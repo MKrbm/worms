@@ -1,6 +1,7 @@
 #ifndef __loop__
 #define __loop__
 
+
 #pragma once
 #include <string.h>
 #include <iostream>
@@ -34,7 +35,10 @@
 
 /* inherit UnionFindTree and add find_and_flip function*/
 
-template <typename MODEL>
+// template <typename MODEL>
+using MODEL = heisenberg1D;
+
+
 class worm{
   public:
   MODEL model;
@@ -59,21 +63,30 @@ class worm{
   std::vector<double> worm_tau;
   std::vector<int> worm_site;
 
-  std::mt19937 rand_src;
+  #ifdef RANDOM_SEED
+  std::mt19937 rand_src = std::mt19937(static_cast <unsigned> (time(0)));
+  #else
+  std::mt19937 rand_src = std::mt19937(2021);
+  #endif
+
   std::uniform_int_distribution<> dist;
   std::uniform_int_distribution<> binary_dice;
   std::uniform_real_distribution<> worm_dist;
 
   worm(double beta, MODEL model_, int W)
   :L(model.L), beta(beta), model(model_), state(L, 1),
-  rand_src(static_cast <unsigned> (time(0))), dist(0,model.Nb-1), worm_dist(0.0, beta), bonds(model.bonds), front_group(L, -1), dfront_group(L),
+  dist(0,model.Nb-1), worm_dist(0.0, beta), bonds(model.bonds), front_group(L, -1), dfront_group(L),
   worm_start(W), worm_site(W), worm_tau(W), W(W),
   end_group(L, {-1,-1})
   {
     worm_start.resize(W);
     worm_tau.resize(W);
     worm_site.resize(W);
+    #ifdef RANDOM_SEED
     srand(static_cast <unsigned> (time(0)));
+    #else
+    srand(2021);
+    #endif
 
     for(int i=0; i< L; i++) dfront_group[i] = -(i+1);
   }
@@ -109,7 +122,7 @@ class worm{
     int s0, s1;
     int r_bond; // randomly choosen bond
 
-    auto operator_list = model.operator_list;
+    const auto &operator_list = model.operator_list;
 
     init_front_group();
     init_worm_rand();
@@ -121,7 +134,7 @@ class worm{
       r = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
       tau_prime = tau - log(r)/model.rho;
 
-      while ( tau_worm > tau_prime){
+      while ( tau_worm < tau_prime && n_worm >= W){
         worm_start[n_worm] = front_group[worm_site[n_worm]]; //it might be negative value, which will be treeded separately.
         n_worm++;
         tau_worm = worm_tau[n_worm];
@@ -137,7 +150,7 @@ class worm{
         if (sum > r) break;
       }
       op_type = i;
-      auto op = operator_list[op_type];
+      auto& op = operator_list[op_type];
 
       r_bond = dist(rand_src);
       s0= bonds[r_bond][0];
@@ -176,15 +189,15 @@ int checkODNFlip(int& ODtau_label, double tau_prime){
   /* 
   return tau_label where one start to look for the next time.
   */
-  if (!ODoperators.size()) return 0;
+  int size = ODoperators.size();
+  if (size==0) return 0;
 
   double ODtau = ODop_tau[ODtau_label];
   int bond_label = ODoperators[ODtau_label][0];
   int op_type = ODoperators[ODtau_label][1];
   auto& operator_list = model.operator_list;
-  int size = ODoperators.size();
   int i = 0, N = 0;
-
+  std::cout << "size = " << size << std::endl;
 
   int s0, s1;
   while((ODtau < tau_prime)&&(ODtau_label <= size-1)){
@@ -217,12 +230,14 @@ int checkODNFlip(int& ODtau_label, double tau_prime){
     auto &lop = front_group[s0];
     auto &rop = front_group[s1];
 
+    if (conn_op.capacity() < n_op) conn_op.resize(2*n_op);
+
     if (lop>=0){
       conn_op[lop][3] = n_op;
       conn_op[n_op][0] = lop;
     }else{
       end_group[s0][0] = n_op;
-      end_group[s0][1] = 0;
+      end_group[s0][1] = 0; //since the site is left side from the operator.
     }
 
     if (rop>=0){
@@ -230,7 +245,7 @@ int checkODNFlip(int& ODtau_label, double tau_prime){
      conn_op[n_op][1] = rop;
     }else{
       end_group[s1][0] = n_op;
-      end_group[s1][1] = 1;
+      end_group[s1][1] = 1; 
     }
 
     lop = n_op;

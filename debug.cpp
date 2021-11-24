@@ -18,7 +18,7 @@ int main(){
     std::mt19937 rand_src(12345);
     heisenberg1D h(6,1,1);
 
-    worm<heisenberg1D> solver(1.0, h, 10);// If std < c++17, worm<heisenberg1D> instead.
+    worm solver(1.0, h, 1);// If std < c++17, worm<heisenberg1D> instead.
     solver.init_worm_rand();
     solver.init_front_group();
     solver.diagonal_update();
