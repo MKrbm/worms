@@ -46,16 +46,26 @@ class worm{
   int L;
   int W;
   std::vector<int> front_group;
+  std::vector<int> front_sides;
   std::vector<std::array<int,2>> end_group;
   std::vector<int> dfront_group;
 
-  std::vector<std::array<int, 2>> ops; // M x 2 vector (M changes dynamically). first element describe the bond on which the operator act. Second describe the type of operator.
-  std::vector<double> op_tau;
+  using OPS = std::vector<std::array<int, 2>>;
+  using OPTAU = std::vector<double>;
+  OPS op_tmp1; 
+  OPS op_tmp2; 
 
-  std::vector<std::array<int, 2>> ODoperators; // for off-diagonal ops.
-  std::vector<double> ODop_tau;
+  OPTAU op_tau_tmp1; 
+  OPTAU op_tau_tmp2; 
 
-  std::vector<std::array<int, 4>> conn_op; // hold the label of connected ops. y = x%2, z = x/2, bond[y] is the site to choose. z decide wether go straight or back.
+
+  OPS& ops_main = op_tmp1; // M x 2 vector (M changes dynamically). first element describe the bond on which the operator act. Second describe the type of operator.
+  OPTAU& ops_main_tau = op_tau_tmp1;
+
+  OPS& ops_sub = op_tmp2; // for sub.
+  OPTAU& ops_sub_tau = op_tau_tmp2;
+
+  std::vector<std::array<int, 4>> conn_op; // hold the label of connected ops_main. y = x%2, z = x/2, bond[y] is the site to choose. z decide wether go straight or back.
   std::vector<int> state;
   std::vector<std::vector<int>> bonds;
 
@@ -66,16 +76,16 @@ class worm{
   #ifdef RANDOM_SEED
   std::mt19937 rand_src = std::mt19937(static_cast <unsigned> (time(0)));
   #else
-  std::mt19937 rand_src = std::mt19937(2021);
+  std::mt19937 rand_src = std::mt19937(2023);
   #endif
 
   std::uniform_int_distribution<> dist;
-  std::uniform_int_distribution<> binary_dice;
+  std::uniform_int_distribution<> binary_dice = std::uniform_int_distribution<>(0,1);
   std::uniform_real_distribution<> worm_dist;
 
   worm(double beta, MODEL model_, int W)
   :L(model.L), beta(beta), model(model_), state(L, 1),
-  dist(0,model.Nb-1), worm_dist(0.0, beta), bonds(model.bonds), front_group(L, -1), dfront_group(L),
+  dist(0,model.Nb-1), worm_dist(0.0, beta), bonds(model.bonds), front_group(L, -1), dfront_group(L),front_sides(L,-1),
   worm_start(W), worm_site(W), worm_tau(W), W(W),
   end_group(L, {-1,-1})
   {
@@ -85,7 +95,7 @@ class worm{
     #ifdef RANDOM_SEED
     srand(static_cast <unsigned> (time(0)));
     #else
-    srand(2021);
+    srand(2023);
     #endif
 
     for(int i=0; i< L; i++) dfront_group[i] = -(i+1);
@@ -99,9 +109,26 @@ class worm{
     std::sort(worm_tau.begin(), worm_tau.end(), std::less<double>());
   }
 
+  void init_states(){
+    for (auto& x : state){
+      x = binary_dice(rand_src) * 2 - 1;
+    }
+  }
+
   void init_front_group(){
     front_group = dfront_group;
+    std::fill(end_group.begin(), end_group.end(), std::array<int,2>({-1, -1})); 
   }
+
+  void swap_oplist(){
+    auto tmp_op = ops_sub;
+    auto tmp_tau = ops_sub_tau;
+    ops_sub = ops_main;
+    ops_sub_tau = ops_main_tau;
+    ops_main = tmp_op;
+    ops_main_tau = tmp_tau;
+  }
+
 
   void diagonal_update(){
     double tau_prime = 0;
@@ -126,15 +153,16 @@ class worm{
 
     init_front_group();
     init_worm_rand();
-    ops.resize(0);
-    op_tau.resize(0);
+    ops_main.resize(0);
+    ops_main_tau.resize(0);
 
 
     while (tau < beta){
       r = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
       tau_prime = tau - log(r)/model.rho;
 
-      while ( tau_worm < tau_prime && n_worm >= W){
+      // put worms on space.
+      while ( tau_worm < tau_prime && n_worm <= W){
         worm_start[n_worm] = front_group[worm_site[n_worm]]; //it might be negative value, which will be treeded separately.
         n_worm++;
         tau_worm = worm_tau[n_worm];
@@ -159,23 +187,24 @@ class worm{
       int tmp = op[(state[s0]+1) + (state[s1]+1)/2];
       if ( tmp >= 0){
         // insert is valid.
-        ops.push_back({r_bond, op_type});
-        op_tau.push_back(tau_prime);
+        ops_main.push_back({r_bond, op_type});
+        ops_main_tau.push_back(tau_prime);
 
-        create_conn(op_tau.size()-1, s0, s1);
+        create_conn(ops_main_tau.size()-1, s0, s1);
       }
 
       tau = tau_prime;
     } //end of while loop
 
-  // connect most fron and most end ops
+  // connect most fron and most end ops_main
   for (int i=0; i<end_group.size(); i++){
-    int op_end = end_group[i][0];
     int op_front = front_group[i];
-    int side = end_group[i][1];
-
-    conn_op[op_end][side] = op_front;
-    conn_op[op_front][2+side] = op_end;
+    int front_side = front_sides[i];
+    if (op_front < 0) continue;
+    int op_end = end_group[i][0];
+    int end_side = end_group[i][1];
+    conn_op[op_end][end_side] = op_front;
+    conn_op[op_front][2+front_side] = op_end;
   }
 
   for (auto& x : worm_start){
@@ -185,42 +214,46 @@ class worm{
   }
 }
 
+
+
 int checkODNFlip(int& ODtau_label, double tau_prime){
   /* 
   return tau_label where one start to look for the next time.
   */
-  int size = ODoperators.size();
+  int size = ops_sub.size();
   if (size==0) return 0;
 
-  double ODtau = ODop_tau[ODtau_label];
-  int bond_label = ODoperators[ODtau_label][0];
-  int op_type = ODoperators[ODtau_label][1];
+  double ODtau = ops_sub_tau[ODtau_label];
+  int bond_label = ops_sub[ODtau_label][0];
+  int op_type = ops_sub[ODtau_label][1];
   auto& operator_list = model.operator_list;
   int i = 0, N = 0;
-  std::cout << "size = " << size << std::endl;
 
   int s0, s1;
   while((ODtau < tau_prime)&&(ODtau_label <= size-1)){
 
-    s0 = bonds[bond_label][0];
-    s1 = bonds[bond_label][1];
-    auto& op = operator_list[op_type];
+    if (op_type >= model.NDop){
 
-    int tmp = (s0+1) + (s1+1)/2;
-    tmp = op[tmp];
-    state[s0] = tmp / 2;
-    state[s1] = tmp % 2;
+      s0 = bonds[bond_label][0];
+      s1 = bonds[bond_label][1];
+      auto& op = operator_list[op_type];
 
-    ops.push_back({bond_label, op_type});
-    op_tau.push_back(ODtau);
+      int tmp = (state[s0]+1) + (state[s1]+1)/2;
+      tmp = op[tmp];
+      state[s0] = (tmp / 2)*2-1;
+      state[s1] = (tmp % 2)*2-1;
 
-    create_conn(op_tau.size()-1, s0, s1); // craete the table of connection.
+      ops_main.push_back({bond_label, op_type});
+      ops_main_tau.push_back(ODtau);
+
+      create_conn(ops_main_tau.size()-1, s0, s1); // craete the table of connection.
+    }
   
     ODtau_label++;
     i++;
-    ODtau = ODop_tau[ODtau_label];
-    bond_label = ODoperators[ODtau_label][0];
-    op_type = ODoperators[ODtau_label][1];
+    ODtau = ops_sub_tau[ODtau_label];
+    bond_label = ops_sub[ODtau_label][0];
+    op_type = ops_sub[ODtau_label][1];
     /* flip state according to off-diagonal operator */
   }
   return i;
@@ -228,12 +261,15 @@ int checkODNFlip(int& ODtau_label, double tau_prime){
 
   void create_conn(int n_op, int s0, int s1){
     auto &lop = front_group[s0];
+    auto &lside = front_sides[s0];
     auto &rop = front_group[s1];
+    auto &rside = front_sides[s1];
 
-    if (conn_op.capacity() < n_op) conn_op.resize(2*n_op);
+    // if (conn_op.capacity() < n_op) conn_op.resize(2*n_op);
+    conn_op.resize(n_op+1);
 
     if (lop>=0){
-      conn_op[lop][3] = n_op;
+      conn_op[lop][2+lside] = n_op;
       conn_op[n_op][0] = lop;
     }else{
       end_group[s0][0] = n_op;
@@ -241,7 +277,7 @@ int checkODNFlip(int& ODtau_label, double tau_prime){
     }
 
     if (rop>=0){
-     conn_op[rop][2] = n_op;
+     conn_op[rop][2+rside] = n_op;
      conn_op[n_op][1] = rop;
     }else{
       end_group[s1][0] = n_op;
@@ -249,7 +285,10 @@ int checkODNFlip(int& ODtau_label, double tau_prime){
     }
 
     lop = n_op;
+    lside = 0;
     rop = n_op;
+    rside = 1;
+
   }
 
 };
