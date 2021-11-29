@@ -61,6 +61,10 @@ int main(){
         printf("\n");
     }
 
+    for (auto x:solver.worm_start){
+        printf("wo")
+    }
+
     auto trans_prob = metropolis(h.weigths);
 
 
