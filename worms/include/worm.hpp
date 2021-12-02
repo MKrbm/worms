@@ -23,7 +23,6 @@
   #include <unistd.h>
 #endif
 
-#include <mach-o/dyld.h>
 
 #include <filesystem>
 #include <unistd.h>
@@ -32,6 +31,7 @@
 #include <math.h> 
 
 #include "model.hpp"
+#include "BC.hpp"
 
 /* inherit UnionFindTree and add find_and_flip function*/
 
@@ -45,7 +45,7 @@ class worm{
   double beta;
   int L;
   int W;
-  std::vector<int> front_group;
+  std::vector<int> front_group; // we initilize this by f[i] = -(i+1) so that we can check wether a operator is assigned for the ith site already or not. 
   std::vector<int> front_sides;
   std::vector<std::array<int,2>> end_group;
   std::vector<int> dfront_group;
@@ -73,6 +73,9 @@ class worm{
   std::vector<double> worm_tau;
   std::vector<int> worm_site;
 
+  decltype(MODEL::trans_prob) trans_prob;
+
+
   #ifdef RANDOM_SEED
   std::mt19937 rand_src = std::mt19937(static_cast <unsigned> (time(0)));
   #else
@@ -99,6 +102,8 @@ class worm{
     #endif
 
     for(int i=0; i< L; i++) dfront_group[i] = -(i+1);
+
+    trans_prob = model.trans_prob = metropolis<decltype(model.weigths)>(model.weigths);
   }
 
   void init_worm_rand(){
@@ -162,7 +167,7 @@ class worm{
       tau_prime = tau - log(r)/model.rho;
 
       // put worms on space.
-      while ( tau_worm < tau_prime && n_worm <= W){
+      while ( tau_worm < tau_prime && n_worm < W){
         worm_start[n_worm] = front_group[worm_site[n_worm]]; //it might be negative value, which will be treeded separately.
         n_worm++;
         tau_worm = worm_tau[n_worm];
@@ -170,14 +175,17 @@ class worm{
 
       checkODNFlip(ODtau_label, tau_prime);
 
-      r = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
-      sum = 0;
-      int i;
-      for(i=0; i<N_Dop; i++){
-        sum += model.prob[i];
-        if (sum > r) break;
-      }
-      op_type = i;
+      
+      // sum = 0;
+      // int i;
+      // for(i=0; i<N_Dop; i++){
+      //   sum += model.prob[i];
+      //   if (sum > r) break;
+      // }
+      // op_type = i;
+      // op_type = model.DopAtRand(r);
+      op_type = chooseAtRand(model.prob);
+
       auto& op = operator_list[op_type];
 
       r_bond = dist(rand_src);
@@ -215,51 +223,76 @@ class worm{
 }
 
 
-
-int checkODNFlip(int& ODtau_label, double tau_prime){
   /* 
-  return tau_label where one start to look for the next time.
+
+  check over off-diagonal operators inside sub operators list (ops_sub) before given tau_prime.
+  If operator is not an off-diagonal ops, then it ignore and continue to the next ODtau_label.
+  If operator is an off-diagonal, then, we append to ops_main and update states accordingly.
+
+  params
+  ------
+  int ODtau_label : the label for sub operators (ops_sub) our search starts from.
+  double tau_prime : tau_prime
+
+  return 
+  ------
+  int : tau_label where one start to look for the next time.
   */
-  int size = ops_sub.size();
-  if (size==0) return 0;
+  int checkODNFlip(int& ODtau_label, double tau_prime){
 
-  double ODtau = ops_sub_tau[ODtau_label];
-  int bond_label = ops_sub[ODtau_label][0];
-  int op_type = ops_sub[ODtau_label][1];
-  auto& operator_list = model.operator_list;
-  int i = 0, N = 0;
+    int size = ops_sub.size();
+    if (size==0 || ODtau_label >= size) return 0;
 
-  int s0, s1;
-  while((ODtau < tau_prime)&&(ODtau_label <= size-1)){
+    double ODtau = ops_sub_tau[ODtau_label];
+    int bond_label = ops_sub[ODtau_label][0];
+    int op_type = ops_sub[ODtau_label][1];
+    auto& operator_list = model.operator_list;
+    int i = 0, N = 0;
 
-    if (op_type >= model.NDop){
+    int s0, s1;
+    while((ODtau < tau_prime)&&(ODtau_label <= size-1)){
 
-      s0 = bonds[bond_label][0];
-      s1 = bonds[bond_label][1];
-      auto& op = operator_list[op_type];
+      if (op_type >= model.NDop){
 
-      int tmp = (state[s0]+1) + (state[s1]+1)/2;
-      tmp = op[tmp];
-      state[s0] = (tmp / 2)*2-1;
-      state[s1] = (tmp % 2)*2-1;
+        s0 = bonds[bond_label][0];
+        s1 = bonds[bond_label][1];
+        auto& op = operator_list[op_type];
 
-      ops_main.push_back({bond_label, op_type});
-      ops_main_tau.push_back(ODtau);
+        int tmp = (state[s0]+1) + (state[s1]+1)/2;
+        tmp = op[tmp];
+        state[s0] = (tmp / 2)*2-1;
+        state[s1] = (tmp % 2)*2-1;
 
-      create_conn(ops_main_tau.size()-1, s0, s1); // craete the table of connection.
+        ops_main.push_back({bond_label, op_type});
+        ops_main_tau.push_back(ODtau);
+
+        create_conn(ops_main_tau.size()-1, s0, s1); // craete the table of connection.
+      }
+    
+      ODtau_label++;
+      i++;
+      ODtau = ops_sub_tau[ODtau_label];
+      bond_label = ops_sub[ODtau_label][0];
+      op_type = ops_sub[ODtau_label][1];
+      /* flip state according to off-diagonal operator */
     }
-  
-    ODtau_label++;
-    i++;
-    ODtau = ops_sub_tau[ODtau_label];
-    bond_label = ops_sub[ODtau_label][0];
-    op_type = ops_sub[ODtau_label][1];
-    /* flip state according to off-diagonal operator */
+    return i;
   }
-  return i;
-}
 
+
+  /*
+  update front_group and end_group. and create a connection for given n_op
+
+  params
+  ------
+
+  int n_op : operator label that will assigned as a new label. 
+  int s0 : one of the site the operator acts on
+  int s1 : "
+  
+  */
   void create_conn(int n_op, int s0, int s1){
+
     auto &lop = front_group[s0];
     auto &lside = front_sides[s0];
     auto &rop = front_group[s1];
@@ -290,37 +323,87 @@ int checkODNFlip(int& ODtau_label, double tau_prime){
     rside = 1;
 
   }
+  /*
+  perform one step from given worm.
+  params
+  ------
+  int[] state : current state
+  int dir : from 0 to 3 that describes the direction (rule is the same as connection). y = dir%2, z = dir/2, bond[y] is the site. z decide wether go up or down.
+  int op_label : the last operator label.
+  params(member variables)
+  ------
+  worm_dir : hold the direction to move.
+  trans_prob : holds probability that the give op_type transition to others (including itself).
+
+  */
+  void worm_step(std::vector<int>& CState, int& dir, int& op_label){
+    int op_label_ = conn_op[op_label][dir]; // candidate op_label from current op_label.
+    int bond = ops_main[op_label_][0];
+    int& type = ops_main[op_label_][1];
+
+    const auto& worm_dir = model.worm_dir[type];
+
+    const auto& prob = trans_prob[type];
+
+    int trans_type = chooseAtRand(prob);
+    int reldir = worm_dir[trans_type]; //reldir specify the relative direction from the pov of worm. check the definitoin of model.worm_dir
+
+    dir = 2 * ((reldir/2 + 1+ dir/2 )%2) + (reldir%2 + dir%2)%2;
+    type = trans_type;
+    op_label = op_label_;
+    int site = bonds[bond][dir%2];
+    CState[site] *= -1;
+
+  }
+
+  template <typename PROB>
+  int chooseAtRand(const PROB& prob){
+      double r = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
+      double sum = 0;
+      int i;
+      for(i=0; i<prob.size()-1; i++){
+          sum += prob[i];
+          if (sum >= r) break;
+      }
+
+      return i;
+  }
 
 };
 
 
 
-inline std::string getExePath(){
-  char buffer[1024];
-  uint32_t size = sizeof(buffer);
-  std::string path;
+// inline std::string getExePath(){
+//   char buffer[1024];
+//   uint32_t size = sizeof(buffer);
+//   std::string path;
 
-#if defined (WIN32)
-  GetModuleFileName(nullptr,buffer,size);
-  path = buffer;
-#elif defined (__APPLE__)
-  namespace fs = std::__fs::filesystem;
-  if(_NSGetExecutablePath(buffer, &size) == 0)
-  {
-  path = buffer;
-  }
-#elif defined(UNIX) || defined(unix) || defined(__unix) || defined(__unix__)
-  throw std::runtime_error("UNIX is not available \n");
-  exit;
-  int byte_count = readlink("/proc/self/exe", buffer, size);
-  if (byte_count  != -1)
-  {
-  path = std::string(buffer, byte_count);
-  }
-#endif
+  
 
-  fs::path p = path;
-  return static_cast<std::string>(p.parent_path());
-}
+// #if defined (WIN32)
+//   GetModuleFileName(nullptr,buffer,size);
+//   path = buffer;
+// #elif defined (__APPLE__)
+//   namespace fs = std::__fs::filesystem;
+//   if(_NSGetExecutablePath(buffer, &size) == 0)
+//   {
+//   path = buffer;
+//   }
+//   fs::path p = path;
+  
+// #elif defined(UNIX) || defined(unix) || defined(__unix) || defined(__unix__)
+//   // throw std::runtime_error("UNIX is not available \n");
+//   exit;
+//   int byte_count = readlink("/proc/self/exe", buffer, size);
+//   if (byte_count  != -1)
+//   {
+//   path = std::string(buffer, byte_count);
+//   }
+//   std::filesystem::path p = path;
+// #endif
+
+//   return static_cast<std::string>(p.parent_path());
+  
+// }
 
 #endif 

@@ -21,28 +21,33 @@ int main(){
 
     worm solver(0.6, h, 4);// If std < c++17, worm<heisenberg1D> instead.
 
-    // solver.ops_sub = {
-    //     {1,0},
-    //     {2,2},
-    //     {3,2},
-    //     {5,2},
-    //     {0,2},
-    //     {4,2},
-    //     {1,2},
-    // };
+    solver.ops_sub = {
+        {1,0},
+        {2,2},
+        {3,2},
+        {5,2},
+        {0,2},
+        {4,2},
+        {1,2},
+    };
 
-    // for(int i = 0; i<solver.ops_sub.size(); i++){
-    //     solver.ops_sub_tau.push_back((double)(i+1) / solver.ops_sub.size() * (solver.beta*0.9));
-    // }
+    for(int i = 0; i<solver.ops_sub.size(); i++){
+        solver.ops_sub_tau.push_back((double)(i+1) / solver.ops_sub.size() * (solver.beta*0.9));
+    }
 
+    printf("state : ");
     solver.init_states();
+    solver.state = {1,1,-1,1,1,-1};
     for (auto x : solver.state){
         printf("%d ", x);
     }
+
+    cout << endl;
     solver.init_worm_rand();
     solver.init_front_group();
     solver.diagonal_update();
 
+    printf("state : ");
     for (auto x : solver.state){
         printf("%d ", x);
     }
@@ -56,16 +61,31 @@ int main(){
     int cnt = 0;
     for (auto x : solver.conn_op){
         printf("op: %d // ", cnt);
-        for (int i=0; i<4; i++) printf("%d:%d ", i, x[i]);
+        for (int i=0; i<4; i++) printf("%d ", x[i]);
         cnt++;
         printf("\n");
     }
 
     for (auto x:solver.worm_start){
-        printf("wo")
+        printf("wo");
     }
 
-    auto trans_prob = metropolis(h.weigths);
+    // auto trans_prob = metropolis<decltype(h.weigths)>(h.weigths);
+
+    int site = solver.worm_site[0];
+    int label = solver.worm_start[0];
+
+    auto bond = solver.bonds[solver.ops_main[label][0]];
+    
+    int i;
+    for (i=0; i<2; i++){
+        if (bond[i]==site) break;
+    }
+    
+    auto state = solver.state;
+    state[site] *= -1;
+    int dir = 2 + i;
+    solver.worm_step(state, dir, label);
 
 
     return 0;

@@ -1,5 +1,5 @@
-#include "../include/model.hpp"
 #include <uftree.hpp>
+#include "../include/model.hpp"
 
 
 
@@ -59,4 +59,18 @@ heisenberg1D::heisenberg1D(int L, double Jz, double Jxy, double h, bool PBC)
 
 
     rho = h*Nb + (1+h)/2 * Nb;
+}
+
+/*
+pick diagonal operator type at random for given r ~ uniform(0,1)
+*/
+int heisenberg1D::DopAtRand(double r){
+    double sum = 0;
+    int i;
+    for(i=0; i<NDop-1; i++){
+        sum += prob[i];
+        if (sum >= r) break;
+    }
+
+    return i;
 }

@@ -1,3 +1,5 @@
+#ifndef __BC__
+#define __BC__
 #include <iostream>
 #include <vector>
 #include <array>
@@ -26,3 +28,5 @@ std::array<std::array<double, n>, n> metropolis(Arr weights){
 
   return trans_prob;
 }
+
+#endif

@@ -81,7 +81,11 @@
           "typeinfo": "cpp",
           "unordered_map": "cpp",
           "utility": "cpp",
-          "__bits": "cpp"
+          "__bits": "cpp",
+          "*.tcc": "cpp",
+          "codecvt": "cpp",
+          "memory_resource": "cpp",
+          "cinttypes": "cpp"
         },
     "cmake.setBuildTypeOnMultiConfig": true,
     "cmake.defaultVariants": {

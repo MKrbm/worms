@@ -26,7 +26,9 @@ public:
   std::array<CONN, N_op> operator_list;
   std::array<double, N_op> weigths; // weight of each operator.
   std::array<double, N_Dop> prob; 
-  std::array<std::array<int, N_op>, N_op> worm_dir; // 0 : go reverse, 1 : reverse direction & change site, 2 : go straight, 3 : go straight & change site.
+  std::array<std::array<int, N_op>, N_op> worm_dir; // 0 : go back to the same root, 1 : reverse direction & change site, 2 : go straight, 3 : go straight & change site.
+
+  std::array<std::array<double, N_op>, N_op> trans_prob;
 
 };
 
@@ -44,6 +46,7 @@ public:
   const int Nb;
   const double h;
 
+  int DopAtRand(double);
 
 };
 
