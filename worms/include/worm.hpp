@@ -351,7 +351,8 @@ class worm{
     int trans_type = chooseAtRand(prob);
     int reldir = worm_dir[trans_type]; //reldir specify the relative direction from the pov of worm. check the definitoin of model.worm_dir
 
-    if (reldir == 1) CState[site] *= -1;
+    if (reldir/2 == 1) CState[site] *= -1;
+    CState = getCState(op_label+1, op_label_-1, CState);
     dir = 2 * ((UorD + reldir/2 + 1) % 2) + (LorR + reldir%2) % 2;
     type = trans_type;
     op_label = op_label_;
@@ -412,13 +413,16 @@ class worm{
 
   }
 
-
+  /* update state from start to end (includes both label)
+  */
 
   std::vector<int> getCState(int start, int end, std::vector<int> Cstate){
+    if (end<start) end+=ops_main.size();
     for(int i=0; i<end-start+1; i++){
       int op_label = (i + start) % ops_main.size();
       int bond_label = ops_main[op_label][0];
       int type = ops_main[op_label][1];
+      if (type<model.NDop) continue;
       int s0 = bonds[bond_label][0];
       int s1 = bonds[bond_label][1];
       auto& op = model.operator_list[type];
