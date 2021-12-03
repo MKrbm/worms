@@ -226,7 +226,6 @@ class worm{
 
 
   /* 
-
   check over off-diagonal operators inside sub operators list (ops_sub) before given tau_prime.
   If operator is not an off-diagonal ops, then it ignore and continue to the next ODtau_label.
   If operator is an off-diagonal, then, we append to ops_main and update states accordingly.
@@ -291,8 +290,9 @@ class worm{
   int n_op : operator label that will assigned as a new label. 
   int s0 : one of the site the operator acts on
   int s1 : "
-  
   */
+
+
   void create_conn(int n_op, int s0, int s1){
 
     auto &lop = front_group[s0];
@@ -336,8 +336,8 @@ class worm{
   ------
   worm_dir : hold the direction to move.
   trans_prob : holds probability that the give op_type transition to others (including itself).
-
   */
+
   void worm_step(std::vector<int>& CState, int& dir, int& op_label, int& site){
     int op_label_ = conn_op[op_label][dir]; // candidate op_label from current op_label.
     int bond_label = ops_main[op_label_][0];
@@ -369,9 +369,9 @@ class worm{
           sum += prob[i];
           if (sum >= r) break;
       }
-
       return i;
   }
+
 
   void worm_update(){
     
