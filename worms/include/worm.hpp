@@ -336,24 +336,25 @@ class worm{
   trans_prob : holds probability that the give op_type transition to others (including itself).
 
   */
-  void worm_step(std::vector<int>& CState, int& dir, int& op_label){
+  void worm_step(std::vector<int>& CState, int& dir, int& op_label, int& site){
     int op_label_ = conn_op[op_label][dir]; // candidate op_label from current op_label.
-    int bond = ops_main[op_label_][0];
+    int bond_label = ops_main[op_label_][0];
+    auto bond = bonds[bond_label];
+    int LorR = (site != bond[0]); // 0 means left side, 1 means right side
+    int UorD = dir/2; // 0 means the worm trave in a down direction, 1 means up
     int& type = ops_main[op_label_][1];
-
     const auto& worm_dir = model.worm_dir[type];
-
     const auto& prob = trans_prob[type];
 
     int trans_type = chooseAtRand(prob);
     int reldir = worm_dir[trans_type]; //reldir specify the relative direction from the pov of worm. check the definitoin of model.worm_dir
 
-    dir = 2 * ((reldir/2 + 1+ dir/2 )%2) + (reldir%2 + dir%2)%2;
+    if (reldir/2 == 1) CState[site] *= -1;
+    dir = 2 * ((UorD + reldir/2 + 1) % 2) + (LorR + reldir%2) % 2;
     type = trans_type;
     op_label = op_label_;
-    int site = bonds[bond][dir%2];
+    site = bond[dir%2];
     CState[site] *= -1;
-
   }
 
   template <typename PROB>
@@ -369,8 +370,68 @@ class worm{
       return i;
   }
 
-};
+  void worm_update(){
+    
+    int s_label = 0;
+    auto index = sortindex(worm_start);
+    auto tmp_start = worm_start;
+    auto tmp_site = worm_site;
 
+    for (int i=0; i<index.size(); i++){
+      worm_start[i] = tmp_start[index[i]];
+      worm_site[i] = tmp_site[index[i]];
+    }
+
+    std::vector<int> CState = state;
+    for(int j=0; j<W; j++){
+      int site = worm_site[j];
+      int label = worm_start[j];
+      std::vector<int> bond = bonds[ops_main[label][j]];
+      int i;
+      for (i=0; i<2; i++){
+          if (bond[i]==site) break;
+      }
+      
+
+      CState = getCState(s_label, label, CState);
+      CState[site] *= -1;
+      int dir = 2 + i;
+      int ori_dir = dir;
+      int ori_label = label;
+      do{
+          worm_step(CState, dir, label, site);
+      }while((ori_dir!=dir)||(ori_label!=label));
+      s_label = ori_label+1;
+    }
+  }
+
+  std::vector<int> getCState(int start, int end, std::vector<int> Cstate){
+    for(int i=0; i<end-start+1; i++){
+      int op_label = i + start;
+      int bond_label = ops_main[op_label][0];
+      int type = ops_main[op_label][1];
+      int s0 = bonds[bond_label][0];
+      int s1 = bonds[bond_label][1];
+      auto& op = model.operator_list[type];
+
+      int tmp = (Cstate[s0]+1) + (Cstate[s1]+1)/2;
+      tmp = op[tmp];
+      Cstate[s0] = (tmp / 2)*2-1;
+      Cstate[s1] = (tmp % 2)*2-1;
+    }
+    return Cstate;
+  }
+
+  std::vector<int> sortindex(std::vector<int> vec){
+    std::vector<int> index(vec.size());
+    for(int i=0; i < vec.size(); i++) index[i] = i;
+
+    std::sort(index.begin(), index.end(), [&](int a, int b) {return vec[a] < vec[b];} );
+
+    return index;
+  }
+
+};
 
 
 // inline std::string getExePath(){

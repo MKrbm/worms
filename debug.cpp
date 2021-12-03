@@ -72,20 +72,8 @@ int main(){
 
     // auto trans_prob = metropolis<decltype(h.weigths)>(h.weigths);
 
-    int site = solver.worm_site[0];
-    int label = solver.worm_start[0];
+    solver.worm_update();
 
-    auto bond = solver.bonds[solver.ops_main[label][0]];
-    
-    int i;
-    for (i=0; i<2; i++){
-        if (bond[i]==site) break;
-    }
-    
-    auto state = solver.state;
-    state[site] *= -1;
-    int dir = 2 + i;
-    solver.worm_step(state, dir, label);
 
 
     return 0;
