@@ -46,6 +46,14 @@ int main(){
     solver.init_worm_rand();
     solver.init_front_group();
     solver.diagonal_update();
+    solver.worm_update();
+    printf("state : ");
+    for (auto x : solver.state){
+        printf("%d ", x);
+    }
+    printf("\n");
+    solver.swap_oplist();
+
 
     printf("state : ");
     for (auto x : solver.state){
@@ -72,7 +80,6 @@ int main(){
 
     // auto trans_prob = metropolis<decltype(h.weigths)>(h.weigths);
 
-    solver.worm_update();
 
 
 

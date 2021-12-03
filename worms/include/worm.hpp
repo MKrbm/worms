@@ -112,6 +112,7 @@ class worm{
       worm_tau[i] =  worm_dist(rand_src);
     }
     std::sort(worm_tau.begin(), worm_tau.end(), std::less<double>());
+    std::fill(worm_start.begin(), worm_start.end(), 0); 
   }
 
   void init_states(){
@@ -123,6 +124,7 @@ class worm{
   void init_front_group(){
     front_group = dfront_group;
     std::fill(end_group.begin(), end_group.end(), std::array<int,2>({-1, -1})); 
+    std::fill(front_sides.begin(), front_sides.end(), -1); 
   }
 
   void swap_oplist(){
@@ -349,7 +351,7 @@ class worm{
     int trans_type = chooseAtRand(prob);
     int reldir = worm_dir[trans_type]; //reldir specify the relative direction from the pov of worm. check the definitoin of model.worm_dir
 
-    if (reldir/2 == 1) CState[site] *= -1;
+    if (reldir == 1) CState[site] *= -1;
     dir = 2 * ((UorD + reldir/2 + 1) % 2) + (LorR + reldir%2) % 2;
     type = trans_type;
     op_label = op_label_;
@@ -376,6 +378,7 @@ class worm{
     auto index = sortindex(worm_start);
     auto tmp_start = worm_start;
     auto tmp_site = worm_site;
+    int label;
 
     for (int i=0; i<index.size(); i++){
       worm_start[i] = tmp_start[index[i]];
@@ -385,7 +388,7 @@ class worm{
     std::vector<int> CState = state;
     for(int j=0; j<W; j++){
       int site = worm_site[j];
-      int label = worm_start[j];
+      label = worm_start[j];
       std::vector<int> bond = bonds[ops_main[label][j]];
       int i;
       for (i=0; i<2; i++){
@@ -402,12 +405,18 @@ class worm{
           worm_step(CState, dir, label, site);
       }while((ori_dir!=dir)||(ori_label!=label));
       s_label = ori_label+1;
+
+      CState = getCState(s_label, ops_main.size()+s_label-1, CState);
+
     }
+
   }
+
+
 
   std::vector<int> getCState(int start, int end, std::vector<int> Cstate){
     for(int i=0; i<end-start+1; i++){
-      int op_label = i + start;
+      int op_label = (i + start) % ops_main.size();
       int bond_label = ops_main[op_label][0];
       int type = ops_main[op_label][1];
       int s0 = bonds[bond_label][0];
