@@ -36,6 +36,10 @@
 /* inherit UnionFindTree and add find_and_flip function*/
 
 // template <typename MODEL>
+
+inline int positive_modulo(int i, int n) {
+    return (i % n + n) % n;
+}
 using MODEL = heisenberg1D;
 
 
@@ -338,7 +342,8 @@ class worm{
   trans_prob : holds probability that the give op_type transition to others (including itself).
   */
 
-  void worm_step(std::vector<int>& CState, int& dir, int& op_label, int& site){
+  void worm_step(std::vector<int>& CState, int& spin, int& dir, int& op_label, int& site, int ori_label, int ori_site){
+
     int op_label_ = conn_op[op_label][dir]; // candidate op_label from current op_label.
     int bond_label = ops_main[op_label_][0];
     auto bond = bonds[bond_label];
@@ -351,27 +356,122 @@ class worm{
     int trans_type = chooseAtRand(prob);
     int reldir = worm_dir[trans_type]; //reldir specify the relative direction from the pov of worm. check the definitoin of model.worm_dir
 
-    if (reldir/2 == 1) CState[site] *= -1;
-    CState = getCState(op_label+1, op_label_-1, CState);
+    // if (reldir/2 == 1) CState[site] *= -1;
+    // CState = getCState(op_label+1, op_label_, CState);
+    test(CState, site, op_label, UorD, ori_site, ori_label);
+    if (flip_ori_state(op_label, op_label_, ori_label, UorD)){
+      // if (UorD == 1){
+      //   auto tmp = getCState(ori_label+1, ori_label + ops_main.size()+1, CState, 1);
+      //   for (int i =0; i<CState.size(); i++){
+      //     if (tmp[i] != CState[i]) {
+      //       if ((i != site) && (i != ori_site))std::cout << "inconsistent" << std::endl;
+      //     }
+      //   }
+      // }
+
+      // if (UorD == 0){
+      //   auto tmp = CState;
+      //   tmp[site] *= -1;
+      //   auto tmp1 = getCState(ori_label+1, op_label_ + ops_main.size(), tmp, 1, 1);
+      //   // tmp[site] *= -1;
+      //   tmp1 = getCState(op_label_, ori_label + 1, tmp1, 1, 1);
+      //   for (int i =0; i<CState.size(); i++){
+      //     if (tmp1[i] != CState[i]) {
+      //       if ((i != site) && (i != ori_site))std::cout << "inconsistent" << std::endl;
+      //     }
+      //   }
+      // }
+      CState[site] = spin;
+    } 
+
+    if (reldir != 0) spin = (2*getstate(spin, LorR, trans_type, reldir)-1);
+    else spin*=-1;
     dir = 2 * ((UorD + reldir/2 + 1) % 2) + (LorR + reldir%2) % 2;
     type = trans_type;
     op_label = op_label_;
     site = bond[dir%2];
-    CState[site] *= -1;
+
+
   }
 
   template <typename PROB>
   int chooseAtRand(const PROB& prob){
-      double r = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
-      double sum = 0;
-      int i;
-      for(i=0; i<prob.size()-1; i++){
-          sum += prob[i];
-          if (sum >= r) break;
-      }
-      return i;
+    double r = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
+    double sum = 0;
+    int i;
+    for(i=0; i<prob.size()-1; i++){
+        sum += prob[i];
+        if (sum >= r) break;
+    }
+    return i;
   }
 
+  int flip_ori_state(int op_label, int op_label_, int ori_label, int UorD){
+    
+
+    UorD = UorD*2-1;
+
+    if (UorD == -1) {
+      if (op_label_ == ori_label) return 1;
+      op_label += UorD;
+      op_label = positive_modulo(op_label, ops_main.size());
+    }
+    while(op_label != op_label_){
+      if (op_label == ori_label) return 1;
+      op_label += UorD;
+      op_label = positive_modulo(op_label, ops_main.size());
+    }
+    return 0;
+  }
+
+  /*
+
+  test if the CState and ops_main is consistent
+
+  params
+  ------
+  int[] CState : current state right after ori_label.
+  int site : site worm is at currently.
+  int op_label : last operator label worm goes through
+  int UorD : which direction the worm goes? 1 : up,  0 : down;
+  int ori_site : original site worm was at.
+  int ori_label : original label the worm starts from (the worm move towrad up direction at the beggining).
+  */
+  void test(std::vector<int> CState, int site, int op_label, int UorD, int ori_site, int ori_label){
+    
+    if (UorD == 1){
+      auto tmp = CState;
+      if (ori_label != op_label)
+      {
+        tmp = getCState(ori_label+1, op_label+1, CState, 1);
+        tmp[site] *= -1;
+      } 
+      auto tmp1 = getCState(op_label+1, ori_label+1, tmp, 1);
+      tmp1[ori_site] *= -1;
+      if (ori_label == op_label) tmp1[site] *= -1;
+
+      for (int i =0; i<CState.size(); i++){
+        if (tmp1[i] != CState[i]) {
+          std::cout << "inconsistent" << std::endl;
+        }
+      }
+    }else if (UorD == 0){
+      auto tmp = CState;
+      if (ori_label+1 != op_label) tmp = getCState(ori_label+1, op_label, CState, 1);
+      tmp[site] *= -1;
+      auto tmp1 = getCState(op_label, ori_label+1, tmp, 1);
+      tmp1[ori_site] *= -1;
+      for (int i =0; i<CState.size(); i++){
+        if (tmp1[i] != CState[i]) {
+          std::cout << "inconsistent" << std::endl;
+        }
+      }
+    }else{
+      std::cout << "UorD is not valid value" << std::endl;
+    }
+
+
+  }
 
   void worm_update(){
     
@@ -380,6 +480,7 @@ class worm{
     auto tmp_start = worm_start;
     auto tmp_site = worm_site;
     int label;
+    int cnt = 0;
 
     for (int i=0; i<index.size(); i++){
       worm_start[i] = tmp_start[index[i]];
@@ -389,25 +490,42 @@ class worm{
     std::vector<int> CState = state;
     for(int j=0; j<W; j++){
       int site = worm_site[j];
+      int ori_site = site;
       label = worm_start[j];
-      std::vector<int> bond = bonds[ops_main[label][j]];
+      std::vector<int> bond = bonds[ops_main[label][0]];
       int i;
       for (i=0; i<2; i++){
           if (bond[i]==site) break;
       }
       
 
-      CState = getCState(s_label, label, CState);
-      CState[site] *= -1;
+      if (s_label <= label) CState = getCState(s_label, label+1, CState);
+      // state[site] *= -1;
+      int spin = -1 * CState[site];
+      // CState[site] = spin;
       int dir = 2 + i;
       int ori_dir = dir;
       int ori_label = label;
       do{
-          worm_step(CState, dir, label, site);
+          worm_step(CState, spin, dir, label, site, ori_label, ori_site);
+          if (ori_label == label){
+            std::cout << "count : " << cnt << std::endl;
+            std::cout << "dir : " << dir << std::endl;
+            cnt ++;
+            for (auto x : ops_main){
+              printf("bond : %d, optype : %d \n", x[0], x[1]);
+            }
+          }
+
       }while((ori_dir!=dir)||(ori_label!=label));
+
+      auto tmp = getCState(ori_label, ori_label + ops_main.size() + 1, CState, 1);
+      for (int i =0; i<CState.size(); i++){
+        if (tmp[i] != CState[i]) std::cout << "inconsistent" << std::endl;
+      }
       s_label = ori_label+1;
 
-      CState = getCState(s_label, ops_main.size()+s_label-1, CState);
+      // CState = getCState(s_label, ops_main.size()+s_label-1, CState);
 
     }
 
@@ -416,21 +534,29 @@ class worm{
   /* update state from start to end (includes both label)
   */
 
-  std::vector<int> getCState(int start, int end, std::vector<int> Cstate){
-    if (end<start) end+=ops_main.size();
-    for(int i=0; i<end-start+1; i++){
-      int op_label = (i + start) % ops_main.size();
+  std::vector<int> getCState(int start, int end, std::vector<int> Cstate, int debug = 0, int dir = 1){
+    if (dir*end<=dir*start) end+=dir*ops_main.size();
+    for(int i=0; i<dir*end-dir*start; i++){
+      int op_label = (dir*i + start) % ops_main.size();
       int bond_label = ops_main[op_label][0];
       int type = ops_main[op_label][1];
-      if (type<model.NDop) continue;
+
+      if (type<model.NDop && debug == 0) continue;
       int s0 = bonds[bond_label][0];
       int s1 = bonds[bond_label][1];
       auto& op = model.operator_list[type];
 
       int tmp = (Cstate[s0]+1) + (Cstate[s1]+1)/2;
-      tmp = op[tmp];
-      Cstate[s0] = (tmp / 2)*2-1;
-      Cstate[s1] = (tmp % 2)*2-1;
+      if (tmp<0) {
+        std::cout << "error occured " << std::endl;
+        exit;
+      }
+      auto tmp1 = op[tmp];
+      if (tmp1>3 || tmp1<0){
+        std::cout << "waht \n";
+      }
+      Cstate[s0] = (tmp1 / 2)*2-1;
+      Cstate[s1] = (tmp1 % 2)*2-1;
     }
     return Cstate;
   }
@@ -444,7 +570,48 @@ class worm{
     return index;
   }
 
+  /*
+  infer the state from the given spin, site, and type of operator.
+  e.g. if spin is 1, type = 0 (heisenberg1D) and LorR = 0 (means left), then spins would be like
+  [1, -1]
+  [1, -1]
+
+  -->> [1,-1,1,-1] // the way of indexing is the same as rel_dir.
+
+  params
+  ------
+  int spin : up or down of the site
+  int LorR : the spin is on the left side of operator or right side or operator
+  int type : type of operator
+
+  return
+  ------
+
+  int[4] : each 
+
+  */
+  int getstate(int spin, int LorR, int type, int reldir){
+    int bin_state[4];
+    auto& op = model.operator_list[type];
+    spin = (1 + spin)/2;
+
+    for(int i=0; i<op.size()/2; i++){
+      int tmp = 2*i + spin;
+      
+      auto t_state = op[tmp];
+      if (t_state >= 0){
+        bin_state[0] = tmp%2;
+        bin_state[1] = tmp/2;
+        bin_state[2] = t_state%2;
+        bin_state[3] = t_state/2;
+        break;
+      }
+
+    }
+    return bin_state[reldir];
+ }
 };
+
 
 
 // inline std::string getExePath(){
