@@ -134,8 +134,8 @@ model::heisenberg1D::heisenberg1D(int L, double Jz, double Jxy, double h, bool P
   }
   loperator.set_ham();
 
-  printf("\n\nprint trans weights : \n\n");
-  loperator.print_trans_weights();
+  // printf("\n\nprint trans weights : \n\n");
+  // loperator.print_trans_weights();
   printf("end setting\n\n\n");
 
   rho = h*Nb + (1+h)/2 * Nb;
