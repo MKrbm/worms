@@ -107,7 +107,7 @@ class worm{
 
     for(int i=0; i< L; i++) dfront_group[i] = -(i+1);
 
-    trans_prob = model.trans_prob = metropolis<decltype(model.weigths)>(model.weigths);
+    // trans_prob = model.trans_prob = BC::metropolis<decltype(model.weigths)>(model.weigths);
   }
 };
 #endif 

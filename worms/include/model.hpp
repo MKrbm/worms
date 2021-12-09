@@ -1,6 +1,5 @@
 #ifndef __model__
 #define __model__
-
 #pragma once
 #include <iostream>
 #include <stdio.h>
@@ -25,7 +24,6 @@
 
 namespace model {
     class local_operator;
-
     
     typedef std::vector<int> STATE;
 
@@ -62,51 +60,39 @@ namespace model {
     int state2num(STATE state, int L);
     STATE num2state(int num, int L);
 
-
-
 }
 
 class model::local_operator{
-
 public:
-    int L; // number of site operator acts 
-    int size; // size of operator (2**L)
-    std::vector<std::vector<double>> ham;
-    std::vector<double> ham_vector;
-    std::vector<std::tuple<int, double>> trans_prob;
+  using TPROB = std::vector<std::vector<double>>; //type for transition probability. typically, this is 2D matrix with 4 x 4 elements( check notebook for detail definition of this type).
 
-    local_operator(int L)
-    :L(L), size(pow(2, L))
-    {
-        ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
-        ham_vector = std::vector<double>(size*size, 0);
-        trans_prob = std::vector<std::tuple<int, double>>(size*size);
-    }
 
-    void set_ham(){
-      int N = ham_vector.size();
+  int L; // number of site operator acts 
+  int size; // size of operator (2**L)
+  std::vector<std::vector<double>> ham;
+  std::vector<double> ham_vector;
+  std::vector<std::vector<double>> trans_weights;
+  std::vector<TPROB> trans_prob; 
 
-      for (int i=0; i<N; i++){
-        auto index = num2index(i);
-        ham_vector[i] = ham[index[0]][index[1]];
+  local_operator(int L);
+
+  void set_ham();
+
+  void set_trans_weights();
+
+  void set_trans_prob();
+
+  std::array<int, 2> num2index(int num);
+
+  int index2num(std::array<int, 2> index);
+
+  void print_trans_weights(){
+    for (int row=0; row<trans_weights.size(); row++){
+        for(int column=0; column<trans_weights[0].size(); column++){
+          printf("%.2f   ", trans_weights[row][column]);}
+        printf("\n");
       }
-    }
-
-    std::array<int, 2> num2index(int num){
-      ASSERT(num < size*size, "num is invalid");
-      std::array<int, 2> index;
-      index[0] = num%size;
-      index[1] = num/size;
-      return index;
-    }
-
-    int index2num(std::array<int, 2> index){
-      ASSERT(index[0] < size && index[1] < size, "index is invalid");
-      int num = 0;
-      num += index[0];
-      num += index[1] * size;
-      return num;
-    }
+  }
 };
 
 
@@ -116,7 +102,7 @@ public:
     heisenberg1D(int L, double Jz, double Jxy, double h, bool PBC = true); //(1) 
     heisenberg1D(int L, double h, double Jz=1, bool PBC = true) : heisenberg1D(L, Jz, -Jz, h, PBC) {} //(2) : pass arguments to (1) constructor. This is for AFH.
     const static int N_op;
-    local_operator loperator;
+    std::vector<local_operator> loperators; //in case where there are three or more body interactions.
     static std::vector<std::vector<int>> return_bonds(int L, bool PBC);
     const std::vector<std::vector<int>> bonds;
     double Jz, Jxy;
@@ -129,4 +115,5 @@ public:
 
 };
 
-#endif 
+
+#endif

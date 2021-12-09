@@ -3,7 +3,6 @@
 #include <worm.hpp>
 #include <iostream>
 #include <stdio.h>
-#include <BC.hpp>
 
 #define DEBUG 0
 
@@ -19,9 +18,13 @@ int main(){
     std::mt19937 rand_src(12345);
     model::heisenberg1D h(6,1,1);
 
-    model::local_operator ops(2);
 
-    ops.set_ham();
+
+
+
+    // model::local_operator ops(2);
+
+    // ops.set_ham();
 
     // worm solver(0.6, h, 4);// If std < c++17, worm<heisenberg1D> instead.
 

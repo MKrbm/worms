@@ -15,3 +15,25 @@ std::vector<std::vector<double>> heatbath(std::vector<double> weights){
   return trans_prob;
 }
 
+
+BC::TPROB BC::metropolis(VECD weights){
+  int n = weights.size();
+  TPROB tm(n, VECD(n));
+
+  for (std::size_t i = 0; i < n; ++i) {
+    tm[i][i] = 1;
+    if (weights[i] > 0) {
+      for (std::size_t j = 0; j < n; ++j) {
+        if (i != j) {
+          tm[i][j] = std::min(weights[i], weights[j]) / weights[i] / (n-1);
+          tm[i][i] -= tm[i][j];
+        }
+      }
+      tm[i][i] = abs(tm[i][i]);
+    } else {
+      for (std::size_t j = 0; j < n; ++j)
+        if (i != j) tm[i][j] = 0;
+    }
+  }
+  return tm;
+}
