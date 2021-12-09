@@ -77,7 +77,6 @@ class worm{
   std::vector<double> worm_tau;
   std::vector<int> worm_site;
 
-  decltype(MODEL::trans_prob) trans_prob;
 
 
   #ifdef RANDOM_SEED

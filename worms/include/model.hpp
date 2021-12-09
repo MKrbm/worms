@@ -23,44 +23,23 @@
 
 
 namespace model {
-    class local_operator;
-    
-    typedef std::vector<int> STATE;
 
-    //$\hat{H} = \sum_{<i,j>} [J \vec{S}_i \dot \vec{S}_j - h/Nb (S_i^z + S_j^z)]$ 
-    // map spin to binary number e.g. -1 \rightarrow 0, 1 \rightarrow 1
-    template <int N_op, int N_Dop>
-    // N_op : number of operators
-    // N_Dop : number of diagonal operators
-    class base_model_spin_1D{
-        using CONN = std::array<int,4>; // holds connection of an operator. 0 = [0, 0] / 1 = [0, 1] / 2 = [1, 0] / 3 = [1, 1]
-    public:
-        int L;
-        int Nb;
-        int NDop = N_Dop;
-        int Nop = N_op;
-        double rho = 0;
+  class local_operator;
+  
+  typedef std::vector<int> STATE;
 
-        
-        base_model_spin_1D(int L_, int Nb_, int N_op_)
-        :L(L_), Nb(Nb_){}
+  template <int N_op>
+  class base_model_spin_1D;
 
-        std::array<CONN, N_op> operator_list;
-        std::array<double, N_op> weigths; // weight of each operator.
-        std::array<double, N_Dop> prob; 
-        std::array<std::array<int, N_op>, N_op> worm_dir; // 0 : go back to the same root, 1 : reverse direction & change site, 2 : go straight, 3 : go straight & change site.
-
-        std::array<std::array<double, N_op>, N_op> trans_prob;
-
-    };
-
-    class heisenberg1D;
+  class heisenberg1D;
 
 
-    int state2num(STATE state, int L);
-    STATE num2state(int num, int L);
+  int state2num(STATE state, int L);
+  STATE num2state(int num, int L);
 
 }
+
+
 
 class model::local_operator{
 public:
@@ -73,8 +52,11 @@ public:
   std::vector<double> ham_vector;
   std::vector<std::vector<double>> trans_weights;
   std::vector<TPROB> trans_prob; 
+  std::vector<double> diagonal_cum_weight; //normalized diagonal elements;
+  double total_weights; //sum of diagonal elemtns of ham
 
   local_operator(int L);
+  local_operator();
 
   void set_ham();
 
@@ -95,25 +77,42 @@ public:
   }
 };
 
+//$\hat{H} = \sum_{<i,j>} [J \vec{S}_i \dot \vec{S}_j - h/Nb (S_i^z + S_j^z)]$ 
+// map spin to binary number e.g. -1 \rightarrow 0, 1 \rightarrow 1
+template <int N_op>
+// N_op : number of operators
+class model::base_model_spin_1D{
+public:
+    const int L;
+    const int Nb; // number of bonds.
+    const bool PBC;
+    int Nop = N_op; //number of local operator (1 for heisenberg model)
+    std::array<local_operator, N_op> loperators; //in case where there are three or more body interactions.
+    std::array<int, N_op> opsize; //size of local operators;
+    std::array<double, N_op> operator_cum_weights;
+    const std::vector<std::vector<int>> bonds;
+    double rho = 0;
+    base_model_spin_1D(int L_, int Nb_, bool PBC, std::vector<std::vector<int>> bonds)
+    :L(L_), Nb(Nb_), PBC(PBC), bonds(bonds){}
+};
 
 
-class model::heisenberg1D :public model::base_model_spin_1D<3,2>{
+
+class model::heisenberg1D :public model::base_model_spin_1D<1>{
 public:
     heisenberg1D(int L, double Jz, double Jxy, double h, bool PBC = true); //(1) 
     heisenberg1D(int L, double h, double Jz=1, bool PBC = true) : heisenberg1D(L, Jz, -Jz, h, PBC) {} //(2) : pass arguments to (1) constructor. This is for AFH.
-    const static int N_op;
-    std::vector<local_operator> loperators; //in case where there are three or more body interactions.
+
     static std::vector<std::vector<int>> return_bonds(int L, bool PBC);
-    const std::vector<std::vector<int>> bonds;
     double Jz, Jxy;
-    const int L; //systemsize of hesenbergmodel
-    const bool PBC;
-    const int Nb;
     const double h;
 
     int DopAtRand(double);
+    void initial_setting();
 
 };
+
+
 
 
 #endif

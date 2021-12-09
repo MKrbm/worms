@@ -7,6 +7,9 @@
 
 // define functions for lolcal_operator class
 
+model::local_operator::local_operator()
+  :local_operator(2){}
+
 model::local_operator::local_operator(int L)
   :L(L), size(pow(2, L)){
   ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
@@ -15,6 +18,7 @@ model::local_operator::local_operator(int L)
           size*size,
           std::vector<double>(2*L)
           );
+  diagonal_cum_weight = std::vector<double>(size, 0);
 }
 
 void model::local_operator::set_ham(){
@@ -24,8 +28,19 @@ void model::local_operator::set_ham(){
     auto index = num2index(i);
     ham_vector[i] = ham[index[0]][index[1]];
   }
+
+  total_weights = 0;
+  for (int i=0; i<size; i++) total_weights+= ham[i][i];
+
+  double tmp=0;
+  for (int i=0; i<size; i++) {
+    tmp += ham[i][i];
+    diagonal_cum_weight[i] = tmp;
+  }
+
   set_trans_weights();//set trans_weights from ham_vector.
   set_trans_prob(); //set transition probability.
+
 }
 
 
@@ -99,11 +114,10 @@ std::vector<std::vector<int>> model::heisenberg1D::return_bonds(int L, bool PBC)
   return bonds;
 }
 
-const int model::heisenberg1D::N_op = 3;
 
 model::heisenberg1D::heisenberg1D(int L, double Jz, double Jxy, double h, bool PBC)
-  :L(L), PBC(PBC), Jz(Jz), Jxy(Jxy), bonds(return_bonds(L,PBC)),
-  Nb(PBC ? L : L-1), h(h), base_model_spin_1D(L, PBC ? L : L-1, 3)
+  :Jz(Jz), Jxy(Jxy),
+  h(h), base_model_spin_1D(L, PBC ? L : L-1, PBC, return_bonds(L,PBC))
 {
   std::cout << "model output" << std::endl;
   std::cout << "L : " << L << std::endl;
@@ -112,7 +126,9 @@ model::heisenberg1D::heisenberg1D(int L, double Jz, double Jxy, double h, bool P
   std::cout << "h : " << h << std::endl;
   std::cout << "end \n" << std::endl;
 
-  loperators.push_back(local_operator(2));
+  int l = 2;
+  loperators[0] = local_operator(l);
+  opsize[0] = l;
   auto& loperator = loperators[0];
   // set hamiltonian
   loperator.ham[0][0] = h;
@@ -121,6 +137,7 @@ model::heisenberg1D::heisenberg1D(int L, double Jz, double Jxy, double h, bool P
   loperator.ham[1][2] = 1/2.0;
   loperator.ham[2][1] = 1/2.0;
   //end
+
 
   
   printf("set local hamiltonian : \n\n");
@@ -132,7 +149,8 @@ model::heisenberg1D::heisenberg1D(int L, double Jz, double Jxy, double h, bool P
    
     printf("\n");
   }
-  loperator.set_ham();
+  initial_setting();
+
 
   // printf("\n\nprint trans weights : \n\n");
   // loperator.print_trans_weights();
@@ -141,19 +159,17 @@ model::heisenberg1D::heisenberg1D(int L, double Jz, double Jxy, double h, bool P
   rho = h*Nb + (1+h)/2 * Nb;
 }
 
-/*
-pick diagonal operator type at random for given r ~ uniform(0,1)
-*/
-int model::heisenberg1D::DopAtRand(double r){
-  double sum = 0;
-  int i;
-  for(i=0; i<NDop-1; i++){
-    sum += prob[i];
-    if (sum >= r) break;
-  }
+void model::heisenberg1D::initial_setting(){
 
-  return i;
+  int i = 0;
+  double tmp=0;
+  for (auto& x : loperators){
+    x.set_ham();
+    tmp += x.total_weights;
+    operator_cum_weights[i] = tmp;
+  }
 }
+
 
 
 /*
