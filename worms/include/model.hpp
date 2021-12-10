@@ -33,8 +33,29 @@ namespace model {
 
   class heisenberg1D;
 
+  /*
+  params
+  -----
+  int[] state : vector of 1 or -1. 
+  int L : size of state
 
-  int state2num(STATE state, int L);
+  return
+  ------
+  integer representation of state
+
+  */
+  template<typename STATE_>
+  int state2num(STATE_ state, int L){
+    int num = 0;
+    int coef = 1;
+    if (L < 0) L = state.size();
+    for (int i = 0; i < L; i++) {
+      num += ((1-state[i])/2) * coef;
+      coef *= 2;
+    }
+    return num;
+  }
+
   STATE num2state(int num, int L);
 
 }
@@ -86,12 +107,13 @@ public:
     const int L;
     const int Nb; // number of bonds.
     const bool PBC;
-    int Nop = N_op; //number of local operator (1 for heisenberg model)
+    static const int Nop = N_op; //number of local operator (1 for heisenberg model)
+    double rho = 0;
+
     std::array<local_operator, N_op> loperators; //in case where there are three or more body interactions.
-    std::array<int, N_op> opsize; //size of local operators;
+    std::array<int, N_op> leg_size; //size of local operators;
     std::array<double, N_op> operator_cum_weights;
     const std::vector<std::vector<int>> bonds;
-    double rho = 0;
     base_model_spin_1D(int L_, int Nb_, bool PBC, std::vector<std::vector<int>> bonds)
     :L(L_), Nb(Nb_), PBC(PBC), bonds(bonds){}
 };

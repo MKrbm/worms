@@ -30,13 +30,14 @@ void model::local_operator::set_ham(){
   }
 
   total_weights = 0;
-  for (int i=0; i<size; i++) total_weights+= ham[i][i];
+  // for (int i=0; i<size; i++) total_weights+= ham[i][i];
 
   double tmp=0;
   for (int i=0; i<size; i++) {
     tmp += ham[i][i];
     diagonal_cum_weight[i] = tmp;
   }
+  total_weights = *(diagonal_cum_weight.end()-1);
 
   set_trans_weights();//set trans_weights from ham_vector.
   set_trans_prob(); //set transition probability.
@@ -128,7 +129,7 @@ model::heisenberg1D::heisenberg1D(int L, double Jz, double Jxy, double h, bool P
 
   int l = 2;
   loperators[0] = local_operator(l);
-  opsize[0] = l;
+  leg_size[0] = l;
   auto& loperator = loperators[0];
   // set hamiltonian
   loperator.ham[0][0] = h;
@@ -156,7 +157,7 @@ model::heisenberg1D::heisenberg1D(int L, double Jz, double Jxy, double h, bool P
   // loperator.print_trans_weights();
   printf("end setting\n\n\n");
 
-  rho = h*Nb + (1+h)/2 * Nb;
+  rho = loperators[0].total_weights * Nb;
 }
 
 void model::heisenberg1D::initial_setting(){
@@ -172,27 +173,7 @@ void model::heisenberg1D::initial_setting(){
 
 
 
-/*
-params
------
-int[] state : vector of 1 or -1. 
-int L : size of state
 
-return
-------
-integer representation of state
-
-*/
-int model::state2num(model::STATE state, int L = -1){
-  int num = 0;
-  int coef = 1;
-  if (L < 0) L = state.size();
-  for (int i = 0; i < L; i++) {
-    num += ((1-state[i])/2) * coef;
-    coef *= 2;
-  }
-  return num;
-}
 
 
 /*
