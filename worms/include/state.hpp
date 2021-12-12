@@ -45,9 +45,9 @@ class model::BaseState : public std::vector<int>
   }
 
   virtual ~BaseState(){
-    cout << "Deconstructor was called" << endl;
+    // cout << "Deconstructor was called" << endl;
   }
-  BaseState(int L):vec(L, -1), L(L), _size(L){}
+  BaseState(int L):vec(L, 0), L(L), _size(L){}
 
   BaseState(std::vector<int> state):vec(state), L(state.size()), _size(L){}
 
@@ -60,7 +60,7 @@ class model::BottomState : public BaseState
   BottomState(){}
   BottomState(int L, double t=0):BaseState(L), tau(0){}
   ~BottomState(){
-  cout << "Deconstructor (BottomState) was called" << endl;
+  // cout << "Deconstructor (BottomState) was called" << endl;
 }
 };
 
@@ -76,7 +76,7 @@ class model::OpState : public BaseState
   std::vector<int> bond;
   double tau;
   ~OpState(){
-    cout << "Deconstructor (OpState) was called" << endl;
+    // cout << "Deconstructor (OpState) was called" << endl;
   }
   OpState():plop(nullptr){}
   OpState(int L_, local_operator* plop, std::vector<int> l, std::vector<int> bond, double t)
@@ -129,7 +129,7 @@ class model::Worms : public BaseState
   std::vector<double> tau_list;
   std::vector<int> worm_site;
   ~Worms(){
-    cout << "Deconstructor (Worms) was called" << endl;
+    // cout << "Deconstructor (Worms) was called" << endl;
   }
   Worms(){}
   Worms(int L)

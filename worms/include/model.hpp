@@ -50,7 +50,7 @@ namespace model {
     int coef = 1;
     if (L < 0) L = state.size();
     for (int i = 0; i < L; i++) {
-      num += ((1-state[i])/2) * coef;
+      num += state[i] * coef;
       coef *= 2;
     }
     return num;

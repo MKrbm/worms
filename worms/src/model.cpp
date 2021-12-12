@@ -184,14 +184,14 @@ int L : size of state
 
 return
 ------
-int[] state : binary representation (1 and -1 instead of 1 and 0) of state.
+int[] state : binary representation (0 (spin up) and 1 (spin down)) of state.
 
 */
 model::STATE model::num2state(int num, int L){
   int coef = 1;
-  model::STATE state(L, -1);
+  model::STATE state(L, 0); // all spin up
   for (int i=0; i<L; i++){
-    state[i] = 1^(num&1);
+    state[i] = num&1;
     num /= 2;
   }
   return state;

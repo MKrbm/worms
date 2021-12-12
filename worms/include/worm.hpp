@@ -61,10 +61,15 @@ class worm{
   OPS ops_tmp1; 
   OPS ops_tmp2; 
 
+
   OPS& ops_main = ops_tmp1;  //contains operators.
   OPS& ops_sub = ops_tmp2; // for sub.
   model::BStatePtr pstate;
   model::WormsPtr pworms;
+
+  model::Worms& worms = *pworms;
+  model::BottomState& state = *pstate;
+
 
   // BSTATE& state;
   // WORMS& worms;
@@ -127,10 +132,13 @@ class worm{
   /* initialize worms */
   void init_worms_rand(){
     for (int i=0; i<W; i++){
-      pworms->worm_site[i] = dist(rand_src);
-      pworms->tau_list[i] =  worm_dist(rand_src);
+      // pworms->worm_site[i] = dist(rand_src);
+      // pworms->tau_list[i] =  worm_dist(rand_src);
+
+      worms.worm_site[i] = dist(rand_src);
+      worms.tau_list[i] =  worm_dist(rand_src);
     }
-    std::sort(pworms->tau_list.begin(), pworms->tau_list.end(), std::less<double>());
+    std::sort(worms.tau_list.begin(), worms.tau_list.end(), std::less<double>());
   }
 
   /* 
@@ -145,8 +153,8 @@ class worm{
   }
 
   void init_states(){
-  for (auto& x : *pstate){
-    x = binary_dice(rand_src) * 2 - 1;
+  for (auto& x : state){
+    x = binary_dice(rand_src);
     }
   }
 
@@ -161,8 +169,12 @@ class worm{
     double tau_prime = 0;
     double tau = 0;
     int n_worm = 0;
-    auto& worm_site = pworms->worm_site;
-    auto& worm_tau_list = pworms->tau_list;
+    init_front_n_end();
+    init_worms_rand();
+
+
+    auto& worm_site = worms.worm_site;
+    auto& worm_tau_list = worms.tau_list;
     double worm_tau = worm_tau_list[0];
     int N_op = model.Nop;
 
@@ -170,98 +182,100 @@ class worm{
     int optau = 0;
     if (ops_sub.size()) optau = ops_sub[0]->tau;
 
-    double r;
     double sum;
 
     int s0, s1;
     int r_bond; // randomly choosen bond
 
-    init_front_n_end();
-    init_worms_rand();
+
 
     ops_main.resize(0);
 
 
     //set worms
     while (true){
-      r = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
+      // cout << "hi" << endl;
+      double r = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
       tau_prime = tau - log(r)/model.rho;
 
       // put worms on space.
-      tau = tau_prime;
       while(worm_tau<tau_prime && n_worm < W){
         int site = worm_site[n_worm];
         spacetime_dots.emplace_back(
-          site, worm_tau, front_dots[site], pworms->data() + n_worm,
+          site, worm_tau, front_dots[site], worms.data() + n_worm,
           pworms, 2
         );
-        (*pworms)[n_worm] = (*pstate)[site];
+        worms[n_worm] = state[site];
         n_worm++;
         worm_tau = worm_tau_list[n_worm];
+        setfrontNend(site, spacetime_dots.size()-1);
       }
 
-    checkODNFlip(optau, tau_prime);
+      checkODNFlip(optau, tau_prime);
 
-    //choose and insert diagonal operator.
+      //choose and insert diagonal operator.
 
-    if (tau_prime > beta) break;
+      if (tau_prime > beta) break;
 
-    r = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
-    double max_ = *(operator_cum_weights.end()-1);
-    sum = 0;
-    int lop_label;
-    for(lop_label=0; lop_label < N_op; lop_label++){
-      sum += operator_cum_weights[lop_label];
-      if (sum >= r * max_) break;
-    }
+      r = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
+      double max_ = *(operator_cum_weights.end()-1);
+      int lop_label;
+      for(lop_label=0; lop_label < N_op; lop_label++){
+        if (operator_cum_weights[lop_label] >= r * max_) break;
+      }
 
-    int leg_size = leg_sizes[lop_label]; //size of choosen operator
-    auto& lop = loperators[lop_label];
-    auto& diag_cum_weight = lop.diagonal_cum_weight;
-    max_ = lop.total_weights;
+      int leg_size = leg_sizes[lop_label]; //size of choosen operator
+      auto& lop = loperators[lop_label];
+      auto& diag_cum_weight = lop.diagonal_cum_weight;
+      max_ = lop.total_weights;
 
-    r = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
-    sum = 0;
-    int s_num; //choose local state 
-    for (s_num=0; s_num < (1<<leg_size); s_num++){
-      sum += diag_cum_weight[s_num];
-      if (sum >= r * max_) break;
-    }
+      r = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
+      int s_num; //choose local state 
+      for (s_num=0; s_num < (1<<leg_size); s_num++){
+        if (diag_cum_weight[s_num] >= r * max_) break;
+      }
 
-    // choose bond
-    r_bond = dist(rand_src);
-    int tuggle = 1;
-    auto local_state = model::num2state(s_num + (s_num<<leg_size ), 2*leg_size);
-    std::vector<int> labels(leg_size);
-    auto bond = bonds[r_bond];
+      // choose bond
+      r_bond = dist(rand_src);
+      int tuggle = 1;
+      auto local_state = model::num2state(s_num + (s_num<<leg_size ), 2*leg_size);
+      std::vector<int> labels(leg_size);
+      auto bond = bonds[r_bond];
 
-    int n_dots = spacetime_dots.size();
-    for (int i=0; i<leg_size; i++){
-      labels[i] = n_dots;
-      n_dots++;
-      int s = bond[i];
-      if ((*pstate)[s] != local_state[i]){
-        tuggle = 0;
-        break;
-      } 
-    }
-
-    // auto l_state = model::num2state(s_num, leg_size)
-
-    if ( tuggle ){
       int n_dots = spacetime_dots.size();
-      ops_main.emplace_back(
-          new model::OpState(
-            local_state,
-            &lop,
-            labels,
-            bond,
-            tau_prime
-        )
-      );
-    }
-    
-    tau = tau_prime;
+      for (int i=0; i<leg_size; i++){
+        labels[i] = n_dots;
+        n_dots++;
+        int s = bond[i];
+        if (state[s] != local_state[i]) tuggle = 0;
+      }
+
+
+
+      if ( tuggle ){
+        ops_main.emplace_back(
+            new model::OpState(
+              local_state,
+              &lop,
+              labels,
+              bond,
+              tau_prime
+          )
+        );
+
+        int dot_label = spacetime_dots.size();
+        int n = ops_main.size();
+        for (int i=0; i<leg_size; i++){
+          spacetime_dots.emplace_back(
+            bond[i], tau_prime, front_dots[bond[i]], ops_main[n-1]->data() + i,
+            ops_main[n-1], 1
+          );
+          setfrontNend(bond[i], n_dots);
+          dot_label++;
+        }
+      }
+      
+      tau = tau_prime;
 
     } //end of while loop
     
@@ -270,6 +284,11 @@ class worm{
 
   void checkODNFlip(int& optau, int tau_prime){
     return;
+  }
+
+  void setfrontNend(int site; int label){
+    if (end_dots[site] < 0) end_dots[site] = label;
+    front_dots[site] = label;
   }
 };
 
