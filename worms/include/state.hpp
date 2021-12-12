@@ -31,6 +31,8 @@ class model::BaseState : public std::vector<int>
   public :
   int L;
   int _size;
+  const local_operator* plop = nullptr;
+
   BaseState(){}
   virtual std::ptrdiff_t GetIndex(int* ptr, int UorD = 0){
     return std::distance(this->data(), ptr);
@@ -44,6 +46,12 @@ class model::BaseState : public std::vector<int>
     return state2num(*this, _size);
   }
 
+  virtual bool is_off_diagonal(){
+    return true;
+  }
+  virtual bool is_diagonal(){
+    return true;
+  }
   virtual ~BaseState(){
     // cout << "Deconstructor was called" << endl;
   }
@@ -72,29 +80,28 @@ class model::OpState : public BaseState
 {
   public :
   const local_operator* plop;
-  std::vector<int> labels;
   std::vector<int> bond;
   double tau;
   ~OpState(){
     // cout << "Deconstructor (OpState) was called" << endl;
   }
   OpState():plop(nullptr){}
-  OpState(int L_, local_operator* plop, std::vector<int> l, std::vector<int> bond, double t)
-  :BaseState(2*L_), plop(plop), labels(l), bond(bond), tau(t)
+  OpState(int L_, local_operator* plop, std::vector<int> bond, double t)
+  :BaseState(2*L_), plop(plop), bond(bond), tau(t)
   {
     BaseState::L = L_;
-    ASSERT(l.size() == L_, "size of labels must be equal to given L");
+    // ASSERT(l.size() == L_, "size of labels must be equal to given L");
     ASSERT(bond.size() == plop->L, "size of bond must be equal to operator size");
   }
 
-  OpState(std::vector<int> state, local_operator* plop, std::vector<int> l
+  OpState(std::vector<int> state, local_operator* plop
           ,std::vector<int> bond, double t)
-  :BaseState(state), plop(plop), labels(l), bond(bond), tau(t)
+  :BaseState(state), plop(plop), bond(bond), tau(t)
   {
     BaseState::L = state.size()/2;
-    ASSERT(l.size() == L, "size of labels must be equal to given L");
+    // ASSERT(l.size() == L, "size of labels must be equal to given L");
     ASSERT(bond.size() == plop->L, "size of bond must be equal to operator size");
-    ASSERT(l.size() == plop->L, "in consistent error");
+    ASSERT(L == plop->L, "in consistent error");
   }
   /*
   int UorD : 1 or 0, corresponds to upside or downside of state.
@@ -109,14 +116,14 @@ class model::OpState : public BaseState
   }
 
 
-  bool is_off_diagonal(){
+  bool is_off_diagonal() override{
     for (int i = 0; i<L; i++){
       if ((*this)[i] != (*this)[i+L]) return true;
     }
     return false;
   }
 
-  bool is_diagonal(){
+  bool is_diagonal() override{
     return !is_off_diagonal();
   }
 
@@ -160,17 +167,20 @@ class model::Dot
   int* sptr;
   double tau;
   BaseStatePtr typeptr;
-  Dot(int s, double t , int p, int* sptr, BaseState* type, int d)
-  :site(s), tau(t), prev(p), sptr(sptr), typeptr(BaseStatePtr(type)), dot_type(d)
+  Dot(int s, double t , int p, int n, int* sptr, BaseState* type, int d)
+  :site(s), tau(t), prev(p), next(n), sptr(sptr), typeptr(BaseStatePtr(type)), dot_type(d)
   {}
 
-  Dot(int s, double t , int p, int* sptr, BaseStatePtr type, int d)
-  :site(s), tau(t), prev(p), sptr(sptr), typeptr(type), dot_type(d)
+  Dot(int s, double t , int p, int n, int* sptr, BaseStatePtr type, int d)
+  :site(s), tau(t), prev(p), next(n), sptr(sptr), typeptr(type), dot_type(d)
   {}
 
   Dot(){}
   
   void set_next(int n){
     next = n;
+  }
+  void set_prev(int p){
+    prev = p;
   }
 };

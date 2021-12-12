@@ -34,6 +34,10 @@ namespace model {
   class heisenberg1D;
 
   /*
+
+  this function works even if L < state.size().
+  In this case, only consider state[:L]
+
   params
   -----
   int[] state : vector of 1 or -1. 

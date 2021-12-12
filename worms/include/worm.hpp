@@ -166,7 +166,6 @@ class worm{
   }
 
   void diagonal_update(){
-    double tau_prime = 0;
     double tau = 0;
     int n_worm = 0;
     init_front_n_end();
@@ -175,7 +174,12 @@ class worm{
 
     auto& worm_site = worms.worm_site;
     auto& worm_tau_list = worms.tau_list;
-    double worm_tau = worm_tau_list[0];
+
+    double worm_tau = 0;
+    if (worm_tau_list.size()) worm_tau = worm_tau_list[0];
+    double op_sub_tau = 0;
+    if (ops_sub.size()) op_sub_tau = ops_sub[0]->tau;
+    int op_sub_label = 0;
     int N_op = model.Nop;
 
 
@@ -186,6 +190,7 @@ class worm{
 
     int s0, s1;
     int r_bond; // randomly choosen bond
+    std::vector<int> cstate = state;
 
 
 
@@ -196,22 +201,18 @@ class worm{
     while (true){
       // cout << "hi" << endl;
       double r = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
-      tau_prime = tau - log(r)/model.rho;
+      double tau_prime = tau - log(r)/model.rho;
 
       // put worms on space.
       while(worm_tau<tau_prime && n_worm < W){
         int site = worm_site[n_worm];
-        spacetime_dots.emplace_back(
-          site, worm_tau, front_dots[site], worms.data() + n_worm,
-          pworms, 2
-        );
-        worms[n_worm] = state[site];
+        set_dots(site, worm_tau, 2 , n_worm);
+        worms[n_worm] = cstate[site];
         n_worm++;
         worm_tau = worm_tau_list[n_worm];
-        setfrontNend(site, spacetime_dots.size()-1);
       }
 
-      checkODNFlip(optau, tau_prime);
+      checkODNFlip(op_sub_tau, tau_prime, op_sub_label, cstate);
 
       //choose and insert diagonal operator.
 
@@ -247,7 +248,7 @@ class worm{
         labels[i] = n_dots;
         n_dots++;
         int s = bond[i];
-        if (state[s] != local_state[i]) tuggle = 0;
+        if (cstate[s] != local_state[i]) tuggle = 0;
       }
 
 
@@ -257,7 +258,6 @@ class worm{
             new model::OpState(
               local_state,
               &lop,
-              labels,
               bond,
               tau_prime
           )
@@ -266,30 +266,125 @@ class worm{
         int dot_label = spacetime_dots.size();
         int n = ops_main.size();
         for (int i=0; i<leg_size; i++){
-          spacetime_dots.emplace_back(
-            bond[i], tau_prime, front_dots[bond[i]], ops_main[n-1]->data() + i,
-            ops_main[n-1], 1
-          );
-          setfrontNend(bond[i], n_dots);
+          set_dots(bond[i], tau_prime, 1 , i);
           dot_label++;
         }
       }
       
       tau = tau_prime;
-
     } //end of while loop
-    
 
   }
 
-  void checkODNFlip(int& optau, int tau_prime){
+  void checkODNFlip(double& optau, double tau_prime, int& op_label,
+                     std::vector<int>& cstate ){
+    if (op_label < ops_sub.size()) optau = ops_sub[op_label]->tau;
+    while(optau<tau_prime && op_label < ops_sub.size()){
+      auto op_ptr = ops_sub[op_label];
+      if (op_ptr->is_off_diagonal()){
+        update_state(op_ptr, cstate);
+      }
+
+      ops_main.push_back(op_ptr);
+      int dot_label = spacetime_dots.size();
+      for (int i=0; i<op_ptr->L; i++){
+        set_dots(op_ptr->bond[i], op_ptr->tau, 1 , i);
+        dot_label++;
+      }
+      op_label++;
+      if (op_label < ops_sub.size()) optau = ops_sub[op_label]->tau;
+    }
+
     return;
   }
 
-  void setfrontNend(int site; int label){
-    if (end_dots[site] < 0) end_dots[site] = label;
+  /*
+  this function will be called after assigining op_main
+  */
+  void set_dots(int site, double tau_prime, int dot_type, int index){
+
+    int* sptr;
+    model::BaseStatePtr stateptr;
+
+    // ASSERT(label == spacetime_dots.size()+1)
+
+    if (dot_type == 0) {
+      sptr = state.data() + index;
+      stateptr = pstate;
+    }else if(dot_type == 1){
+      int n = ops_main.size();
+      sptr = ops_main[n-1]->data() + index;
+      stateptr = ops_main[n-1];
+    }else if(dot_type == 2){
+      sptr = worms.data() + index;
+      stateptr = pworms;
+    }
+
+    int label = spacetime_dots.size();
+    if (end_dots[site] < 0){
+      end_dots[site] = label;
+    } 
+    int prev = front_dots[site];
+    int end = end_dots[site];
+
+
+    spacetime_dots.emplace_back(
+      site, tau_prime, prev, end, sptr,
+      stateptr, dot_type
+    );
+
+    if (prev>=0) spacetime_dots[prev].set_next(label);
+    
+    if (end>=0) spacetime_dots[end].set_prev(label);
+
     front_dots[site] = label;
+
   }
+
+  /*
+  update given state by given operator ptr;
+  */
+  static void update_state(model::OpStatePtr op_ptr, std::vector<int>& state){
+    std::vector<int> local_state = *op_ptr;
+    std::vector<int> state_(op_ptr->plop->L);
+    int i=0;
+    for (auto x : op_ptr->bond){
+      state_[i] = state[x];
+      i++;
+    }
+    ASSERT(is_same_state(local_state, state_), "the operator can not be applied to the state");
+    if (op_ptr->is_off_diagonal()){
+      int index = 0;
+      for (auto x : op_ptr->bond){
+        state[x] = local_state[state_.size() + index];
+        index++;
+      }
+    }
+  }
+
+  static void check_operators(model::BottomState state, OPS ops){
+    const auto state_ = state;
+    for (auto op : ops){
+      update_state(op, state);
+    }
+    ASSERT(is_same_state(state_, state), "operators are not consistent");
+  }
+
+  static bool is_same_state(int n, int m){
+    return n==m;
+  }
+
+  static bool is_same_state(int n, std::vector<int> state){
+    int m = model::state2num(state, state.size());
+    return n==m;
+  }
+
+  static bool is_same_state( std::vector<int> state_, std::vector<int> state){
+    int m = model::state2num(state, state.size());
+    int n= model::state2num(state_, state.size());
+    return n==m;
+  }
+
 };
 
 #endif 

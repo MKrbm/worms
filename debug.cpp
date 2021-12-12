@@ -23,18 +23,96 @@ int main(){
   std::cout << "debug start" << std::endl;
   std::mt19937 rand_src(12345);
   model::heisenberg1D h(6,1,1);
-  worm solver(0.6, h, 5);
+  worm solver(0.6, h, 1);
 
   solver.init_worms_rand();
   solver.init_states();
+  int s = 1;
+  for(auto&x : solver.state){
+    x = s;
+    s = 1^s;
+  }
+
+  int off_diag[][2] = {
+        {1,0},
+        {2,2},
+        {3,2},
+        {5,2},
+        {0,2},
+        {4,2},
+        {1,2},
+    };
+
+
+  solver.ops_sub.emplace_back(
+  new model::OpState(
+    {1,0,0,1},
+    &solver.loperators[0],
+    {2,3},
+    0.01)
+  );
+  
+  solver.ops_sub.emplace_back(
+  new model::OpState(
+    {1,0,0,1},
+    &solver.loperators[0],
+    {4,5},
+    0.35)
+  );
+
+  solver.ops_sub.emplace_back(
+  new model::OpState(
+    {0,1,1,0},
+    &solver.loperators[0],
+    {4,5},
+    0.4)
+  );
+
+  solver.ops_sub.emplace_back(
+  new model::OpState(
+    {0,1,1,0},
+    &solver.loperators[0],
+    {2,3},
+    0.4)
+  );
+
+  // solver.set_dots(4, 0.33, 1, 0);
+  // solver.set_dots(5, 0.33, 1, 1);
 
   solver.diagonal_update();
+  // solver.ops_main.resize(0);
+  // solver.state[2] = 0;
+  solver.check_operators(solver.state, solver.ops_sub);
+  solver.check_operators(solver.state, solver.ops_main);
 
 
-  solver.init_worms_rand();
-  solver.init_states();
 
-  solver.diagonal_update();
+  int ind = 0;
+  for (auto&x : solver.spacetime_dots){
+    cout << "index : " << ind;
+    cout << "   site : " << x.site << endl; 
+    cout << "tau : " << x.tau << endl;
+    cout << "leg index : " <<x.typeptr->GetIndex(x.sptr, 0) << endl;
+
+
+    cout << "type : ";
+    if (x.dot_type==1){
+      cout << "operator--";
+      if (x.typeptr->is_off_diagonal()) cout << "off-diagonal";
+    }
+    cout << x.dot_type<<endl;
+  
+
+
+    printf("prev : %d, next : %d", x.prev, x.next);
+    cout << "\n\n" ;
+    ind++;
+  }
+
+  // solver.init_worms_rand();
+  // solver.init_states();
+
+  // solver.diagonal_update();
   // cout << "clear ops_main" << endl;
   // solver.ops_main.resize(0);
 
