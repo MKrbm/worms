@@ -97,6 +97,9 @@ class worm{
   // random distribution from 0 to beta 
   std::uniform_real_distribution<> worm_dist;
 
+  // random distribution from 0 to 1
+  std::uniform_real_distribution<> uni_dist; 
+
 
   // reference of member variables from model class
 
@@ -217,7 +220,9 @@ class worm{
     //set worms
     while (true){
       // cout << "hi" << endl;
-      double r = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
+      double r = uni_dist(rand_src);
+
+      // cout << "random number : " << r << endl;
       double tau_prime = tau - log(r)/model.rho;
 
       // put worms on space.
@@ -232,25 +237,25 @@ class worm{
       checkODNFlip(op_sub_tau, tau_prime, op_sub_label, cstate);
 
       //choose and insert diagonal operator.
-
       if (tau_prime > beta) break;
 
-      r = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
+      r = uni_dist(rand_src);
       double max_ = *(operator_cum_weights.end()-1);
+      double target = r * max_;
       int lop_label;
       for(lop_label=0; lop_label < N_op; lop_label++){
-        if (operator_cum_weights[lop_label] >= r * max_) break;
+        if (operator_cum_weights[lop_label] >= target) break;
       }
 
       int leg_size = leg_sizes[lop_label]; //size of choosen operator
       auto& lop = loperators[lop_label];
       auto& diag_cum_weight = lop.diagonal_cum_weight;
       max_ = lop.total_weights;
-
-      r = static_cast <double> (rand()) / static_cast <double> (RAND_MAX);
+      r = uni_dist(rand_src);
       int s_num; //choose local state 
+      target = r * max_;
       for (s_num=0; s_num < (1<<leg_size); s_num++){
-        if (diag_cum_weight[s_num] >= r * max_) break;
+        if (diag_cum_weight[s_num] >= target) break;
       }
 
       // choose bond
@@ -315,7 +320,53 @@ class worm{
     return;
   }
 
-  void worm_update();
+
+  /*
+  perform one step from given worm.
+  params
+  ------
+  int next_dot : next dot.
+  int dir : direction worm is moving toward. 1 : move up, 0 : move down.
+  int spin : current spin state of worm.
+  int site : site worm is at.
+
+  params(member variables)
+  ------
+  */
+  void worm_update(int& next_dot, int& dir, int& spin, int& site){
+
+    int clabel = next_dot;
+    spin_state::Dot& dot = spacetime_dots[clabel];
+    int dtype = dot.dot_type;
+
+    ASSERT(site == dot.site, "site is not consistent");
+    if (dtype!=1){ // if dot is state or worm.
+      *dot.sptr = spin;
+      next_dot = dot.move_next(dir);
+      return;
+    }
+
+    if (dtype==1){
+      int dir_in = !dir;
+      int cindex = dot.typeptr->GetIndex(dot.sptr, dir_in);
+      auto& opstate = *dot.typeptr;
+      opstate[cindex] ^= 1;
+      int num = spin_state::state2num(opstate, opstate.get_size());
+      double r = uni_dist(rand_src);
+      int nindex = opstate.plop->choose_next_worm(r, num, cindex);
+      opstate[cindex] ^= 1;
+
+      //*assigin for next step
+      dir = nindex/(opstate.L);
+      next_dot = opstate.GetLabel(cindex, nindex, clabel);
+      site = opstate.bond[nindex%opstate.L];
+      spin = opstate[cindex];
+
+      // opstate.plop->tran
+
+    }
+    
+  }
 
   /*
   this function will be called after assigining op_main

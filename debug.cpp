@@ -35,7 +35,7 @@ int main(){
 
 
   solver.ops_sub.emplace_back(
-  new model::OpState(
+  new spin_state::OpState(
     {1,0,0,1},
     &solver.loperators[0],
     {2,3},
@@ -43,7 +43,7 @@ int main(){
   );
   
   solver.ops_sub.emplace_back(
-  new model::OpState(
+  new spin_state::OpState(
     {1,0,0,1},
     &solver.loperators[0],
     {4,5},
@@ -51,7 +51,7 @@ int main(){
   );
 
   solver.ops_sub.emplace_back(
-  new model::OpState(
+  new spin_state::OpState(
     {0,1,1,0},
     &solver.loperators[0],
     {4,5},
@@ -59,7 +59,7 @@ int main(){
   );
 
   solver.ops_sub.emplace_back(
-  new model::OpState(
+  new spin_state::OpState(
     {0,1,1,0},
     &solver.loperators[0],
     {2,3},
@@ -80,7 +80,7 @@ int main(){
   for (auto&x : solver.spacetime_dots){
     cout << "index : " << ind;
     cout << "   site : " << x.site << endl; 
-    cout << "type : " << model::return_name(x.dot_type, x.typeptr->is_off_diagonal()) << endl;
+    cout << "type : " << spin_state::return_name(x.dot_type, x.typeptr->is_off_diagonal()) << endl;
     
     cout << "tau : " << x.tau << endl;
     cout << "leg index : " <<x.typeptr->GetIndex(x.sptr, 0) << endl;

@@ -37,3 +37,44 @@ BC::TPROB BC::metropolis(VECD weights){
   }
   return tm;
 }
+
+
+
+bool BC::check_probability_conservation(TPROB const& transition_matrix, double tolerance) {
+  std::size_t n = transition_matrix.size();
+  for (std::size_t i = 0; i < n; ++i) {
+    double p = 0;
+    for (std::size_t j = 0; j < n; ++j) p += transition_matrix[i][j];
+    if (std::abs(p - 1) > tolerance) return false;
+  }
+  return true;
+}
+
+
+bool BC::check_balance_condition(VECD const& weights, TPROB const& transition_matrix, double tolerance) {
+  typedef typename VECD::value_type value_type;
+  std::size_t n = weights.size();
+  for (std::size_t j = 0; j < n; ++j) {
+    value_type w = 0;
+    for (std::size_t i = 0; i < n; ++i) w += weights[i] * transition_matrix[i][j];
+    if (std::abs(w - weights[j]) > tolerance * weights[j]) return false;
+  }
+  return true;
+}
+
+
+bool BC::check_detailed_balance(VECD const& weights, TPROB const& transition_matrix,double tolerance) {
+  typedef typename VECD::value_type value_type;
+  value_type sum = std::accumulate(weights.begin(), weights.end(), value_type(0));
+  std::size_t n = weights.size();
+  for (std::size_t i = 0; i < n; ++i)
+    for (std::size_t j = 0; j < n; ++j)
+      if (std::abs(weights[i] * transition_matrix[i][j] - weights[j] * transition_matrix[j][i]) >
+          tolerance * sum) return false;
+  return true;
+}
+
+bool BC::check(VECD const& weights, TPROB const& transition_matrix, double tolerance) {
+  return check_probability_conservation(transition_matrix, tolerance) &&
+    check_balance_condition(weights, transition_matrix, tolerance);
+  }

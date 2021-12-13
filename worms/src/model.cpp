@@ -21,6 +21,13 @@ model::local_operator::local_operator(int L)
   diagonal_cum_weight = std::vector<double>(size, 0);
 }
 
+
+/*
+setting various variable for local_operators 
+this function should be called after manually define 2D local hamiltonian.
+
+- set 1D hamiltonian 
+*/
 void model::local_operator::set_ham(){
   int N = ham_vector.size();
 
@@ -42,7 +49,10 @@ void model::local_operator::set_ham(){
   set_trans_weights();//set trans_weights from ham_vector.
   set_trans_prob(); //set transition probability.
 
+  check_trans_prob(); // check if transition probability is consistent with the definition of transition matrix
+
 }
+
 
 
 void model::local_operator::set_trans_prob(){
@@ -98,6 +108,33 @@ int model::local_operator::index2num(std::array<int, 2> index){
   return num;
 }
 
+void model::local_operator::check_trans_status(VECD weights, TPROB transition_matrix){
+    // check transition matrix
+  std::cout << "[check transition matrix]\n";
+  std::cout << "probability conservation = "
+            << (BC::check_probability_conservation(transition_matrix) ? "pass" : "fail")
+            << std::endl;
+  std::cout << "detailed balance condition = "
+            << (BC::check_detailed_balance(weights, transition_matrix) ? "pass" : "fail")
+            << std::endl;
+  std::cout << "balance condition = "
+            << (BC::check_balance_condition(weights, transition_matrix) ? "pass" : "fail")
+            << std::endl;
+}
+
+
+// check if transition probability is consistent with the definition of transition matrix
+void model::local_operator::check_trans_prob(){
+    int num_conf = trans_prob.size();
+    ASSERT(num_conf == trans_weights.size(),
+    "size of trans_prob and trans_weights must be the same");
+
+    for(int i=0; i<num_conf; i++){
+      ASSERT(BC::check(trans_weights[i], trans_prob[i])
+      , "condition of transition matrix is not satisfied" );
+    }
+  }
+
 //end definition
 
 
@@ -150,7 +187,7 @@ model::heisenberg1D::heisenberg1D(int L, double Jz, double Jxy, double h, bool P
    
     printf("\n");
   }
-  initial_setting();
+  initial_setting(); //set_hum will be called inside the function
 
 
   // printf("\n\nprint trans weights : \n\n");

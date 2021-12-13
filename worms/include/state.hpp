@@ -40,13 +40,12 @@ namespace spin_state{
 
   */
   template<typename STATE_>
-  int state2num(STATE_ state, int L){
+  int state2num(STATE_ const& state, int L){
     int num = 0;
-    int coef = 1;
     if (L < 0) L = state.size();
-    for (int i = 0; i < L; i++) {
-      num += state[i] * coef;
-      coef *= 2;
+    for (int i = L-1; i >= 0; i--) {
+      num = num<<1;
+      num += state[i];
     }
     return num;
   }
@@ -74,15 +73,22 @@ class spin_state::BaseState : public std::vector<int>
   public :
   int L;
   int _size;
+  const std::vector<int> bond;
   const local_operator* plop = nullptr;
 
   BaseState(){}
-  virtual std::ptrdiff_t GetIndex(int* ptr, int UorD = 0){
+  virtual std::ptrdiff_t GetIndex(int* ptr, int dir_in = 0){
     return std::distance(this->data(), ptr);
   }
 
-  virtual int* GetStatePtr(int* ptr,int UorD = 0){
+  virtual int* GetStatePtr(int* ptr,int dir_in = 0){
     return ptr;
+  }
+
+  virtual int GetLabel(int cindex, int nindex, int clabel){
+    // int cindex = GetIndex(ptr, 0);
+    std::cerr << "GetLabel is unavailable" << std::endl;
+    return 0;
   }
 
   virtual int GetNum(){
@@ -105,6 +111,10 @@ class spin_state::BaseState : public std::vector<int>
 
   void resize (int x){
     ASSERT(false, "resize is unavailable");
+  }
+
+  int get_size(){
+    return _size;
   }
 
 
@@ -134,14 +144,14 @@ class spin_state::OpState : public BaseState
 {
   public :
   const local_operator* plop;
-  std::vector<int> bond;
+  const std::vector<int> bond;
   double tau;
   ~OpState(){
     // cout << "Deconstructor (OpState) was called" << endl;
   }
   OpState():plop(nullptr){}
-  OpState(int L_, local_operator* plop, std::vector<int> bond, double t)
-  :BaseState(2*L_), plop(plop), bond(bond), tau(t)
+  OpState(int L_, local_operator* plop, std::vector<int> bond_, double t)
+  :BaseState(2*L_), plop(plop), bond(bond_), tau(t)
   {
     BaseState::L = L_;
     // ASSERT(l.size() == L_, "size of labels must be equal to given L");
@@ -149,8 +159,8 @@ class spin_state::OpState : public BaseState
   }
 
   OpState(std::vector<int> state, local_operator* plop
-          ,std::vector<int> bond, double t)
-  :BaseState(state), plop(plop), bond(bond), tau(t)
+          ,std::vector<int> bond_, double t)
+  :BaseState(state), plop(plop), bond(bond_), tau(t)
   {
     BaseState::L = state.size()/2;
     // ASSERT(l.size() == L, "size of labels must be equal to given L");
@@ -158,15 +168,39 @@ class spin_state::OpState : public BaseState
     ASSERT(L == plop->L, "in consistent error");
   }
   /*
-  int UorD : 1 or 0, corresponds to upside or downside of state.
+  int dir : 1 or 0, corresponds to upside or downside of state.
   */
-  int* GetStatePtr (int* ptr, int UorD) override{
-    return ptr + UorD*L;
+  int* GetStatePtr (int* ptr, int dir_in) override{
+    return ptr + dir_in*L;
   }
 
-  std::ptrdiff_t GetIndex(int* ptr, int UorD) override{
-    ptr = GetStatePtr(ptr, UorD);
+  /*
+  return index of element
+  params
+  ------
+  int* ptr : ptr to element of state
+  int dir_in : direction (1 or 0) worm comes in.
+  */
+  std::ptrdiff_t GetIndex(int* ptr, int dir_in) override{
+    ptr = GetStatePtr(ptr, dir_in);
     return std::distance(this->data(), ptr);
+  }
+
+  /*
+  return label worm will move to
+  params
+  ------
+  cindex : current index (0 to 3). corresponds to which leg the worm comes in.
+  nindex : next index the worm goes out.
+  clabel : label of dot. (label doesn't distinguish the direction worm goes out or comes in)
+  L : number of site the operator acts, typically 2.
+
+  */
+  int GetLabel(int cindex, int nindex, int clabel) override{
+    // int cindex = GetIndex(ptr, 0);
+    cindex %= L;
+    nindex %= L;
+    return clabel + (nindex - cindex);
   }
 
   bool is_off_diagonal() override{
@@ -236,4 +270,14 @@ class spin_state::Dot
   void set_prev(int p){
     prev = p;
   }
+
+  /*
+  int dir : direction worm goes
+  */
+  int move_next(int dir){
+    if (dir == 1) return next;
+    else if (dir == 0) return prev;
+    ASSERT(false, "dir can be 1 or 0");
+  }
+
 };
