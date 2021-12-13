@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <vector>
 #include <array>
+#include <string>
 #include <math.h>
 
 
@@ -33,34 +34,21 @@ namespace model {
 
   class heisenberg1D;
 
-  /*
 
-  this function works even if L < state.size().
-  In this case, only consider state[:L]
 
-  params
-  -----
-  int[] state : vector of 1 or -1. 
-  int L : size of state
+  static std::string op_type_name[2] = {
+      "diagonal",
+      "off-diagonal"
+    };
 
-  return
-  ------
-  integer representation of state
 
-  */
-  template<typename STATE_>
-  int state2num(STATE_ state, int L){
-    int num = 0;
-    int coef = 1;
-    if (L < 0) L = state.size();
-    for (int i = 0; i < L; i++) {
-      num += state[i] * coef;
-      coef *= 2;
-    }
-    return num;
-  }
+  static std::string dot_type_name[3] = {
+    "state",
+    "operator",
+    "worm"
+  };
 
-  STATE num2state(int num, int L);
+  std::string return_name(int dot_type, int op_type);
 
 }
 
@@ -137,6 +125,7 @@ public:
     void initial_setting();
 
 };
+
 
 
 

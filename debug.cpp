@@ -33,16 +33,6 @@ int main(){
     s = 1^s;
   }
 
-  int off_diag[][2] = {
-        {1,0},
-        {2,2},
-        {3,2},
-        {5,2},
-        {0,2},
-        {4,2},
-        {1,2},
-    };
-
 
   solver.ops_sub.emplace_back(
   new model::OpState(
@@ -86,21 +76,16 @@ int main(){
   solver.check_operators(solver.state, solver.ops_main);
 
 
-
   int ind = 0;
   for (auto&x : solver.spacetime_dots){
     cout << "index : " << ind;
     cout << "   site : " << x.site << endl; 
+    cout << "type : " << model::return_name(x.dot_type, x.typeptr->is_off_diagonal()) << endl;
+    
     cout << "tau : " << x.tau << endl;
     cout << "leg index : " <<x.typeptr->GetIndex(x.sptr, 0) << endl;
 
 
-    cout << "type : ";
-    if (x.dot_type==1){
-      cout << "operator--";
-      if (x.typeptr->is_off_diagonal()) cout << "off-diagonal";
-    }
-    cout << x.dot_type<<endl;
   
 
 

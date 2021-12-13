@@ -176,25 +176,4 @@ void model::heisenberg1D::initial_setting(){
 
 
 
-/*
-params
------
-int num : integer representation of state
-int L : size of state
-
-return
-------
-int[] state : binary representation (0 (spin up) and 1 (spin down)) of state.
-
-*/
-model::STATE model::num2state(int num, int L){
-  int coef = 1;
-  model::STATE state(L, 0); // all spin up
-  for (int i=0; i<L; i++){
-    state[i] = num&1;
-    num /= 2;
-  }
-  return state;
-}
-
 

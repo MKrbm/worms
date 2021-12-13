@@ -33,7 +33,7 @@
 #include "state.hpp"
 #include "model.hpp"
 #include "BC.hpp"
-
+#define SEED 2030
 /* inherit UnionFindTree and add find_and_flip function*/
 
 // template <typename MODEL>
@@ -42,10 +42,10 @@ inline int positive_modulo(int i, int n) {
     return (i % n + n) % n;
 }
 using MODEL = model::heisenberg1D;
-using OPS = std::vector<model::OpStatePtr>;
-using BSTATE = model::BottomState;
-using WORMS = model::Worms;
-using DOTS = std::vector<model::Dot>;
+using OPS = std::vector<spin_state::OpStatePtr>;
+using BSTATE = spin_state::BottomState;
+using WORMS = spin_state::Worms;
+using DOTS = std::vector<spin_state::Dot>;
 
 
 
@@ -64,11 +64,12 @@ class worm{
 
   OPS& ops_main = ops_tmp1;  //contains operators.
   OPS& ops_sub = ops_tmp2; // for sub.
-  model::BStatePtr pstate;
-  model::WormsPtr pworms;
+  spin_state::BStatePtr pstate;
+  spin_state::WormsPtr pworms;
 
-  model::Worms& worms = *pworms;
-  model::BottomState& state = *pstate;
+  spin_state::Worms& worms = *pworms;
+  spin_state::BottomState& state = *pstate;
+  std::vector<int> worms_label;
 
 
   // BSTATE& state;
@@ -84,7 +85,7 @@ class worm{
   #ifdef RANDOM_SEED
   std::mt19937 rand_src = std::mt19937(static_cast <unsigned> (time(0)));
   #else
-  std::mt19937 rand_src = std::mt19937(2023);
+  std::mt19937 rand_src = std::mt19937(SEED);
   #endif
 
   //for choosing bonds
@@ -111,7 +112,7 @@ class worm{
   :model(model_), L(model.L), beta(beta), W(W),
   dist(0, model.Nb-1), worm_dist(0.0, beta),
   bonds(model.bonds), 
-  pstate(model::BStatePtr(new BSTATE(L))), pworms(model::WormsPtr(new WORMS(W))),
+  pstate(spin_state::BStatePtr(new BSTATE(L))), pworms(spin_state::WormsPtr(new WORMS(W))),
   loperators(model.loperators), leg_sizes(model.leg_size),
   operator_cum_weights(model.operator_cum_weights), worms_tau(W),
   front_dots(L,0), end_dots(L,0)
@@ -119,7 +120,7 @@ class worm{
     #ifdef RANDOM_SEED
     srand(static_cast <unsigned> (time(0)));
     #else
-    srand(2023);
+    srand(SEED);
     #endif
     worms_tau.resize(W);
     // pstate = new BSTATE(L);
@@ -127,10 +128,11 @@ class worm{
     
   }
 
-  // functions for initializing
 
+  //* functions for initializing
   /* initialize worms */
   void init_worms_rand(){
+    worms_label.resize(0);
     for (int i=0; i<W; i++){
       // pworms->worm_site[i] = dist(rand_src);
       // pworms->tau_list[i] =  worm_dist(rand_src);
@@ -144,7 +146,6 @@ class worm{
   /* 
   initialize front and end groups 
   */
-
   void init_front_n_end(){
     for (int i=0; i<L; i++){
       front_dots[i] = -(i+1);
@@ -158,19 +159,36 @@ class worm{
     }
   }
 
+  void init_dots(bool add_state = true){
+    spacetime_dots.resize(0);
+    if (add_state){
+      for(int i=0; i<L; i++){
+        set_dots(i, 0, 0, i);
+      }
+    }
+  }
 
+  //swapt main and sub
   void swap_oplist(){
     auto tmp_op = ops_sub;
     ops_sub = ops_main;
     ops_main = tmp_op;
   }
 
+
+  //main functions
+
   void diagonal_update(){
     double tau = 0;
     int n_worm = 0;
+
+    //initialization
     init_front_n_end();
     init_worms_rand();
-
+    // init_ops_main()
+    ops_main.resize(0);
+    //init spacetime_dots
+    init_dots();
 
     auto& worm_site = worms.worm_site;
     auto& worm_tau_list = worms.tau_list;
@@ -194,7 +212,6 @@ class worm{
 
 
 
-    ops_main.resize(0);
 
 
     //set worms
@@ -239,7 +256,7 @@ class worm{
       // choose bond
       r_bond = dist(rand_src);
       int tuggle = 1;
-      auto local_state = model::num2state(s_num + (s_num<<leg_size ), 2*leg_size);
+      auto local_state = spin_state::num2state(s_num + (s_num<<leg_size ), 2*leg_size);
       std::vector<int> labels(leg_size);
       auto bond = bonds[r_bond];
 
@@ -255,7 +272,7 @@ class worm{
 
       if ( tuggle ){
         ops_main.emplace_back(
-            new model::OpState(
+            new spin_state::OpState(
               local_state,
               &lop,
               bond,
@@ -298,15 +315,18 @@ class worm{
     return;
   }
 
+  void worm_update();
+
   /*
   this function will be called after assigining op_main
   */
   void set_dots(int site, double tau_prime, int dot_type, int index){
 
     int* sptr;
-    model::BaseStatePtr stateptr;
+    spin_state::BaseStatePtr stateptr;
 
     // ASSERT(label == spacetime_dots.size()+1)
+    int label = spacetime_dots.size();
 
     if (dot_type == 0) {
       sptr = state.data() + index;
@@ -318,9 +338,9 @@ class worm{
     }else if(dot_type == 2){
       sptr = worms.data() + index;
       stateptr = pworms;
+      worms_label.push_back(label);
     }
 
-    int label = spacetime_dots.size();
     if (end_dots[site] < 0){
       end_dots[site] = label;
     } 
@@ -344,7 +364,7 @@ class worm{
   /*
   update given state by given operator ptr;
   */
-  static void update_state(model::OpStatePtr op_ptr, std::vector<int>& state){
+  static void update_state(spin_state::OpStatePtr op_ptr, std::vector<int>& state){
     std::vector<int> local_state = *op_ptr;
     std::vector<int> state_(op_ptr->plop->L);
     int i=0;
@@ -362,7 +382,9 @@ class worm{
     }
   }
 
-  static void check_operators(model::BottomState state, OPS ops){
+
+  //* functions for testing
+  static void check_operators(spin_state::BottomState state, OPS ops){
     const auto state_ = state;
     for (auto op : ops){
       update_state(op, state);
@@ -375,15 +397,16 @@ class worm{
   }
 
   static bool is_same_state(int n, std::vector<int> state){
-    int m = model::state2num(state, state.size());
+    int m = spin_state::state2num(state, state.size());
     return n==m;
   }
 
   static bool is_same_state( std::vector<int> state_, std::vector<int> state){
-    int m = model::state2num(state, state.size());
-    int n= model::state2num(state_, state.size());
+    int m = spin_state::state2num(state, state.size());
+    int n= spin_state::state2num(state_, state.size());
     return n==m;
   }
+
 
 };
 
