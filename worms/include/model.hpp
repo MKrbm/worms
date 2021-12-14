@@ -53,7 +53,8 @@ namespace model {
   template <typename PROB>
   int chooseAtRand (const PROB& prob, double r){
     double sum = 0;
-    ASSERT(std::abs(std::accumulate(prob.begin(), prob.end(), 0)-1) <= TOR,
+    double sum_ = std::accumulate(prob.begin(), prob.end(), 0.0);
+    ASSERT(std::abs(sum_-1) <= TOR,
            "given prob can not be considered as probability distribution");
     int i;
     for(i=0; i<prob.size()-1; i++){

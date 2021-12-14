@@ -297,32 +297,35 @@ class worm{
     } //end of while loop
 
   }
-
+  /*
+  * check off-diagonal operator in ops_sub and flip accordingly.
+  * note that diagonal operators will disappear during this step.
+  */
   void checkODNFlip(double& optau, double tau_prime, int& op_label,
                      std::vector<int>& cstate ){
-    if (op_label < ops_sub.size()) optau = ops_sub[op_label]->tau;
     while(optau<tau_prime && op_label < ops_sub.size()){
       auto op_ptr = ops_sub[op_label];
+      // spin_state::BaseStatePtr op_ptr_ = ops_sub[op_label];
+      spin_state::BaseStatePtr stateptr;
+      stateptr = ops_sub[op_label];
+      // cout << "L : " << stateptr->plop->L << endl;
       if (op_ptr->is_off_diagonal()){
         update_state(op_ptr, cstate);
-      }
-
-      ops_main.push_back(op_ptr);
-      int dot_label = spacetime_dots.size();
-      for (int i=0; i<op_ptr->L; i++){
-        set_dots(op_ptr->bond[i], op_ptr->tau, 1 , i);
-        dot_label++;
+        ops_main.push_back(op_ptr);
+        for (int i=0; i<op_ptr->L; i++){
+          set_dots(op_ptr->bond[i], op_ptr->tau, 1 , i);
+        }
       }
       op_label++;
       if (op_label < ops_sub.size()) optau = ops_sub[op_label]->tau;
     }
-
     return;
   }
 
 
   /*
-  perform one step from given worm.
+  *perform one step from given worm.
+  If dot is operator then, worm move to exit. otherwise just assigin spin to dot.
   params
   ------
   int next_dot : next dot.
@@ -333,43 +336,65 @@ class worm{
   params(member variables)
   ------
   */
-  void worm_update(int& next_dot, int& dir, int& spin, int& site){
+  void worm_process_op(int& next_dot, int& dir, int& spin, int& site){
 
     int clabel = next_dot;
     spin_state::Dot& dot = spacetime_dots[clabel];
     int dtype = dot.dot_type;
 
     ASSERT(site == dot.site, "site is not consistent");
-    if (dtype!=1){ // if dot is state or worm.
+    if (dtype!=1){ //n* if dot is state or worm.
       *dot.sptr = spin;
-      next_dot = dot.move_next(dir);
+      // next_dot = dot.move_next(dir);
       return;
     }
 
     if (dtype==1){
-      int dir_in = !dir;
+      int dir_in = !dir; //n* direction the worm comes in from the view of operator.
       int cindex = dot.typeptr->GetIndex(dot.sptr, dir_in);
       auto& opstate = *dot.typeptr;
       opstate[cindex] ^= 1;
       int num = spin_state::state2num(opstate, opstate.get_size());
       double r = uni_dist(rand_src);
       int nindex = opstate.plop->choose_next_worm(r, num, cindex);
-      opstate[cindex] ^= 1;
+      opstate[nindex] ^= 1;
 
-      //*assigin for next step
+      //n* assigin for next step
       dir = nindex/(opstate.L);
-      next_dot = opstate.GetLabel(cindex, nindex, clabel);
       site = opstate.bond[nindex%opstate.L];
-      spin = opstate[cindex];
+      spin = opstate[nindex];
+
+      next_dot = opstate.GetLabel(cindex, nindex, clabel);
 
       // opstate.plop->tran
-
     }
-    
   }
 
   /*
-  this function will be called after assigining op_main
+  *update worm for W times.
+  */
+  void worm_update(){
+    int w_index =0;
+    for (const auto& w_label : worms_label){
+      int d_label = w_label;
+      auto* dot_ptr = &spacetime_dots[d_label];
+      int site = dot_ptr->site;
+      int dots_size = spacetime_dots.size();
+      int dir = 1;//n initial direction is 1.
+      *dot_ptr->sptr = 1^*dot_ptr->sptr; //n flip the worm. and it propagate through spacetime.
+      int spin = *dot_ptr->sptr;
+      do{
+        check_operators_while_update(w_label, dir ? d_label : dot_ptr->prev);
+        d_label = dot_ptr->move_next(dir);
+        worm_process_op(d_label, dir, spin, site);
+        dot_ptr = &spacetime_dots[d_label];
+      }while(d_label != w_label);
+      w_index++;  
+    }
+  }
+
+  /*
+  *this function will be called after assigining op_main
   */
   void set_dots(int site, double tau_prime, int dot_type, int index){
 
@@ -413,9 +438,9 @@ class worm{
   }
 
   /*
-  update given state by given operator ptr;
+  *update given state by given operator ptr;
   */
-  static void update_state(spin_state::OpStatePtr op_ptr, std::vector<int>& state){
+  static void update_state(spin_state::BaseStatePtr op_ptr, std::vector<int>& state){
     std::vector<int> local_state = *op_ptr;
     std::vector<int> state_(op_ptr->plop->L);
     int i=0;
@@ -431,6 +456,41 @@ class worm{
         index++;
       }
     }
+  }
+
+  /*
+  * check the operator and state is consistent during the worm_updateg
+  params
+  ------
+  worm_label : label of dot (worm) we are aiming at.
+  p_label : label of dot before reaching at the current position of worm.
+
+  */
+  void check_operators_while_update(int worm_label, int p_label){
+    auto state_ = state;
+    spin_state::BaseStatePtr ptr = nullptr;
+
+    int label = 0;
+    for (const auto& dot:spacetime_dots){
+
+
+      if (dot.dot_type == 1 && ptr != dot.typeptr){ //if dot_type is operator
+        ptr = dot.typeptr;  
+        update_state(ptr, state_);
+      }
+      if (dot.dot_type != 1){
+        int spin = worm_label == label ? 1^(*dot.sptr) : (*dot.sptr);
+        ASSERT(state_[dot.site] == spin, "spin is not consistent");
+        state_[dot.site] = *dot.sptr;
+      }
+
+      if (p_label == label){
+        state_[dot.site] = 1^state_[dot.site];
+      }
+
+      label++;
+    }
+    ASSERT(is_same_state(state_, state), "operators are not consistent while update worms");
   }
 
 

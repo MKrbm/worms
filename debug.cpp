@@ -23,7 +23,7 @@ int main(){
   std::cout << "debug start" << std::endl;
   std::mt19937 rand_src(12345);
   model::heisenberg1D h(6,1,1);
-  worm solver(0.6, h, 1);
+  worm solver(0.4, h, 1);
 
   solver.init_worms_rand();
   solver.init_states();
@@ -52,10 +52,18 @@ int main(){
 
   solver.ops_sub.emplace_back(
   new spin_state::OpState(
+    {0,0,0,0},
+    &solver.loperators[0],
+    {1,2},
+    0.38)
+  );
+
+  solver.ops_sub.emplace_back(
+  new spin_state::OpState(
     {0,1,1,0},
     &solver.loperators[0],
     {4,5},
-    0.4)
+    0.39)
   );
 
   solver.ops_sub.emplace_back(
@@ -63,17 +71,18 @@ int main(){
     {0,1,1,0},
     &solver.loperators[0],
     {2,3},
-    0.4)
+    0.39)
   );
 
   // solver.set_dots(4, 0.33, 1, 0);
   // solver.set_dots(5, 0.33, 1, 1);
 
   solver.diagonal_update();
-  // solver.ops_main.resize(0);
-  // solver.state[2] = 0;
   solver.check_operators(solver.state, solver.ops_sub);
   solver.check_operators(solver.state, solver.ops_main);
+  solver.worm_update();
+  // solver.ops_main.resize(0);
+  // solver.state[2] = 0;
 
 
   int ind = 0;

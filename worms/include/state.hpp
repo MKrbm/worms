@@ -73,10 +73,19 @@ class spin_state::BaseState : public std::vector<int>
   public :
   int L;
   int _size;
+  const double tau;
   const std::vector<int> bond;
-  const local_operator* plop = nullptr;
+  const local_operator* plop;
 
-  BaseState(){}
+  BaseState() : tau(0){}
+
+  BaseState(int L, double tau = 0, local_operator* ptr = nullptr, std::vector<int> bond = std::vector<int>())
+  :vec(L, 0), L(L), _size(L), plop(ptr), bond(bond), tau(tau) {}
+
+  BaseState(std::vector<int> state, double tau = 0, local_operator* ptr = nullptr, std::vector<int> bond = std::vector<int>())
+  :vec(state), L(state.size()), _size(L), plop(ptr), bond(bond), tau(tau) {}
+
+
   virtual std::ptrdiff_t GetIndex(int* ptr, int dir_in = 0){
     return std::distance(this->data(), ptr);
   }
@@ -117,20 +126,13 @@ class spin_state::BaseState : public std::vector<int>
     return _size;
   }
 
-
-
-  BaseState(int L):vec(L, 0), L(L), _size(L){}
-
-  BaseState(std::vector<int> state):vec(state), L(state.size()), _size(L){}
-
 };
 
 class spin_state::BottomState : public BaseState
 {
   public :
-  double tau;
   BottomState(){}
-  BottomState(int L, double t=0):BaseState(L), tau(0){}
+  BottomState(int L, double t=0):BaseState(L, t){}
   ~BottomState(){
   // cout << "Deconstructor (BottomState) was called" << endl;
 }
@@ -143,15 +145,14 @@ class spin_state::BottomState : public BaseState
 class spin_state::OpState : public BaseState
 {
   public :
-  const local_operator* plop;
-  const std::vector<int> bond;
-  double tau;
+
   ~OpState(){
     // cout << "Deconstructor (OpState) was called" << endl;
   }
-  OpState():plop(nullptr){}
+  OpState(){}
+
   OpState(int L_, local_operator* plop, std::vector<int> bond_, double t)
-  :BaseState(2*L_), plop(plop), bond(bond_), tau(t)
+  :BaseState(2*L_, t, plop, bond_)
   {
     BaseState::L = L_;
     // ASSERT(l.size() == L_, "size of labels must be equal to given L");
@@ -160,7 +161,7 @@ class spin_state::OpState : public BaseState
 
   OpState(std::vector<int> state, local_operator* plop
           ,std::vector<int> bond_, double t)
-  :BaseState(state), plop(plop), bond(bond_), tau(t)
+  :BaseState(state, t, plop, bond_)
   {
     BaseState::L = state.size()/2;
     // ASSERT(l.size() == L, "size of labels must be equal to given L");
