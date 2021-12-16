@@ -33,7 +33,7 @@
 #include "state.hpp"
 #include "model.hpp"
 #include "BC.hpp"
-#define SEED 2030
+#define SEED 2035
 /* inherit UnionFindTree and add find_and_flip function*/
 
 // template <typename MODEL>
@@ -126,6 +126,8 @@ class worm{
     srand(SEED);
     #endif
     worms_tau.resize(W);
+
+    cout << "beta : " << beta << endl;
     // pstate = new BSTATE(L);
     // pworms = new WORMS(W);
     

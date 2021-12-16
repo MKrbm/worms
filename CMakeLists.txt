@@ -39,5 +39,5 @@ target_include_directories(debug PUBLIC
             "${PROJECT_BINARY_DIR}"
             )
 
-
+target_compile_features(debug PUBLIC cxx_std_14)
 

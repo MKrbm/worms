@@ -2,11 +2,13 @@
 #include <model.hpp>
 #include <worm.hpp>
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include <state.hpp>
 #include <chrono>
 #include <memory>
 #include <iterator>
+#include <cstdio>
 
 using namespace std::chrono;
 
@@ -14,6 +16,7 @@ using namespace std::chrono;
 
 using std::cout;
 using std::endl;
+using std::ofstream;
 
 int add(int a, int b){
   return a+b;
@@ -22,57 +25,48 @@ int add(int a, int b){
 int main(){
   std::cout << "debug start" << std::endl;
   std::mt19937 rand_src(12345);
-  model::heisenberg1D h(6,1,1);
-  worm solver(0.4, h, 1);
+  model::heisenberg1D h(6,0,1);
+  worm solver(1, h, 1);
 
-  solver.init_worms_rand();
   solver.init_states();
-  int s = 1;
-  for(auto&x : solver.state){
-    x = s;
-    s = 1^s;
-  }
+  // int s = 1;
+  // for(auto&x : solver.state){
+  //   x = s;
+  //   s = 1^s;
+  // }
 
 
-  solver.ops_sub.emplace_back(
-  new spin_state::OpState(
-    {1,0,0,1},
-    &solver.loperators[0],
-    {2,3},
-    0.01)
-  );
+  // solver.ops_sub.emplace_back(
+  // new spin_state::OpState(
+  //   {1,0,0,1},
+  //   &solver.loperators[0],
+  //   {2,3},
+  //   0.01)
+  // );
   
-  solver.ops_sub.emplace_back(
-  new spin_state::OpState(
-    {1,0,0,1},
-    &solver.loperators[0],
-    {4,5},
-    0.35)
-  );
+  // solver.ops_sub.emplace_back(
+  // new spin_state::OpState(
+  //   {1,0,0,1},
+  //   &solver.loperators[0],
+  //   {4,5},
+  //   0.35)
+  // );
 
-  solver.ops_sub.emplace_back(
-  new spin_state::OpState(
-    {0,0,0,0},
-    &solver.loperators[0],
-    {1,2},
-    0.38)
-  );
+  // solver.ops_sub.emplace_back(
+  // new spin_state::OpState(
+  //   {0,1,1,0},
+  //   &solver.loperators[0],
+  //   {4,5},
+  //   0.39)
+  // );
 
-  solver.ops_sub.emplace_back(
-  new spin_state::OpState(
-    {0,1,1,0},
-    &solver.loperators[0],
-    {4,5},
-    0.39)
-  );
-
-  solver.ops_sub.emplace_back(
-  new spin_state::OpState(
-    {0,1,1,0},
-    &solver.loperators[0],
-    {2,3},
-    0.39)
-  );
+  // solver.ops_sub.emplace_back(
+  // new spin_state::OpState(
+  //   {0,1,1,0},
+  //   &solver.loperators[0],
+  //   {2,3},
+  //   0.39)
+  // );
 
   // solver.set_dots(4, 0.33, 1, 0);
   // solver.set_dots(5, 0.33, 1, 1);
@@ -81,119 +75,53 @@ int main(){
   solver.check_operators(solver.state, solver.ops_sub);
   solver.check_operators(solver.state, solver.ops_main);
   solver.worm_update();
-  // solver.ops_main.resize(0);
-  // solver.state[2] = 0;
+  solver.swap_oplist();
+  solver.diagonal_update();
 
-
-  int ind = 0;
-  for (auto&x : solver.spacetime_dots){
-    cout << "index : " << ind;
-    cout << "   site : " << x.site << endl; 
-    cout << "type : " << spin_state::return_name(x.dot_type, x.typeptr->is_off_diagonal()) << endl;
-    
-    cout << "tau : " << x.tau << endl;
-    cout << "leg index : " <<x.typeptr->GetIndex(x.sptr, 0) << endl;
-
-
-  
-
-
-    printf("prev : %d, next : %d", x.prev, x.next);
-    cout << "\n\n" ;
-    ind++;
-  }
-
-  // solver.init_worms_rand();
-  // solver.init_states();
-
-  // solver.diagonal_update();
-  // cout << "clear ops_main" << endl;
-  // solver.ops_main.resize(0);
-
-  // model::Worms& worms = *solver.pworms;
-  // cout << "count of worms : " <<solver.pworms.use_count() << endl;
-
-
-  // cout << "hi" << endl;
-  // cout << "clear spacetime_dots" << endl;
-  // solver.spacetime_dots.resize(4);
-  // cout << "capacity : " << solver.spacetime_dots.capacity() << endl;
-  // for (auto& x :  solver.spacetime_dots){
-  //   cout << x.typeptr.use_count() << endl;
+  // int n_kink=0;
+  // for (int i=0; i < 1E3; i++){
+  //   solver.init_states();
+  //   solver.ops_sub.resize(0);
+  //   for (int i=0; i< 5*1E2; i++){
+  //     solver.diagonal_update();
+  //     solver.check_operators(solver.state, solver.ops_sub);
+  //     solver.check_operators(solver.state, solver.ops_main);
+  //     solver.worm_update();
+  //     solver.swap_oplist();
+  //   }
+  //   n_kink += solver.ops_sub.size();
   // }
 
+  // double energy = -1.5 * ((double)n_kink/MCSTEP) / beta;
 
 
 
 
+  // int ind = 0;
+  // ofstream outputfile("logs.txt");
+  // outputfile  << "stdout is redirected to a file\n\n\n"; // this is written to redir.txt
+  // for (auto&x : solver.spacetime_dots){
+  //   // cout << spin_state::return_name(x.dot_type, x.typeptr->is_off_diagonal()) <<endl;
+  //   outputfile << "index : " << ind;
+  //   outputfile << "   site : " << x.site << endl; 
+  //   outputfile << "type : " << spin_state::return_name(x.dot_type, x.typeptr->is_off_diagonal()) << endl;
+    
+  //   outputfile << "tau : " << x.tau << endl;
+  //   outputfile << "leg index : " <<x.typeptr->GetIndex(x.sptr, 0) << endl;
+  //   // printf("prev : %d, next : %d", x.prev, x.next);
+  //   outputfile << "prev : " << x.prev << ", next : " << x.next << endl;
+  //   outputfile << "\n\n" ;
+  //   ind++;
+  // }
+
+  // outputfile << "\n\noutput state : " << endl;
+  // for (auto&x : solver.state){
+  //   outputfile << x << " ";
+  // }
+  // outputfile.close();
 
 
-  // std::vector<model::OpStatePtr> ops_main;
-  // std::vector<model::OpStatePtr> ops_sub;
-  // model::WormsPtr pworms = model::WormsPtr(new model::Worms(3));
-
-  // // auto& worms = pworms;
-
-  // ops_main.push_back(model::OpStatePtr(new model::OpState(
-  //   {-1,-1,-1,-1}, &h.loperators[0], {0,1}, {0,1}, 0
-  // )));
-
-
-  // cout << "integer representation of state : " << ops_main[0]->GetNum() << endl;
-
-
-  // // ops_main.resize(0);
-
-
-  // cout << "N_op for heisenberg1D is " << model::heisenberg1D::Nop << endl;
-
-  // std::vector<model::Dot> dots;
-
-  // dots.emplace_back(0, 0.1, 1, ops_main[0]->data(),
-  //   ops_main[0], 1);
-
-  // dots.emplace_back(0, 0.1, 1, pworms->data(),
-  //   pworms, 1);
-
-  // // printf("element : %d \n",*dot.sptr);
-  // // printf("index : %ld \n",dot.typeptr->GetIndex(dot.sptr, 1));
-
-  // // printf("num shared : %ld \n",dot.typeptr.use_count());
-
-
-  // // // printf("num shared : %ld \n",dot.typeptr.use_count());
-
-
-
-  // // ops_sub.push_back(ops_main[0]);
-  // ops_main.clear();
-  // dots.clear();
-  // cout << "clear ops_main" << endl;
-  // ops_sub.clear();
-  // dot.~Dot();
-
-  // printf("L : %d\n",ops_sub[0]->L);
-
-  // printf("num shared : %ld \n",dot.typeptr.use_count());
-
-  // printf("dot.site : %d\n", dot.site);
-
-
-
-  // std::vector<std::shared_ptr<model::BaseState>> dots_main;
-  // dots_main.push_back(std::shared_ptr<model::OpState>(new model::OpState(3, &h.loperators[0])));
-
-  
-
-
-
-
-
-  // model::local_operator ops(2);
-
-  // ops.set_ham();
-
-  // worm solver(0.6, h, 4);// If std < c++17, worm<heisenberg1D> instead.
+  // cout << "number of operators : " << solver.ops_main.size() << endl;
 
   return 0;
 }

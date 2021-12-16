@@ -11,6 +11,7 @@ add_library(worm STATIC
     ./src/model.cpp
     ./src/BC.cpp
     ./src/state.cpp
+    ./src/heisenberg1D.cpp
     )
 
 add_subdirectory(./lib/uftree) #call /uftree/CMakeLists.txst
@@ -20,7 +21,7 @@ target_link_libraries(worm uftree) # link library
 
 
 
-target_compile_features(worm PUBLIC cxx_std_14)
+target_compile_features(worm PRIVATE cxx_std_14)
 target_include_directories(worm INTERFACE ./include)
 # target_compile_options(worm PRIVATE -O3 -Wall)
 

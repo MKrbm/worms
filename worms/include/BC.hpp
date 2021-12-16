@@ -24,6 +24,8 @@ namespace BC{
 
   //* create transition probability
   TPROB metropolis(VECD weights);
+  TPROB st(VECD weights);
+
 }
 
 #endif

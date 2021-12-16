@@ -76,7 +76,9 @@ public:
 
   int L; // number of site operator acts 
   int size; // size of operator (2**L)
+  double ene_shift = 0; //energy shift to ensure that diagonal elements of hamiltonian are non-negative
   std::vector<std::vector<double>> ham;
+  std::vector<std::vector<double>> ham_;
   std::vector<double> ham_vector;
   std::vector<std::vector<double>> trans_weights;
   std::vector<TPROB> trans_prob; //num_configuration x 4 x 4 matrix.
@@ -133,6 +135,7 @@ public:
     const bool PBC;
     static const int Nop = N_op; //number of local operator (1 for heisenberg model)
     double rho = 0;
+    std::vector<double> shifts;
 
     std::array<local_operator, N_op> loperators; //in case where there are three or more body interactions.
     std::array<int, N_op> leg_size; //size of local operators;
