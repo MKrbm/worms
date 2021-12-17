@@ -81,6 +81,8 @@ public:
   std::vector<std::vector<double>> ham_;
   std::vector<double> ham_vector;
   std::vector<std::vector<double>> trans_weights;
+  std::vector<std::vector<double>> ori_trans_weights; //original weights, which can have negative elements;
+  std::vector<int> signs; //list of sign defined via the sign of ham_;
   std::vector<TPROB> trans_prob; //num_configuration x 4 x 4 matrix.
   std::vector<double> diagonal_cum_weight; //normalized diagonal elements;
   double total_weights; //sum of diagonal elemtns of ham

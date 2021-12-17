@@ -40,7 +40,7 @@ namespace spin_state{
 
   */
   template<typename STATE_>
-  int state2num(STATE_ const& state, int L){
+  int state2num(STATE_ const& state, int L = -1){
     int num = 0;
     if (L < 0) L = state.size();
     for (int i = L-1; i >= 0; i--) {

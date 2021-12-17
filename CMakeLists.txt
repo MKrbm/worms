@@ -46,4 +46,6 @@ target_include_directories(debug PUBLIC
             )
 
 target_compile_features(debug PUBLIC cxx_std_14)
+target_compile_features(main_app PUBLIC cxx_std_14)
+
 

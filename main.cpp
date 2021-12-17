@@ -6,11 +6,12 @@
 #include <model.hpp>
 #include <string>
 #include <chrono>
+#include <observable.hpp>
 
 #include "MainConfig.h"
 #define DEBUG 1
-#define MCSTEP 100000
-#define SWEEP 50
+#define MCSTEP 1E5
+#define SWEEP 1E4
 #define MESTIME 1
 
 
@@ -29,11 +30,15 @@ int main(int argc, char* argv[])
   int L = std::stoi(argv[1]);
   double J = std::stoi(argv[2]);
   double beta = std::stoi(argv[3]);
-  double h = 1;
+  double h = 0;
+  BC::observable ene; // signed energy i.e. $\sum_i E_i S_i / N_MC$
+  BC::observable umag; // uniform magnetization 
+  BC::observable ave_sign; // average sign 
+
 
   std::mt19937 rand_src(12345);
   model::heisenberg1D h1(L,h,J);
-  worm solver(beta, h1, 5);
+  worm solver(beta, h1, 3);
   // std::vector<std::vector<int>> states;
 
 
@@ -43,28 +48,52 @@ int main(int argc, char* argv[])
 
 
   int n_kink=0;
-  for (int i=0; i < MCSTEP; i++){
-    solver.init_states();
-    solver.ops_sub.resize(0);
-    for (int i=0; i< SWEEP; i++){
-      solver.diagonal_update();
-      solver.check_operators(solver.state, solver.ops_sub);
-      solver.check_operators(solver.state, solver.ops_main);
-      solver.worm_update();
-      solver.swap_oplist();
+  int cnt = 0;
+  solver.init_states();
+  solver.ops_sub.resize(0);
+  for (int i=0; i < MCSTEP + SWEEP; i++){
+    solver.diagonal_update();
+    solver.check_operators(solver.state, solver.ops_sub);
+    solver.check_operators(solver.state, solver.ops_main);
+    solver.worm_update();
+    solver.swap_oplist();
+    if (cnt > SWEEP){
+      int sign = 1;
+      double mu = 0;
+      for (const auto&  s : solver.state) {
+        mu += 0.5 - s;
+      }
+      for (const auto& op : solver.ops_sub){
+        std::vector<int> local_state = *op;
+        int num = spin_state::state2num(local_state);
+        sign *= op->plop->signs[num];
+      }
+      ene << (- ((double)solver.ops_sub.size()) / beta + h1.shifts[0] * h1.Nb) * sign;
+      ave_sign << sign;
+      mu /= h1.L;
+      umag << mu * sign;
     }
-    n_kink += solver.ops_sub.size();
+    cnt++;
+    // ene << - ((double)solver.ops_sub.size()) / beta + h1.shifts[0] * h1.Nb;
   }
 
-  double energy = -((double)n_kink/MCSTEP) / beta;
-  energy += h1.shifts[0] * h1.Nb;
+  
 
   #if MESTIME
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-  std::cout << "exection time : " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
+  double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / (double)1E3;
   #endif
-
-  std::cout << "calculated energy : " << energy << std::endl;
-  // std::cout << "argment : " << argv[1] << " is provided " << std::endl;
+  std::cout << "Elapsed time = " << elapsed << " sec\n"
+            << "Speed = " << (MCSTEP + SWEEP) / elapsed << " MCS/sec\n";
+  std::cout << "Energy             = "
+            << ene.mean()/ave_sign.mean() / h1.L << " +- " 
+            << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) / h1.L
+            << std::endl
+            << "Uniform Magnetization     = "
+            << umag.mean()/ave_sign.mean() << " +- " 
+            << std::sqrt(std::pow(umag.error()/ave_sign.mean(), 2) + std::pow(umag.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2))
+            << std::endl
+            << "average sign     = "
+            << ave_sign.mean() << " +- " << ave_sign.error() << std::endl;
 }

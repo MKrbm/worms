@@ -54,6 +54,10 @@ void model::local_operator::set_ham(){
     tmp += ham_[i][i];
     diagonal_cum_weight[i] = tmp;
   }
+
+  for (const auto& x : ham_vector){
+    signs.push_back(x >= 0 ? 1 : -1);
+  }
   total_weights = *(diagonal_cum_weight.end()-1);
 
   set_trans_weights();//set trans_weights from ham_vector.
@@ -79,14 +83,14 @@ void model::local_operator::set_trans_prob(){
 /*
 set weights for transition
 the first index represent the sate when the worm invade into the operator
-e.g. 
+e.g.
                      ↑
-                     * 
+                     + 
 1 0        1 0     1 1
----        -*-     ---
+---        -+-     ---
 1 0    →   0 0  →  0 0
 ↑
-*
++
 
 In this case, first index = [1, 0, 0, 0] (1*2^3 + 0 + 0 + 0 = 8)
 and the second index represents which bond the worm choese;
@@ -94,9 +98,11 @@ In above case, j = 3.
 */
 void model::local_operator::set_trans_weights(){
   // ham_vector.size() = size*size;
+  ori_trans_weights = trans_weights;
   for(int i=0; i<ham_vector.size(); i++)
     for (int j=0; j<2*L; j++){
-      trans_weights[i][j] = ham_vector[i ^ (1<<j)];
+      trans_weights[i][j] = std::abs(ham_vector[i ^ (1<<j)]);
+      ori_trans_weights[i][j] = ham_vector[i ^ (1<<j)];
     }
 }
 

@@ -3,6 +3,7 @@
 #include <uftree.hpp>
 #include <model.hpp>
 #include <worm.hpp>
+#include <observable.hpp>
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
@@ -26,11 +27,17 @@ int add(int a, int b){
 
 int main(){
   std::cout << "debug start" << std::endl;
-  std::mt19937 rand_src(12345);
-  model::heisenberg1D h(6,0,1);
-  worm solver(1, h, 1);
+  int L = 6;
+  double J = 1;
+  double beta = 1;
+  double h = 1;
+  BC::observable ene; // energy 
+  BC::observable umag; // uniform magnetization 
 
-  solver.init_states();
+
+  std::mt19937 rand_src(12345);
+  model::heisenberg1D h1(L,h,J);
+  worm solver(beta, h1, 10);
   // int s = 1;
   // for(auto&x : solver.state){
   //   x = s;
@@ -73,12 +80,12 @@ int main(){
   // solver.set_dots(4, 0.33, 1, 0);
   // solver.set_dots(5, 0.33, 1, 1);
 
-  solver.diagonal_update();
-  solver.check_operators(solver.state, solver.ops_sub);
-  solver.check_operators(solver.state, solver.ops_main);
-  solver.worm_update();
-  solver.swap_oplist();
-  solver.diagonal_update();
+  // solver.diagonal_update();
+  // solver.check_operators(solver.state, solver.ops_sub);
+  // solver.check_operators(solver.state, solver.ops_main);
+  // solver.worm_update();
+  // solver.swap_oplist();
+  // solver.diagonal_update();
 
   // int n_kink=0;
   // for (int i=0; i < 1E3; i++){

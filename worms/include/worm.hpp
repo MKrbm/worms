@@ -33,6 +33,7 @@
 #include "state.hpp"
 #include "model.hpp"
 #include "BC.hpp"
+
 #define SEED 2035
 /* inherit UnionFindTree and add find_and_flip function*/
 
@@ -78,7 +79,7 @@ class worm{
   DOTS spacetime_dots; //contain dots in space-time.
 
   std::vector<double> worms_tau;
-  std::vector<std::vector<int>> bonds;
+  std::vector< std::vector<int> > bonds;
 
   //declaration for random number generator
 
