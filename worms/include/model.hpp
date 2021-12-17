@@ -56,7 +56,7 @@ namespace model {
     double sum_ = std::accumulate(prob.begin(), prob.end(), 0.0);
     ASSERT(std::abs(sum_-1) <= TOR,
            "given prob can not be considered as probability distribution");
-    int i;
+    std::size_t i;
     for(i=0; i<prob.size()-1; i++){
         sum += prob[i];
         if (sum >= r) break;

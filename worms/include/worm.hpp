@@ -202,16 +202,17 @@ class worm{
     if (worm_tau_list.size()) worm_tau = worm_tau_list[0];
     double op_sub_tau = 0;
     if (ops_sub.size()) op_sub_tau = ops_sub[0]->tau;
-    int op_sub_label = 0;
-    int N_op = model.Nop;
+    std::size_t op_sub_label = 0;
+    std::size_t N_op = model.Nop;
 
 
-    int optau = 0;
+    std::size_t optau = 0;
     if (ops_sub.size()) optau = ops_sub[0]->tau;
 
-    double sum;
+    double tau_prime;
+    double r;
 
-    int s0, s1;
+    std::size_t s0, s1;
     int r_bond; // randomly choosen bond
     std::vector<int> cstate = state;
 
@@ -222,10 +223,10 @@ class worm{
     //set worms
     while (true){
       // cout << "hi" << endl;
-      double r = uni_dist(rand_src);
+      r = uni_dist(rand_src);
 
       // cout << "random number : " << r << endl;
-      double tau_prime = tau - log(r)/model.rho;
+      tau_prime = tau - log(r)/model.rho;
 
       // put worms on space.
       while(worm_tau<tau_prime && n_worm < W){
@@ -244,7 +245,7 @@ class worm{
       r = uni_dist(rand_src);
       double max_ = *(operator_cum_weights.end()-1);
       double target = r * max_;
-      int lop_label;
+      std::size_t lop_label;
       for(lop_label=0; lop_label < N_op; lop_label++){
         if (operator_cum_weights[lop_label] >= target) break;
       }
@@ -288,7 +289,7 @@ class worm{
         );
 
         int dot_label = spacetime_dots.size();
-        int n = ops_main.size();
+        std::size_t n = ops_main.size();
         for (int i=0; i<leg_size; i++){
           set_dots(bond[i], tau_prime, 1 , i);
           dot_label++;
@@ -303,7 +304,7 @@ class worm{
   * check off-diagonal operator in ops_sub and flip accordingly.
   * note that diagonal operators will disappear during this step.
   */
-  void checkODNFlip(double& optau, double tau_prime, int& op_label,
+  void checkODNFlip(double& optau, double tau_prime, std::size_t& op_label,
                      std::vector<int>& cstate ){
     while(optau<tau_prime && op_label < ops_sub.size()){
       auto op_ptr = ops_sub[op_label];
@@ -469,6 +470,8 @@ class worm{
 
   */
   void check_operators_while_update(int worm_label, int p_label){
+    
+    #ifndef NDEBUG
     auto state_ = state;
     spin_state::BaseStatePtr ptr = nullptr;
 
@@ -493,16 +496,21 @@ class worm{
       label++;
     }
     ASSERT(is_same_state(state_, state), "operators are not consistent while update worms");
+    #endif 
+    return;
   }
 
 
   //* functions for testing
   static void check_operators(spin_state::BottomState state, OPS ops){
+    #ifndef NDEBUG
     const auto state_ = state;
     for (auto op : ops){
       update_state(op, state);
     }
     ASSERT(is_same_state(state_, state), "operators are not consistent");
+    #endif
+    return;
   }
 
   static bool is_same_state(int n, int m){

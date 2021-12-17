@@ -1,4 +1,5 @@
 #define RANDOM_SEED 1
+#define NDEBUG 1
 
 #include <iostream>
 #include <worm.hpp>
@@ -8,7 +9,7 @@
 
 #include "MainConfig.h"
 #define DEBUG 1
-#define MCSTEP 50000
+#define MCSTEP 100000
 #define SWEEP 50
 #define MESTIME 1
 

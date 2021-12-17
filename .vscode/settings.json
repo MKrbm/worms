@@ -87,18 +87,18 @@
           "memory_resource": "cpp",
           "cinttypes": "cpp"
         },
-    "cmake.setBuildTypeOnMultiConfig": true,
-    "cmake.defaultVariants": {
-        "buildType": {
-          "default": "default",
-          "description": "The build type.",
-          "choices": {
-            "Hello": {
-              "short": "Hello",
-              "long": "Disable optimizations - include debug information.",
-              "buildType": "Hello"
+        "cmake.setBuildTypeOnMultiConfig": true,
+        "cmake.defaultVariants": {
+            "buildType": {
+              "default": "default",
+              "description": "The build type.",
+              "choices": {
+                "GPROF": {
+                  "short": "gprof",
+                  "long": "profile c++ ocde.",
+                  "buildType": "GPROF"
+                }
+              }
             }
-          }
-        }
-      },
+          },
 }

@@ -8,10 +8,16 @@ option(RANDOM_SEED "wether using random seed or not " ON)
 message("None = ${CMAKE_C_FLAGS}")
 message("Debug = ${CMAKE_C_FLAGS_DEBUG}")
 message("Release = ${CMAKE_C_FLAGS_RELEASE}")
+message("GCC_DEBUG_FLAGS = ${GCC_DEBUG_FLAGS}")
 
-# set(Hello "-O3")
 
-# set(CMAKE_BUILD_TYPE Hello) #Debug for -O0 flag
+set(CMAKE_CXX_FLAGS_GPROF
+    "-g -O3 -DNDEBUG -Wall -pg"
+    CACHE STRING "Flags used by the C++ compiler during coverage builds."
+    FORCE )
+
+MARK_AS_ADVANCED(CMAKE_CXX_FLAGS_GPROF)
+
 
 add_subdirectory(./worms) #call /LoopAlgo/CMakeLists.txst
 
