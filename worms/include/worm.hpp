@@ -59,12 +59,12 @@ class worm{
   int W; //number of worms
   std::vector<int> front_dots;// initilize this by f[i] = -(i+1) so that we can check wether a operator is assigned for the ith site already
   std::vector<int> end_dots; //initialize in the same manner.
-  OPS ops_tmp1; 
-  OPS ops_tmp2; 
+  OPS ops_main; //contains operators.
+  OPS ops_sub; // for sub.
 
 
-  OPS& ops_main = ops_tmp1;  //contains operators.
-  OPS& ops_sub = ops_tmp2; // for sub.
+  // OPS& ops_main = ops_tmp1;  //contains operators.
+  // OPS& ops_sub = ops_tmp2; // for sub.
   spin_state::BStatePtr pstate;
   spin_state::WormsPtr pworms;
 
@@ -176,9 +176,10 @@ class worm{
 
   //swapt main and sub
   void swap_oplist(){
-    auto tmp_op = ops_sub;
-    ops_sub = ops_main;
-    ops_main = tmp_op;
+    // auto tmp_op = ops_sub;
+    // ops_sub = ops_main;
+    // ops_main = tmp_op;
+    ops_main.swap(ops_sub);
   }
 
 

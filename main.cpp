@@ -1,4 +1,4 @@
-#define RANDOM_SEED 1
+// #define RANDOM_SEED 0
 #define NDEBUG 1
 
 #include <iostream>
@@ -14,6 +14,14 @@
 #define SWEEP 1E4
 #define MESTIME 1
 
+#if MESTIME
+  using std::chrono::high_resolution_clock;
+  using std::chrono::duration_cast;
+  using std::chrono::duration;
+  using std::chrono::milliseconds;
+  using std::chrono::microseconds;
+
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -38,12 +46,17 @@ int main(int argc, char* argv[])
 
   std::mt19937 rand_src(12345);
   model::heisenberg1D h1(L,h,J);
-  worm solver(beta, h1, 3);
+  worm solver(beta, h1, 6);
   // std::vector<std::vector<int>> states;
 
 
   #if MESTIME
   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+  auto t1 = high_resolution_clock::now();
+  auto t2 = high_resolution_clock::now();
+  double du_time = 0;
+  double wu_time = 0;
   #endif
 
 
@@ -51,8 +64,9 @@ int main(int argc, char* argv[])
   int cnt = 0;
   solver.init_states();
   solver.ops_sub.resize(0);
+  solver.diagonal_update(); //n* need to be comment out 
   for (int i=0; i < MCSTEP + SWEEP; i++){
-    solver.diagonal_update();
+    // solver.diagonal_update(); 
     solver.check_operators(solver.state, solver.ops_sub);
     solver.check_operators(solver.state, solver.ops_main);
     solver.worm_update();
@@ -77,10 +91,14 @@ int main(int argc, char* argv[])
     // ene << - ((double)solver.ops_sub.size()) / beta + h1.shifts[0] * h1.Nb;
   }
 
+
   
 
   #if MESTIME
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+  cout << "time for diagonal_update : " << du_time/(MCSTEP + SWEEP) << endl
+            << "time for worm update : " << wu_time/(MCSTEP+SWEEP) << endl;
 
   double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / (double)1E3;
   #endif
