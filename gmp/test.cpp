@@ -36,33 +36,45 @@ inline mpz_class getbit(mpz_class n, mpz_class p)
 
 int main (void)
 {
-  mpz_class a = 3, b, c;
-  mpz_class d = 1;
+  // int a = 3, b, c;
+  // mpz_class d = 1;
 
-  d = d << a.get_ui();
-  cout << "d : " << d << endl;
+  // d = d << a.get_ui();
+  // cout << "d : " << d << endl;
 
   //* state (using integer)
   mpz_class state_ = ~0;
   mpz_class lstate_ = ~0;
   auto t1 = high_resolution_clock::now();
 
+  long long int a,b,c;
+  long long int d;
+  double x = 0;
   for(std::size_t i=0; i<1E9; i++){
-    int s1 = (i*100)%6;
-    int s2 = (i*99)%6;
-    int s3 = (i*98)%6;
-    int s4 = (i*97)%6;
-    int s5 = (i*96)%6;
+    
+    a = 1;
+    b = 20;
+    c = a << b;
+    c = c >> b;
+    x++;
+    // d += c;
+    // if (i % (int)1E7 == 0) cout << c << endl;
+    // int s1 = (i*100)%6;
+    // int s2 = (i*99)%6;
+    // int s3 = (i*98)%6;
+    // int s4 = (i*97)%6;
+    // int s5 = (i*96)%6;
 
-    state_ = state_ ^ (1<<s1);
-    state_ = modifyBit(s2, state_, 1);
-    state_ = modifyBit(s3, state_, 0);
-    lstate_ = modifyBit(0, lstate_, getbit(state_, s4)); 
-    lstate_ = modifyBit(1, lstate_, getbit(state_, s5)); 
+    // state_ = state_ ^ (1<<s1);
+    // state_ = modifyBit(s2, state_, 1);
+    // state_ = modifyBit(s3, state_, 0);
+    // lstate_ = modifyBit(0, lstate_, getbit(state_, s4)); 
+    // lstate_ = modifyBit(1, lstate_, getbit(state_, s5)); 
   }
+  cout << x << endl;
 
   auto t2 = high_resolution_clock::now();
-  auto elapsed = duration_cast<milliseconds>(t2 - t1).count() / (double)1E3;
+  auto elapsed = duration_cast<microseconds>(t2 - t1).count() / (double)1E3;
 
   cout << "elapsed time : " << elapsed << endl;
  
