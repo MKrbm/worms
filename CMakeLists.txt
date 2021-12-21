@@ -1,14 +1,29 @@
 cmake_minimum_required(VERSION 3.0.0)
 
+# needed for include gmp
+set(CMAKE_SYSTEM_PROCESSOR arm64) #is this needed?
+set(CMAKE_OSX_ARCHITECTURES arm64)
+
+
 
 project(worms VERSION 0.1.0) # set project version
 option(RANDOM_SEED "wether using random seed or not " ON)
 
+#include find package
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
+
+#find package for gmp
+find_package(GMP REQUIRED)
+find_package(GMPXX REQUIRED)
 
 message("None = ${CMAKE_C_FLAGS}")
 message("Debug = ${CMAKE_C_FLAGS_DEBUG}")
 message("Release = ${CMAKE_C_FLAGS_RELEASE}")
 message("GCC_DEBUG_FLAGS = ${GCC_DEBUG_FLAGS}")
+
+# set(CMAKE_CXX_COMPILER "/usr/bin/g++")
+# set(CMAKE_CXX_COMPILER /usr/bin/g++ CACHE PATH "" FORCE)
+
 
 
 set(CMAKE_CXX_FLAGS_GPROF
@@ -26,8 +41,6 @@ add_subdirectory(./worms) #call /LoopAlgo/CMakeLists.txst
 # main_app
 add_executable(main_app main.cpp) # add executable
 target_link_libraries(main_app worm) # link library
-
-
 
 
 # debug_app
@@ -48,4 +61,7 @@ target_include_directories(debug PUBLIC
 target_compile_features(debug PUBLIC cxx_std_14)
 target_compile_features(main_app PUBLIC cxx_std_14)
 
-
+# test
+add_executable(test ./gmp/test.cpp)
+target_compile_features(test PUBLIC cxx_std_14)
+target_link_libraries(test GMP::GMP GMPXX::GMPXX)

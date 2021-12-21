@@ -99,11 +99,11 @@ int main(){
     int s4 = (i*97)%6;
     int s5 = (i*96)%6;
 
-    // state[s1] = !state[s1];
-    // state[s2] = 1;
-    // state[s3] = 0;
-    // lstate[0] = state[s4];
-    // lstate[1] = state[s5];
+    state[s1] = !state[s1];
+    state[s2] = 1;
+    state[s3] = 0;
+    lstate[0] = state[s4];
+    lstate[1] = state[s5];
   }
   auto t2 = high_resolution_clock::now();
   double elapsed = duration_cast<milliseconds>(t2 - t1).count() / (double)1E3;
