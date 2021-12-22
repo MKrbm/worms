@@ -56,7 +56,7 @@ model::heisenberg1D::heisenberg1D(int L, double Jz, double Jxy, double h, bool P
   // loperator.print_trans_weights();
   printf("end setting\n\n\n");
 
-  rho = loperators[0].total_weights * Nb;
+  rho = loperators[0].max_diagonal_weight_ * Nb;
 }
 
 void model::heisenberg1D::initial_setting(){

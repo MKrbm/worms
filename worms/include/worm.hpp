@@ -81,7 +81,7 @@ class worm{
 
   //declaration for random number generator
 
-  #ifdef RANDOM_SEED
+  #ifdef NDEBUG
   std::mt19937 rand_src = std::mt19937(static_cast <unsigned> (time(0)));
   #else
   std::mt19937 rand_src = std::mt19937(SEED);
@@ -214,7 +214,7 @@ class worm{
       r = uni_dist(rand_src);
 
       // cout << "random number : " << r << endl;
-      tau_prime = tau + exp_dist(rand_src);
+      double tau_prime = tau + exp_dist(rand_src);
 
       // put worms on space.
       while(worm_tau<tau_prime && n_worm < W){
@@ -231,7 +231,7 @@ class worm{
       if (tau_prime > beta) break;
 
       /*
-      //* typically, we don't need this part. This is needed if there are more than one local hamiltonian.
+      * typically, we don't need this part. This is needed if there are more than one local hamiltonian.
       // r = uni_dist(rand_src);
       // max_ = *(operator_cum_weights.end()-1);
       // target = r * max_;
@@ -239,27 +239,24 @@ class worm{
       //   if (operator_cum_weights[lop_label] >= target) break;
       // }
       */
-
+     
       int leg_size = leg_sizes[lop_label]; //size of choosen operator
       auto& lop = loperators[lop_label];
-      auto& diag_cum_weight = lop.diagonal_cum_weight;
 
-      const auto& bond = bonds[dist(rand_src)];
-      int u = 0;
-      for (int i = leg_size-1; i >= 0; i--) {
-        u <<= 1;
-        u += state[bond[i]];
-      }
+      // choose bond
+      auto& bond = bonds[dist(rand_src)];
+      int u = spin_state::state2num(cstate, bond);
+
       if (uni_dist(rand_src) < lop.accept[u]){
-        local_state = spin_state::num2state(u + (u<<leg_size ), 2*leg_size);
-        ops_main.emplace_back( new spin_state::OpState(
-                                  local_state,
-                                  &lop,
-                                  bond,
-                                  tau_prime
-                              ));
-
-
+        local_state = spin_state::num2state(u + (u<<leg_size), 2*leg_size);
+        ops_main.emplace_back(
+            new spin_state::OpState(
+              local_state,
+              &lop,
+              bond,
+              tau_prime
+          )
+        );
 
         for (int i=0; i<leg_size; i++){
           set_dots(bond[i], tau_prime, 1 , i);
@@ -283,7 +280,7 @@ class worm{
       stateptr = ops_sub[op_label];
       // cout << "L : " << stateptr->plop->L << endl;
       if (op_ptr->is_off_diagonal()){
-        update_state(op_ptr, cstate);
+        update_state_OD(op_ptr, cstate);
         ops_main.push_back(op_ptr);
         for (int i=0; i<op_ptr->L; i++){
           set_dots(op_ptr->bond[i], op_ptr->tau, 1 , i);
@@ -422,15 +419,19 @@ class worm{
       i++;
     }
     ASSERT(is_same_state(local_state, state_), "the operator can not be applied to the state");
-    if (op_ptr->is_off_diagonal()){
-      int index = 0;
-      for (auto x : op_ptr->bond){
-        state[x] = local_state[state_.size() + index];
-        index++;
-      }
-    }
+    if (op_ptr->is_off_diagonal()) update_state_OD(op_ptr, state);
   }
 
+  /*
+  *update given state by given offdiagonal operator ptr;
+  */
+  static void update_state_OD(spin_state::BaseStatePtr op_ptr, std::vector<int>& state){
+    int index = 0;
+    for (auto x : op_ptr->bond){
+      state[x] = (*op_ptr)[op_ptr->L + index];
+      index++;
+    }
+  }
   /*
   * check the operator and state is consistent during the worm_updateg
   params

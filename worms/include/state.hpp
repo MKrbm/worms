@@ -50,6 +50,16 @@ namespace spin_state{
     return num;
   }
 
+  template<typename STATE_>
+  int state2num(STATE_ const& state, std::vector<int> const& bond){
+    int u = 0;
+    for (int i = bond.size()-1; i >= 0; i--) {
+      u <<= 1;
+      u += state[bond[i]];
+    }
+    return u;
+  }
+
   STATE num2state(int num, int L);
   std::string return_name(int dot_type, int op_type);
   

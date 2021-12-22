@@ -52,7 +52,7 @@ void model::local_operator::set_ham(){
   // for (int i=0; i<size; i++) total_weights+= ham[i][i];
 
   double tmp=0;
-  double max_diagonal_weight_ = 0;
+  max_diagonal_weight_ = 0;
   for (int i=0; i<size; i++) {
     tmp += ham_[i][i];
     diagonal_cum_weight[i] = tmp;
