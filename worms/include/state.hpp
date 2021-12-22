@@ -247,6 +247,8 @@ int dot_type : state type 0 : bottom state, 1:operator, 2:worms;
 */
 class spin_state::Dot
 {
+  private:
+  
   public:
   int prev;
   int next = -1;
@@ -271,6 +273,8 @@ class spin_state::Dot
   void set_prev(int p){
     prev = p;
   }
+
+  // static add_origin(int s, )
 
   /*
   int dir : direction worm goes

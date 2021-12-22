@@ -217,6 +217,7 @@ class worm{
     std::size_t s0, s1;
     int r_bond; // randomly choosen bond
     std::vector<int> cstate = state;
+    std::vector<int> local_state;
 
 
 
@@ -266,19 +267,17 @@ class worm{
       // choose bond
       r_bond = dist(rand_src);
       int tuggle = 1;
-      auto local_state = spin_state::num2state(s_num + (s_num<<leg_size ), 2*leg_size);
-      std::vector<int> labels(leg_size);
-      auto bond = bonds[r_bond];
+      local_state = spin_state::num2state(s_num + (s_num<<leg_size ), 2*leg_size);
+      // std::vector<int> labels(leg_size);
+      const auto& bond = bonds[r_bond];
 
       int n_dots = spacetime_dots.size();
       for (int i=0; i<leg_size; i++){
-        labels[i] = n_dots;
+        // labels[i] = n_dots;
         n_dots++;
         int s = bond[i];
         if (cstate[s] != local_state[i]) tuggle = 0;
       }
-
-
 
       if ( tuggle ){
         ops_main.emplace_back(
@@ -409,30 +408,54 @@ class worm{
     // ASSERT(label == spacetime_dots.size()+1)
     int label = spacetime_dots.size();
 
+    int prev, end;
     if (dot_type == 0) {
       sptr = state.data() + index;
       stateptr = pstate;
+      if (end_dots[site] < 0){
+        end_dots[site] = label;
+      } 
+      prev = front_dots[site];
+      end = end_dots[site];
+      spacetime_dots.emplace_back(
+        site, tau_prime, prev, end, sptr,
+        stateptr, dot_type
+      );
     }else if(dot_type == 1){
       int n = ops_main.size();
       sptr = ops_main[n-1]->data() + index;
       stateptr = ops_main[n-1];
+      if (end_dots[site] < 0){
+        end_dots[site] = label;
+      } 
+      prev = front_dots[site];
+      end = end_dots[site];
+      spacetime_dots.emplace_back(
+        site, tau_prime, prev, end, sptr,
+        stateptr, dot_type
+      );
     }else if(dot_type == 2){
       sptr = worms.data() + index;
       stateptr = pworms;
       worms_label.push_back(label);
+      if (end_dots[site] < 0){
+        end_dots[site] = label;
+      } 
+      prev = front_dots[site];
+      end = end_dots[site];
+      spacetime_dots.emplace_back(
+        site, tau_prime, prev, end, sptr,
+        stateptr, dot_type
+      );
     }
 
-    if (end_dots[site] < 0){
-      end_dots[site] = label;
-    } 
-    int prev = front_dots[site];
-    int end = end_dots[site];
 
 
-    spacetime_dots.emplace_back(
-      site, tau_prime, prev, end, sptr,
-      stateptr, dot_type
-    );
+
+    // spacetime_dots.emplace_back(
+    //   site, tau_prime, prev, end, sptr,
+    //   stateptr, dot_type
+    // );
 
     if (prev>=0) spacetime_dots[prev].set_next(label);
     

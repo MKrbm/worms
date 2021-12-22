@@ -85,7 +85,15 @@
           "*.tcc": "cpp",
           "codecvt": "cpp",
           "memory_resource": "cpp",
-          "cinttypes": "cpp"
+          "cinttypes": "cpp",
+          "compare": "cpp",
+          "concepts": "cpp",
+          "condition_variable": "cpp",
+          "numbers": "cpp",
+          "queue": "cpp",
+          "semaphore": "cpp",
+          "thread": "cpp",
+          "stop_token": "cpp"
         },
         "cmake.setBuildTypeOnMultiConfig": true,
         "cmake.defaultVariants": {

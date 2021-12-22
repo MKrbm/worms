@@ -1,5 +1,6 @@
 // #define RANDOM_SEED 0
 #define NDEBUG 1
+#include "MainConfig.h"
 
 #include <iostream>
 #include <worm.hpp>
@@ -8,7 +9,6 @@
 #include <chrono>
 #include <observable.hpp>
 
-#include "MainConfig.h"
 #define DEBUG 1
 #define MCSTEP 1E5
 #define SWEEP 1E4
@@ -64,9 +64,9 @@ int main(int argc, char* argv[])
   int cnt = 0;
   solver.init_states();
   solver.ops_sub.resize(0);
-  solver.diagonal_update(); //n* need to be comment out 
   for (int i=0; i < MCSTEP + SWEEP; i++){
     // solver.diagonal_update(); 
+    solver.diagonal_update(); //n* need to be comment out 
     solver.check_operators(solver.state, solver.ops_sub);
     solver.check_operators(solver.state, solver.ops_main);
     solver.worm_update();

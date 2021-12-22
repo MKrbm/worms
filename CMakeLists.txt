@@ -64,4 +64,5 @@ target_compile_features(main_app PUBLIC cxx_std_14)
 # test
 add_executable(test ./gmp/test.cpp)
 target_compile_features(test PUBLIC cxx_std_14)
+target_link_libraries(test worm) # link library
 # target_link_libraries(test gmp gmpxx)
