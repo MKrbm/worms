@@ -246,20 +246,20 @@ class worm{
       if (tau_prime > beta) break;
 
       r = uni_dist(rand_src);
-      double max_ = *(operator_cum_weights.end()-1);
-      double target = r * max_;
-      std::size_t lop_label;
-      for(lop_label=0; lop_label < N_op; lop_label++){
-        if (operator_cum_weights[lop_label] >= target) break;
-      }
-
+      // double max_ = *(operator_cum_weights.end()-1);
+      // double target = r * max_;
+      // std::size_t lop_label;
+      // for(lop_label=0; lop_label < N_op; lop_label++){
+      //   if (operator_cum_weights[lop_label] >= target) break;
+      // }
+      std::size_t lop_label = 0;
       int leg_size = leg_sizes[lop_label]; //size of choosen operator
       auto& lop = loperators[lop_label];
       auto& diag_cum_weight = lop.diagonal_cum_weight;
-      max_ = lop.total_weights;
+      double max_ = lop.total_weights;
       r = uni_dist(rand_src);
       int s_num; //choose local state 
-      target = r * max_;
+      double target = r * max_;
       for (s_num=0; s_num < (1<<leg_size); s_num++){
         if (diag_cum_weight[s_num] >= target) break;
       }
