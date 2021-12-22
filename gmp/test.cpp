@@ -33,13 +33,16 @@ inline int getbit(int n, int p)
     return (n >> p) ^ 1;
 }
 
+template <unsigned int L = 2>
 class binstate{
 public:
   int x;
   binstate(){} 
+  binstate(const int& x) :x(x){}
 
-  binstate(const int& x) :x(x)
-  {} 
+  unsigned int return_L(){
+    return L;
+  }
 
   binstate& operator=(int x){
     this->x = x;
@@ -96,7 +99,7 @@ public:
     return result;
   }
 
-
+  //* bitwise not operator
   binstate operator~(){
     binstate result = *this;
     result.x = ~this->x;
@@ -128,8 +131,8 @@ int main (void)
 
   // d = d << a.get_ui();
   // cout << "d : " << d << endl;
-  binstate y = 1, x = 2;
-  cout << (y<<x) << endl; 
+  binstate<> y = 1, x = 2;
+  cout << y.return_L() << endl; 
 
 
 
@@ -142,7 +145,7 @@ int main (void)
   // long long int a,b,c;
   // long long int d;
 
-  binstate a,b,c;
+  binstate<> a,b,c;
   for(std::size_t i=0; i<1E9; i++){
     
     a = 1;
