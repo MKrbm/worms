@@ -1,5 +1,4 @@
 // #define RANDOM_SEED 0
-#define NDEBUG 1
 #include "MainConfig.h"
 
 #include <iostream>
@@ -46,7 +45,7 @@ int main(int argc, char* argv[])
 
   std::mt19937 rand_src(12345);
   model::heisenberg1D h1(L,h,J);
-  worm solver(beta, h1, 6);
+  worm solver(beta, h1, 4);
   // std::vector<std::vector<int>> states;
 
 

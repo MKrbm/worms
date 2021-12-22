@@ -57,8 +57,6 @@ class worm{
   double beta;
   int L;
   int W; //number of worms
-  std::vector<int> front_dots;// initilize this by f[i] = -(i+1) so that we can check wether a operator is assigned for the ith site already
-  std::vector<int> end_dots; //initialize in the same manner.
   OPS ops_main; //contains operators.
   OPS ops_sub; // for sub.
 
@@ -100,8 +98,7 @@ class worm{
 
   // random distribution from 0 to 1
   std::uniform_real_distribution<> uni_dist; 
-
-
+  std::exponential_distribution<> exp_dist;
   // reference of member variables from model class
 
   static const int N_op = MODEL::Nop;
@@ -114,12 +111,11 @@ class worm{
 
   worm(double beta, MODEL model_, int W)
   :model(model_), L(model.L), beta(beta), W(W),
-  dist(0, model.Nb-1), worm_dist(0.0, beta),
+  dist(0, model.Nb-1), worm_dist(0.0, beta), exp_dist(model_.rho),
   bonds(model.bonds), 
   pstate(spin_state::BStatePtr(new BSTATE(L))), pworms(spin_state::WormsPtr(new WORMS(W))),
   loperators(model.loperators), leg_sizes(model.leg_size),
-  operator_cum_weights(model.operator_cum_weights), worms_tau(W),
-  front_dots(L,0), end_dots(L,0)
+  operator_cum_weights(model.operator_cum_weights), worms_tau(W)
   {
     #ifdef RANDOM_SEED
     srand(static_cast <unsigned> (time(0)));
@@ -147,16 +143,6 @@ class worm{
       worms.tau_list[i] =  worm_dist(rand_src);
     }
     std::sort(worms.tau_list.begin(), worms.tau_list.end(), std::less<double>());
-  }
-
-  /* 
-  initialize front and end groups 
-  */
-  void init_front_n_end(){
-    for (int i=0; i<L; i++){
-      front_dots[i] = -(i+1);
-      end_dots[i] = -(i+1);
-    }
   }
 
   void init_states(){
@@ -190,7 +176,6 @@ class worm{
     int n_worm = 0;
 
     //initialization
-    init_front_n_end();
     init_worms_rand();
     // init_ops_main()
     ops_main.resize(0);
@@ -218,9 +203,9 @@ class worm{
     int r_bond; // randomly choosen bond
     std::vector<int> cstate = state;
     std::vector<int> local_state;
-
-
-
+    double max_, target;
+    std::size_t lop_label, s_num;
+    lop_label = 0;
 
 
     //set worms
@@ -229,7 +214,7 @@ class worm{
       r = uni_dist(rand_src);
 
       // cout << "random number : " << r << endl;
-      tau_prime = tau - log(r)/model.rho;
+      tau_prime = tau + exp_dist(rand_src);
 
       // put worms on space.
       while(worm_tau<tau_prime && n_worm < W){
@@ -245,55 +230,39 @@ class worm{
       //choose and insert diagonal operator.
       if (tau_prime > beta) break;
 
-      r = uni_dist(rand_src);
-      double max_ = *(operator_cum_weights.end()-1);
-      double target = r * max_;
-      std::size_t lop_label;
-      for(lop_label=0; lop_label < N_op; lop_label++){
-        if (operator_cum_weights[lop_label] >= target) break;
-      }
+      /*
+      //* typically, we don't need this part. This is needed if there are more than one local hamiltonian.
+      // r = uni_dist(rand_src);
+      // max_ = *(operator_cum_weights.end()-1);
+      // target = r * max_;
+      // for(lop_label=0; lop_label < N_op; lop_label++){
+      //   if (operator_cum_weights[lop_label] >= target) break;
+      // }
+      */
 
       int leg_size = leg_sizes[lop_label]; //size of choosen operator
       auto& lop = loperators[lop_label];
       auto& diag_cum_weight = lop.diagonal_cum_weight;
-      max_ = lop.total_weights;
-      r = uni_dist(rand_src);
-      int s_num; //choose local state 
-      target = r * max_;
-      for (s_num=0; s_num < (1<<leg_size); s_num++){
-        if (diag_cum_weight[s_num] >= target) break;
+
+      const auto& bond = bonds[dist(rand_src)];
+      int u = 0;
+      for (int i = leg_size-1; i >= 0; i--) {
+        u <<= 1;
+        u += state[bond[i]];
       }
+      if (uni_dist(rand_src) < lop.accept[u]){
+        local_state = spin_state::num2state(u + (u<<leg_size ), 2*leg_size);
+        ops_main.emplace_back( new spin_state::OpState(
+                                  local_state,
+                                  &lop,
+                                  bond,
+                                  tau_prime
+                              ));
 
-      // choose bond
-      r_bond = dist(rand_src);
-      int tuggle = 1;
-      local_state = spin_state::num2state(s_num + (s_num<<leg_size ), 2*leg_size);
-      // std::vector<int> labels(leg_size);
-      const auto& bond = bonds[r_bond];
 
-      int n_dots = spacetime_dots.size();
-      for (int i=0; i<leg_size; i++){
-        // labels[i] = n_dots;
-        n_dots++;
-        int s = bond[i];
-        if (cstate[s] != local_state[i]) tuggle = 0;
-      }
 
-      if ( tuggle ){
-        ops_main.emplace_back(
-            new spin_state::OpState(
-              local_state,
-              &lop,
-              bond,
-              tau_prime
-          )
-        );
-
-        int dot_label = spacetime_dots.size();
-        std::size_t n = ops_main.size();
         for (int i=0; i<leg_size; i++){
           set_dots(bond[i], tau_prime, 1 , i);
-          dot_label++;
         }
       }
       
@@ -412,56 +381,32 @@ class worm{
     if (dot_type == 0) {
       sptr = state.data() + index;
       stateptr = pstate;
-      if (end_dots[site] < 0){
-        end_dots[site] = label;
-      } 
-      prev = front_dots[site];
-      end = end_dots[site];
+      ASSERT(label == site, "label must be equal to site");
       spacetime_dots.emplace_back(
-        site, tau_prime, prev, end, sptr,
+        site, tau_prime, site, site, sptr,
         stateptr, dot_type
       );
     }else if(dot_type == 1){
       int n = ops_main.size();
       sptr = ops_main[n-1]->data() + index;
       stateptr = ops_main[n-1];
-      if (end_dots[site] < 0){
-        end_dots[site] = label;
-      } 
-      prev = front_dots[site];
-      end = end_dots[site];
       spacetime_dots.emplace_back(
-        site, tau_prime, prev, end, sptr,
+        site, tau_prime, spacetime_dots[site].prev, site, sptr,
         stateptr, dot_type
       );
+      spacetime_dots[spacetime_dots[site].prev].set_next(label);
+      spacetime_dots[site].set_prev(label);
     }else if(dot_type == 2){
       sptr = worms.data() + index;
       stateptr = pworms;
       worms_label.push_back(label);
-      if (end_dots[site] < 0){
-        end_dots[site] = label;
-      } 
-      prev = front_dots[site];
-      end = end_dots[site];
       spacetime_dots.emplace_back(
-        site, tau_prime, prev, end, sptr,
+        site, tau_prime, spacetime_dots[site].prev, site, sptr,
         stateptr, dot_type
       );
+      spacetime_dots[spacetime_dots[site].prev].set_next(label);
+      spacetime_dots[site].set_prev(label);
     }
-
-
-
-
-    // spacetime_dots.emplace_back(
-    //   site, tau_prime, prev, end, sptr,
-    //   stateptr, dot_type
-    // );
-
-    if (prev>=0) spacetime_dots[prev].set_next(label);
-    
-    if (end>=0) spacetime_dots[end].set_prev(label);
-
-    front_dots[site] = label;
 
   }
 

@@ -1,5 +1,3 @@
-#define ndebug 1
-
 #include <uftree.hpp>
 #include <model.hpp>
 #include <worm.hpp>

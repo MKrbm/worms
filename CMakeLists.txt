@@ -8,6 +8,8 @@ cmake_minimum_required(VERSION 3.0.0)
 
 project(worms VERSION 0.1.0) # set project version
 option(RANDOM_SEED "wether using random seed or not " ON)
+option(NDEBUG "wether using random seed or not " ON)
+
 
 #include find package
 # set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)

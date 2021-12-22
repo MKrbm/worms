@@ -1,5 +1,3 @@
-#define ndebug 1
-
 #include <uftree.hpp>
 #include <model.hpp>
 #include <worm.hpp>
@@ -16,7 +14,6 @@
 
 using namespace std::chrono;
 
-#define DEBUG 0
 
 using std::cout;
 using std::endl;
