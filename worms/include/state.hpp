@@ -267,12 +267,12 @@ class spin_state::Dot
   int* sptr;
   double tau;
   BaseStatePtr typeptr;
-  Dot(int s, double t , int p, int n, int* sptr, BaseState* type, int d)
-  :site(s), tau(t), prev(p), next(n), sptr(sptr), typeptr(BaseStatePtr(type)), dot_type(d)
+  Dot(int s, int p, int n, int* sptr, BaseState* type, int d)
+  :site(s),  prev(p), next(n), sptr(sptr), typeptr(BaseStatePtr(type)), dot_type(d)
   {}
 
-  Dot(int s, double t , int p, int n, int* sptr, BaseStatePtr type, int d)
-  :site(s), tau(t), prev(p), next(n), sptr(sptr), typeptr(type), dot_type(d)
+  Dot(int s, int p, int n, int* sptr, BaseStatePtr type, int d)
+  :site(s),  prev(p), next(n), sptr(sptr), typeptr(type), dot_type(d)
   {}
 
   Dot(){}

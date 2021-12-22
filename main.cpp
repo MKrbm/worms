@@ -9,8 +9,8 @@
 #include <observable.hpp>
 
 #define DEBUG 1
-#define MCSTEP 1E4
-#define SWEEP 1E3
+#define MCSTEP 1E5
+#define SWEEP 1E4
 #define MESTIME 1
 
 #if MESTIME
@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
   std::mt19937 rand_src(12345);
   model::heisenberg1D h1(L,h,J);
-  worm solver(beta, h1, 4);
+  worm solver(beta, h1, 6);
   // std::vector<std::vector<int>> states;
 
 

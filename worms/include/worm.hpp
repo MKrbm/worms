@@ -81,7 +81,7 @@ class worm{
 
   //declaration for random number generator
 
-  #ifdef NDEBUG
+  #ifdef RANDOM_SEED
   std::mt19937 rand_src = std::mt19937(static_cast <unsigned> (time(0)));
   #else
   std::mt19937 rand_src = std::mt19937(SEED);
@@ -117,13 +117,7 @@ class worm{
   loperators(model.loperators), leg_sizes(model.leg_size),
   operator_cum_weights(model.operator_cum_weights), worms_tau(W)
   {
-    #ifdef RANDOM_SEED
-    srand(static_cast <unsigned> (time(0)));
-    #else
-    srand(SEED);
-    #endif
     worms_tau.resize(W);
-
     cout << "beta : " << beta << endl;
     // pstate = new BSTATE(L);
     // pworms = new WORMS(W);
@@ -155,7 +149,7 @@ class worm{
     spacetime_dots.resize(0);
     if (add_state){
       for(int i=0; i<L; i++){
-        set_dots(i, 0, 0, i);
+        set_dots(i, 0, i);
       }
     }
   }
@@ -219,7 +213,7 @@ class worm{
       // put worms on space.
       while(worm_tau<tau_prime && n_worm < W){
         int site = worm_site[n_worm];
-        set_dots(site, worm_tau, 2 , n_worm);
+        set_dots(site, 2 , n_worm);
         worms[n_worm] = cstate[site];
         n_worm++;
         worm_tau = worm_tau_list[n_worm];
@@ -259,7 +253,7 @@ class worm{
         );
 
         for (int i=0; i<leg_size; i++){
-          set_dots(bond[i], tau_prime, 1 , i);
+          set_dots(bond[i], 1 , i);
         }
       }
       
@@ -283,7 +277,7 @@ class worm{
         update_state_OD(op_ptr, cstate);
         ops_main.push_back(op_ptr);
         for (int i=0; i<op_ptr->L; i++){
-          set_dots(op_ptr->bond[i], op_ptr->tau, 1 , i);
+          set_dots(op_ptr->bond[i], 1 , i);
         }
       }
       op_label++;
@@ -366,7 +360,7 @@ class worm{
   /*
   *this function will be called after assigining op_main
   */
-  void set_dots(int site, double tau_prime, int dot_type, int index){
+  void set_dots(int site, int dot_type, int index){
 
     int* sptr;
     spin_state::BaseStatePtr stateptr;
@@ -380,7 +374,7 @@ class worm{
       stateptr = pstate;
       ASSERT(label == site, "label must be equal to site");
       spacetime_dots.emplace_back(
-        site, tau_prime, site, site, sptr,
+        site, site, site, sptr,
         stateptr, dot_type
       );
     }else if(dot_type == 1){
@@ -388,7 +382,7 @@ class worm{
       sptr = ops_main[n-1]->data() + index;
       stateptr = ops_main[n-1];
       spacetime_dots.emplace_back(
-        site, tau_prime, spacetime_dots[site].prev, site, sptr,
+        site, spacetime_dots[site].prev, site, sptr,
         stateptr, dot_type
       );
       spacetime_dots[spacetime_dots[site].prev].set_next(label);
@@ -398,7 +392,7 @@ class worm{
       stateptr = pworms;
       worms_label.push_back(label);
       spacetime_dots.emplace_back(
-        site, tau_prime, spacetime_dots[site].prev, site, sptr,
+        site, spacetime_dots[site].prev, site, sptr,
         stateptr, dot_type
       );
       spacetime_dots[spacetime_dots[site].prev].set_next(label);
