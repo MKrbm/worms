@@ -274,7 +274,8 @@ class worm{
       stateptr = ops_sub[op_label];
       // cout << "L : " << stateptr->plop->L << endl;
       if (op_ptr->is_off_diagonal()){
-        update_state_OD(op_ptr, cstate);
+        // update_state_OD(op_ptr, cstate);
+        update_state(op_ptr, cstate);
         ops_main.push_back(op_ptr);
         for (int i=0; i<op_ptr->L; i++){
           set_dots(op_ptr->bond[i], 1 , i);
