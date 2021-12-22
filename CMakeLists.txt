@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.0.0)
 
 # needed for include gmp
-set(CMAKE_SYSTEM_PROCESSOR arm64) #is this needed?
-set(CMAKE_OSX_ARCHITECTURES arm64)
+# set(CMAKE_SYSTEM_PROCESSOR arm64) #only mac
+# set(CMAKE_OSX_ARCHITECTURES arm64) # only mac
 
 
 
@@ -10,11 +10,11 @@ project(worms VERSION 0.1.0) # set project version
 option(RANDOM_SEED "wether using random seed or not " ON)
 
 #include find package
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
+# set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 
-#find package for gmp
-find_package(GMP REQUIRED)
-find_package(GMPXX REQUIRED)
+# #find package for gmp
+# find_package(GMP REQUIRED)
+# find_package(GMPXX REQUIRED)
 
 message("None = ${CMAKE_C_FLAGS}")
 message("Debug = ${CMAKE_C_FLAGS_DEBUG}")
@@ -64,4 +64,4 @@ target_compile_features(main_app PUBLIC cxx_std_14)
 # test
 add_executable(test ./gmp/test.cpp)
 target_compile_features(test PUBLIC cxx_std_14)
-target_link_libraries(test GMP::GMP GMPXX::GMPXX)
+# target_link_libraries(test gmp gmpxx)
