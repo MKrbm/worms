@@ -6,7 +6,10 @@ cmake_minimum_required(VERSION 3.0.0)
 
 
 
-project(worms VERSION 0.1.0) # set project version
+# include(cmake/prefix.cmake)
+project(worms VERSION 1.0.0 LANGUAGES CXX)
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 option(RANDOM_SEED "wether using random seed or not " ON)
 option(NDEBUG "wether using random seed or not " ON)
 
@@ -17,6 +20,18 @@ option(NDEBUG "wether using random seed or not " ON)
 # #find package for gmp
 # find_package(GMP REQUIRED)
 # find_package(GMPXX REQUIRED)
+
+#include findpackages
+include_directories(${worms_SOURCE_DIR})
+
+#include libraries
+include(bcl)
+include(lattice)
+include(eigen3)
+
+FetchContent_MakeAvailable(bcl)
+include_directories(${FetchContent_includes})
+
 
 message("None = ${CMAKE_C_FLAGS}")
 message("Debug = ${CMAKE_C_FLAGS_DEBUG}")
@@ -34,37 +49,27 @@ set(CMAKE_CXX_FLAGS_GPROF
     FORCE )
 
 MARK_AS_ADVANCED(CMAKE_CXX_FLAGS_GPROF)
-
-
 add_subdirectory(./worms) #call /LoopAlgo/CMakeLists.txst
 
 
-
-# main_app
-add_executable(main_app main.cpp) # add executable
-target_link_libraries(main_app worm) # link library
-
-
-# debug_app
-add_executable(debug debug.cpp) # add executable
-target_link_libraries(debug worm) # link library
-# target_compile_features(worm PRIVATE cxx_std_20)
-
-
-configure_file(MainConfig.h.in ${PROJECT_SOURCE_DIR}/MainConfig.h)
-
-target_include_directories(main_app PUBLIC
+# add executable
+FOREACH(name main debug)
+    add_executable(${name} ${name}.cpp)
+    target_link_libraries(${name} worm)
+    target_include_directories(${name} PUBLIC
             "${PROJECT_BINARY_DIR}"
-            )
-target_include_directories(debug PUBLIC
-            "${PROJECT_BINARY_DIR}"
-            )
+        )
+    target_compile_features(${name} PUBLIC cxx_std_14)
+ENDFOREACH(name)
 
-target_compile_features(debug PUBLIC cxx_std_14)
-target_compile_features(main_app PUBLIC cxx_std_14)
+
+configure_file(MainConfig.h.in MainConfig.h)
+
 
 # test
 add_executable(test ./gmp/test.cpp)
 target_compile_features(test PUBLIC cxx_std_14)
 target_link_libraries(test worm) # link library
-# target_link_libraries(test gmp gmpxx)
+
+
+

@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
   std::mt19937 rand_src(12345);
   model::heisenberg1D h1(L,h,J);
-  worm solver(beta, h1, 6);
+  worm solver(beta, h1);
   // std::vector<std::vector<int>> states;
 
 
@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
   solver.ops_sub.resize(0);
   for (int i=0; i < MCSTEP + SWEEP; i++){
     // solver.diagonal_update(); 
-    solver.diagonal_update(); //n* need to be comment out 
+    solver.diagonal_update(3.0); //n* need to be comment out 
     solver.check_operators(solver.state, solver.ops_sub);
     solver.check_operators(solver.state, solver.ops_main);
     solver.worm_update();

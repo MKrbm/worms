@@ -14,6 +14,8 @@
 #include <sstream>
 #include <algorithm>
 
+#include <bcl.hpp>
+
 #ifdef __APPLE__
 #  include <mach-o/dyld.h>
 #endif
@@ -33,8 +35,7 @@
 #include "state.hpp"
 #include "model.hpp"
 #include "BC.hpp"
-
-#define SEED 2035
+#define SEED 2021
 /* inherit UnionFindTree and add find_and_flip function*/
 
 // template <typename MODEL>
@@ -80,25 +81,20 @@ class worm{
   std::vector< std::vector<int> > bonds;
 
   //declaration for random number generator
-
+  // typedef model::local_operator::engine_type engine_type;
+  typedef std::mt19937 engine_type;
   #ifdef RANDOM_SEED
-  std::mt19937 rand_src = std::mt19937(static_cast <unsigned> (time(0)));
+  engine_type rand_src = engine_type(static_cast <unsigned> (time(0)));
   #else
-  std::mt19937 rand_src = std::mt19937(SEED);
+  engine_type rand_src = engine_type(SEED);
   #endif
 
-  //for choosing bonds
-  std::uniform_int_distribution<> dist;
-
-  // for binary dice
-  std::uniform_int_distribution<> binary_dice = std::uniform_int_distribution<>(0,1); 
-
-  // random distribution from 0 to beta 
-  std::uniform_real_distribution<> worm_dist;
 
   // random distribution from 0 to 1
   std::uniform_real_distribution<> uni_dist; 
-  std::exponential_distribution<> exp_dist;
+  typedef std::uniform_real_distribution<> uniform_t;
+  typedef std::exponential_distribution<> expdist_t;
+  uniform_t uniform;
   // reference of member variables from model class
 
   static const int N_op = MODEL::Nop;
@@ -109,39 +105,35 @@ class worm{
 
 
 
-  worm(double beta, MODEL model_, int W)
-  :model(model_), L(model.L), beta(beta), W(W),
-  dist(0, model.Nb-1), worm_dist(0.0, beta), exp_dist(model_.rho),
-  bonds(model.bonds), 
-  pstate(spin_state::BStatePtr(new BSTATE(L))), pworms(spin_state::WormsPtr(new WORMS(W))),
+  worm(double beta, MODEL model_)
+  :model(model_), L(model.L), beta(beta),
+  // dist(0, model.Nb-1), worm_dist(0.0, beta),
+  bonds(model.bonds), pworms(spin_state::WormsPtr(new WORMS(20))),
+  pstate(spin_state::BStatePtr(new BSTATE(L))), 
   loperators(model.loperators), leg_sizes(model.leg_size),
-  operator_cum_weights(model.operator_cum_weights), worms_tau(W)
+  operator_cum_weights(model.operator_cum_weights)
   {
-    worms_tau.resize(W);
     cout << "beta : " << beta << endl;
-    // pstate = new BSTATE(L);
-    // pworms = new WORMS(W);
-    
   }
 
 
   //* functions for initializing
   /* initialize worms */
-  void init_worms_rand(){
-    worms_label.resize(0);
-    for (int i=0; i<W; i++){
-      // pworms->worm_site[i] = dist(rand_src);
-      // pworms->tau_list[i] =  worm_dist(rand_src);
+  // void init_worms_rand(){
+  //   worms_label.resize(0);
+  //   for (int i=0; i<W; i++){
+  //     // pworms->worm_site[i] = dist(rand_src);
+  //     // pworms->tau_list[i] =  worm_dist(rand_src);
 
-      worms.worm_site[i] = dist(rand_src);
-      worms.tau_list[i] =  worm_dist(rand_src);
-    }
-    std::sort(worms.tau_list.begin(), worms.tau_list.end(), std::less<double>());
-  }
+  //     worms.worm_site[i] = dist(rand_src);
+  //     worms.tau_list[i] =  worm_dist(rand_src);
+  //   }
+  //   std::sort(worms.tau_list.begin(), worms.tau_list.end(), std::less<double>());
+  // }
 
-  void init_states(){
+  void init_states(){ //* initialized to all up
   for (auto& x : state){
-    x = binary_dice(rand_src);
+    x = 0;
     }
   }
 
@@ -165,33 +157,23 @@ class worm{
 
   //main functions
 
-  void diagonal_update(){
-    double tau = 0;
+  void diagonal_update(double wdensity){
+    
     int n_worm = 0;
-
-    //initialization
-    init_worms_rand();
     // init_ops_main()
     ops_main.resize(0);
     //init spacetime_dots
     init_dots();
+    //init worms
+    worms.worm_site.resize(0);
+    worms.tau_list.resize(0);
+    worms_label.resize(0);
 
-    auto& worm_site = worms.worm_site;
-    auto& worm_tau_list = worms.tau_list;
+    double tmp = model.rho * beta + wdensity;
+    expdist_t expdist(model.rho * beta + wdensity); //initialize exponential distribution
+    double pstart = wdensity / (beta * model.rho + wdensity); //probability of choosing worms
 
-    double worm_tau = 0;
-    if (worm_tau_list.size()) worm_tau = worm_tau_list[0];
-    double op_sub_tau = 0;
-    if (ops_sub.size()) op_sub_tau = ops_sub[0]->tau;
-    std::size_t op_sub_label = 0;
     std::size_t N_op = model.Nop;
-
-
-    std::size_t optau = 0;
-    if (ops_sub.size()) optau = ops_sub[0]->tau;
-
-    double tau_prime;
-    double r;
 
     std::size_t s0, s1;
     int r_bond; // randomly choosen bond
@@ -199,67 +181,50 @@ class worm{
     std::vector<int> local_state;
     double max_, target;
     std::size_t lop_label, s_num;
-    lop_label = 0;
+    lop_label = 0; //typically, lop_label is fixed to 0
+    int leg_size = leg_sizes[lop_label]; //size of choosen operator
+    auto& lop = loperators[lop_label];
 
-
-    //set worms
-    while (true){
-      // cout << "hi" << endl;
-      r = uni_dist(rand_src);
-
-      // cout << "random number : " << r << endl;
-      double tau_prime = tau + exp_dist(rand_src);
-
-      // put worms on space.
-      while(worm_tau<tau_prime && n_worm < W){
-        int site = worm_site[n_worm];
-        set_dots(site, 2 , n_worm);
-        worms[n_worm] = cstate[site];
-        n_worm++;
-        worm_tau = worm_tau_list[n_worm];
-      }
-
-      checkODNFlip(op_sub_tau, tau_prime, op_sub_label, cstate);
-
-      //choose and insert diagonal operator.
-      if (tau_prime > beta) break;
-
-      /*
-      * typically, we don't need this part. This is needed if there are more than one local hamiltonian.
-      // r = uni_dist(rand_src);
-      // max_ = *(operator_cum_weights.end()-1);
-      // target = r * max_;
-      // for(lop_label=0; lop_label < N_op; lop_label++){
-      //   if (operator_cum_weights[lop_label] >= target) break;
-      // }
-      */
-     
-      int leg_size = leg_sizes[lop_label]; //size of choosen operator
-      auto& lop = loperators[lop_label];
-
-      // choose bond
-      auto& bond = bonds[dist(rand_src)];
-      int u = spin_state::state2num(cstate, bond);
-
-      if (uni_dist(rand_src) < lop.accept[u]){
-        local_state = spin_state::num2state(u + (u<<leg_size), 2*leg_size);
-        ops_main.emplace_back(
-            new spin_state::OpState(
-              local_state,
-              &lop,
-              bond,
-              tau_prime
-          )
-        );
-
-        for (int i=0; i<leg_size; i++){
-          set_dots(bond[i], 1 , i);
-        }
-      }
+    ops_sub.emplace_back(new spin_state::OpState((double)1)); //*sentinels
       
-      tau = tau_prime;
-    } //end of while loop
+    double tau = expdist(rand_src);
+    for (OPS::iterator opi = ops_sub.begin(); opi != ops_sub.end();){
+      auto op_sub = *opi;
+      if (tau < op_sub->tau){ //* if new point is behind the next operator is opsub.
+        double r = uniform(rand_src);
 
+        if (r < pstart){
+          int s = static_cast<int>(model.L * uniform(rand_src));
+          worms.worm_site.push_back(s);
+          worms.tau_list.push_back(tau);
+          worms[n_worm] = cstate[s];
+          set_dots(s, 2 , worms.size());
+          n_worm++;
+        }else{
+          int b = static_cast<int>(bonds.size() * uniform(rand_src));
+          const auto& bond = bonds[b];
+          int u = spin_state::state2num(cstate, bond);
+          r = uni_dist(rand_src);
+          if (r < lop.accept[u]){
+            local_state = spin_state::num2state(u + (u<<leg_size), 2*leg_size);
+            append_ops(ops_main, local_state, &lop, bond, tau);
+            for (int i=0; i<leg_size; i++){
+              set_dots(bond[i], 1 , i);
+            }
+          }
+        }
+        tau += expdist(rand_src);
+      }else{ //*if tau went over the operator time.
+        if (op_sub->is_off_diagonal()) {
+          update_state(op_sub, cstate);
+          ops_main.push_back(op_sub);
+          for (int i=0; i<op_sub->L; i++){
+            set_dots(op_sub->bond[i], 1 , i);
+          }
+        }
+        ++opi;
+      }
+    } //end of while loop
   }
   /*
   * check off-diagonal operator in ops_sub and flip accordingly.
@@ -287,7 +252,17 @@ class worm{
     return;
   }
 
-
+  //*append to ops
+  void append_ops(OPS& ops, std::vector<int> const& ls,
+    model::local_operator* plop, std::vector<int> const& bond, double tau){
+    ops_main.emplace_back( new spin_state::OpState(ls, plop, bond, tau));
+  }
+  //*overload for r value
+  void append_ops(OPS& ops, std::vector<int>&& ls,
+    model::local_operator* plop, std::vector<int>&& bond, double tau){
+    ops_main.emplace_back( new spin_state::OpState(ls, plop, bond, tau));
+  }
+ 
   /*
   *perform one step from given worm.
   If dot is operator then, worm move to exit. otherwise just assigin spin to dot.
@@ -316,12 +291,12 @@ class worm{
 
     if (dtype==1){
       int dir_in = !dir; //n* direction the worm comes in from the view of operator.
-      int cindex = dot.typeptr->GetIndex(dot.sptr, dir_in);
+      std::size_t cindex = dot.typeptr->GetIndex(dot.sptr, dir_in);
       auto& opstate = *dot.typeptr;
       opstate[cindex] ^= 1;
       int num = spin_state::state2num(opstate, opstate.get_size());
       double r = uni_dist(rand_src);
-      int nindex = opstate.plop->choose_next_worm(r, num, cindex);
+      int nindex = opstate.plop->markov[num](cindex, rand_src);
       opstate[nindex] ^= 1;
 
       //n* assigin for next step
@@ -345,7 +320,7 @@ class worm{
       auto* dot_ptr = &spacetime_dots[d_label];
       int site = dot_ptr->site;
       int dots_size = spacetime_dots.size();
-      int dir = 1;//n initial direction is 1.
+      int dir = 2 * uniform(rand_src);//n initial direction is 1.
       *dot_ptr->sptr = 1^*dot_ptr->sptr; //n flip the worm. and it propagate through spacetime.
       int spin = *dot_ptr->sptr;
       do{

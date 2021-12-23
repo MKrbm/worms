@@ -7,7 +7,11 @@
 #include <array>
 #include <string>
 #include <numeric>
+#include <random>
 #include <math.h>
+#include <bcl.hpp>
+#include "outgoing_weight.hpp"
+
 
 #ifndef NDEBUG
 #   define ASSERT(condition, message) \
@@ -89,6 +93,13 @@ public:
   double max_diagonal_weight_;
   double total_weights; //sum of diagonal elemtns of ham
   std::array<int, 2> num2index(int num);
+
+  // craete markov
+  // table for worm update
+  typedef std::mt19937 engine_type;
+  typedef bcl::markov<engine_type> markov_t;
+  outgoing_weight ogwt;
+  std::vector<markov_t> markov;
 
 
   local_operator(int L);

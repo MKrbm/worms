@@ -85,9 +85,9 @@ class spin_state::BaseState : public std::vector<int>
   int _size;
   const double tau;
   const std::vector<int> bond;
-  const local_operator* plop;
+  local_operator* const plop;
 
-  BaseState() : tau(0){}
+  BaseState() : tau(0), plop(nullptr){}
 
   BaseState(int L, double tau = 0, local_operator* ptr = nullptr, std::vector<int> bond = std::vector<int>())
   :vec(L, 0), L(L), _size(L), plop(ptr), bond(bond), tau(tau) {}
@@ -125,7 +125,7 @@ class spin_state::BaseState : public std::vector<int>
   }
 
   void push_back (int x){
-    ASSERT(false, "push_back is unavailable");
+    ASSERT(false, "push_back is unavailable"); //inorder to avoid pointer problem.
   }
 
   void resize (int x){
@@ -178,6 +178,8 @@ class spin_state::OpState : public BaseState
     ASSERT(bond.size() == plop->L, "size of bond must be equal to operator size");
     ASSERT(L == plop->L, "in consistent error");
   }
+
+  OpState(double t): BaseState(0, t){} //* for append sentinels.
   /*
   int dir : 1 or 0, corresponds to upside or downside of state.
   */
@@ -290,8 +292,9 @@ class spin_state::Dot
   int dir : direction worm goes
   */
   int move_next(int dir){
-    if (dir == 1) return next;
-    else if (dir == 0) return prev;
+    // if (dir == 1) return next;
+    // else if (dir == 0) return prev;
+    return (dir == 0) ? prev : next;
     ASSERT(false, "dir can be 1 or 0");
   }
 
