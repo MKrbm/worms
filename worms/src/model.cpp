@@ -11,7 +11,7 @@ model::local_operator::local_operator()
   :local_operator(2){}
 
 model::local_operator::local_operator(int L)
-  :L(L), size(pow(2, L)){
+  :L(L), size(pow(2, L)), ogwt(L){
   ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
   ham_vector = std::vector<double>(size*size, 0);
   trans_weights = std::vector<std::vector<double>>(
@@ -19,6 +19,8 @@ model::local_operator::local_operator(int L)
           std::vector<double>(2*L)
           );
   diagonal_cum_weight = std::vector<double>(size, 0);
+  accept = std::vector<double>(size, 0);
+
 }
 
 
@@ -46,24 +48,41 @@ void model::local_operator::set_ham(){
     ham_vector[i] = ham_[index[0]][index[1]];
   }
 
+
   total_weights = 0;
   // for (int i=0; i<size; i++) total_weights+= ham[i][i];
 
   double tmp=0;
+  max_diagonal_weight_ = 0;
   for (int i=0; i<size; i++) {
     tmp += ham_[i][i];
     diagonal_cum_weight[i] = tmp;
+    max_diagonal_weight_ = std::max(max_diagonal_weight_, ham_[i][i]);
   }
+
+  for (int i=0; i<size; i++) {
+    accept[i] = ham_[i][i]/max_diagonal_weight_;
+  }
+
+  // max_diagonal_weight_ = std::max(max_diagonal_weight_, weights_[p]);
 
   for (const auto& x : ham_vector){
     signs.push_back(x >= 0 ? 1 : -1);
   }
   total_weights = *(diagonal_cum_weight.end()-1);
 
-  set_trans_weights();//set trans_weights from ham_vector.
-  set_trans_prob(); //set transition probability.
+  // set transition probability
+  ogwt.init_table(ham_vector);
+  for (int c = 0; c < ogwt.size(); ++c) markov.push_back(markov_t(bcl::st2010(), ogwt[c]));
 
-  check_trans_prob(); // check if transition probability is consistent with the definition of transition matrix
+  // auto rand_src = engine_type(2021);
+  // auto xxx = markov[0](0, rand_src);
+
+
+  // set_trans_weights();//set trans_weights from ham_vector.
+  // set_trans_prob(); //set transition probability.
+
+  // check_trans_prob(); // check if transition probability is consistent with the definition of transition matrix
 
 }
 

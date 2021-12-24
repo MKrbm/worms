@@ -2,3 +2,4 @@
 #define VERSION_MAJOR @worms_VERSION_MAJOR@
 #define VERSION_MINOR @worms_VERSION_MINOR@
 #cmakedefine RANDOM_SEED
+#cmakedefine NDEBUG

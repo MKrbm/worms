@@ -1,5 +1,4 @@
 // #define RANDOM_SEED 0
-#define NDEBUG 1
 #include "MainConfig.h"
 
 #include <iostream>
@@ -46,7 +45,7 @@ int main(int argc, char* argv[])
 
   // std::mt19937 rand_src(12345);
   model::heisenberg1D h1(L,h,J);
-  worm solver(beta, h1, 6);
+  worm solver(beta, h1);
   // std::vector<std::vector<int>> states;
 
 
@@ -63,32 +62,36 @@ int main(int argc, char* argv[])
   int n_kink=0;
   int cnt = 0;
   solver.init_states();
-  solver.ops_sub.resize(0);
+  int spin = 1;
+  for (auto& s : solver.state){
+    s = spin;
+    spin^=1;
+  }
   for (int i=0; i < MCSTEP + SWEEP; i++){
     // solver.diagonal_update(); 
-    solver.diagonal_update(); //n* need to be comment out 
-    solver.check_operators(solver.state, solver.ops_sub);
-    solver.check_operators(solver.state, solver.ops_main);
+    solver.diagonal_update(3); //n* need to be comment out 
+    // solver.check_operators(solver.state, solver.ops_sub);
+    // solver.check_operators(solver.state, solver.ops_main);
     solver.worm_update();
-    solver.swap_oplist();
-    if (cnt > SWEEP){
+    // solver.swap_oplist();
+    // std::cout << "operator size : " << solver.ops_main.size() << std::endl;
+    if (cnt >= SWEEP){
       int sign = 1;
       double mu = 0;
       for (const auto&  s : solver.state) {
         mu += 0.5 - s;
       }
-      for (const auto& op : solver.ops_sub){
+      for (const auto& op : solver.ops_main){
         std::vector<int> local_state = *op;
         int num = spin_state::state2num(local_state);
         sign *= op->plop->signs[num];
       }
-      ene << (- ((double)solver.ops_sub.size()) / beta + h1.shifts[0] * h1.Nb) * sign;
+      ene << (- ((double)solver.ops_main.size()) / beta + h1.shifts[0] * h1.Nb) * sign;
       ave_sign << sign;
       mu /= h1.L;
       umag << mu * sign;
     }
     cnt++;
-    // ene << - ((double)solver.ops_sub.size()) / beta + h1.shifts[0] * h1.Nb;
   }
 
 

@@ -1,5 +1,3 @@
-#define ndebug 1
-
 #include <uftree.hpp>
 #include <model.hpp>
 #include <worm.hpp>
@@ -55,7 +53,7 @@ int main(){
 
   std::mt19937 rand_src(12345);
   model::heisenberg1D h1(L,h,J);
-  worm solver(beta, h1, 10);
+  worm solver(beta, h1);
 
   /*
   * test for swap functions

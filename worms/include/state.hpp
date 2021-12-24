@@ -50,6 +50,16 @@ namespace spin_state{
     return num;
   }
 
+  template<typename STATE_>
+  int state2num(STATE_ const& state, std::vector<int> const& bond){
+    int u = 0;
+    for (int i = bond.size()-1; i >= 0; i--) {
+      u <<= 1;
+      u |= state[bond[i]];
+    }
+    return u;
+  }
+
   STATE num2state(int num, int L);
   std::string return_name(int dot_type, int op_type);
   
@@ -75,9 +85,9 @@ class spin_state::BaseState : public std::vector<int>
   int _size;
   const double tau;
   const std::vector<int> bond;
-  const local_operator* plop;
+  local_operator* const plop;
 
-  BaseState() : tau(0){}
+  BaseState() : tau(0), plop(nullptr){}
 
   BaseState(int L, double tau = 0, local_operator* ptr = nullptr, std::vector<int> bond = std::vector<int>())
   :vec(L, 0), L(L), _size(L), plop(ptr), bond(bond), tau(tau) {}
@@ -115,7 +125,7 @@ class spin_state::BaseState : public std::vector<int>
   }
 
   void push_back (int x){
-    ASSERT(false, "push_back is unavailable");
+    ASSERT(false, "push_back is unavailable"); //inorder to avoid pointer problem.
   }
 
   void resize (int x){
@@ -168,6 +178,8 @@ class spin_state::OpState : public BaseState
     ASSERT(bond.size() == plop->L, "size of bond must be equal to operator size");
     ASSERT(L == plop->L, "in consistent error");
   }
+
+  OpState(double t): BaseState(0, t){} //* for append sentinels.
   /*
   int dir : 1 or 0, corresponds to upside or downside of state.
   */
@@ -221,14 +233,35 @@ class spin_state::OpState : public BaseState
 class spin_state::Worms : public BaseState
 {
   public :
-  std::vector<double> tau_list;
-  std::vector<int> worm_site;
+  const std::vector<int>& spin;
+  const std::vector<int>& site;
+  // std::vector<int> worm_site;
   ~Worms(){
     // cout << "Deconstructor (Worms) was called" << endl;
   }
-  Worms(){}
+  Worms():BaseState(), spin(*this), site(bond){}
   Worms(int L)
-  :BaseState(L), tau_list(std::vector<double>(L)), worm_site(std::vector<int>(L)){}
+  :BaseState(L), spin(*this), site(bond){}
+
+  Worms(std::vector<int> spin_
+          ,std::vector<int> site_, double t)
+  :BaseState(spin_, t, nullptr, site_), spin(*this), site(bond)
+  {
+    BaseState::L = 1;
+    // ASSERT(l.size() == L, "size of labels must be equal to given L");
+    ASSERT(bond.size() == 1, "size of site (called bond here) must be equal to 1");
+    ASSERT(size() == 1, "the size ofspin (state) must be equal to 1");
+  }
+
+  Worms(int spin_
+          ,int site_, double t)
+  :BaseState(std::vector<int>(1,spin_), t, nullptr, std::vector<int>(1,site_)), spin(*this), site(bond)
+  {
+    BaseState::L = 1;
+    // ASSERT(l.size() == L, "size of labels must be equal to given L");
+    ASSERT(bond.size() == 1, "size of site (called bond here) must be equal to 1");
+    ASSERT(size() == 1, "the size ofspin (state) must be equal to 1");
+  }
 };
 
 
@@ -257,12 +290,12 @@ class spin_state::Dot
   int* sptr;
   double tau;
   BaseStatePtr typeptr;
-  Dot(int s, double t , int p, int n, int* sptr, BaseState* type, int d)
-  :site(s), tau(t), prev(p), next(n), sptr(sptr), typeptr(BaseStatePtr(type)), dot_type(d)
+  Dot(int s, int p, int n, int* sptr, BaseState* type, int d)
+  :site(s),  prev(p), next(n), sptr(sptr), typeptr(BaseStatePtr(type)), dot_type(d)
   {}
 
-  Dot(int s, double t , int p, int n, int* sptr, BaseStatePtr type, int d)
-  :site(s), tau(t), prev(p), next(n), sptr(sptr), typeptr(type), dot_type(d)
+  Dot(int s, int p, int n, int* sptr, BaseStatePtr type, int d)
+  :site(s),  prev(p), next(n), sptr(sptr), typeptr(type), dot_type(d)
   {}
 
   Dot(){}
@@ -280,8 +313,9 @@ class spin_state::Dot
   int dir : direction worm goes
   */
   int move_next(int dir){
-    if (dir == 1) return next;
-    else if (dir == 0) return prev;
+    // if (dir == 1) return next;
+    // else if (dir == 0) return prev;
+    return (dir == 0) ? prev : next;
     ASSERT(false, "dir can be 1 or 0");
   }
 

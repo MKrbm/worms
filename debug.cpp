@@ -1,5 +1,3 @@
-#define ndebug 1
-
 #include <uftree.hpp>
 #include <model.hpp>
 #include <worm.hpp>
@@ -16,7 +14,6 @@
 
 using namespace std::chrono;
 
-#define DEBUG 0
 
 using std::cout;
 using std::endl;
@@ -47,94 +44,36 @@ int main(){
   std::cout << "debug start" << std::endl;
   int L = 6;
   double J = 1;
-  double beta = 1;
-  double h = 1;
+  double beta = 5;
+  double h = 0;
   BC::observable ene; // energy 
   BC::observable umag; // uniform magnetization 
 
 
   std::mt19937 rand_src(12345);
   model::heisenberg1D h1(L,h,J);
-  worm solver(beta, h1, 10);
-
-  /*
-  * test for swap functions
-  std::vector<spin_state::OpStatePtr> ops1(1E3, 
-    spin_state::OpStatePtr(new spin_state::OpState(
-    {1,0,0,1},
-    &solver.loperators[0],
-    {2,3},
-    0.01)));
-
-  std::vector<spin_state::OpStatePtr> ops2(1E3, 
-    spin_state::OpStatePtr(new spin_state::OpState(
-    {1,0,0,1},
-    &solver.loperators[0],
-    {4,5},
-    0.01)));
+  worm solver(beta, h1);
+  cout << "initialized " << endl;
 
 
-  auto t1 = high_resolution_clock::now();
-  for (int i=0; i<1E4; i++){
-    // auto tmp = ops1;
-    // ops1 = ops2;
-    // ops1 = tmp;
-    ops1.swap(ops2);
+  solver.init_states();
+  int spin = 1;
+  for (auto& s : solver.state){
+    s = spin;
+    spin^=1;
   }
-  auto t2 = high_resolution_clock::now();
-  double elapsed = duration_cast<milliseconds>(t2 - t1).count() / (double)1E3;
+  solver.ops_sub.resize(0);
 
-  cout << "elapsed time : " << elapsed << endl;
-  */
-  
+  for (int i = 0; i<100; i++){
+    solver.diagonal_update(3);
+    solver.worm_update();
+    solver.swap_oplist();
+    std::cout << "operator size : " << solver.ops_sub.size() << std::endl;
+  }
+  // solver.diagonal_update(3);
 
-  // for ()
-  // int s = 1;
-  // for(auto&x : solver.state){
-  //   x = s;
-  //   s = 1^s;
-  // }
-
-
-  // ops.push_back(
-  // spin_state::OpStatePtr(new spin_state::OpState(
-  //   {1,0,0,1},
-  //   &solver.loperators[0],
-  //   {2,3},
-  //   0.01))
-  // );
-  
-  // solver.ops_sub.emplace_back(
-  // new spin_state::OpState(
-  //   {1,0,0,1},
-  //   &solver.loperators[0],
-  //   {4,5},
-  //   0.35)
-  // );
-
-  // solver.ops_sub.emplace_back(
-  // new spin_state::OpState(
-  //   {0,1,1,0},
-  //   &solver.loperators[0],
-  //   {4,5},
-  //   0.39)
-  // );
-
-  // solver.ops_sub.emplace_back(
-  // new spin_state::OpState(
-  //   {0,1,1,0},
-  //   &solver.loperators[0],
-  //   {2,3},
-  //   0.39)
-  // );
-
-  // solver.set_dots(4, 0.33, 1, 0);
-  // solver.set_dots(5, 0.33, 1, 1);
-
-  // solver.diagonal_update();
   // solver.check_operators(solver.state, solver.ops_sub);
   // solver.check_operators(solver.state, solver.ops_main);
-  // solver.worm_update();
   // solver.swap_oplist();
   // solver.diagonal_update();
 
