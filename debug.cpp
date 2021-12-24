@@ -55,10 +55,23 @@ int main(){
   worm solver(beta, h1);
   cout << "initialized " << endl;
 
+
   solver.init_states();
+  int spin = 1;
+  for (auto& s : solver.state){
+    s = spin;
+    spin^=1;
+  }
   solver.ops_sub.resize(0);
-  solver.diagonal_update(3);
-  solver.worm_update();
+
+  for (int i = 0; i<100; i++){
+    solver.diagonal_update(3);
+    solver.worm_update();
+    solver.swap_oplist();
+    std::cout << "operator size : " << solver.ops_sub.size() << std::endl;
+  }
+  // solver.diagonal_update(3);
+
   // solver.check_operators(solver.state, solver.ops_sub);
   // solver.check_operators(solver.state, solver.ops_main);
   // solver.swap_oplist();

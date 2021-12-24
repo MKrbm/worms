@@ -55,7 +55,7 @@ namespace spin_state{
     int u = 0;
     for (int i = bond.size()-1; i >= 0; i--) {
       u <<= 1;
-      u += state[bond[i]];
+      u |= state[bond[i]];
     }
     return u;
   }
@@ -233,14 +233,35 @@ class spin_state::OpState : public BaseState
 class spin_state::Worms : public BaseState
 {
   public :
-  std::vector<double> tau_list;
-  std::vector<int> worm_site;
+  const std::vector<int>& spin;
+  const std::vector<int>& site;
+  // std::vector<int> worm_site;
   ~Worms(){
     // cout << "Deconstructor (Worms) was called" << endl;
   }
-  Worms(){}
+  Worms():BaseState(), spin(*this), site(bond){}
   Worms(int L)
-  :BaseState(L), tau_list(std::vector<double>(L)), worm_site(std::vector<int>(L)){}
+  :BaseState(L), spin(*this), site(bond){}
+
+  Worms(std::vector<int> spin_
+          ,std::vector<int> site_, double t)
+  :BaseState(spin_, t, nullptr, site_), spin(*this), site(bond)
+  {
+    BaseState::L = 1;
+    // ASSERT(l.size() == L, "size of labels must be equal to given L");
+    ASSERT(bond.size() == 1, "size of site (called bond here) must be equal to 1");
+    ASSERT(size() == 1, "the size ofspin (state) must be equal to 1");
+  }
+
+  Worms(int spin_
+          ,int site_, double t)
+  :BaseState(std::vector<int>(1,spin_), t, nullptr, std::vector<int>(1,site_)), spin(*this), site(bond)
+  {
+    BaseState::L = 1;
+    // ASSERT(l.size() == L, "size of labels must be equal to given L");
+    ASSERT(bond.size() == 1, "size of site (called bond here) must be equal to 1");
+    ASSERT(size() == 1, "the size ofspin (state) must be equal to 1");
+  }
 };
 
 

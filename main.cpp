@@ -62,15 +62,21 @@ int main(int argc, char* argv[])
   int n_kink=0;
   int cnt = 0;
   solver.init_states();
+  int spin = 1;
+  for (auto& s : solver.state){
+    s = spin;
+    spin^=1;
+  }
   solver.ops_sub.resize(0);
   for (int i=0; i < MCSTEP + SWEEP; i++){
     // solver.diagonal_update(); 
-    solver.diagonal_update(3.0); //n* need to be comment out 
-    solver.check_operators(solver.state, solver.ops_sub);
-    solver.check_operators(solver.state, solver.ops_main);
+    solver.diagonal_update(3); //n* need to be comment out 
+    // solver.check_operators(solver.state, solver.ops_sub);
+    // solver.check_operators(solver.state, solver.ops_main);
     solver.worm_update();
     solver.swap_oplist();
-    if (cnt > SWEEP){
+    // std::cout << "operator size : " << solver.ops_sub.size() << std::endl;
+    if (cnt >= SWEEP){
       int sign = 1;
       double mu = 0;
       for (const auto&  s : solver.state) {
