@@ -156,7 +156,7 @@ class worm{
 
   void diagonal_update(double wdensity){
     
-    // swap_oplist();
+    swap_oplist();
     
     int n_worm = 0;
 

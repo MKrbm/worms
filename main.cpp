@@ -67,33 +67,31 @@ int main(int argc, char* argv[])
     s = spin;
     spin^=1;
   }
-  solver.ops_sub.resize(0);
   for (int i=0; i < MCSTEP + SWEEP; i++){
     // solver.diagonal_update(); 
     solver.diagonal_update(3); //n* need to be comment out 
     // solver.check_operators(solver.state, solver.ops_sub);
     // solver.check_operators(solver.state, solver.ops_main);
     solver.worm_update();
-    solver.swap_oplist();
-    // std::cout << "operator size : " << solver.ops_sub.size() << std::endl;
+    // solver.swap_oplist();
+    // std::cout << "operator size : " << solver.ops_main.size() << std::endl;
     if (cnt >= SWEEP){
       int sign = 1;
       double mu = 0;
       for (const auto&  s : solver.state) {
         mu += 0.5 - s;
       }
-      for (const auto& op : solver.ops_sub){
+      for (const auto& op : solver.ops_main){
         std::vector<int> local_state = *op;
         int num = spin_state::state2num(local_state);
         sign *= op->plop->signs[num];
       }
-      ene << (- ((double)solver.ops_sub.size()) / beta + h1.shifts[0] * h1.Nb) * sign;
+      ene << (- ((double)solver.ops_main.size()) / beta + h1.shifts[0] * h1.Nb) * sign;
       ave_sign << sign;
       mu /= h1.L;
       umag << mu * sign;
     }
     cnt++;
-    // ene << - ((double)solver.ops_sub.size()) / beta + h1.shifts[0] * h1.Nb;
   }
 
 
