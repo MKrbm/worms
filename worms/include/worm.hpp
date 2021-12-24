@@ -186,81 +186,6 @@ class worm{
     worms_list.resize(0);
     worms_label.resize(0);
 
-<<<<<<< HEAD
-
-
-    //set worms
-    while (true){
-      // cout << "hi" << endl;
-      r = uni_dist(rand_src);
-
-      // cout << "random number : " << r << endl;
-      tau_prime = tau - log(r)/model.rho;
-
-      // put worms on space.
-      while(worm_tau<tau_prime && n_worm < W){
-        int site = worm_site[n_worm];
-        set_dots(site, worm_tau, 2 , n_worm);
-        worms[n_worm] = cstate[site];
-        n_worm++;
-        worm_tau = worm_tau_list[n_worm];
-      }
-
-      checkODNFlip(op_sub_tau, tau_prime, op_sub_label, cstate);
-
-      //choose and insert diagonal operator.
-      if (tau_prime > beta) break;
-
-      r = uni_dist(rand_src);
-      // double max_ = *(operator_cum_weights.end()-1);
-      // double target = r * max_;
-      // std::size_t lop_label;
-      // for(lop_label=0; lop_label < N_op; lop_label++){
-      //   if (operator_cum_weights[lop_label] >= target) break;
-      // }
-      std::size_t lop_label = 0;
-      int leg_size = leg_sizes[lop_label]; //size of choosen operator
-      auto& lop = loperators[lop_label];
-      auto& diag_cum_weight = lop.diagonal_cum_weight;
-      double max_ = lop.total_weights;
-      r = uni_dist(rand_src);
-      int s_num; //choose local state 
-      double target = r * max_;
-      for (s_num=0; s_num < (1<<leg_size); s_num++){
-        if (diag_cum_weight[s_num] >= target) break;
-      }
-
-      // choose bond
-      r_bond = dist(rand_src);
-      int tuggle = 1;
-      local_state = spin_state::num2state(s_num + (s_num<<leg_size ), 2*leg_size);
-      // std::vector<int> labels(leg_size);
-      const auto& bond = bonds[r_bond];
-
-      int n_dots = spacetime_dots.size();
-      for (int i=0; i<leg_size; i++){
-        // labels[i] = n_dots;
-        n_dots++;
-        int s = bond[i];
-        if (cstate[s] != local_state[i]) tuggle = 0;
-      }
-
-      if ( tuggle ){
-        ops_main.emplace_back(
-            new spin_state::OpState(
-              local_state,
-              &lop,
-              bond,
-              tau_prime
-          )
-        );
-
-        int dot_label = spacetime_dots.size();
-        std::size_t n = ops_main.size();
-        for (int i=0; i<leg_size; i++){
-          set_dots(bond[i], tau_prime, 1 , i);
-          dot_label++;
-=======
     ops_sub.emplace_back(new spin_state::OpState((double)1)); //*sentinels
       
     double tau = expdist(rand_src);
@@ -289,7 +214,6 @@ class worm{
               set_dots(bond[i], 1 , i);
             }
           }
->>>>>>> working
         }
         tau += expdist(rand_src);
       }else{ //*if tau went over the operator time.

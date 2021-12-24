@@ -10,7 +10,7 @@
 
 #define DEBUG 1
 #define MCSTEP 1E5
-#define SWEEP 2E4
+#define SWEEP 1E4
 #define MESTIME 1
 
 #if MESTIME
