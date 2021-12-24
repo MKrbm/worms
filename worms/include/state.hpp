@@ -16,6 +16,10 @@ namespace spin_state{
   class OpState;
   class Worms;
   class Dot;
+  class Dotv2;
+  class BottomStatev2;
+  class OpStatev2;
+  class Wormsv2;
 
   using STATE = model::STATE;
   using BaseStatePtr = std::shared_ptr<BaseState>;
@@ -318,5 +322,62 @@ class spin_state::Dot
     return (dir == 0) ? prev : next;
     ASSERT(false, "dir can be 1 or 0");
   }
+
+};
+
+/*
+params
+------
+int prev : previous dot label
+int% sptr : ptr to state
+int dot_type : state type where -1 : state, -2 : worms, non-negative integer : operator. 
+int index : index which will be used to indexing the spin. e.g. if dot_type = -1. state[index] is the spin on the dot, if -2, worm[index], and so on.
+
+*/
+class spin_state::Dotv2
+{
+  int prev_;
+  int next_;
+  int dot_type_;
+  int index_; 
+public:
+  Dotv2(){}
+  Dotv2(int p, int n, int d, int i)
+  :prev_(p), next_(n), index_(i), dot_type_(d)
+  {}
+
+  static Dotv2 state(int s) { return Dotv2(s, s, -1, 0); }
+  static Dotv2 worm(int p, int n) { return Dotv2(p, n, -2, 0); }
+  int move_next(int dir){
+    return (dir == 0) ? prev_ : next_;
+    ASSERT(false, "dir can be 1 or 0");
+  }
+  int prev() const { return prev_; }
+  int next() const { return next_; }
+  int index() const { return index_; }
+  int op_label() const { return dot_type_; }
+  bool at_operator() const { return dot_type_ >= 0; }
+  bool at_origin() const { return dot_type_ == -1; }
+  bool at_worm() const { return dot_type_ == -2; }
+  void set_prev(int p) { prev_ = p; }
+  void set_next(int n) { next_ = n; }
+};
+
+
+class spin_state::Wormsv2{
+  int site_;
+  int spin_;
+  int dot_label_;
+  double tau_;
+public:
+  Wormsv2(){}
+  Wormsv2(int si, int sp, int dl, double t):site_(si), spin_(sp),dot_label_(dl),tau_(t)
+  {}
+  
+  void set_spin(int s){ spin_ = s; }
+  int site(){return site_;}
+  int spin(){return spin_;}
+  int dot_label(){return dot_label_;}
+  double tau(){return tau_;}
 
 };

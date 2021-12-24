@@ -10,6 +10,7 @@
 #include <memory>
 #include <iterator>
 #include <cstdio>
+#include <tuple>
 #include <binstate.hpp>
 
 using namespace std::chrono;
@@ -86,23 +87,22 @@ int main(){
   */
   
 
-  //* state (using vector)
+  //* measure tuple
   std::vector<int> state(6,1); 
   std::vector<int> lstate(2);
 
   auto t1 = high_resolution_clock::now();
+  int a = 0;
+  std::vector<std::tuple<int, int, int, double>> worm_tupple;
   for(std::size_t i=0; i<1E6; i++){
-    int s1 = (i*100)%6;
-    int s2 = (i*99)%6;
-    int s3 = (i*98)%6;
-    int s4 = (i*97)%6;
-    int s5 = (i*96)%6;
+    worm_tupple.resize(0);
+    for (std::size_t j = 0; j<100; j++){
+      worm_tupple.emplace_back(
+        a,a,a,(double)a
+      );
+    }
 
-    state[s1] = !state[s1];
-    state[s2] = 1;
-    state[s3] = 0;
-    lstate[0] = state[s4];
-    lstate[1] = state[s5];
+    a += std::get<0>(worm_tupple[0]);
   }
   auto t2 = high_resolution_clock::now();
   double elapsed = duration_cast<milliseconds>(t2 - t1).count() / (double)1E3;
@@ -111,7 +111,7 @@ int main(){
 
   cout << "state[0] = " << state[0] << endl;
 
-  //* state (using integer)
+  //* measure class
   unsigned long state_ = ~0;
   unsigned int lstate_ = ~0;
   binstate<6> X; 
@@ -121,28 +121,18 @@ int main(){
   int size = X.base_size;
 
   int c = 0;
+
+  std::vector<spin_state::Wormsv2> worm_list;
   for(std::size_t i=0; i<1E6; i++){
-    int s1 = (i*100)%6;
-    int s2 = (i*99)%6;
-    int s3 = (i*98)%6;
-    int s4 = (i*97)%6;
-    int s5 = (i*96)%6;
-
-    state_ = state_ ^ (1<<s1);
-    state_ = modifyBit(s2, state_, 1);
-    state_ = modifyBit(s3, state_, 0);
-    lstate_ = modifyBit(0, lstate_, getbit(state_, s4)); 
-    lstate_ = modifyBit(1, lstate_, getbit(state_, s5)); 
-    // c += state_;
-    // X.flip(s1);
-    // flip(XX, s1, size);
-    // X.assign(s2, 1);
-    // X.assign(s3, 0);
-    // LX.assign(0, X[s4]);
-    // LX.assign(1, X[s5]);
-
+    worm_tupple.resize(0);
+    for (std::size_t j = 0; j<100; j++){
+      worm_list.emplace_back(
+         c, c, c, (double)c
+      );
+    }
+    c += worm_list[0].site();
   }
-
+  std::cout << "c : " << c << " a : " << a << std::endl;
 
   t2 = high_resolution_clock::now();
   elapsed = duration_cast<milliseconds>(t2 - t1).count() / (double)1E3;
