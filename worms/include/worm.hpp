@@ -315,11 +315,11 @@ class worm{
   */
   void worm_update(){
     int w_index =0;
-    for (const auto& w_label : worms_label){
+    int dots_size = spacetime_dots.size();
+    for (auto w_label : worms_label){
       int d_label = w_label;
       auto* dot_ptr = &spacetime_dots[d_label];
       int site = dot_ptr->site;
-      int dots_size = spacetime_dots.size();
       int dir = 2 * uniform(rand_src);//n initial direction is 1.
       *dot_ptr->sptr = 1^*dot_ptr->sptr; //n flip the worm. and it propagate through spacetime.
       int spin = *dot_ptr->sptr;

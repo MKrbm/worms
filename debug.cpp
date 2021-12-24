@@ -58,9 +58,9 @@ int main(){
   solver.init_states();
   solver.ops_sub.resize(0);
   solver.diagonal_update(3);
+  solver.worm_update();
   // solver.check_operators(solver.state, solver.ops_sub);
   // solver.check_operators(solver.state, solver.ops_main);
-  // solver.worm_update();
   // solver.swap_oplist();
   // solver.diagonal_update();
 
