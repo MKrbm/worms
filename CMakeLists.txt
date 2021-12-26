@@ -26,8 +26,8 @@ include_directories(${worms_SOURCE_DIR})
 
 #include libraries
 include(bcl)
-include(lattice)
 include(eigen3)
+include(lattice)
 
 FetchContent_MakeAvailable(bcl)
 include_directories(${FetchContent_includes})
