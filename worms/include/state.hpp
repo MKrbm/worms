@@ -20,6 +20,7 @@ namespace spin_state{
   class BottomStatev2;
   class OpStatev2;
   class Wormsv2;
+  class Operatorv2;
 
   using STATE = model::STATE;
   using BaseStatePtr = std::shared_ptr<BaseState>;
@@ -27,6 +28,8 @@ namespace spin_state{
   using WormsPtr = std::shared_ptr<Worms>;
   using BStatePtr = std::shared_ptr<BottomState>;
   using local_operator = model::local_operator;
+  using WORM_ARR = std::vector<std::tuple<int, int, int, double>>; //  site, spin, dot_label, tau (dot label is needed for reverse lookup)
+  using DOT_ARR = std::vector<std::tuple<int,int,int,int>>;   //prev, next, dot_type, index, (index refers to the legs of the dot with respect to the class of dots)
 
   /*
 
@@ -330,17 +333,17 @@ params
 ------
 int prev : previous dot label
 int% sptr : ptr to state
-int dot_type : state type where -1 : state, -2 : worms, non-negative integer : operator. 
+int dot_type : state type where -1 : state, -2 : worms, non-negative integer : operator type. 
 int index : index which will be used to indexing the spin. e.g. if dot_type = -1. state[index] is the spin on the dot, if -2, worm[index], and so on.
 
 */
 class spin_state::Dotv2
 {
+public:
   int prev_;
   int next_;
   int dot_type_;
   int index_; 
-public:
   Dotv2(){}
   Dotv2(int p, int n, int d, int i)
   :prev_(p), next_(n), index_(i), dot_type_(d)
@@ -365,19 +368,98 @@ public:
 
 
 class spin_state::Wormsv2{
+public:
   int site_;
   int spin_;
   int dot_label_;
   double tau_;
-public:
   Wormsv2(){}
   Wormsv2(int si, int sp, int dl, double t):site_(si), spin_(sp),dot_label_(dl),tau_(t)
   {}
   
-  void set_spin(int s){ spin_ = s; }
-  int site(){return site_;}
-  int spin(){return spin_;}
-  int dot_label(){return dot_label_;}
-  double tau(){return tau_;}
+  void set_spin(int s) { spin_ = s; }
+  int site() const {return site_;}
+  int spin()const {return spin_;}
+  int dot_label()const {return dot_label_;}
+  double tau()const {return tau_;}
+};
+
+/*
+
+  the actual size of state (number of bits for expressing state ) is 2 * size
+*/
+class spin_state::Operatorv2{
+  std::vector<int> bond_;
+  std::vector<int> dot_labels_;
+  int size_;
+  int op_type_;
+  int state_;
+  double tau_;
+public:
+  Operatorv2(){}
+
+  /*
+  bond_;
+  dot_labels_;
+  size_;
+  op_type;
+  state_;
+  tau_;
+  */
+  Operatorv2(std::vector<int> b, std::vector<int> d, int st,
+            int si, int o, double t):bond_(b), dot_labels_(d),state_(st), size_(si), op_type_(o), tau_(t)
+  {
+    ASSERT(size_ == b.size(), "bond size and size is inconsistent");
+  }
+  
+  void set_state(int sp) { state_ = sp; }
+  int size() const {return size_;}
+  int op_type()const {return op_type_;}
+  int state()const {return state_;}
+  int state(int dir)const { // dir = 0 lower part, dir = 1 upper pirt
+    if (dir==0) return state_ & ((1<<size_)-1);
+    else if (dir == 1) return (state_ >> size_) & ((1<<size_)-1);
+    return state_;
+  }
+  double tau()const {return tau_;}
+  int bond(int s) const {return bond_[s];}
+  std::vector<int> const & bond() const {return bond_;}
+  int dot_labels(int s) const {return dot_labels_[s];}
+  std::vector<int> const & dot_labels() const {return dot_labels_;}
+
+  /*
+  leg = 0,1,2,3 for bond operator     
+  2  3
+  ====
+  0  1.
+  */
+  void flip_state(int leg){ state_ ^= (1<<leg);} 
+
+  int get_spin(int leg) const {return (state_>>leg) & 1;}
+
+  bool is_off_diagonal() const{
+    if (state(0) != state(1)) return true;
+  }
+  bool is_diagonal()const{
+    return !is_off_diagonal();
+  }
+
+  void print(std::ostream& os) const {
+    for (int i=0; i<size_*2; i++) os << get_spin(i) << " ";
+    os << tau;
+  }
+
+
+
+  std::vector<int> const get_state_vec(){
+    std::vector<int> state_vec(size_*2);
+    for (int i=0; i<size_*2; i++) state_vec[i] = get_spin(i);
+    return state_vec;
+
+  }
 
 };
+  std::ostream& operator<<(std::ostream& os, spin_state::Operatorv2 const& op) {
+    op.print(os);
+    return os;
+  }

@@ -1,6 +1,5 @@
 find_package(Eigen3)
 if(Eigen3_FOUND)
-  include(${EIGEN3_USE_FILE})
 else(Eigen3_FOUND)
   include(FetchContent)
   FetchContent_Declare(
