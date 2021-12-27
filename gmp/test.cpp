@@ -195,12 +195,12 @@ int main(){
 
   spin_state::Operatorv2 op;
   typedef std::vector<int> veci;
-  op = spin_state::Operatorv2(veci(2,1), veci(2,1), 3, 2, 0, 0);
-  std::cout << op.is_off_diagonal()<< std::endl;
-  std::cout << op.state(0) << std::endl;
-  std::cout << op.state(1) << std::endl;
-  std::cout << op.get_spin(0) << std::endl;
-  auto state = op.get_state_vec();
+  // op = spin_state::Operatorv2(veci(2,1), veci(2,1), 3, 2, 0, 0);
+  // std::cout << op.is_off_diagonal()<< std::endl;
+  // std::cout << op.state(0) << std::endl;
+  // std::cout << op.state(1) << std::endl;
+  // std::cout << op.get_spin(0) << std::endl;
+  // auto state = op.get_state_vec();
 
 
   return 0;

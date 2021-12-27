@@ -70,11 +70,7 @@ int main(int argc, char* argv[])
   for (int i=0; i < MCSTEP + SWEEP; i++){
     // solver.diagonal_update(); 
     solver.diagonal_update(3); //n* need to be comment out 
-    // solver.check_operators(solver.state, solver.ops_sub);
-    // solver.check_operators(solver.state, solver.ops_main);
-    solver.worm_update();
-    // solver.swap_oplist();
-    // std::cout << "operator size : " << solver.ops_main.size() << std::endl;
+    // solver.worm_update();
     if (cnt >= SWEEP){
       int sign = 1;
       double mu = 0;
@@ -82,9 +78,11 @@ int main(int argc, char* argv[])
         mu += 0.5 - s;
       }
       for (const auto& op : solver.ops_main){
-        std::vector<int> local_state = *op;
-        int num = spin_state::state2num(local_state);
-        sign *= op->plop->signs[num];
+        // std::vector<int> local_state = *op;
+        // int num = spin_state::state2num(local_state);
+        // sign *= h1.loperators[op.op_type()];
+        sign *= h1.loperators[op.op_type()].signs[op.state()];
+        // sign *= op->plop->signs[num];
       }
       ene << (- ((double)solver.ops_main.size()) / beta + h1.shifts[0] * h1.Nb) * sign;
       ave_sign << sign;

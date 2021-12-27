@@ -5,7 +5,6 @@ cmake_minimum_required(VERSION 3.0.0)
 # set(CMAKE_OSX_ARCHITECTURES arm64) # only mac
 
 
-
 # include(cmake/prefix.cmake)
 project(worms VERSION 1.0.0 LANGUAGES CXX)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
@@ -53,7 +52,7 @@ add_subdirectory(./worms) #call /LoopAlgo/CMakeLists.txst
 
 
 # add executable
-FOREACH(name main debug)
+FOREACH(name main debug worms_main)
     add_executable(${name} ${name}.cpp)
     target_link_libraries(${name} worm)
     target_include_directories(${name} PUBLIC

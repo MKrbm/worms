@@ -101,7 +101,9 @@
           "map": "cpp",
           "set": "cpp",
           "unordered_set": "cpp",
-          "variant": "cpp"
+          "variant": "cpp",
+          "future": "cpp",
+          "valarray": "cpp"
         },
         "cmake.setBuildTypeOnMultiConfig": true,
         "cmake.defaultVariants": {

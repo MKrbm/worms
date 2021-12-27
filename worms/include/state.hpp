@@ -21,6 +21,7 @@ namespace spin_state{
   class OpStatev2;
   class Wormsv2;
   class Operatorv2;
+  
 
   using STATE = model::STATE;
   using BaseStatePtr = std::shared_ptr<BaseState>;
@@ -29,6 +30,7 @@ namespace spin_state{
   using BStatePtr = std::shared_ptr<BottomState>;
   using local_operator = model::local_operator;
   using WORM_ARR = std::vector<std::tuple<int, int, int, double>>; //  site, spin, dot_label, tau (dot label is needed for reverse lookup)
+  using WORM = std::tuple<int, int, int, double>;
   using DOT_ARR = std::vector<std::tuple<int,int,int,int>>;   //prev, next, dot_type, index, (index refers to the legs of the dot with respect to the class of dots)
 
   /*
@@ -46,8 +48,7 @@ namespace spin_state{
   integer representation of state
 
   */
-  template<typename STATE_>
-  int state2num(STATE_ const& state, int L = -1){
+  inline int state2num(std::vector<int> const& state, int L = -1){
     int num = 0;
     if (L < 0) L = state.size();
     for (int i = L-1; i >= 0; i--) {
@@ -57,8 +58,7 @@ namespace spin_state{
     return num;
   }
 
-  template<typename STATE_>
-  int state2num(STATE_ const& state, std::vector<int> const& bond){
+  inline int state2num(std::vector<int> const& state, std::vector<int> const& bond){
     int u = 0;
     for (int i = bond.size()-1; i >= 0; i--) {
       u <<= 1;
@@ -69,7 +69,7 @@ namespace spin_state{
 
   STATE num2state(int num, int L);
   std::string return_name(int dot_type, int op_type);
-  
+
 
   static std::string op_type_name[2] = {
       "diagonal",
@@ -81,6 +81,25 @@ namespace spin_state{
     "state",
     "operator",
     "worm"
+  };
+
+
+  template<unsigned int NUM_LEGS, unsigned int DIM> struct spin_state;
+
+  template<>
+  struct spin_state<2, 2> {
+    static const int num_configurations = 16;
+    static const int num_candidates = 4;
+    static int p2c(int p, int l) { return (p >> l) & 1; }
+    static int p2u(int p, int d) { return (p >> (2 * d)) & 3; }
+    static int c2u(int c0, int c1) { return (c0 | (c1 << 1)); }
+    static int c2p(int c0, int c1, int c2, int c3) {
+      return (c0 | (c1 << 1) | (c2 << 2) | (c3 << 3));
+    }
+    static int u2p(int u0, int u1) { return (u0 | (u1 << 2)); }
+    static int candidate(int p, int g) { return p ^ (1<<g); }
+    static int maskp(int l) { return (1 << l); }
+    static bool is_diagonal(int p) { return p2u(p, 0) == p2u(p, 1); }
   };
 }
 
@@ -333,46 +352,60 @@ params
 ------
 int prev : previous dot label
 int% sptr : ptr to state
-int dot_type : state type where -1 : state, -2 : worms, non-negative integer : operator type. 
-int index : index which will be used to indexing the spin. e.g. if dot_type = -1. state[index] is the spin on the dot, if -2, worm[index], and so on.
+int dot_type : state type where -1 : state, -2 : worms, non-negative integer : operator label. 
+int index : index which will be used to indexing the corresponding type list. e.g. if dot_type = -1. state[index] is the spin on the dot, if -2, worm[index] is the worm corresponds to the dot. However, if dot_type=0, wich means the dot is operator, ops[dot_type] is the operator of the dot and the index refers to the position of dot with respect to the operator.
 
 */
 class spin_state::Dotv2
 {
-public:
   int prev_;
   int next_;
   int dot_type_;
   int index_; 
+  int site_;
+public:
   Dotv2(){}
-  Dotv2(int p, int n, int d, int i)
-  :prev_(p), next_(n), index_(i), dot_type_(d)
+  Dotv2(int s, int p, int n, int o, int i)
+  :site_(s), prev_(p), next_(n), dot_type_(o), index_(i)
   {}
 
-  static Dotv2 state(int s) { return Dotv2(s, s, -1, 0); }
-  static Dotv2 worm(int p, int n) { return Dotv2(p, n, -2, 0); }
+  static Dotv2 state(int s) { return Dotv2(s, s, s, -1, s); }
+  static Dotv2 worm(int s, int p, int n, int wl) { return Dotv2(s, p, n, -2, wl); }
   int move_next(int dir){
     return (dir == 0) ? prev_ : next_;
     ASSERT(false, "dir can be 1 or 0");
   }
+  int site() const { return site_; }
   int prev() const { return prev_; }
   int next() const { return next_; }
-  int index() const { return index_; }
-  int op_label() const { return dot_type_; }
+  int leg(int dir, int L) const {
+    if (at_operator()) return dir*L + index_;
+    else return 0;
+  }
+  int label() const {
+    if (at_operator()) return dot_type_;
+    else return index_;
+  }
   bool at_operator() const { return dot_type_ >= 0; }
   bool at_origin() const { return dot_type_ == -1; }
   bool at_worm() const { return dot_type_ == -2; }
   void set_prev(int p) { prev_ = p; }
   void set_next(int n) { next_ = n; }
+  int move_next(int dir) const {
+    // if (dir == 1) return next;
+    // else if (dir == 0) return prev;
+    ASSERT(false, "dir can be 1 or 0");
+    return (dir == 0) ? prev_ : next_;
+  }
 };
 
 
 class spin_state::Wormsv2{
-public:
   int site_;
   int spin_;
   int dot_label_;
   double tau_;
+public:
   Wormsv2(){}
   Wormsv2(int si, int sp, int dl, double t):site_(si), spin_(sp),dot_label_(dl),tau_(t)
   {}
@@ -390,7 +423,6 @@ public:
 */
 class spin_state::Operatorv2{
   std::vector<int> bond_;
-  std::vector<int> dot_labels_;
   int size_;
   int op_type_;
   int state_;
@@ -398,19 +430,20 @@ class spin_state::Operatorv2{
 public:
   Operatorv2(){}
 
-  /*
-  bond_;
-  dot_labels_;
-  size_;
-  op_type;
-  state_;
-  tau_;
-  */
-  Operatorv2(std::vector<int> b, std::vector<int> d, int st,
-            int si, int o, double t):bond_(b), dot_labels_(d),state_(st), size_(si), op_type_(o), tau_(t)
+  //bond_, dot_labels_, size_, op_type, state_,tau_;
+  Operatorv2(std::vector<int> b, int st,
+            int si, int o, double t):bond_(b), state_(st), size_(si), op_type_(o), tau_(t)
   {
     ASSERT(size_ == b.size(), "bond size and size is inconsistent");
   }
+
+  //size_, op_type, state_,tau_;
+  Operatorv2(int st, int si, int o, double t)
+  :state_(st), size_(si), op_type_(o), tau_(t)
+  {
+    ASSERT(size_ == bond_.size(), "bond size and size is inconsistent");
+  }
+
   
   void set_state(int sp) { state_ = sp; }
   int size() const {return size_;}
@@ -419,13 +452,13 @@ public:
   int state(int dir)const { // dir = 0 lower part, dir = 1 upper pirt
     if (dir==0) return state_ & ((1<<size_)-1);
     else if (dir == 1) return (state_ >> size_) & ((1<<size_)-1);
-    return state_;
+    return -1;
   }
   double tau()const {return tau_;}
   int bond(int s) const {return bond_[s];}
   std::vector<int> const & bond() const {return bond_;}
-  int dot_labels(int s) const {return dot_labels_[s];}
-  std::vector<int> const & dot_labels() const {return dot_labels_;}
+  // int dot_labels(int s) const {return dot_labels_[s];}
+  // std::vector<int> const & dot_labels() const {return dot_labels_;}
 
   /*
   leg = 0,1,2,3 for bond operator     
@@ -439,6 +472,7 @@ public:
 
   bool is_off_diagonal() const{
     if (state(0) != state(1)) return true;
+    return false;
   }
   bool is_diagonal()const{
     return !is_off_diagonal();
@@ -446,20 +480,38 @@ public:
 
   void print(std::ostream& os) const {
     for (int i=0; i<size_*2; i++) os << get_spin(i) << " ";
-    os << tau;
+    os << tau_;
   }
-
-
 
   std::vector<int> const get_state_vec(){
     std::vector<int> state_vec(size_*2);
     for (int i=0; i<size_*2; i++) state_vec[i] = get_spin(i);
     return state_vec;
-
   }
 
-};
-  std::ostream& operator<<(std::ostream& os, spin_state::Operatorv2 const& op) {
+  static Operatorv2 sentinel(double tau = 1){
+    return Operatorv2(0, 0, 0, tau);
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, Operatorv2 const& op) {
     op.print(os);
     return os;
   }
+
+  /*
+  return label worm will move to
+  params
+  ------
+  cindex : current index (0 to 3). corresponds to which leg the worm comes in.
+  nindex : next index the worm goes out.
+  clabel : label of dot. (label doesn't distinguish the direction worm goes out or comes in)
+  L : number of site the operator acts, typically 2.
+
+  */
+  int next_dot(int cindex, int nindex, int clabel){
+    // int cindex = GetIndex(ptr, 0);
+    cindex %= size_;
+    nindex %= size_;
+    return clabel + (nindex - cindex);
+  }
+};
