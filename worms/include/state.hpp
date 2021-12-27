@@ -422,7 +422,7 @@ public:
   the actual size of state (number of bits for expressing state ) is 2 * size
 */
 class spin_state::Operatorv2{
-  std::vector<int> bond_;
+  int s0_, s1_;
   int size_;
   int op_type_;
   int state_;
@@ -431,8 +431,8 @@ public:
   Operatorv2(){}
 
   //bond_, dot_labels_, size_, op_type, state_,tau_;
-  Operatorv2(std::vector<int> b, int st,
-            int si, int o, double t):bond_(b), state_(st), size_(si), op_type_(o), tau_(t)
+  Operatorv2(int s0, int s1 , int st,
+            int si, int o, double t):s0_(s0), s1_(s1), state_(st), size_(si), op_type_(o), tau_(t)
   {
     ASSERT(size_ == b.size(), "bond size and size is inconsistent");
   }
@@ -455,8 +455,11 @@ public:
     return -1;
   }
   double tau()const {return tau_;}
-  int bond(int s) const {return bond_[s];}
-  std::vector<int> const & bond() const {return bond_;}
+  int s0() const {return s0_;}
+  int s1() const {return s1_;}
+
+  // int bond(int s) const {return bond_[s];}
+  // std::vector<int> const & bond() const {return bond_;}
   // int dot_labels(int s) const {return dot_labels_[s];}
   // std::vector<int> const & dot_labels() const {return dot_labels_;}
 
