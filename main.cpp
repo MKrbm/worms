@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
   for (int i=0; i < MCSTEP + SWEEP; i++){
     // solver.diagonal_update(); 
     solver.diagonal_update(3); //n* need to be comment out 
-    // solver.worm_update();
+    solver.worm_update();
     if (cnt >= SWEEP){
       int sign = 1;
       double mu = 0;

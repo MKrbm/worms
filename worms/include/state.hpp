@@ -60,9 +60,9 @@ namespace spin_state{
 
   inline int state2num(std::vector<int> const& state, std::vector<int> const& bond){
     int u = 0;
-    for (int i = bond.size()-1; i >= 0; i--) {
-      u <<= 1;
-      u |= state[bond[i]];
+    for (int i=0; i<bond.size(); i++){
+      // int tmp = cstate[bond[i]];
+      u += (state[bond[i]] << i);
     }
     return u;
   }
@@ -422,7 +422,7 @@ public:
   the actual size of state (number of bits for expressing state ) is 2 * size
 */
 class spin_state::Operatorv2{
-  int s0_, s1_;
+  const std::vector<int> * bond_ptr_;
   int size_;
   int op_type_;
   int state_;
@@ -431,15 +431,15 @@ public:
   Operatorv2(){}
 
   //bond_, dot_labels_, size_, op_type, state_,tau_;
-  Operatorv2(int s0, int s1 , int st,
-            int si, int o, double t):s0_(s0), s1_(s1), state_(st), size_(si), op_type_(o), tau_(t)
+  Operatorv2(const std::vector<int>* bp , int st,
+            int si, int o, double t):bond_ptr_(bp), state_(st), size_(si), op_type_(o), tau_(t)
   {
     ASSERT(size_ == b.size(), "bond size and size is inconsistent");
   }
 
   //size_, op_type, state_,tau_;
   Operatorv2(int st, int si, int o, double t)
-  :state_(st), size_(si), op_type_(o), tau_(t)
+  :bond_ptr_(nullptr),state_(st), size_(si), op_type_(o), tau_(t)
   {
     ASSERT(size_ == bond_.size(), "bond size and size is inconsistent");
   }
@@ -455,8 +455,10 @@ public:
     return -1;
   }
   double tau()const {return tau_;}
-  int s0() const {return s0_;}
-  int s1() const {return s1_;}
+  int bond(int i) {return bond_ptr_->operator[](i);}
+  const std::vector<int>* bond_ptr()const {return bond_ptr_;}
+  // int s0() const {return s0_;}
+  // int s1() const {return s1_;}
 
   // int bond(int s) const {return bond_[s];}
   // std::vector<int> const & bond() const {return bond_;}
