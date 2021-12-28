@@ -1,5 +1,6 @@
 // #define RANDOM_SEED 0
 #include "MainConfig.h"
+#include "options.hpp"
 
 #include <iostream>
 #include <worm.hpp>
@@ -9,8 +10,6 @@
 #include <observable.hpp>
 
 #define DEBUG 1
-#define MCSTEP 1E5
-#define SWEEP 1E4
 #define MESTIME 1
 
 #if MESTIME
@@ -24,20 +23,18 @@
 
 int main(int argc, char* argv[])
 {
-  if (argc < 4) {
-    // report version
-    std::cout << argv[0] << " Version " << VERSION_MAJOR << "."
-              << VERSION_MINOR << std::endl;
-    std::cout << "Usage: " << argv[0] << " L J beta" << std::endl;
-    return 1;
-  }
-  std::cout << "MC step : " << MCSTEP << "\n" 
-            << "sweep size : " << SWEEP << std::endl;
 
-  int L = std::stoi(argv[1]);
-  double J = std::stoi(argv[2]);
-  double beta = std::stoi(argv[3]);
-  double h = 0;
+  options opt(argc, argv, 16, 1.0);
+  if (!opt.valid) std::exit(-1);
+  double beta = 1 / opt.T;
+  int L = opt.L;
+  double J = 1;
+  double h = opt.H;
+  // double beta = std::stoi(argv[3]);
+
+  std::cout << "MC step : " << opt.sweeps << "\n" 
+            << "thermal size : " << opt.therm << std::endl;
+
   BC::observable ene; // signed energy i.e. $\sum_i E_i S_i / N_MC$
   BC::observable umag; // uniform magnetization 
   BC::observable ave_sign; // average sign 
@@ -67,22 +64,18 @@ int main(int argc, char* argv[])
     s = spin;
     spin^=1;
   }
-  for (int i=0; i < MCSTEP + SWEEP; i++){
+  for (int i=0; i < opt.therm + opt.sweeps; i++){
     // solver.diagonal_update(); 
     solver.diagonal_update(3); //n* need to be comment out 
     solver.worm_update();
-    if (cnt >= SWEEP){
+    if (cnt >= opt.therm){
       int sign = 1;
       double mu = 0;
       for (const auto&  s : solver.state) {
         mu += 0.5 - s;
       }
       for (const auto& op : solver.ops_main){
-        // std::vector<int> local_state = *op;
-        // int num = spin_state::state2num(local_state);
-        // sign *= h1.loperators[op.op_type()];
         sign *= h1.loperators[op.op_type()].signs[op.state()];
-        // sign *= op->plop->signs[num];
       }
       ene << (- ((double)solver.ops_main.size()) / beta + h1.shifts[0] * h1.Nb) * sign;
       ave_sign << sign;
@@ -98,13 +91,13 @@ int main(int argc, char* argv[])
   #if MESTIME
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-  cout << "time for diagonal_update : " << du_time/(MCSTEP + SWEEP) << endl
-            << "time for worm update : " << wu_time/(MCSTEP+SWEEP) << endl;
+  cout << "time for diagonal_update : " << du_time/(opt.therm+opt.sweeps) << endl
+            << "time for worm update : " << wu_time/(opt.therm+opt.sweeps) << endl;
 
   double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / (double)1E3;
   #endif
   std::cout << "Elapsed time = " << elapsed << " sec\n"
-            << "Speed = " << (MCSTEP + SWEEP) / elapsed << " MCS/sec\n";
+            << "Speed = " << (opt.therm+opt.sweeps) / elapsed << " MCS/sec\n";
   std::cout << "Energy             = "
             << ene.mean()/ave_sign.mean() / h1.L << " +- " 
             << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) / h1.L

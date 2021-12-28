@@ -29,8 +29,8 @@ namespace spin_state{
   using WormsPtr = std::shared_ptr<Worms>;
   using BStatePtr = std::shared_ptr<BottomState>;
   using local_operator = model::local_operator;
-  using WORM_ARR = std::vector<std::tuple<int, int, int, double>>; //  site, spin, dot_label, tau (dot label is needed for reverse lookup)
-  using WORM = std::tuple<int, int, int, double>;
+  using WORM = std::tuple<int, int, double>;
+  using WORM_ARR = std::vector<WORM>; //  site, spin, dot_label, tau (dot label is needed for reverse lookup)
   using DOT_ARR = std::vector<std::tuple<int,int,int,int>>;   //prev, next, dot_type, index, (index refers to the legs of the dot with respect to the class of dots)
 
   /*
@@ -371,10 +371,6 @@ public:
 
   static Dotv2 state(int s) { return Dotv2(s, s, s, -1, s); }
   static Dotv2 worm(int s, int p, int n, int wl) { return Dotv2(s, p, n, -2, wl); }
-  int move_next(int dir){
-    return (dir == 0) ? prev_ : next_;
-    ASSERT(false, "dir can be 1 or 0");
-  }
   int site() const { return site_; }
   int prev() const { return prev_; }
   int next() const { return next_; }
@@ -392,8 +388,6 @@ public:
   void set_prev(int p) { prev_ = p; }
   void set_next(int n) { next_ = n; }
   int move_next(int dir) const {
-    // if (dir == 1) return next;
-    // else if (dir == 0) return prev;
     ASSERT(false, "dir can be 1 or 0");
     return (dir == 0) ? prev_ : next_;
   }
@@ -422,16 +416,16 @@ public:
   the actual size of state (number of bits for expressing state ) is 2 * size
 */
 class spin_state::Operatorv2{
-  const std::vector<int> * bond_ptr_;
+  const std::vector<int>* const bond_ptr_;
   int size_;
   int op_type_;
   int state_;
   double tau_;
 public:
-  Operatorv2(){}
+  Operatorv2() :bond_ptr_(nullptr){}
 
   //bond_, dot_labels_, size_, op_type, state_,tau_;
-  Operatorv2(const std::vector<int>* bp , int st,
+  Operatorv2(const std::vector<int>* const bp , int st,
             int si, int o, double t):bond_ptr_(bp), state_(st), size_(si), op_type_(o), tau_(t)
   {
     ASSERT(size_ == b.size(), "bond size and size is inconsistent");
@@ -457,14 +451,6 @@ public:
   double tau()const {return tau_;}
   int bond(int i) {return bond_ptr_->operator[](i);}
   const std::vector<int>* bond_ptr()const {return bond_ptr_;}
-  // int s0() const {return s0_;}
-  // int s1() const {return s1_;}
-
-  // int bond(int s) const {return bond_[s];}
-  // std::vector<int> const & bond() const {return bond_;}
-  // int dot_labels(int s) const {return dot_labels_[s];}
-  // std::vector<int> const & dot_labels() const {return dot_labels_;}
-
   /*
   leg = 0,1,2,3 for bond operator     
   2  3
@@ -472,36 +458,26 @@ public:
   0  1.
   */
   void flip_state(int leg){ state_ ^= (1<<leg);} 
-
   int get_spin(int leg) const {return (state_>>leg) & 1;}
-
-  bool is_off_diagonal() const{
-    if (state(0) != state(1)) return true;
-    return false;
-  }
-  bool is_diagonal()const{
-    return !is_off_diagonal();
-  }
-
+  bool is_off_diagonal() const{ return (state(0) != state(1)); }
+  bool is_diagonal()const{ return !is_off_diagonal();}
+  static Operatorv2 sentinel(double tau = 1){ return Operatorv2(0, 0, 0, tau);}
   void print(std::ostream& os) const {
     for (int i=0; i<size_*2; i++) os << get_spin(i) << " ";
     os << tau_;
   }
-
-  std::vector<int> const get_state_vec(){
-    std::vector<int> state_vec(size_*2);
-    for (int i=0; i<size_*2; i++) state_vec[i] = get_spin(i);
-    return state_vec;
-  }
-
-  static Operatorv2 sentinel(double tau = 1){
-    return Operatorv2(0, 0, 0, tau);
-  }
-
   friend std::ostream& operator<<(std::ostream& os, Operatorv2 const& op) {
     op.print(os);
     return os;
   }
+
+  // std::vector<int> const get_state_vec(){
+  //   std::vector<int> state_vec(size_*2);
+  //   for (int i=0; i<size_*2; i++) state_vec[i] = get_spin(i);
+  //   return state_vec;
+  // }
+
+
 
   /*
   return label worm will move to
