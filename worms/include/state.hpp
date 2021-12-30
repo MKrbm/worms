@@ -22,7 +22,7 @@ namespace spin_state{
   class Wormsv2;
   class Operatorv2;
   
-
+  using size_t = std::size_t; 
   using STATE = model::STATE;
   using BaseStatePtr = std::shared_ptr<BaseState>;
   using OpStatePtr = std::shared_ptr<OpState>;
@@ -48,7 +48,7 @@ namespace spin_state{
   integer representation of state
 
   */
-  inline int state2num(std::vector<int> const& state, int L = -1){
+  inline int state2num(STATE const& state, int L = -1){
     int num = 0;
     if (L < 0) L = state.size();
     for (int i = L-1; i >= 0; i--) {
@@ -58,7 +58,7 @@ namespace spin_state{
     return num;
   }
 
-  inline int state2num(std::vector<int> const& state, std::vector<int> const& bond){
+  inline int state2num(STATE const& state, STATE const& bond){
     int u = 0;
     for (int i=0; i<bond.size(); i++){
       // int tmp = cstate[bond[i]];
@@ -103,9 +103,9 @@ namespace spin_state{
   };
 }
 
-class spin_state::BaseState : public std::vector<int>
+class spin_state::BaseState : public STATE
 {
-  typedef std::vector<int> vec;
+  typedef STATE vec;
   public :
   int L;
   int _size;
@@ -118,15 +118,15 @@ class spin_state::BaseState : public std::vector<int>
   BaseState(int L, double tau = 0, local_operator* ptr = nullptr, std::vector<int> bond = std::vector<int>())
   :vec(L, 0), L(L), _size(L), plop(ptr), bond(bond), tau(tau) {}
 
-  BaseState(std::vector<int> state, double tau = 0, local_operator* ptr = nullptr, std::vector<int> bond = std::vector<int>())
+  BaseState(STATE state, double tau = 0, local_operator* ptr = nullptr, std::vector<int> bond = std::vector<int>())
   :vec(state), L(state.size()), _size(L), plop(ptr), bond(bond), tau(tau) {}
 
 
-  virtual std::ptrdiff_t GetIndex(int* ptr, int dir_in = 0){
+  virtual std::ptrdiff_t GetIndex(int8_t* ptr, int dir_in = 0){
     return std::distance(this->data(), ptr);
   }
 
-  virtual int* GetStatePtr(int* ptr,int dir_in = 0){
+  virtual int8_t* GetStatePtr(int8_t* ptr,int dir_in = 0){
     return ptr;
   }
 
@@ -195,7 +195,7 @@ class spin_state::OpState : public BaseState
     ASSERT(bond.size() == plop->L, "size of bond must be equal to operator size");
   }
 
-  OpState(std::vector<int> state, local_operator* plop
+  OpState(STATE state, local_operator* plop
           ,std::vector<int> bond_, double t)
   :BaseState(state, t, plop, bond_)
   {
@@ -209,8 +209,8 @@ class spin_state::OpState : public BaseState
   /*
   int dir : 1 or 0, corresponds to upside or downside of state.
   */
-  int* GetStatePtr (int* ptr, int dir_in) override{
-    return ptr + dir_in*L;
+  int8_t* GetStatePtr (int8_t* ptr, int dir_in) override{
+    return ptr + (int8_t)dir_in*L;
   }
 
   /*
@@ -220,7 +220,7 @@ class spin_state::OpState : public BaseState
   int* ptr : ptr to element of state
   int dir_in : direction (1 or 0) worm comes in.
   */
-  std::ptrdiff_t GetIndex(int* ptr, int dir_in) override{
+  std::ptrdiff_t GetIndex(int8_t* ptr, int dir_in) override{
     ptr = GetStatePtr(ptr, dir_in);
     return std::distance(this->data(), ptr);
   }
@@ -259,7 +259,7 @@ class spin_state::OpState : public BaseState
 class spin_state::Worms : public BaseState
 {
   public :
-  const std::vector<int>& spin;
+  const STATE& spin;
   const std::vector<int>& site;
   // std::vector<int> worm_site;
   ~Worms(){
@@ -269,7 +269,7 @@ class spin_state::Worms : public BaseState
   Worms(int L)
   :BaseState(L), spin(*this), site(bond){}
 
-  Worms(std::vector<int> spin_
+  Worms(STATE spin_
           ,std::vector<int> site_, double t)
   :BaseState(spin_, t, nullptr, site_), spin(*this), site(bond)
   {
@@ -281,7 +281,7 @@ class spin_state::Worms : public BaseState
 
   Worms(int spin_
           ,int site_, double t)
-  :BaseState(std::vector<int>(1,spin_), t, nullptr, std::vector<int>(1,site_)), spin(*this), site(bond)
+  :BaseState(STATE(1,spin_), t, nullptr, std::vector<int>(1,site_)), spin(*this), site(bond)
   {
     BaseState::L = 1;
     // ASSERT(l.size() == L, "size of labels must be equal to given L");
@@ -358,27 +358,26 @@ int index : index which will be used to indexing the corresponding type list. e.
 */
 class spin_state::Dotv2
 {
-  int prev_;
-  int next_;
+  size_t prev_;
+  size_t next_;
   int dot_type_;
-  int index_; 
-  int site_;
+  size_t index_; 
+  // size_t site_;
 public:
   Dotv2(){}
-  Dotv2(int s, int p, int n, int o, int i)
-  :site_(s), prev_(p), next_(n), dot_type_(o), index_(i)
+  Dotv2(size_t p, size_t n, int o, size_t i)
+  :prev_(p), next_(n), dot_type_(o), index_(i)
   {}
 
-  static Dotv2 state(int s) { return Dotv2(s, s, s, -1, s); }
-  static Dotv2 worm(int s, int p, int n, int wl) { return Dotv2(s, p, n, -2, wl); }
-  int site() const { return site_; }
-  int prev() const { return prev_; }
-  int next() const { return next_; }
-  int leg(int dir, int L) const {
+  static Dotv2 state(int s) { return Dotv2(s, s, -1, s); }
+  static Dotv2 worm(int p, int n, int wl) { return Dotv2(p, n, -2, wl); }
+  size_t prev() const { return prev_; }
+  size_t next() const { return next_; }
+  size_t leg(int dir, int L) const {
     if (at_operator()) return dir*L + index_;
     else return 0;
   }
-  int label() const {
+  size_t label() const {
     if (at_operator()) return dot_type_;
     else return index_;
   }
@@ -387,7 +386,7 @@ public:
   bool at_worm() const { return dot_type_ == -2; }
   void set_prev(int p) { prev_ = p; }
   void set_next(int n) { next_ = n; }
-  int move_next(int dir) const {
+  size_t move_next(int dir) const {
     ASSERT(false, "dir can be 1 or 0");
     return (dir == 0) ? prev_ : next_;
   }
@@ -395,19 +394,19 @@ public:
 
 
 class spin_state::Wormsv2{
-  int site_;
-  int spin_;
-  int dot_label_;
+  size_t site_;
+  size_t spin_;
+  size_t dot_label_;
   double tau_;
 public:
   Wormsv2(){}
-  Wormsv2(int si, int sp, int dl, double t):site_(si), spin_(sp),dot_label_(dl),tau_(t)
+  Wormsv2(size_t si, size_t sp, size_t dl, double t):site_(si), spin_(sp),dot_label_(dl),tau_(t)
   {}
   
   void set_spin(int s) { spin_ = s; }
-  int site() const {return site_;}
-  int spin()const {return spin_;}
-  int dot_label()const {return dot_label_;}
+  size_t site() const {return site_;}
+  size_t spin()const {return spin_;}
+  size_t dot_label()const {return dot_label_;}
   double tau()const {return tau_;}
 };
 
@@ -415,55 +414,64 @@ public:
 
   the actual size of state (number of bits for expressing state ) is 2 * size
 */
-class spin_state::Operatorv2{
-  const std::vector<int>* const bond_ptr_;
-  int size_;
-  int op_type_;
-  int state_;
+// class spin_state::Operatorv2{
+class Operatorv2{
+
+  // const std::vector<int>* const bond_ptr_;
+  size_t s0_;
+  size_t s1_;
+  size_t size_;
+  size_t op_type_;
+  size_t state_;
   double tau_;
 public:
-  Operatorv2() :bond_ptr_(nullptr){}
+  // Operatorv2() :bond_ptr_(nullptr){}
+  Operatorv2(){}
+
 
   //bond_, dot_labels_, size_, op_type, state_,tau_;
-  Operatorv2(const std::vector<int>* const bp , int st,
-            int si, int o, double t):bond_ptr_(bp), state_(st), size_(si), op_type_(o), tau_(t)
+  Operatorv2(size_t s0, size_t s1 , size_t st,
+            size_t si, size_t o, double t):s0_(s0), s1_(s1), state_(st), size_(si), op_type_(o), tau_(t)
   {
     ASSERT(size_ == b.size(), "bond size and size is inconsistent");
   }
 
   //size_, op_type, state_,tau_;
-  Operatorv2(int st, int si, int o, double t)
-  :bond_ptr_(nullptr),state_(st), size_(si), op_type_(o), tau_(t)
+  Operatorv2(size_t st, size_t si, size_t o, double t)
+  :state_(st), size_(si), op_type_(o), tau_(t)
   {
     ASSERT(size_ == bond_.size(), "bond size and size is inconsistent");
   }
 
   
-  void set_state(int sp) { state_ = sp; }
-  int size() const {return size_;}
-  int op_type()const {return op_type_;}
-  int state()const {return state_;}
-  int state(int dir)const { // dir = 0 lower part, dir = 1 upper pirt
+  void set_state(size_t sp) { state_ = sp; }
+  size_t size() const {return size_;}
+  size_t op_type()const {return op_type_;}
+  size_t state()const {return state_;}
+  size_t state(size_t dir)const { // dir = 0 lower part, dir = 1 upper pirt
     if (dir==0) return state_ & ((1<<size_)-1);
     else if (dir == 1) return (state_ >> size_) & ((1<<size_)-1);
     return -1;
   }
   double tau()const {return tau_;}
-  int bond(int i) {return bond_ptr_->operator[](i);}
-  const std::vector<int>* bond_ptr()const {return bond_ptr_;}
+  // int bond(int i) {return bond_ptr_->operator[](i);}
+  // const std::vector<int>* bond_ptr()const {return bond_ptr_;}
+  size_t s0() const {return s0_;}
+  size_t s1() const {return s1_;}
+
   /*
   leg = 0,1,2,3 for bond operator     
   2  3
   ====
   0  1.
   */
-  void flip_state(int leg){ state_ ^= (1<<leg);} 
-  int get_spin(int leg) const {return (state_>>leg) & 1;}
+  void flip_state(size_t leg){ state_ ^= (1<<leg);} 
+  size_t get_spin(size_t leg) const {return (state_>>leg) & 1;}
   bool is_off_diagonal() const{ return (state(0) != state(1)); }
   bool is_diagonal()const{ return !is_off_diagonal();}
   static Operatorv2 sentinel(double tau = 1){ return Operatorv2(0, 0, 0, tau);}
   void print(std::ostream& os) const {
-    for (int i=0; i<size_*2; i++) os << get_spin(i) << " ";
+    for (size_t i=0; i<size_*2; i++) os << get_spin(i) << " ";
     os << tau_;
   }
   friend std::ostream& operator<<(std::ostream& os, Operatorv2 const& op) {

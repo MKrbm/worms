@@ -21,7 +21,7 @@ target_link_libraries(worm uftree) # link library
 
 
 
-target_compile_features(worm PRIVATE cxx_std_14)
+# target_compile_features(worm PRIVATE cxx_std_14)
 target_include_directories(worm INTERFACE ./include)
 # target_compile_options(worm PRIVATE -O3 -Wall)
 

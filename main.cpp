@@ -39,6 +39,8 @@ int main(int argc, char* argv[])
   BC::observable umag; // uniform magnetization 
   BC::observable ave_sign; // average sign 
 
+  std::cout << "size of int : " << sizeof(int8_t) << endl;
+
 
   // std::mt19937 rand_src(12345);
   model::heisenberg1D h1(L,h,J);
@@ -67,7 +69,7 @@ int main(int argc, char* argv[])
   for (int i=0; i < opt.therm + opt.sweeps; i++){
     // solver.diagonal_update(); 
     solver.diagonal_update(3); //n* need to be comment out 
-    solver.worm_update();
+    // solver.worm_update();
     if (cnt >= opt.therm){
       int sign = 1;
       double mu = 0;
@@ -90,9 +92,6 @@ int main(int argc, char* argv[])
 
   #if MESTIME
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-
-  cout << "time for diagonal_update : " << du_time/(opt.therm+opt.sweeps) << endl
-            << "time for worm update : " << wu_time/(opt.therm+opt.sweeps) << endl;
 
   double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / (double)1E3;
   #endif

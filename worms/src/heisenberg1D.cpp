@@ -1,8 +1,8 @@
 #include "../include/BC.hpp"
 #include "../include/model.hpp"
 
-std::vector<std::vector<int>> model::heisenberg1D::return_bonds(int L, bool PBC){
-  std::vector<std::vector<int>> bonds(L, std::vector<int>(2));
+std::vector<model::BOND> model::heisenberg1D::return_bonds(int L, bool PBC){
+  std::vector<model::BOND> bonds(L, model::BOND(2));
 
   for(int i=0; i<L; i++){
     bonds[i][0] = i;
