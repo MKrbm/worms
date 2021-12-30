@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
   for (int i=0; i < opt.therm + opt.sweeps; i++){
     // solver.diagonal_update(); 
     solver.diagonal_update(3); //n* need to be comment out 
-    // solver.worm_update();
+    solver.worm_update();
     if (cnt >= opt.therm){
       int sign = 1;
       double mu = 0;

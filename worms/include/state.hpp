@@ -22,6 +22,7 @@ namespace spin_state{
   class Wormsv2;
   class Operatorv2;
   
+  using SPIN = model::SPIN;
   using size_t = std::size_t; 
   using STATE = model::STATE;
   using BOND = model::BOND;
@@ -123,11 +124,11 @@ class spin_state::BaseState : public STATE
   :vec(state), L(state.size()), _size(L), plop(ptr), bond(bond), tau(tau) {}
 
 
-  virtual std::ptrdiff_t GetIndex(int8_t* ptr, int dir_in = 0){
+  virtual std::ptrdiff_t GetIndex(SPIN* ptr, int dir_in = 0){
     return std::distance(this->data(), ptr);
   }
 
-  virtual int8_t* GetStatePtr(int8_t* ptr,int dir_in = 0){
+  virtual SPIN* GetStatePtr(SPIN* ptr,int dir_in = 0){
     return ptr;
   }
 
@@ -210,8 +211,8 @@ class spin_state::OpState : public BaseState
   /*
   int dir : 1 or 0, corresponds to upside or downside of state.
   */
-  int8_t* GetStatePtr (int8_t* ptr, int dir_in) override{
-    return ptr + (int8_t)dir_in*L;
+  SPIN* GetStatePtr (SPIN* ptr, int dir_in) override{
+    return ptr + (SPIN)dir_in*L;
   }
 
   /*
@@ -221,7 +222,7 @@ class spin_state::OpState : public BaseState
   int* ptr : ptr to element of state
   int dir_in : direction (1 or 0) worm comes in.
   */
-  std::ptrdiff_t GetIndex(int8_t* ptr, int dir_in) override{
+  std::ptrdiff_t GetIndex(SPIN* ptr, int dir_in) override{
     ptr = GetStatePtr(ptr, dir_in);
     return std::distance(this->data(), ptr);
   }
@@ -363,17 +364,18 @@ class spin_state::Dotv2
   size_t next_;
   int dot_type_;
   size_t index_; 
-  // size_t site_;
+  size_t site_;
 public:
   Dotv2(){}
-  Dotv2(size_t p, size_t n, int o, size_t i)
-  :prev_(p), next_(n), dot_type_(o), index_(i)
+  Dotv2(size_t p, size_t n, int o, size_t i, size_t s)
+  :prev_(p), next_(n), dot_type_(o), index_(i), site_(s)
   {}
 
-  static Dotv2 state(size_t s) { return Dotv2(s, s, -1, s); }
-  static Dotv2 worm(size_t p, size_t n, size_t wl) { return Dotv2(p, n, -2, wl); }
+  static Dotv2 state(size_t s) { return Dotv2(s, s, -1, s, s); }
+  static Dotv2 worm(size_t p, size_t n, size_t wl, size_t s) { return Dotv2(p, n, -2, wl, s); }
   size_t prev() const { return prev_; }
   size_t next() const { return next_; }
+  size_t site() const {return site_;}
   size_t leg(size_t dir, size_t L) const {
     if (at_operator()) return dir*L + index_;
     else return 0;
@@ -382,14 +384,15 @@ public:
     if (at_operator()) return dot_type_;
     else return index_;
   }
+
   bool at_operator() const { return dot_type_ >= 0; }
   bool at_origin() const { return dot_type_ == -1; }
   bool at_worm() const { return dot_type_ == -2; }
   void set_prev(size_t p) { prev_ = p; }
   void set_next(size_t n) { next_ = n; }
   size_t move_next(size_t dir) const {
-    ASSERT(false, "dir can be 1 or 0");
     return (dir == 0) ? prev_ : next_;
+    ASSERT(false, "dir can be 1 or 0");
   }
 };
 
@@ -432,14 +435,14 @@ public:
   Operatorv2(const BOND* const bp , size_t st,
             size_t si, size_t o, double t):bond_ptr_(bp), state_(st), size_(si), op_type_(o), tau_(t)
   {
-    ASSERT(size_ == b.size(), "bond size and size is inconsistent");
+    ASSERT(size_ == bp->size(), "bond size and size is inconsistent");
   }
 
   //size_, op_type, state_,tau_;
   Operatorv2(size_t st, size_t si, size_t o, double t)
   :state_(st), size_(si), op_type_(o), tau_(t), bond_ptr_(nullptr)
   {
-    ASSERT(size_ == bond_.size(), "bond size and size is inconsistent");
+    // ASSERT(size_ == bond_.size(), "bond size and size is inconsistent");
   }
 
   
@@ -465,7 +468,7 @@ public:
   0  1.
   */
   void flip_state(size_t leg){ state_ ^= (1<<leg);} 
-  size_t get_spin(size_t leg) const {return (state_>>leg) & 1;}
+  SPIN get_spin(size_t leg) const {return (state_>>leg) & 1;}
   bool is_off_diagonal() const{ return (state(0) != state(1)); }
   bool is_diagonal()const{ return !is_off_diagonal();}
   static Operatorv2 sentinel(double tau = 1){ return Operatorv2(0, 0, 0, tau);}
@@ -478,11 +481,11 @@ public:
     return os;
   }
 
-  // std::vector<int> const get_state_vec(){
-  //   std::vector<int> state_vec(size_*2);
-  //   for (int i=0; i<size_*2; i++) state_vec[i] = get_spin(i);
-  //   return state_vec;
-  // }
+  STATE const get_state_vec(){
+    STATE state_vec(size_*2);
+    for (int i=0; i<size_*2; i++) state_vec[i] = get_spin(i);
+    return state_vec;
+  }
 
 
 

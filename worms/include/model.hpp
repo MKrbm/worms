@@ -40,7 +40,8 @@ namespace model {
 
   class local_operator;
   
-  using STATE = std::vector<int8_t> ;
+  using SPIN = unsigned short;
+  using STATE = std::vector<SPIN> ;
   using BOND = std::vector<std::size_t>;
 
   template <int N_op>
