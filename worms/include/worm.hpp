@@ -42,15 +42,17 @@
 inline int positive_modulo(int i, int n) {
     return (i % n + n) % n;
 }
+using spin_state::Operatorv2;
+using spin_state::Dotv2;
+
 using MODEL = model::heisenberg1D;
-using OPS = std::vector<spin_state::Operatorv2>;
+using OPS = std::vector<Operatorv2>;
 using STATE = model::STATE;
 using BOND = model::BOND;
 using WORMS = spin_state::WORM_ARR;
-using DOTS = std::vector<spin_state::Dotv2>;
+using DOTS = std::vector<Dotv2>;
 using spin_state_t = spin_state::spin_state<2, 2>;
 using size_t = std::size_t;
-
 
 
 class worm{
@@ -146,7 +148,7 @@ class worm{
 
     //*init worms
     worms_list.resize(0);
-    ops_sub.push_back(spin_state::Operatorv2::sentinel(1)); //*sentinels
+    ops_sub.push_back(Operatorv2::sentinel(1)); //*sentinels
     double tau = expdist(rand_src);
     for (OPS::iterator opi = ops_sub.begin(); opi != ops_sub.end();){
       // auto op_sub = *opi;
@@ -168,9 +170,17 @@ class worm{
           if (r < lop.accept[u]){
             // append_ops(ops_main, bond, (u<<bond.size()) | u, lop_label, tau);
             // int s = bond.size();
-            ops_main.push_back(spin_state::Operatorv2(s0, s1, spin_state_t::u2p(u, u), 2, lop_label, tau));
+            ops_main.push_back(Operatorv2(&bonds[b], spin_state_t::u2p(u, u), 2, lop_label, tau));
             // set_dots(s0, 0, 0);
             // set_dots(s1, 0, 1);
+            size_t n = ops_main.size();
+            size_t label = spacetime_dots.size();
+            spacetime_dots.push_back( Dotv2(spacetime_dots[s0].prev(), s1, n-1,0));
+            spacetime_dots[spacetime_dots[s0].prev()].set_next(label);
+            spacetime_dots[s0].set_prev(label);
+            spacetime_dots.push_back( Dotv2(spacetime_dots[s1].prev(), s1, n-1,1));
+            spacetime_dots[spacetime_dots[s1].prev()].set_next(label+1);
+            spacetime_dots[s1].set_prev(label+1);
           }
         }
         tau += expdist(rand_src);
@@ -178,9 +188,9 @@ class worm{
         if (opi->is_off_diagonal()) {
           // auto const& bond = *opi->bond_ptr();
           update_state(opi, cstate);
-          ops_main.push_back(spin_state::Operatorv2(opi->s0(),opi->s1(), opi->state(), opi->size(), opi->op_type(), opi->tau()));
-          set_dots(opi->s0(), 0, 0);
-          set_dots(opi->s1(), 0, 1);
+          ops_main.push_back(Operatorv2(opi->bond_ptr(), opi->state(), opi->size(), opi->op_type(), opi->tau()));
+          // set_dots(opi->s0(), 0, 0);
+          // set_dots(opi->s1(), 0, 1);
           printStateAtTime(cstate, tau);
         }
         ++opi;
@@ -191,7 +201,7 @@ class worm{
   // //*append to ops
   // inline void append_ops(OPS& ops, std::vector<int> const& bond,  int state, int op_type, double tau){
   //   int s = bond.size();
-  //   ops.push_back(spin_state::Operatorv2(&bond, state, s, op_type, tau));
+  //   ops.push_back(Operatorv2(&bond, state, s, op_type, tau));
   //   for (int i=0; i<s; i++){
   //     set_dots(bond[i], 0, i);
   //   }
@@ -199,7 +209,7 @@ class worm{
   // //*overload for r value
   // inline void append_ops(OPS& ops, std::vector<int> && bond,  int state, int op_type, double tau){
   //   int s = bond.size();
-  //   ops.push_back(spin_state::Operatorv2(&bond, state, s, op_type, tau));
+  //   ops.push_back(Operatorv2(&bond, state, s, op_type, tau));
   //   for (int i=0; i<s; i++){
   //     set_dots(bond[i], 0, i);
   //   }
@@ -208,13 +218,13 @@ class worm{
   // //*append to ops
   // inline void append_ops(OPS& ops, const std::vector<int> * const bp,  int state, int op_type, double tau){
   //   int s = bp->size();
-  //   ops.push_back(spin_state::Operatorv2(bp, state, s, op_type, tau));
+  //   ops.push_back(Operatorv2(bp, state, s, op_type, tau));
   //   for (int i=0; i<s; i++){
   //     set_dots(bp->operator[](i), 0, i);
   //   }
   // }
 
-  // inline void append_ops(OPS& ops, spin_state::Operatorv2& op){
+  // inline void append_ops(OPS& ops, Operatorv2& op){
   //   append_ops(ops, op.bond_ptr(), op.state(), op.op_type(), op.tau());
   // }
 
@@ -265,8 +275,8 @@ class worm{
 
       //n* assigin for next step
       dir = nindex/(L);
-      // site = opstate.bond(nindex%L);
-      site = nindex%L == 0 ? opstate.s0() : opstate.s1();
+      site = opstate.bond(nindex%L);
+      // site = nindex%L == 0 ? opstate.bond(0) : opstate.bond(1);
       next_dot = opstate.next_dot(cindex, nindex, clabel);
 
       // opstate.plop->tran
@@ -307,19 +317,19 @@ class worm{
     if (dot_type == -1) {
       ASSERT(label == site, "label must be equal to site");
       spacetime_dots.push_back(
-        spin_state::Dotv2::state(site)
+        Dotv2::state(site)
       );
     }else if(dot_type == 0){
       size_t n = ops_main.size();
       spacetime_dots.push_back(
-        spin_state::Dotv2(spacetime_dots[site].prev(), site, n-1,index)
+        Dotv2(spacetime_dots[site].prev(), site, n-1,index)
       );
       spacetime_dots[spacetime_dots[site].prev()].set_next(label);
       spacetime_dots[site].set_prev(label);
     }else if(dot_type == -2){
       size_t n = worms_list.size();
       spacetime_dots.push_back(
-        spin_state::Dotv2::worm(spacetime_dots[site].prev(), site, n-1)
+        Dotv2::worm(spacetime_dots[site].prev(), site, n-1)
       );
       spacetime_dots[spacetime_dots[site].prev()].set_next(label);
       spacetime_dots[site].set_prev(label);
@@ -333,7 +343,7 @@ class worm{
     size_t label = spacetime_dots.size();
     size_t n = ops_main.size();
     spacetime_dots.push_back(
-      spin_state::Dotv2(spacetime_dots[site].prev(), site, n-1,index)
+      Dotv2(spacetime_dots[site].prev(), site, n-1,index)
     );
     spacetime_dots[spacetime_dots[site].prev()].set_next(label);
     spacetime_dots[site].set_prev(label);

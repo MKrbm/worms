@@ -24,6 +24,7 @@ namespace spin_state{
   
   using size_t = std::size_t; 
   using STATE = model::STATE;
+  using BOND = model::BOND;
   using BaseStatePtr = std::shared_ptr<BaseState>;
   using OpStatePtr = std::shared_ptr<OpState>;
   using WormsPtr = std::shared_ptr<Worms>;
@@ -369,11 +370,11 @@ public:
   :prev_(p), next_(n), dot_type_(o), index_(i)
   {}
 
-  static Dotv2 state(int s) { return Dotv2(s, s, -1, s); }
-  static Dotv2 worm(int p, int n, int wl) { return Dotv2(p, n, -2, wl); }
+  static Dotv2 state(size_t s) { return Dotv2(s, s, -1, s); }
+  static Dotv2 worm(size_t p, size_t n, size_t wl) { return Dotv2(p, n, -2, wl); }
   size_t prev() const { return prev_; }
   size_t next() const { return next_; }
-  size_t leg(int dir, int L) const {
+  size_t leg(size_t dir, size_t L) const {
     if (at_operator()) return dir*L + index_;
     else return 0;
   }
@@ -384,9 +385,9 @@ public:
   bool at_operator() const { return dot_type_ >= 0; }
   bool at_origin() const { return dot_type_ == -1; }
   bool at_worm() const { return dot_type_ == -2; }
-  void set_prev(int p) { prev_ = p; }
-  void set_next(int n) { next_ = n; }
-  size_t move_next(int dir) const {
+  void set_prev(size_t p) { prev_ = p; }
+  void set_next(size_t n) { next_ = n; }
+  size_t move_next(size_t dir) const {
     ASSERT(false, "dir can be 1 or 0");
     return (dir == 0) ? prev_ : next_;
   }
@@ -414,37 +415,35 @@ public:
 
   the actual size of state (number of bits for expressing state ) is 2 * size
 */
-// class spin_state::Operatorv2{
-class Operatorv2{
-
-  // const std::vector<int>* const bond_ptr_;
-  size_t s0_;
-  size_t s1_;
+class spin_state::Operatorv2{
+  const BOND* const bond_ptr_;
+  // size_t s0_;
+  // size_t s1_;
   size_t size_;
   size_t op_type_;
   size_t state_;
   double tau_;
 public:
-  // Operatorv2() :bond_ptr_(nullptr){}
-  Operatorv2(){}
+  Operatorv2() :bond_ptr_(nullptr){}
+  // Operatorv2(){}
 
 
   //bond_, dot_labels_, size_, op_type, state_,tau_;
-  Operatorv2(size_t s0, size_t s1 , size_t st,
-            size_t si, size_t o, double t):s0_(s0), s1_(s1), state_(st), size_(si), op_type_(o), tau_(t)
+  Operatorv2(const BOND* const bp , size_t st,
+            size_t si, size_t o, double t):bond_ptr_(bp), state_(st), size_(si), op_type_(o), tau_(t)
   {
     ASSERT(size_ == b.size(), "bond size and size is inconsistent");
   }
 
   //size_, op_type, state_,tau_;
   Operatorv2(size_t st, size_t si, size_t o, double t)
-  :state_(st), size_(si), op_type_(o), tau_(t)
+  :state_(st), size_(si), op_type_(o), tau_(t), bond_ptr_(nullptr)
   {
     ASSERT(size_ == bond_.size(), "bond size and size is inconsistent");
   }
 
   
-  void set_state(size_t sp) { state_ = sp; }
+  // void set_state(size_t sp) { state_ = sp; }
   size_t size() const {return size_;}
   size_t op_type()const {return op_type_;}
   size_t state()const {return state_;}
@@ -454,10 +453,10 @@ public:
     return -1;
   }
   double tau()const {return tau_;}
-  // int bond(int i) {return bond_ptr_->operator[](i);}
-  // const std::vector<int>* bond_ptr()const {return bond_ptr_;}
-  size_t s0() const {return s0_;}
-  size_t s1() const {return s1_;}
+  int bond(int i) {return bond_ptr_->operator[](i);}
+  const BOND* bond_ptr()const {return bond_ptr_;}
+  // size_t s0() const {return s0_;}
+  // size_t s1() const {return s1_;}
 
   /*
   leg = 0,1,2,3 for bond operator     
