@@ -1,21 +1,12 @@
 #include "../include/BC.hpp"
-#include "../include/model.hpp"
-
-std::vector<model::BOND> model::heisenberg1D::return_bonds(int L, bool PBC){
-  std::vector<model::BOND> bonds(L, model::BOND(2));
-
-  for(int i=0; i<L; i++){
-    bonds[i][0] = i;
-    bonds[i][1] = (i+1)%L;
-  }
-  // std::vector<std::vector<int>> vtr {{34,55},{45},{53,62}};
-  return bonds;
-}
+#include "../include/heisenberg.hpp"
 
 
-model::heisenberg1D::heisenberg1D(int L, double Jz, double Jxy, double h, bool PBC)
-  :Jz(Jz), Jxy(Jxy),
-  h(h), base_model_spin_1D(L, PBC ? L : L-1, PBC, return_bonds(L,PBC))
+
+
+model::heisenberg::heisenberg(int L, double Jz, double Jxy, double h, int dim)
+  :Jz(Jz), Jxy(Jxy), dim(dim),
+  h(h), base_spin_model(lattice::graph::simple(dim, L))
 {
   std::cout << "model output" << std::endl;
   std::cout << "L : " << L << std::endl;
@@ -59,7 +50,7 @@ model::heisenberg1D::heisenberg1D(int L, double Jz, double Jxy, double h, bool P
   rho = loperators[0].max_diagonal_weight_ * Nb;
 }
 
-void model::heisenberg1D::initial_setting(){
+void model::heisenberg::initial_setting(){
 
   int i = 0;
   double tmp=0;

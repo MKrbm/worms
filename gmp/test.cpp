@@ -12,6 +12,9 @@
 #include <cstdio>
 #include <tuple>
 #include <binstate.hpp>
+#include <lattice/graph.hpp>
+#include <lattice/coloring.hpp>
+
 
 using namespace std::chrono;
 
@@ -43,164 +46,16 @@ int main(){
 
 
 
-  std::cout << "debug start" << std::endl;
-  int L = 6;
-  double J = 1;
-  double beta = 1;
-  double h = 1;
-  BC::observable ene; // energy 
-  BC::observable umag; // uniform magnetization 
 
+  //latice
+  lattice::graph lat = lattice::graph::simple(1,16);
+  lat.print(std::cout);
 
-  // std::mt19937 rand_src(12345);
-  // model::heisenberg1D h1(L,h,J);
-  // worm solver(beta, h1);
+  model::base_spin_model<> md(lat);
 
-  /*
-  * test for swap functions
-  std::vector<spin_state::OpStatePtr> ops1(1E3, 
-    spin_state::OpStatePtr(new spin_state::OpState(
-    {1,0,0,1},
-    &solver.loperators[0],
-    {2,3},
-    0.01)));
-
-  std::vector<spin_state::OpStatePtr> ops2(1E3, 
-    spin_state::OpStatePtr(new spin_state::OpState(
-    {1,0,0,1},
-    &solver.loperators[0],
-    {4,5},
-    0.01)));
-
-
-  auto t1 = high_resolution_clock::now();
-  for (int i=0; i<1E4; i++){
-    // auto tmp = ops1;
-    // ops1 = ops2;
-    // ops1 = tmp;
-    ops1.swap(ops2);
-  }
-  auto t2 = high_resolution_clock::now();
-  double elapsed = duration_cast<milliseconds>(t2 - t1).count() / (double)1E3;
-
-  cout << "elapsed time : " << elapsed << endl;
-  */
-  
-
-  // //* measure tuple
-  // std::vector<int> state(6,1); 
-  // std::vector<int> lstate(2);
-
-  // auto t1 = high_resolution_clock::now();
-  // int a = 0;
-  // std::vector<std::tuple<int, int, int, double>> worm_tupple;
-  // for(std::size_t i=0; i<1E6; i++){
-  //   worm_tupple.resize(0);
-  //   for (std::size_t j = 0; j<100; j++){
-  //     worm_tupple.emplace_back(
-  //       a,a,a,(double)a
-  //     );
-  //   }
-
-  //   a += std::get<0>(worm_tupple[0]);
-  // }
-  // auto t2 = high_resolution_clock::now();
-  // double elapsed = duration_cast<milliseconds>(t2 - t1).count() / (double)1E3;
-
-  // cout << "elapsed time : " << elapsed << endl;
-
-  // cout << "state[0] = " << state[0] << endl;
-
-  // //* measure class
-  // unsigned long state_ = ~0;
-  // unsigned int lstate_ = ~0;
-  // binstate<6> X; 
-  // binstate<2> LX; 
-  // t1 = high_resolution_clock::now();
-  // std::array<long long unsigned int, 1> XX = {0};
-  // int size = X.base_size;
-
-  // int c = 0;
-
-  // std::vector<spin_state::Wormsv2> worm_list;
-  // for(std::size_t i=0; i<1E6; i++){
-  //   worm_list.resize(0);
-  //   for (std::size_t j = 0; j<100; j++){
-  //     worm_list.emplace_back(
-  //        c, c, c, (double)c
-  //     );
-  //   }
-  //   c += worm_list[0].site();
-  // }
-  // std::cout << "c : " << c << " a : " << a << std::endl;
-
-  // t2 = high_resolution_clock::now();
-  // elapsed = duration_cast<milliseconds>(t2 - t1).count() / (double)1E3;
-  // cout << "elapsed time : " << elapsed << endl;
-
-
-  // //* measure tuple
-  // std::vector<int> state(6,1); 
-  // std::vector<int> lstate(2);
-
-  // auto t1 = high_resolution_clock::now();
-  // int a = 0;
-  // spin_state::DOT_ARR dots;
-  // for(std::size_t i=0; i<1E6; i++){
-  //   dots.resize(0);
-  //   for (std::size_t j = 0; j<100; j++){
-  //     dots.emplace_back(
-  //       a,a,a,a
-  //     );
-  //   }
-  //   std::get<0>(dots[0]) = a+1;
-  //   a += std::get<0>(dots[0]);
-  //   a%=200;
-  // }
-  // auto t2 = high_resolution_clock::now();
-  // double elapsed = duration_cast<milliseconds>(t2 - t1).count() / (double)1E3;
-
-  // cout << "elapsed time : " << elapsed << endl;
-
-  // cout << "state[0] = " << state[0] << endl;
-
-  // //* measure class
-  // unsigned long state_ = ~0;
-  // unsigned int lstate_ = ~0;
-  // binstate<6> X; 
-  // binstate<2> LX; 
-  // t1 = high_resolution_clock::now();
-  // std::array<long long unsigned int, 1> XX = {0};
-  // int size = X.base_size;
-
-  // int c = 0;
-
-  // std::vector<spin_state::Dotv2> dot_list;
-  // for(std::size_t i=0; i<1E6; i++){
-  //   dot_list.resize(0);
-  //   for (std::size_t j = 0; j<100; j++){
-  //     dot_list.emplace_back(
-  //        c, c, c, c
-  //     );
-  //   }
-  //   dot_list[0].set_prev(c+1);
-  //   c += dot_list[0].prev();
-  //   c%=200;
-  // }
-
-  // t2 = high_resolution_clock::now();
-  // elapsed = duration_cast<milliseconds>(t2 - t1).count() / (double)1E3;
-  // cout << "elapsed time : " << elapsed << endl;
-  // std::cout << "c : " << c << " a : " << a << std::endl;
 
   spin_state::Operatorv2 op;
   typedef std::vector<int> veci;
-  // op = spin_state::Operatorv2(veci(2,1), veci(2,1), 3, 2, 0, 0);
-  // std::cout << op.is_off_diagonal()<< std::endl;
-  // std::cout << op.state(0) << std::endl;
-  // std::cout << op.state(1) << std::endl;
-  // std::cout << op.get_spin(0) << std::endl;
-  // auto state = op.get_state_vec();
 
 
   return 0;

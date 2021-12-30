@@ -1,5 +1,5 @@
 #include <uftree.hpp>
-#include <model.hpp>
+#include <heisenberg.hpp>
 #include <worm.hpp>
 #include <observable.hpp>
 #include <iostream>
@@ -51,8 +51,8 @@ int main(){
 
 
   std::mt19937 rand_src(12345);
-  model::heisenberg1D h1(L,h,J);
-  worm solver(beta, h1);
+  model::heisenberg h1(L,h,1,J);
+  worm<model::heisenberg> solver(beta, h1);
   cout << "initialized " << endl;
 
 

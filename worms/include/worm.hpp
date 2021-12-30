@@ -47,7 +47,7 @@ inline int positive_modulo(int i, int n) {
 using spin_state::Operatorv2;
 using spin_state::Dotv2;
 
-using MODEL = model::heisenberg1D;
+// using MODEL = model::heisenberg1D;
 using OPS = std::vector<Operatorv2>;
 using STATE = model::STATE;
 using BOND = model::BOND;
@@ -57,7 +57,7 @@ using spin_state_t = spin_state::spin_state<2, 2>;
 using size_t = std::size_t;
 
 
-
+template <typename MODEL>
 class worm{
   public:
   MODEL model;
@@ -89,6 +89,7 @@ class worm{
   // reference of member variables from model class
 
   static const int N_op = MODEL::Nop;
+  // static const int N_op = 1;
 
   std::array<model::local_operator, N_op>& loperators; //holds multiple local operators
   std::array<int, N_op>& leg_sizes; //leg size of local operators;

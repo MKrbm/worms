@@ -34,6 +34,7 @@ include(eigen3)
 include(lattice)
 
 FetchContent_MakeAvailable(bcl)
+FetchContent_MakeAvailable(lattice)
 include_directories(${FetchContent_includes})
 
 
@@ -57,7 +58,7 @@ add_subdirectory(./worms) #call /LoopAlgo/CMakeLists.txst
 
 
 # add executable
-FOREACH(name main debug worms_main)
+FOREACH(name main debug)
     add_executable(${name} ${name}.cpp)
     target_link_libraries(${name} worm)
     target_include_directories(${name} PUBLIC
@@ -67,13 +68,15 @@ FOREACH(name main debug worms_main)
 ENDFOREACH(name)
 
 
+add_executable(test ./gmp/test.cpp)
+target_compile_features(test PUBLIC cxx_std_14)
+target_link_libraries(test worm) # link library
+
+
 configure_file(MainConfig.h.in MainConfig.h)
 
 
 # test
-add_executable(test ./gmp/test.cpp)
-target_compile_features(test PUBLIC cxx_std_14)
-target_link_libraries(test worm) # link library
 
 
 

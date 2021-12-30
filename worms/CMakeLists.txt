@@ -6,12 +6,15 @@ project(worm_lib
     # コメントアウトしておきます(2019/12/02 修正)
     # HOMEPAGE_URL "https://example.com"
     LANGUAGES CXX)
+# list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 add_library(worm STATIC
     ./src/worm.cpp 
     ./src/model.cpp
     ./src/BC.cpp
     ./src/state.cpp
-    ./src/heisenberg1D.cpp
+    ./src/heisenberg.cpp
+    ./src/Shastry.cpp
     )
 
 add_subdirectory(./lib/uftree) #call /uftree/CMakeLists.txst

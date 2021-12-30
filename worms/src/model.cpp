@@ -170,6 +170,11 @@ void model::local_operator::check_trans_prob(){
     }
   }
 
+template<>
+model::base_spin_model<1>::base_spin_model(lattice::graph lt)
+:L(lt.num_sites()), Nb(lt.num_bonds()), lattice(lt), bonds(generate_bonds(lt))
+{}
+
 //end definition
 
 

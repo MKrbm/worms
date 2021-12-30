@@ -1,6 +1,5 @@
 #ifndef __model__
 #define __model__
-#pragma once
 #include <iostream>
 #include <stdio.h>
 #include <vector>
@@ -10,6 +9,8 @@
 #include <random>
 #include <math.h>
 #include <bcl.hpp>
+#include <lattice/graph.hpp>
+#include <lattice/coloring.hpp>
 #include "outgoing_weight.hpp"
 
 
@@ -38,17 +39,13 @@
 
 namespace model {
 
+  template <int N_op>
+  class base_spin_model;
   class local_operator;
   
   using SPIN = unsigned short;
   using STATE = std::vector<SPIN> ;
   using BOND = std::vector<std::size_t>;
-
-  template <int N_op>
-  class base_model_spin_1D;
-
-  class heisenberg1D;
-
 
 
   /*
@@ -143,40 +140,45 @@ public:
 
 //$\hat{H} = \sum_{<i,j>} [J \vec{S}_i \dot \vec{S}_j - h/Nb (S_i^z + S_j^z)]$ 
 // map spin to binary number e.g. -1 \rightarrow 0, 1 \rightarrow 1
-template <int N_op>
-// N_op : number of operators
-class model::base_model_spin_1D{
+template <int N_op = 1>
+class model::base_spin_model{
 public:
-    const int L;
-    const int Nb; // number of bonds.
-    const bool PBC;
-    static const int Nop = N_op; //number of local operator (1 for heisenberg model)
-    double rho = 0;
-    std::vector<double> shifts;
+  const int L;
+  const int Nb; // number of bonds.
+  static const int Nop = N_op; //number of local operator (1 for heisenberg model)
+  double rho = 0;
+  std::vector<double> shifts;
+  std::array<local_operator, N_op> loperators; //in case where there are three or more body interactions.
+  std::array<int, N_op> leg_size; //size of local operators;
+  std::array<double, N_op> operator_cum_weights;
+  const std::vector<BOND> bonds;
+  lattice::graph lattice;
+  base_spin_model(int L_, int Nb_, std::vector<BOND> bonds)
+  :L(L_), Nb(Nb_), bonds(bonds){}
 
-    std::array<local_operator, N_op> loperators; //in case where there are three or more body interactions.
-    std::array<int, N_op> leg_size; //size of local operators;
-    std::array<double, N_op> operator_cum_weights;
-    const std::vector<BOND> bonds;
-    base_model_spin_1D(int L_, int Nb_, bool PBC, std::vector<BOND> bonds)
-    :L(L_), Nb(Nb_), PBC(PBC), bonds(bonds){}
+  base_spin_model(lattice::graph lt)
+  :L(lt.num_sites()), Nb(lt.num_bonds()), lattice(lt), bonds(generate_bonds(lt))
+  {
+    std::cerr << "lattice cannot be used for the base_spin_model with N_OP != 1" << std::endl;
+  }
+
+  static std::vector<BOND> generate_bonds(lattice::graph lattice){
+    std::vector<BOND> bonds;
+    for (int b=0; b<lattice.num_bonds(); b++){
+      std::vector<size_t> tmp(2);
+      tmp[0] = lattice.source(b);
+      tmp[1] = lattice.target(b);
+      bonds.push_back(tmp);
+
+    }
+    return bonds;
+  }
 };
 
 
 
-class model::heisenberg1D :public model::base_model_spin_1D<1>{
-public:
-    heisenberg1D(int L, double Jz, double Jxy, double h, bool PBC = true); //(1) 
-    heisenberg1D(int L, double h, double Jz=1, bool PBC = true) : heisenberg1D(L, Jz, -Jz, h, PBC) {} //(2) : pass arguments to (1) constructor. This is for AFH.
 
-    static std::vector<BOND> return_bonds(int L, bool PBC);
-    double Jz, Jxy;
-    const double h;
 
-    int DopAtRand(double);
-    void initial_setting();
-
-};
 
 
 
