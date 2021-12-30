@@ -40,7 +40,9 @@ namespace model {
 
   class local_operator;
   
-  typedef std::vector<int> STATE;
+  using SPIN = unsigned short;
+  using STATE = std::vector<SPIN> ;
+  using BOND = std::vector<std::size_t>;
 
   template <int N_op>
   class base_model_spin_1D;
@@ -155,8 +157,8 @@ public:
     std::array<local_operator, N_op> loperators; //in case where there are three or more body interactions.
     std::array<int, N_op> leg_size; //size of local operators;
     std::array<double, N_op> operator_cum_weights;
-    const std::vector<std::vector<int>> bonds;
-    base_model_spin_1D(int L_, int Nb_, bool PBC, std::vector<std::vector<int>> bonds)
+    const std::vector<BOND> bonds;
+    base_model_spin_1D(int L_, int Nb_, bool PBC, std::vector<BOND> bonds)
     :L(L_), Nb(Nb_), PBC(PBC), bonds(bonds){}
 };
 
@@ -167,7 +169,7 @@ public:
     heisenberg1D(int L, double Jz, double Jxy, double h, bool PBC = true); //(1) 
     heisenberg1D(int L, double h, double Jz=1, bool PBC = true) : heisenberg1D(L, Jz, -Jz, h, PBC) {} //(2) : pass arguments to (1) constructor. This is for AFH.
 
-    static std::vector<std::vector<int>> return_bonds(int L, bool PBC);
+    static std::vector<BOND> return_bonds(int L, bool PBC);
     double Jz, Jxy;
     const double h;
 

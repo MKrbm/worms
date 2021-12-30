@@ -8,6 +8,11 @@ cmake_minimum_required(VERSION 3.0.0)
 # include(cmake/prefix.cmake)
 project(worms VERSION 1.0.0 LANGUAGES CXX)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+# C++ standards
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 
 option(RANDOM_SEED "wether using random seed or not " ON)
 option(NDEBUG "wether using random seed or not " ON)
@@ -58,7 +63,7 @@ FOREACH(name main debug worms_main)
     target_include_directories(${name} PUBLIC
             "${PROJECT_BINARY_DIR}"
         )
-    target_compile_features(${name} PUBLIC cxx_std_14)
+    # target_compile_features(${name} PUBLIC cxx_std_14)
 ENDFOREACH(name)
 
 
