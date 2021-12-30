@@ -370,7 +370,7 @@ class worm{
   *update given state by given offdiagonal operator ptr;
   */
   static void update_state_OD(OPS::iterator opi, STATE& state){
-    state[opi->s0()] = opi->get_spin(2);
+    state[opi->bond(0)] = opi->get_spin(2);
     state[opi->s1()] = opi->get_spin(3);
   }
 
