@@ -47,8 +47,8 @@ int main(int argc, char* argv[])
 
   // std::mt19937 rand_src(12345);
   int dim = 1;
-  model::heisenberg h1(L,h,dim,J);
-  worm<model::heisenberg> solver(beta, h1); //template needs for std=14
+  model::heisenberg spin_model(L,h,dim,J);
+  worm<model::heisenberg> solver(beta, spin_model); //template needs for std=14
   // std::vector<std::vector<int>> states;
 
 
@@ -70,10 +70,14 @@ int main(int argc, char* argv[])
     s = spin;
     spin^=1;
   }
+  // worm statistics
+  double wcount = 0;
+  double wlength = 0;
+  double wdensity = spin_model.L;
   for (int i=0; i < opt.therm + opt.sweeps; i++){
     // solver.diagonal_update(); 
-    solver.diagonal_update(3); //n* need to be comment out 
-    solver.worm_update();
+    solver.diagonal_update(wdensity); //n* need to be comment out 
+    solver.worm_update(wcount, wlength);
     if (cnt >= opt.therm){
       int sign = 1;
       double mu = 0;
@@ -81,13 +85,23 @@ int main(int argc, char* argv[])
         mu += 0.5 - s;
       }
       for (const auto& op : solver.ops_main){
-        sign *= h1.loperators[op.op_type()].signs[op.state()];
+        sign *= spin_model.loperators[op.op_type()].signs[op.state()];
       }
-      ene << (- ((double)solver.ops_main.size()) / beta + h1.shifts[0] * h1.Nb) * sign;
+      ene << (- ((double)solver.ops_main.size()) / beta + spin_model.shifts[0] * spin_model.Nb) * sign;
       ave_sign << sign;
-      mu /= h1.L;
+      mu /= spin_model.L;
       umag << mu * sign;
     }
+    if (i <= opt.therm / 2) {
+      if (wcount > 0) wdensity = spin_model.L/ (wlength / wcount);
+      if (i % (opt.therm / 8) == 0) {
+        wcount /= 2;
+        wlength /= 2;
+      }
+    }
+    if (i == opt.therm / 2)
+    std::cout << "Info: average number worms per MCS is reset from " << spin_model.L
+              << " to " << wdensity << "\n\n";
     cnt++;
   }
 
@@ -102,8 +116,8 @@ int main(int argc, char* argv[])
   std::cout << "Elapsed time = " << elapsed << " sec\n"
             << "Speed = " << (opt.therm+opt.sweeps) / elapsed << " MCS/sec\n";
   std::cout << "Energy             = "
-            << ene.mean()/ave_sign.mean() / h1.L << " +- " 
-            << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) / h1.L
+            << ene.mean()/ave_sign.mean() / spin_model.L << " +- " 
+            << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) / spin_model.L
             << std::endl
             << "Uniform Magnetization     = "
             << umag.mean()/ave_sign.mean() << " +- " 

@@ -78,7 +78,6 @@ public:
   std::vector<int> signs; //list of sign defined via the sign of ham_;
   std::vector<TPROB> trans_prob; //num_configuration x 4 x 4 matrix.
   std::vector<double> diagonal_cum_weight; //normalized diagonal elements;
-  std::vector<double> accept; //normalized diagonal elements;
   double max_diagonal_weight_;
   double total_weights; //sum of diagonal elemtns of ham
   std::array<int, 2> num2index(int num);

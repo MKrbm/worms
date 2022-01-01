@@ -64,9 +64,12 @@ int main(){
   }
   solver.ops_sub.resize(0);
 
+  double wcount, wlength;
+  wcount = 0;
+  wlength = 0;
   for (int i = 0; i<3; i++){
     solver.diagonal_update(3);
-    solver.worm_update();
+    solver.worm_update(wcount, wlength);
     std::cout << "operator size : " << solver.ops_sub.size() << std::endl;
   }
   // solver.diagonal_update(3);

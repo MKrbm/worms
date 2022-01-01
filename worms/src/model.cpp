@@ -19,7 +19,7 @@ model::local_operator::local_operator(int L)
           std::vector<double>(2*L)
           );
   diagonal_cum_weight = std::vector<double>(size, 0);
-  accept = std::vector<double>(size, 0);
+  
 
 }
 
@@ -60,9 +60,7 @@ void model::local_operator::set_ham(){
     max_diagonal_weight_ = std::max(max_diagonal_weight_, ham_[i][i]);
   }
 
-  for (int i=0; i<size; i++) {
-    accept[i] = ham_[i][i]/max_diagonal_weight_;
-  }
+
 
   // max_diagonal_weight_ = std::max(max_diagonal_weight_, weights_[p]);
 

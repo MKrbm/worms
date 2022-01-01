@@ -96,6 +96,7 @@ class worm{
   std::array<double, N_op>& operator_cum_weights;
   double rho;
   model::local_operator lop;
+  std::vector<std::vector<double>> accepts; //normalized diagonal elements;
 
   typedef bcl::markov<engine_type> markov_t;
   std::vector<markov_t> markov;
@@ -109,6 +110,17 @@ class worm{
   markov(lop.markov)
   {
     cout << "beta : " << beta << endl;
+    for (int i=0; i<loperators.size(); i++){
+      auto const& lop = loperators[i];
+      auto accept = std::vector<double>(lop.size, 0);
+
+      auto const& ham = lop.ham_;
+      auto max_diagonal_weight = lop.max_diagonal_weight_;
+      for (int j=0; j<lop.size; j++) {
+        accept[j] = ham[j][j]/max_diagonal_weight;
+      }
+      accepts.push_back(accept);
+  }
   }
 
 
@@ -145,6 +157,7 @@ class worm{
     lop_label = 0; //typically, lop_label is fixed to 0
     // int leg_size = leg_sizes[lop_label]; //size of choosen operator
     // auto const& lop = loperators[lop_label];
+    auto accept = accepts[lop_label];
 
     ops_main.resize(0); //* init_ops_main()
     
@@ -170,7 +183,7 @@ class worm{
           // size_t u = spin_state_t::c2u(cstate[bond[0]], cstate[bond[1]]);
           size_t u = spin_state::state2num(cstate, bond);
           r = uniform(rand_src);
-          if (r < lop.accept[u]){
+          if (r < accept[u]){
             append_ops(ops_main, spacetime_dots, &bond, (u<<bond.size()) | u, lop_label, tau);
             //*append ops
             // size_t s = bond.size();
@@ -274,7 +287,7 @@ class worm{
   params(member variables)
   ------
   */
-  void worm_process_op(size_t& next_dot, size_t& dir, size_t& site){
+  void worm_process_op(size_t& next_dot, size_t& dir, size_t& site, double& wlength){
 
     size_t clabel = next_dot;
     auto& dot = spacetime_dots[clabel];
@@ -282,6 +295,7 @@ class worm{
     // ASSERT(site == dot.site(), "site is not consistent");
     if (dot.at_origin()){ //n* if dot is state.
       state[dot.label()] ^= 1; 
+      wlength +=1;
       return;
     }
 
@@ -292,6 +306,7 @@ class worm{
     if (dot.at_operator()){
       size_t dir_in = !dir; //n* direction the worm comes in from the view of operator.
       auto & opstate = ops_main[dot.label()];
+      wlength += (dir==0) ? -opstate.tau() : opstate.tau();
       size_t size = opstate.size();
       size_t cindex = dot.leg(dir_in, size);
       opstate.flip_state(cindex);
@@ -305,13 +320,14 @@ class worm{
       dir = nindex/(size);
       site = opstate.bond(nindex%size);
       next_dot = opstate.next_dot(cindex, nindex, clabel);
+      return;
     }
   }
 
   /*
   *update worm for W times.
   */
-  void worm_update(){
+  void worm_update(double& wcount, double& wlength){
     for (WORMS::iterator wsi = worms_list.begin(); wsi != worms_list.end(); ++wsi){
       size_t w_label, site;
       double tau;
@@ -321,12 +337,15 @@ class worm{
       double r = uniform(rand_src);
       size_t dir = (size_t)2 * r;//n initial direction is 1.
       size_t ini_dir = dir;
+      wcount += 1;
+      wlength += (dir == 0) ? tau : -tau;
       do{
         check_operators_while_update(w_label, dir ? d_label : dot->prev(), ini_dir);
         d_label = dot->move_next(dir);
-        worm_process_op(d_label, dir, site);
+        worm_process_op(d_label, dir, site, wlength);
         dot = &spacetime_dots[d_label];
       }while(d_label != w_label); 
+      wlength += (dir == 0) ? -tau : tau;
     }
   }
 

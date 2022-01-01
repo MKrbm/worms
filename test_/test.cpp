@@ -90,7 +90,6 @@ int main(){
   // lat.print(std::cout);
   // std::cout << "bond_type of 0 is : " << lat.bond_type(0) << std::endl;;
 
-
   
   return 0;
 }
