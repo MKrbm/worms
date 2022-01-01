@@ -46,14 +46,9 @@ int main(int argc, char* argv[])
 
 
   // std::mt19937 rand_src(12345);
-<<<<<<< HEAD
   int dim = 1;
   model::heisenberg spin_model(L,h,dim,J);
   worm<model::heisenberg> solver(beta, spin_model); //template needs for std=14
-=======
-  model::heisenberg h1(L,h,2,J);
-  worm<model::heisenberg> solver(beta, h1); //template needs for std=14
->>>>>>> shastry
   // std::vector<std::vector<int>> states;
 
 
