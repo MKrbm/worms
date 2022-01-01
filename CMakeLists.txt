@@ -68,7 +68,7 @@ FOREACH(name main debug)
 ENDFOREACH(name)
 
 
-add_executable(test ./gmp/test.cpp)
+add_executable(test ./test_/test.cpp)
 target_compile_features(test PUBLIC cxx_std_14)
 target_link_libraries(test worm) # link library
 

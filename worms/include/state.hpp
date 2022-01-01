@@ -50,18 +50,18 @@ namespace spin_state{
   integer representation of state
 
   */
-  inline int state2num(STATE const& state, int L = -1){
-    int num = 0;
+  inline size_t state2num(STATE const& state, int L = -1){
+    size_t num = 0;
     if (L < 0) L = state.size();
-    for (int i = L-1; i >= 0; i--) {
+    for (size_t i = L-1; i >= 0; i--) {
       num = num<<1;
       num += state[i];
     }
     return num;
   }
 
-  inline int state2num(STATE const& state, STATE const& bond){
-    int u = 0;
+  inline size_t state2num(STATE const& state, BOND const& bond){
+    size_t u = 0;
     for (int i=0; i<bond.size(); i++){
       // int tmp = cstate[bond[i]];
       u += (state[bond[i]] << i);

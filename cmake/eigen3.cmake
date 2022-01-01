@@ -1,4 +1,4 @@
-find_package(Eigen3)
+find_package(Eigen3 MODULE)
 if(Eigen3_FOUND)
 message("found")
 message("EIGEN3_USE_FILE  =  ${EIGEN3_USE_FILE}")

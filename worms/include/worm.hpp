@@ -161,30 +161,32 @@ class worm{
 
         if (r < pstart){
           size_t s = static_cast<int>(L * uniform(rand_src));
-          append_worms(worms_list, s,spacetime_dots.size(), tau);
+          append_worms(worms_list, s, spacetime_dots.size(), tau);
           set_dots(s, -2 , 0); //*index is always 0 
         }else{
           size_t b = static_cast<size_t>(bonds.size() * uniform(rand_src));
           auto const& bond = bonds[b];
-          size_t s0 = bond[0];
-          size_t s1 = bond[1];
 
-          size_t u = spin_state_t::c2u(cstate[s0], cstate[s1]);
+          // size_t u = spin_state_t::c2u(cstate[bond[0]], cstate[bond[1]]);
+          size_t u = spin_state::state2num(cstate, bond);
           r = uniform(rand_src);
           if (r < lop.accept[u]){
-            int s = bond.size();
-            ops_main.push_back(Operatorv2(&bond, (u<<s) | u, s, lop_label, tau));
-            size_t n = ops_main.size();
-            size_t label = spacetime_dots.size();
-            int site;
+            append_ops(ops_main, spacetime_dots, &bond, (u<<bond.size()) | u, lop_label, tau);
+            //*append ops
+            // size_t s = bond.size();
+            // ops_main.push_back(Operatorv2(&bond, (u<<s) | u, s, lop_label, tau));
+            // size_t n = ops_main.size();
+            // size_t label = spacetime_dots.size();
+            // size_t site;
 
-            for (int i=0; i<s; i++){
-              site = bond[i];
-              spacetime_dots.push_back( Dotv2(spacetime_dots[site].prev(), site, n-1,i, site));
-              spacetime_dots[spacetime_dots[site].prev()].set_next(label);
-              spacetime_dots[site].set_prev(label);
-              label += 1;
-            }
+            // for (size_t i=0; i<s; i++){
+            //   site = bond[i];
+            //   spacetime_dots.push_back( Dotv2(spacetime_dots[site].prev(), site, n-1,i, site));
+            //   spacetime_dots[spacetime_dots[site].prev()].set_next(label);
+            //   spacetime_dots[site].set_prev(label);
+            //   label += 1;
+            // }
+            //* end
           }
         }
         tau += expdist(rand_src);
@@ -192,18 +194,21 @@ class worm{
         if (opi->is_off_diagonal()) {
           // auto const& bond = *opi->bond_ptr();
           update_state(opi, cstate);
-          int size = opi->size();
-          ops_main.push_back(Operatorv2(opi->bond_ptr(), opi->state(), size, opi->op_type(), opi->tau()));
-          size_t n = ops_main.size();
-          size_t label = spacetime_dots.size();
-          int site;
-          for (int i=0; i<size; i++){
-            site = opi->bond(i);
-            spacetime_dots.push_back( Dotv2(spacetime_dots[site].prev(), site, n-1,i, site));
-            spacetime_dots[spacetime_dots[site].prev()].set_next(label);
-            spacetime_dots[site].set_prev(label);
-            label += 1;
-          }
+          append_ops(ops_main, spacetime_dots, opi->bond_ptr(), opi->state(), opi->op_type(),opi->tau());
+          //* append ops
+          // size_t size = opi->size();
+          // ops_main.push_back(Operatorv2(opi->bond_ptr(), opi->state(), size, opi->op_type(), opi->tau()));
+          // size_t n = ops_main.size();
+          // size_t label = spacetime_dots.size();
+          // size_t site;
+          // for (size_t i=0; i<size; i++){
+          //   site = opi->bond(i);
+          //   spacetime_dots.push_back( Dotv2(spacetime_dots[site].prev(), site, n-1,i, site));
+          //   spacetime_dots[spacetime_dots[site].prev()].set_next(label);
+          //   spacetime_dots[site].set_prev(label);
+          //   label += 1;
+          // }
+          //* end append
           printStateAtTime(cstate, tau);
         }
         ++opi;
@@ -212,24 +217,23 @@ class worm{
   }
 
   // //*append to ops
-  // static void append_ops(OPS& ops, DOTS& sp, const BOND const* bp,  int state, int op_type, double tau){
+  static void append_ops(OPS& ops, DOTS& sp, const BOND * const bp, int state, int op_type, double tau){
 
-  //   int s = bp->size();
-  //   ops.push_back(Operatorv2(bp, state, s, op_type, tau));
-  //   size_t n = ops.size();
-  //   size_t label = sp.size();
-  //   int site;
+    int s = bp->size();
+    ops.push_back(Operatorv2(bp, state, s, op_type, tau));
+    size_t n = ops.size();
+    size_t label = sp.size();
+    int site;
 
-  //   for (int i=0; i<s; i++){
-  //     // set_dots(bond[i], 0, i);
-  //     site = bp->operator[](i);
-  //     sp.push_back( Dotv2(sp[site].prev(), site, n-1,i));
-  //     sp[sp[site].prev()].set_next(label);
-  //     sp[site].set_prev(label);
-  //     label += 1;
-  //   }
-
-  // }
+    for (int i=0; i<s; i++){
+      // set_dots(bond[i], 0, i);
+      site = bp->operator[](i);
+      sp.push_back( Dotv2(sp[site].prev(), site, n-1, i, site));
+      sp[sp[site].prev()].set_next(label);
+      sp[site].set_prev(label);
+      label += 1;
+    }
+  }
   // //*overload for r value
   // inline void append_ops(OPS& ops, std::vector<int> && bond,  int state, int op_type, double tau){
   //   int s = bond.size();
@@ -259,7 +263,7 @@ class worm{
  
   /*
   *perform one step from given worm.
-  If dot is operator then, worm move to exit. otherwise just assigin spin to dot.
+  If dot is operator then, worm move to exit of the operator. otherwise just assigin spin to dot.
   params
   ------
   int next_dot : next dot.

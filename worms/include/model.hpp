@@ -46,26 +46,16 @@ namespace model {
   using SPIN = unsigned short;
   using STATE = std::vector<SPIN> ;
   using BOND = std::vector<std::size_t>;
-
-
-  /*
-  sample from given discrete probability distribution
-  prob : prob dist. the sum of all elements must be equal to 0
-  r : random number (0 to 1)
-  */
-  template <typename PROB>
-  int chooseAtRand (const PROB& prob, double r){
-    double sum = 0;
-    double sum_ = std::accumulate(prob.begin(), prob.end(), 0.0);
-    ASSERT(std::abs(sum_-1) <= TOR,
-           "given prob can not be considered as probability distribution");
-    std::size_t i;
-    for(i=0; i<prob.size()-1; i++){
-        sum += prob[i];
-        if (sum >= r) break;
+  inline std::vector<BOND> generate_bonds(lattice::graph lattice){
+    std::vector<BOND> bonds;
+    for (int b=0; b<lattice.num_bonds(); b++){
+      std::vector<size_t> tmp(2);
+      tmp[0] = lattice.source(b);
+      tmp[1] = lattice.target(b);
+      bonds.push_back(tmp);
     }
-    return i;
-  }
+  return bonds;
+}
 
 }
 
@@ -111,22 +101,6 @@ public:
   void check_trans_prob();
   int index2num(std::array<int, 2> index);
 
-  /*
-  choose next dot from given random number
-  params
-  ------
-  double r : random number
-  int lnum : initial local state represent in integer (2 ** (2 * L) configurations)
-  int cw_pos : current worm position (0 to 3)
-
-  return
-  ------
-  int : pos worm goes out.
-  */
-  int choose_next_worm (double r,int lnum, int cw_pos) const{
-    std::vector<double> const& trans = trans_prob[lnum][cw_pos];
-    return chooseAtRand(trans, r);
-  }
 
 
   void print_trans_weights(){
@@ -160,18 +134,6 @@ public:
   :L(lt.num_sites()), Nb(lt.num_bonds()), lattice(lt), bonds(generate_bonds(lt))
   {
     std::cerr << "lattice cannot be used for the base_spin_model with N_OP != 1" << std::endl;
-  }
-
-  static std::vector<BOND> generate_bonds(lattice::graph lattice){
-    std::vector<BOND> bonds;
-    for (int b=0; b<lattice.num_bonds(); b++){
-      std::vector<size_t> tmp(2);
-      tmp[0] = lattice.source(b);
-      tmp[1] = lattice.target(b);
-      bonds.push_back(tmp);
-
-    }
-    return bonds;
   }
 };
 

@@ -46,7 +46,8 @@ int main(int argc, char* argv[])
 
 
   // std::mt19937 rand_src(12345);
-  model::heisenberg h1(L,h,1,J);
+  int dim = 1;
+  model::heisenberg h1(L,h,dim,J);
   worm<model::heisenberg> solver(beta, h1); //template needs for std=14
   // std::vector<std::vector<int>> states;
 

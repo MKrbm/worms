@@ -104,7 +104,8 @@
           "variant": "cpp",
           "future": "cpp",
           "valarray": "cpp",
-          "hash_map": "cpp"
+          "hash_map": "cpp",
+          "dense": "cpp"
         },
         "cmake.setBuildTypeOnMultiConfig": true,
         "cmake.defaultVariants": {
