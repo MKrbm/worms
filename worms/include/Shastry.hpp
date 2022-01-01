@@ -33,5 +33,9 @@ public:
   } 
 };
 
+<<<<<<< HEAD
+=======
+  lattice::graph Shastry_lattice(size_t L, size_t dim);
+>>>>>>> shastry
 }
 
