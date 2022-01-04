@@ -12,7 +12,14 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+unset(CMAKE_Fortran_COMPILER CACHE)
 
+message(STATUS "${CMAKE_Fortran_COMPILER} is available")
+message(STATUS "current directory is ${PROJECT_BINARY_DIR}")
+
+include(CheckLanguage)
+check_language(Fortran)
+message(STATUS "${CMAKE_Fortran_COMPILER} is available")
 
 option(RANDOM_SEED "wether using random seed or not " ON)
 option(NDEBUG "wether using random seed or not " ON)
@@ -31,11 +38,14 @@ include_directories(${worms_SOURCE_DIR})
 #include libraries
 include(bcl)
 include(eigen3)
+message(STATUS "after include: ${CMAKE_Fortran_COMPILER} is available")
+
 include(lattice)
 
 FetchContent_MakeAvailable(bcl)
 FetchContent_MakeAvailable(lattice)
 include_directories(${FetchContent_includes})
+message(STATUS "after include directory: ${CMAKE_Fortran_COMPILER} is available")
 
 
 message("None = ${CMAKE_C_FLAGS}")

@@ -3,7 +3,6 @@
         {
             "name": "Mac",
             "configurationProvider": "ms-vscode.cmake-tools"
-
         },
         {
             "name": "Linux",
@@ -14,7 +13,8 @@
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "gnu17",
             "cppStandard": "gnu++20",
-            "intelliSenseMode": "macos-gcc-arm64"
+            "intelliSenseMode": "macos-gcc-arm64",
+            "configurationProvider": "ms-vscode.cmake-tools"
         }
     ],
     "version": 4

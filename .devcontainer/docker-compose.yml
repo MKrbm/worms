@@ -1,0 +1,23 @@
+version: '3.4'
+
+services:
+  worm:
+    image: cpp
+    container_name: worms
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      args:
+        VARIANT: ubuntu-20.04
+    volumes:
+      - type: bind
+        source: ../
+        target: /worms
+    # cap_add: 
+    #   - SYS_PTRACE
+    privileged: true
+    security_opt: 
+      - seccomp:unconfined
+    stdin_open: true
+    tty: true
+    working_dir: /worms

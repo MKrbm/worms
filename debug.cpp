@@ -40,7 +40,6 @@ inline int getbit(int n, int p)
 int main(){
 
 
-
   std::cout << "debug start" << std::endl;
   int L = 6;
   double J = 1;

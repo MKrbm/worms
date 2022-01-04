@@ -11,6 +11,5 @@ public:
     const double h;
     int dim;
     void initial_setting();
-
 };
 }
