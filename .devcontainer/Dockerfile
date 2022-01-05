@@ -8,4 +8,25 @@ FROM mcr.microsoft.com/vscode/devcontainers/cpp:0-${VARIANT}
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 #     && apt-get -y install --no-install-recommends <your-package-list-here>
 # RUN cp ~/.ssh/git_ssh /tmp/
+
+
 RUN apt-get update && apt-get -y install htop
+
+# ARG USER_ID="1001"
+# ARG GROUP_ID="1001"
+# ARG USER_NAME="user"
+
+# RUN groupadd -g "${GROUP_ID}" "${USER_NAME}" && \
+#   useradd -l -u "${USER_ID}" -m "${USER_NAME}" -g "${USER_NAME}"
+# RUN chown -R "${USER_NAME}":"${USER_NAME}" /home/"${USER_NAME}"
+# RUN chmod 755 /home/"${USER_NAME}"
+# # RUN useradd -u $USER_ID -o -m $USER_NAME
+# # RUN groupmod -g $GROUP_ID $USER_NAME
+# ENV HOME=/home/$USER_NAME
+RUN echo "root:root" | chpasswd
+RUN usermod -l keisuke vscode
+RUN usermod -d /home/keisuke -m keisuke
+RUN groupmod -n keisuke vscode
+# USER vscode
+
+WORKDIR /home/$USERNAME/
