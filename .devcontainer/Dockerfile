@@ -4,8 +4,19 @@
 ARG VARIANT="bullseye"
 FROM mcr.microsoft.com/vscode/devcontainers/cpp:0-${VARIANT}
 
-# [Optional] Uncomment this section to install additional packages.
-# RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-#     && apt-get -y install --no-install-recommends <your-package-list-here>
-# RUN cp ~/.ssh/git_ssh /tmp/
+
 RUN apt-get update && apt-get -y install htop
+
+
+RUN usermod -l keisuke vscode
+RUN groupmod -n keisuke vscode
+RUN echo "root:root" | chpasswd
+RUN echo "keisuke:keisuke" | chpasswd
+RUN usermod -aG sudo keisuke 
+# RUN mv /home/vscode /home/keisuke
+RUN usermod -d /home/keisuke -m keisuke
+USER keisuke
+COPY ssh-agent-manage.sh /usr/local/bin/ssh-agent-manage.sh
+RUN mkdir -p ~/.config && touch ~/.config/ssh-agent.pid
+RUN echo "$(cat /usr/local/bin/ssh-agent-manage.sh)" >> ~/.bashrc
+WORKDIR /home/keisuke/worms

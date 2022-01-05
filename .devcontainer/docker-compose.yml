@@ -12,7 +12,15 @@ services:
     volumes:
       - type: bind
         source: ../
-        target: /worms
+        target: /home/keisuke/worms
+      - type: bind
+        source: ~/.ssh
+        target: /home/keisuke/.ssh
+        read_only: true
+      - type: bind
+        source: ~/.gitconfig
+        target: /etc/gitconfig
+        read_only: true
     # cap_add: 
     #   - SYS_PTRACE
     privileged: true
@@ -20,4 +28,4 @@ services:
       - seccomp:unconfined
     stdin_open: true
     tty: true
-    working_dir: /worms
+    working_dir: /home/keisuke/worms
