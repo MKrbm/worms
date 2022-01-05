@@ -23,10 +23,10 @@ RUN apt-get update && apt-get -y install htop
 # # RUN useradd -u $USER_ID -o -m $USER_NAME
 # # RUN groupmod -g $GROUP_ID $USER_NAME
 # ENV HOME=/home/$USER_NAME
-RUN echo "root:root" | chpasswd
 RUN usermod -l keisuke vscode
 RUN usermod -d /home/keisuke -m keisuke
 RUN groupmod -n keisuke vscode
-# USER vscode
-
+RUN echo "root:root" | chpasswd
+RUN echo "keisuke:keisuke" | chpasswd
+USER keisuke
 WORKDIR /home/$USERNAME/

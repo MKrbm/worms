@@ -13,6 +13,10 @@ services:
       - type: bind
         source: ../
         target: /home/keisuke
+      - type: bind
+        source: ~/.ssh
+        target: /root/.ssh
+        read_only: true
     # cap_add: 
     #   - SYS_PTRACE
     privileged: true

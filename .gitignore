@@ -5,8 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
-.gitconfig
-.vscode-server
+
 
 # Distribution / packaging
 .Python
@@ -14,6 +13,13 @@ build/
 build2/
 # lib/
 
+#hidden folder
+#Exclude all dlls
+.*
+#Except for .vscode
+!.vscode 
+!.devcontainer
+!.gitignore
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
