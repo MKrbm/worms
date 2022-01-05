@@ -11,6 +11,7 @@
 #include <bcl.hpp>
 #include <lattice/graph.hpp>
 #include <lattice/coloring.hpp>
+#include <algorithm>
 #include "outgoing_weight.hpp"
 
 
@@ -54,9 +55,20 @@ namespace model {
       tmp[1] = lattice.target(b);
       bonds.push_back(tmp);
     }
-  return bonds;
-}
+    return bonds;
+  }
 
+  inline std::vector<size_t> generate_bond_type(lattice::graph lattice){
+    std::vector<size_t> bond_type;
+    for (int b=0; b<lattice.num_bonds(); b++) bond_type.push_back(lattice.bond_type(b));
+    return bond_type;
+  }
+
+  inline size_t num_type(std::vector<size_t> bond_type){
+    std::sort(bond_type.begin(), bond_type.end());
+    auto it = std::unique(bond_type.begin(), bond_type.end());
+    return std::distance(bond_type.begin(), it);
+  }
 }
 
 
@@ -93,7 +105,7 @@ public:
   local_operator(int L);
   local_operator();
 
-  void set_ham();
+  void set_ham(double off_set = 0);
   void set_trans_weights();
   void set_trans_prob();
   void check_trans_status(VECD, TPROB);
@@ -123,16 +135,29 @@ public:
   std::vector<double> shifts;
   std::array<local_operator, N_op> loperators; //in case where there are three or more body interactions.
   std::array<int, N_op> leg_size; //size of local operators;
-  std::array<double, N_op> operator_cum_weights;
   const std::vector<BOND> bonds;
+  const std::vector<size_t> bond_type;
   lattice::graph lattice;
   base_spin_model(int L_, int Nb_, std::vector<BOND> bonds)
   :L(L_), Nb(Nb_), bonds(bonds){}
 
   base_spin_model(lattice::graph lt)
-  :L(lt.num_sites()), Nb(lt.num_bonds()), lattice(lt), bonds(generate_bonds(lt))
+  :L(lt.num_sites()), Nb(lt.num_bonds()), lattice(lt), 
+    bonds(generate_bonds(lt)), bond_type(generate_bond_type(lt))
   {
-    std::cerr << "lattice cannot be used for the base_spin_model with N_OP != 1" << std::endl;
+    if (num_type(bond_type)!=Nop) {
+      std::cerr << "Nop is not consistent with number of bond_type" << std::endl;
+      std::terminate();
+    }
+  }
+  void initial_setting(std::vector<double>off_sets = std::vector<double>(2,0)){
+    int i = 0;
+    double tmp=0;
+    for (auto& x : loperators){
+      x.set_ham(off_sets[i]);
+      shifts.push_back(x.ene_shift);
+      i++;
+    }
   }
 };
 

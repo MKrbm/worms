@@ -23,13 +23,14 @@
 
 struct options {
   unsigned int L;
+  unsigned int dim;
   double T;
   double H;
   unsigned int sweeps;
   unsigned int therm;
   bool valid;
 
-  options(unsigned int argc, char *argv[], unsigned int L_def, double T_def) :
+  options(unsigned int argc, char *argv[], unsigned int L_def, unsigned int dim_def, double T_def) :
     L(L_def), T(T_def), H(0), sweeps(1 << 16), therm(sweeps >> 3), valid(true) {
     for (unsigned int i = 1; i < argc; ++i) {
       switch (argv[i][0]) {
@@ -38,6 +39,9 @@ struct options {
         case 'L' :
           if (++i == argc) { usage(); return; }
           L = std::atoi(argv[i]); break;
+        case 'D' :
+          if (++i == argc) { usage(); return; }
+          dim = std::atoi(argv[i]); break;
         case 'T' :
           if (++i == argc) { usage(); return; }
           T = std::atof(argv[i]); break;

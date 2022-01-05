@@ -53,7 +53,8 @@ namespace spin_state{
   inline size_t state2num(STATE const& state, int L = -1){
     size_t num = 0;
     if (L < 0) L = state.size();
-    for (size_t i = L-1; i >= 0; i--) {
+    if (L == 0) return 0;
+    for (int i = L-1; i >= 0; i--) {
       num = num<<1;
       num += state[i];
     }
