@@ -33,6 +33,7 @@ int main(int argc, char* argv[])
   if (!opt.valid) std::exit(-1);
   double beta = 1 / opt.T;
   int L = opt.L;
+  int dim = opt.dim;
   double J = 1;
   double h = opt.H;
   // double beta = std::stoi(argv[3]);
@@ -48,7 +49,7 @@ int main(int argc, char* argv[])
 
 
   // std::mt19937 rand_src(12345);
-  int dim = 1;
+  // int dim = 1;
   model::heisenberg spin_model(L,h,dim);
   // model::Shastry spin_model(2, 2, 1, 0);
   worm<decltype(spin_model)> solver(beta, spin_model); //template needs for std=14
