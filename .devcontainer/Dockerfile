@@ -13,5 +13,10 @@ RUN groupmod -n keisuke vscode
 RUN echo "root:root" | chpasswd
 RUN echo "keisuke:keisuke" | chpasswd
 RUN usermod -aG sudo keisuke 
+# RUN mv /home/vscode /home/keisuke
+RUN usermod -d /home/keisuke -m keisuke
 USER keisuke
-WORKDIR /home/$USERNAME/
+COPY ssh-agent-manage.sh /usr/local/bin/ssh-agent-manage.sh
+RUN mkdir -p ~/.config && touch ~/.config/ssh-agent.pid
+RUN echo "$(cat /usr/local/bin/ssh-agent-manage.sh)" >> ~/.bashrc
+WORKDIR /home/keisuke/worms
