@@ -17,6 +17,10 @@ services:
         source: ~/.ssh
         target: /home/keisuke/.ssh
         read_only: true
+      - type: bind
+        source: ~/.gitconfig
+        target: /etc/gitconfig
+        read_only: true
     # cap_add: 
     #   - SYS_PTRACE
     privileged: true
