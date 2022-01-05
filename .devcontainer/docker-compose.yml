@@ -15,7 +15,7 @@ services:
         target: /home/keisuke
       - type: bind
         source: ~/.ssh
-        target: /root/.ssh
+        target: /home/.ssh
         read_only: true
     # cap_add: 
     #   - SYS_PTRACE

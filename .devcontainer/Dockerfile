@@ -28,5 +28,6 @@ RUN usermod -d /home/keisuke -m keisuke
 RUN groupmod -n keisuke vscode
 RUN echo "root:root" | chpasswd
 RUN echo "keisuke:keisuke" | chpasswd
+# RUN chown -R keisuke:keisuke /root/.ssh
 USER keisuke
 WORKDIR /home/$USERNAME/
