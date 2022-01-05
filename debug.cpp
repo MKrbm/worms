@@ -1,127 +1,132 @@
-#include <uftree.hpp>
-#include <heisenberg.hpp>
-#include <worm.hpp>
-#include <observable.hpp>
+// #define RANDOM_SEED 0
+#include "MainConfig.h"
+#include "options.hpp"
+
 #include <iostream>
-#include <fstream>
-#include <stdio.h>
-#include <state.hpp>
+#include <worm.hpp>
+#include <heisenberg.hpp>
+#include <Shastry.hpp>
+#include <string>
 #include <chrono>
-#include <memory>
-#include <iterator>
-#include <cstdio>
-#include <binstate.hpp>
+#include <observable.hpp>
+#include <lattice/graph.hpp>
+#include <lattice/coloring.hpp>
 
-using namespace std::chrono;
+#define DEBUG 1
+#define MESTIME 1
 
 
-using std::cout;
-using std::endl;
-using std::ofstream;
-using std::chrono::high_resolution_clock;
-using std::chrono::duration_cast;
-using std::chrono::duration;
-using std::chrono::milliseconds;
-using std::chrono::microseconds;
-int add(int a, int b){
-  return a+b;
-}
+#if MESTIME
+  using std::chrono::high_resolution_clock;
+  using std::chrono::duration_cast;
+  using std::chrono::duration;
+  using std::chrono::milliseconds;
+  using std::chrono::microseconds;
 
-inline int modifyBit(int n, int p, int b)
+#endif
+
+int main(int argc, char* argv[])
 {
-    return ((n & ~(1 << p)) | (b << p));
-}
-
-inline int getbit(int n, int p)
-{
-    return (n >> p) & 1;
-}
-
-int main(){
 
 
-  std::cout << "debug start" << std::endl;
-  int L = 6;
+  options opt(argc, argv, 16, 1, 1.0);
+  if (!opt.valid) std::exit(-1);
+  double beta = 1 / opt.T;
+  int L = opt.L;
+  int dim = opt.dim;
   double J = 1;
-  double beta = 5;
-  double h = 0;
-  BC::observable ene; // energy 
+  double h = opt.H;
+  // double beta = std::stoi(argv[3]);
+
+  std::cout << "MC step : " << opt.sweeps << "\n" 
+            << "thermal size : " << opt.therm << std::endl;
+
+  BC::observable ene; // signed energy i.e. $\sum_i E_i S_i / N_MC$
   BC::observable umag; // uniform magnetization 
+  BC::observable ave_sign; // average sign 
+
+  // std::cout << "size of int : " << sizeof(int8_t) << endl;
 
 
-  std::mt19937 rand_src(12345);
-  model::heisenberg h1(L,h,1,J);
-  worm<model::heisenberg> solver(beta, h1);
-  cout << "initialized " << endl;
+  // std::mt19937 rand_src(12345);
+  model::heisenberg spin_model(L,h,dim);
+  spin_model.lattice.print(std::cout);
+  // model::Shastry spin_model(2, 1, 0);
+  worm<decltype(spin_model)> solver(beta, spin_model); //template needs for std=14
+  // std::vector<std::vector<int>> states;
 
 
+  #if MESTIME
+  std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+  auto t1 = high_resolution_clock::now();
+  auto t2 = high_resolution_clock::now();
+  double du_time = 0;
+  double wu_time = 0;
+  #endif
+
+
+  int n_kink=0;
+  int cnt = 0;
   solver.init_states();
   int spin = 1;
   for (auto& s : solver.state){
     s = spin;
     spin^=1;
   }
-  solver.ops_sub.resize(0);
-
-  double wcount, wlength;
-  wcount = 0;
-  wlength = 0;
-  for (int i = 0; i<3; i++){
-    solver.diagonal_update(3);
+  // worm statistics
+  double wcount = 0;
+  double wlength = 0;
+  double wdensity = spin_model.L;
+  for (int i=0; i < opt.therm + opt.sweeps; i++){
+    // solver.diagonal_update(); 
+    solver.diagonal_update(wdensity); //n* need to be comment out 
     solver.worm_update(wcount, wlength);
-    std::cout << "operator size : " << solver.ops_sub.size() << std::endl;
+    if (cnt >= opt.therm){
+      int sign = 1;
+      double mu = 0;
+      for (const auto&  s : solver.state) {
+        mu += 0.5 - s;
+      }
+      for (const auto& op : solver.ops_main){
+        sign *= spin_model.loperators[op.op_type()].signs[op.state()];
+      }
+      ene << (- ((double)solver.ops_main.size()) / beta + spin_model.shifts[0] * spin_model.lattice.num_bonds()) * sign;
+      ave_sign << sign;
+      mu /= spin_model.L;
+      umag << mu * sign;
+    }
+    if (i <= opt.therm / 2) {
+      if (wcount > 0) wdensity = spin_model.lattice.num_bonds()/ (wlength / wcount);
+      if (i % (opt.therm / 8) == 0) {
+        wcount /= 2;
+        wlength /= 2;
+      }
+    }
+    if (i == opt.therm / 2)
+    std::cout << "Info: average number worms per MCS is reset from " << spin_model.L
+              << " to " << wdensity << "\n\n";
+    cnt++;
   }
-  // solver.diagonal_update(3);
-
-  // solver.check_operators(solver.state, solver.ops_sub);
-  // solver.check_operators(solver.state, solver.ops_main);
-  // solver.swap_oplist();
-  // solver.diagonal_update();
-
-  // int n_kink=0;
-  // for (int i=0; i < 1E3; i++){
-  //   solver.init_states();
-  //   solver.ops_sub.resize(0);
-  //   for (int i=0; i< 5*1E2; i++){
-  //     solver.diagonal_update();
-  //     solver.check_operators(solver.state, solver.ops_sub);
-  //     solver.check_operators(solver.state, solver.ops_main);
-  //     solver.worm_update();
-  //     solver.swap_oplist();
-  //   }
-  //   n_kink += solver.ops_sub.size();
-  // }
-
-  // double energy = -1.5 * ((double)n_kink/MCSTEP) / beta;
 
 
+  
 
+  #if MESTIME
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-  // int ind = 0;
-  // ofstream outputfile("logs.txt");
-  // outputfile  << "stdout is redirected to a file\n\n\n"; // this is written to redir.txt
-  // for (auto&x : solver.spacetime_dots){
-  //   // cout << spin_state::return_name(x.dot_type, x.typeptr->is_off_diagonal()) <<endl;
-  //   outputfile << "index : " << ind;
-  //   outputfile << "   site : " << x.site << endl; 
-  //   outputfile << "type : " << spin_state::return_name(x.dot_type, x.typeptr->is_off_diagonal()) << endl;
-    
-  //   outputfile << "tau : " << x.tau << endl;
-  //   outputfile << "leg index : " <<x.typeptr->GetIndex(x.sptr, 0) << endl;
-  //   // printf("prev : %d, next : %d", x.prev, x.next);
-  //   outputfile << "prev : " << x.prev << ", next : " << x.next << endl;
-  //   outputfile << "\n\n" ;
-  //   ind++;
-  // }
-
-  // outputfile << "\n\noutput state : " << endl;
-  // for (auto&x : solver.state){
-  //   outputfile << x << " ";
-  // }
-  // outputfile.close();
-
-
-  // cout << "number of operators : " << solver.ops_main.size() << endl;
-
-  return 0;
+  double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / (double)1E3;
+  #endif
+  std::cout << "Elapsed time = " << elapsed << " sec\n"
+            << "Speed = " << (opt.therm+opt.sweeps) / elapsed << " MCS/sec\n";
+  std::cout << "Energy             = "
+            << ene.mean()/ave_sign.mean() / spin_model.lattice.num_sites() << " +- " 
+            << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) / spin_model.lattice.num_sites()
+            << std::endl
+            << "Uniform Magnetization     = "
+            << umag.mean()/ave_sign.mean() << " +- " 
+            << std::sqrt(std::pow(umag.error()/ave_sign.mean(), 2) + std::pow(umag.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2))
+            << std::endl
+            << "average sign     = "
+            << ave_sign.mean() << " +- " << ave_sign.error() << std::endl;
 }

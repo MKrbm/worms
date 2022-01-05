@@ -45,7 +45,7 @@ inline int getbit(int n, int p)
 int main(){
 
 
-  auto ss = model::Shastry(2, 2, 1);
+  auto ss = model::Shastry(2, 2, 1, 0);
 
   // //latice
   // // lattice::graph lat = lattice::graph::simple(1,16);
@@ -74,7 +74,9 @@ int main(){
   // lattice::span_t span(2, 2); span << 2, 0, 0, 2;
   // std::vector<lattice::boundary_t> boundary(2, lattice::boundary_t::periodic);
   // lattice::graph lat(basis, unitcell, span, boundary);
-  // lat.print(std::cout);
+  ss.lattice.print(std::cout);
+  // ss.lattice.bond_type(0)
+  // ss.lattice.c
   // auto color = lattice::coloring(lat);
 
   // lattice::basis_t bs(1, 1); bs << 2; // 1x1 matrix

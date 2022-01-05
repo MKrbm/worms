@@ -71,6 +71,7 @@ class worm{
   WORMS worms_list;
 
   std::vector< BOND > bonds;
+  std::vector<size_t> bond_type;
 
   //declaration for random number generator
   // typedef model::local_operator::engine_type engine_type;
@@ -93,7 +94,6 @@ class worm{
 
   std::array<model::local_operator, N_op>& loperators; //holds multiple local operators
   std::array<int, N_op>& leg_sizes; //leg size of local operators;
-  std::array<double, N_op>& operator_cum_weights;
   double rho;
   model::local_operator lop;
   std::vector<std::vector<double>> accepts; //normalized diagonal elements;
@@ -102,24 +102,27 @@ class worm{
   std::vector<markov_t> markov;
 
   worm(double beta, MODEL model_)
-  :model(model_), L(model.L), beta(beta), rho(model.rho),
+  :model(model_), L(model.L), beta(beta), rho(-1),
   // dist(0, model.Nb-1), worm_dist(0.0, beta),
-  bonds(model.bonds),state(L),cstate(L),
+  bonds(model.bonds),bond_type(model.bond_type) ,state(L),cstate(L),
   loperators(model.loperators), leg_sizes(model.leg_size),
-  operator_cum_weights(model.operator_cum_weights), lop(loperators[0]),
-  markov(lop.markov)
+  lop(loperators[0]),markov(lop.markov)
   {
     cout << "beta : " << beta << endl;
+    double max_diagonal_weight = loperators[0].max_diagonal_weight_;
+    for (auto const& lop : loperators){
+      max_diagonal_weight = std::max(max_diagonal_weight, lop.max_diagonal_weight_);
+    }
     for (int i=0; i<loperators.size(); i++){
       auto const& lop = loperators[i];
       auto accept = std::vector<double>(lop.size, 0);
 
       auto const& ham = lop.ham_;
-      auto max_diagonal_weight = lop.max_diagonal_weight_;
       for (int j=0; j<lop.size; j++) {
         accept[j] = ham[j][j]/max_diagonal_weight;
       }
       accepts.push_back(accept);
+      rho = max_diagonal_weight * model.lattice.num_bonds();
   }
   }
 
@@ -149,6 +152,7 @@ class worm{
   void diagonal_update(double wdensity){
     
     swap_oplist();
+    // wdensity = 3;
     
     expdist_t expdist(rho * beta + wdensity); //initialize exponential distribution
     double pstart = wdensity / (beta * rho + wdensity); //probability of choosing worms
@@ -157,7 +161,6 @@ class worm{
     lop_label = 0; //typically, lop_label is fixed to 0
     // int leg_size = leg_sizes[lop_label]; //size of choosen operator
     // auto const& lop = loperators[lop_label];
-    auto accept = accepts[lop_label];
 
     ops_main.resize(0); //* init_ops_main()
     
@@ -178,6 +181,8 @@ class worm{
           set_dots(s, -2 , 0); //*index is always 0 
         }else{
           size_t b = static_cast<size_t>(bonds.size() * uniform(rand_src));
+          lop_label = bond_type[b];
+          auto const& accept = accepts[lop_label];
           auto const& bond = bonds[b];
 
           // size_t u = spin_state_t::c2u(cstate[bond[0]], cstate[bond[1]]);
@@ -318,6 +323,7 @@ class worm{
 
       //n* assigin for next step
       dir = nindex/(size);
+      wlength += (dir==0) ? opstate.tau() : -opstate.tau();
       site = opstate.bond(nindex%size);
       next_dot = opstate.next_dot(cindex, nindex, clabel);
       return;

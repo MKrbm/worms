@@ -21,12 +21,19 @@ model::heisenberg::heisenberg(int L, double Jz, double Jxy, double h, int dim)
   auto& loperator = loperators[0];
   // set hamiltonian
   // loperator.ham[0][0] = h;
+  // auto color = lattice::coloring(lat);
+  int is_bip = 1;
+  double off_set = 0;
+  if (L%2!=0) {
+    is_bip = -1;
+    off_set = 1.0/4;
+  }
   loperator.ham[0][0] = -1/4.0 + h/2.0;
   loperator.ham[1][1] = 1/4.0;
   loperator.ham[2][2] = 1/4.0;
   loperator.ham[3][3] = -1/4.0 - h/2.0;
-  loperator.ham[1][2] = 1/2.0;
-  loperator.ham[2][1] = 1/2.0;
+  loperator.ham[1][2] = is_bip * 1/2.0;
+  loperator.ham[2][1] = is_bip * 1/2.0;
   //end
 
 
@@ -40,7 +47,9 @@ model::heisenberg::heisenberg(int L, double Jz, double Jxy, double h, int dim)
    
     printf("\n");
   }
-  initial_setting(); //set_hum will be called inside the function
+
+  std::vector<double> off_sets(Nop, off_set);
+  initial_setting(off_sets); //set_hum will be called inside the function
 
 
   // printf("\n\nprint trans weights : \n\n");
@@ -50,15 +59,5 @@ model::heisenberg::heisenberg(int L, double Jz, double Jxy, double h, int dim)
   rho = loperators[0].max_diagonal_weight_ * Nb;
 }
 
-void model::heisenberg::initial_setting(){
 
-  int i = 0;
-  double tmp=0;
-  for (auto& x : loperators){
-    x.set_ham();
-    tmp += x.total_weights;
-    operator_cum_weights[i] = tmp;
-    shifts.push_back(x.ene_shift);
-  }
-}
 

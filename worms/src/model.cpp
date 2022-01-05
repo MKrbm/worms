@@ -30,7 +30,7 @@ this function should be called after manually define 2D local hamiltonian.
 
 - set 1D hamiltonian 
 */
-void model::local_operator::set_ham(){
+void model::local_operator::set_ham(double off_set){
   int N = ham_vector.size();
   ene_shift=0;
   ham_ = ham;
@@ -39,6 +39,7 @@ void model::local_operator::set_ham(){
     ene_shift = std::min(ene_shift, ham[i][i]);
   }
   ene_shift *= -1;
+  ene_shift += off_set;
   for (int i=0; i<ham_.size();i++){
     ham_[i][i] = ham_[i][i] + ene_shift;
   }
@@ -64,8 +65,9 @@ void model::local_operator::set_ham(){
 
   // max_diagonal_weight_ = std::max(max_diagonal_weight_, weights_[p]);
 
-  for (const auto& x : ham_vector){
+  for (auto& x : ham_vector){
     signs.push_back(x >= 0 ? 1 : -1);
+    x = std::abs(x);
   }
   total_weights = *(diagonal_cum_weight.end()-1);
 
@@ -168,10 +170,13 @@ void model::local_operator::check_trans_prob(){
     }
   }
 
-template<>
-model::base_spin_model<1>::base_spin_model(lattice::graph lt)
-:L(lt.num_sites()), Nb(lt.num_bonds()), lattice(lt), bonds(generate_bonds(lt))
-{}
+// template<>
+// model::base_spin_model<1>::base_spin_model(lattice::graph lt)
+// :L(lt.num_sites()), Nb(lt.num_bonds()), lattice(lt),
+//   bonds(generate_bonds(lt)), bond_type(generate_bond_type(lt))
+// {
+//   std::cout << "N_OP = 1" << std::endl;
+// }
 
 //end definition
 
