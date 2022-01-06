@@ -6,7 +6,8 @@ FROM mcr.microsoft.com/vscode/devcontainers/cpp:0-${VARIANT}
 
 
 RUN apt-get update && apt-get -y install htop
-
+RUN apt-get -y install openssh-server
+RUN apt-get -y install gfortran
 
 RUN usermod -l keisuke vscode
 RUN groupmod -n keisuke vscode

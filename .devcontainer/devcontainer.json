@@ -124,5 +124,7 @@
 		"editor.occurrencesHighlight": false,
 		"search.useIgnoreFiles": false,
 		"cmake.configureOnEdit": false, 
+		"C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+		"C_Cpp.default.compilerPath": "/usr/bin/gcc"
 	},
 }

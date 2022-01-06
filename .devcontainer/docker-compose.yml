@@ -10,9 +10,10 @@ services:
       args:
         VARIANT: ubuntu-20.04
     volumes:
-      - type: bind
-        source: ../
-        target: /home/keisuke/worms
+      # - ../:/home/keisuke/worms:delegated
+      # - type: bind
+      #   source: ../
+      #   target: /home/keisuke/worms
       - type: bind
         source: ~/.ssh
         target: /home/keisuke/.ssh
