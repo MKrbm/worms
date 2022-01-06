@@ -28,10 +28,13 @@ struct options {
   double H;
   unsigned int sweeps;
   unsigned int therm;
+  std::string MN;
   bool valid;
 
-  options(unsigned int argc, char *argv[], unsigned int L_def, unsigned int dim_def, double T_def) :
-    L(L_def), T(T_def), H(0), sweeps(1 << 16), therm(sweeps >> 3), valid(true) {
+  options(unsigned int argc, char *argv[], unsigned int L_def, unsigned int dim_def, double T_def, std::string M_def) :
+    L(L_def), T(T_def), H(0), sweeps(1 << 16), therm(sweeps >> 3), valid(true),
+    dim(dim_def), MN(M_def)
+    {
     for (unsigned int i = 1; i < argc; ++i) {
       switch (argv[i][0]) {
       case '-' :
@@ -54,6 +57,9 @@ struct options {
         case 'n' :
           if (++i == argc) { usage(); return; }
           sweeps = std::atoi(argv[i]); break;
+        case 'MN' :
+          if (++i == argc) { usage(); return; }
+          MN = argv[i]; break;
         case 'h' :
           usage(std::cout); return;
         default :

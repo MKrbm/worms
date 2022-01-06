@@ -190,6 +190,10 @@ class worm{
           r = uniform(rand_src);
           if (r < accept[u]){
             append_ops(ops_main, spacetime_dots, &bond, (u<<bond.size()) | u, lop_label, tau);
+
+            if (lop_label == 1) {
+              int  x = 1;
+            }
             //*append ops
             // size_t s = bond.size();
             // ops_main.push_back(Operatorv2(&bond, (u<<s) | u, s, lop_label, tau));

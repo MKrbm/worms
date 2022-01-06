@@ -4,7 +4,7 @@
 namespace model{
   class Shastry :public base_spin_model<2>{
 public:
-  Shastry(int Lx, int Ly, double J1, double J2 = 1, double h = 0); //(1) 
+  Shastry(int Lx, int Ly, double J1, double J2, double h); //(1) 
   Shastry(int L, double J1, double J2 = 1, double h = 0)
   :Shastry(L, L, J1, J2, h){}
   int Lx, Ly;

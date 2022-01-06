@@ -11,10 +11,10 @@ h(h), base_spin_model(return_lattice(Lx, Ly))
   
   std::cout << "h : " << h << std::endl;
   std::cout << "num local operators : " << Nop << std::endl;
+  printf("bond num : [type0, type1] = [%lu, %lu] \n", bond_t_size[0], bond_t_size[1]);
   std::cout << "end \n" << std::endl;
 
-  if (J1 < 0 || J2 < 0) std::cerr << "J1 and J2 must have non-negative value in this setting"
-                                  << std::endl;
+  if (J1 < 0 || J2 < 0) std::cerr << "J1 and J2 must have non-negative value in this setting" << std::endl;
 
 
 
@@ -26,6 +26,7 @@ h(h), base_spin_model(return_lattice(Lx, Ly))
   leg_size[1] = l;
   //* bond b is assigined to i = bond_type(b) th local operator.
 
+  std::vector<double> off_sets(2,0);
 
   //* setting for type 1 bond operator.
   //* local unitary transformation is applied beforehand so that off-diagonal terms have non-negative value.
@@ -39,6 +40,7 @@ h(h), base_spin_model(return_lattice(Lx, Ly))
   loperators[0].ham[2][1] = 1/2.0;
   for (auto& row:loperators[0].ham)
     for (auto& ele:row) ele *= J1;
+  off_sets[0] = 1/4.0;
 
   //* setting for type 2
   loperators[1].ham[0][0] = -1/4.0;
@@ -49,9 +51,10 @@ h(h), base_spin_model(return_lattice(Lx, Ly))
   loperators[1].ham[2][1] = -1/2.0;
   for (auto& row:loperators[1].ham)
     for (auto& ele:row) ele *= J2;
+  off_sets[1] = 1/4.0;
 
   
-  initial_setting();
+  initial_setting(off_sets);
   printf("local hamiltonian (type 1) / energy shift = %lf\n\n", shifts[0]);
   for (int row=0; row<loperators[0].size; row++)
   {

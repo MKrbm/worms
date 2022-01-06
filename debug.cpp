@@ -29,14 +29,15 @@ int main(int argc, char* argv[])
 {
 
 
-  options opt(argc, argv, 16, 1, 1.0);
+  options opt(argc, argv, 16, 1, 1.0, "heisernberg");
   if (!opt.valid) std::exit(-1);
   double beta = 1 / opt.T;
   int L = opt.L;
   int dim = opt.dim;
   double J = 1;
   double h = opt.H;
-  // double beta = std::stoi(argv[3]);
+  std::string model_name = opt.MN;
+
 
   std::cout << "MC step : " << opt.sweeps << "\n" 
             << "thermal size : " << opt.therm << std::endl;
@@ -49,9 +50,16 @@ int main(int argc, char* argv[])
 
 
   // std::mt19937 rand_src(12345);
-  model::heisenberg spin_model(L,h,dim);
-  spin_model.lattice.print(std::cout);
-  // model::Shastry spin_model(2, 1, 0);
+  // spin_model.lattice.print(std::cout);
+  // if (model_name == "heisernberg"){
+  // }else if (model_name == "shastry"){
+  // }
+  //* choose model 
+  // model::heisenberg spin_model(L,h,dim);
+  double J1 = 1;
+  double J2 = 1;
+  model::Shastry spin_model(L, J1, J2);
+
   worm<decltype(spin_model)> solver(beta, spin_model); //template needs for std=14
   // std::vector<std::vector<int>> states;
 
@@ -77,7 +85,7 @@ int main(int argc, char* argv[])
   // worm statistics
   double wcount = 0;
   double wlength = 0;
-  double wdensity = spin_model.L;
+  double wdensity = spin_model.lattice.num_bonds();
   for (int i=0; i < opt.therm + opt.sweeps; i++){
     // solver.diagonal_update(); 
     solver.diagonal_update(wdensity); //n* need to be comment out 
@@ -90,15 +98,23 @@ int main(int argc, char* argv[])
       }
       for (const auto& op : solver.ops_main){
         sign *= spin_model.loperators[op.op_type()].signs[op.state()];
+        // if (sign == -1) {
+        //   int x = 1;
+        // }
       }
-      ene << (- ((double)solver.ops_main.size()) / beta + spin_model.shifts[0] * spin_model.lattice.num_bonds()) * sign;
+      double ene_tmp = - (double)solver.ops_main.size() / beta;
+      for (int e=0; e<spin_model.Nop; e++){
+        ene_tmp += spin_model.shifts[e] * spin_model.bond_t_size[e];
+      }
+      ene << ene_tmp * sign;
+      // ene << (- ((double)solver.ops_main.size()) / beta + spin_model.shifts[0] * spin_model.lattice.num_bonds()) * sign;
       ave_sign << sign;
       mu /= spin_model.L;
       umag << mu * sign;
     }
     if (i <= opt.therm / 2) {
       if (wcount > 0) wdensity = spin_model.lattice.num_bonds()/ (wlength / wcount);
-      if (i % (opt.therm / 8) == 0) {
+      if (i % (opt.therm / 8 + 1) == 0) {
         wcount /= 2;
         wlength /= 2;
       }
@@ -117,16 +133,16 @@ int main(int argc, char* argv[])
 
   double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / (double)1E3;
   #endif
-  std::cout << "Elapsed time = " << elapsed << " sec\n"
-            << "Speed = " << (opt.therm+opt.sweeps) / elapsed << " MCS/sec\n";
-  std::cout << "Energy             = "
+  std::cout << "Elapsed time         = " << elapsed << " sec\n"
+            << "Speed                = " << (opt.therm+opt.sweeps) / elapsed << " MCS/sec\n";
+  std::cout << "Energy               = "
             << ene.mean()/ave_sign.mean() / spin_model.lattice.num_sites() << " +- " 
             << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) / spin_model.lattice.num_sites()
             << std::endl
-            << "Uniform Magnetization     = "
+            << "Uniform Magnetization  = "
             << umag.mean()/ave_sign.mean() << " +- " 
             << std::sqrt(std::pow(umag.error()/ave_sign.mean(), 2) + std::pow(umag.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2))
             << std::endl
-            << "average sign     = "
+            << "average sign           = "
             << ave_sign.mean() << " +- " << ave_sign.error() << std::endl;
 }

@@ -137,6 +137,7 @@ public:
   std::array<int, N_op> leg_size; //size of local operators;
   const std::vector<BOND> bonds;
   const std::vector<size_t> bond_type;
+  std::array<size_t, N_op> bond_t_size;
   lattice::graph lattice;
   base_spin_model(int L_, int Nb_, std::vector<BOND> bonds)
   :L(L_), Nb(Nb_), bonds(bonds){}
@@ -145,12 +146,26 @@ public:
   :L(lt.num_sites()), Nb(lt.num_bonds()), lattice(lt), 
     bonds(generate_bonds(lt)), bond_type(generate_bond_type(lt))
   {
+    int sum = 0;
+    for (int i=0; i<Nop; i++){
+      bond_t_size[i] = 0;
+      for (auto bt : bond_type){
+        if (bt==i) bond_t_size[i]++;
+      }
+      sum += bond_t_size[i];
+    }
+
     if (num_type(bond_type)!=Nop) {
       std::cerr << "Nop is not consistent with number of bond_type" << std::endl;
       std::terminate();
     }
+
+    if (sum != bonds.size()) {
+      std::cerr << "something wrong in bond_type" << std::endl;
+      std::terminate();
+    }
   }
-  void initial_setting(std::vector<double>off_sets = std::vector<double>(2,0)){
+  void initial_setting(std::vector<double>off_sets = std::vector<double>(N_op,0)){
     int i = 0;
     double tmp=0;
     for (auto& x : loperators){
