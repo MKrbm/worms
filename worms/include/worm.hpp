@@ -53,7 +53,6 @@ using STATE = model::STATE;
 using BOND = model::BOND;
 using WORMS = spin_state::WORM_ARR;
 using DOTS = std::vector<Dotv2>;
-using spin_state_t = spin_state::spin_state<2, 2>;
 using size_t = std::size_t;
 
 
@@ -72,6 +71,10 @@ class worm{
 
   std::vector< BOND > bonds;
   std::vector<size_t> bond_type;
+  typedef typename MODEL::base_spin_model base_spin_model;
+
+  // const spin_state::state_func func = {2};
+  typedef spin_state::state_func<base_spin_model::S> state_func;
 
   //declaration for random number generator
   // typedef model::local_operator::engine_type engine_type;
@@ -186,7 +189,9 @@ class worm{
           auto const& bond = bonds[b];
 
           // size_t u = spin_state_t::c2u(cstate[bond[0]], cstate[bond[1]]);
-          size_t u = spin_state::state2num(cstate, bond);
+          size_t u = state_func::state2num(cstate, bond);
+          // size_t u = spin_state::state2num(cstate, bond);
+
           r = uniform(rand_src);
           if (r < accept[u]){
             append_ops(ops_main, spacetime_dots, &bond, (u<<bond.size()) | u, lop_label, tau);
@@ -470,18 +475,6 @@ class worm{
     return;
   }
 
-
-  //* functions for testing
-  static void check_operators(spin_state::BottomState state, OPS ops){
-    #ifndef NDEBUG
-    const auto state_ = state;
-    for (OPS::iterator opi = ops.begin(); opi != ops.end(); opi++){
-      update_state(opi, state);
-    }
-    ASSERT(is_same_state(state_, state), "operators are not consistent");
-    #endif
-    return;
-  }
 
   static bool is_same_state(int n, int m){
     return n==m;

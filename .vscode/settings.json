@@ -111,6 +111,7 @@
       "utility": "cpp",
       "valarray": "cpp",
       "variant": "cpp",
-      "vector": "cpp"
+      "vector": "cpp",
+      "nonlinearoptimization": "cpp"
     },
 }

@@ -45,7 +45,7 @@ inline int getbit(int n, int p)
 int main(){
 
 
-  auto ss = model::Shastry(2, 2, 1, 0);
+  auto ss = model::Shastry_2(2, 2, 1, 0);
 
   // //latice
   // // lattice::graph lat = lattice::graph::simple(1,16);

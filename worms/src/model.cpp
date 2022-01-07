@@ -10,15 +10,13 @@
 model::local_operator::local_operator()
   :local_operator(2){}
 
-model::local_operator::local_operator(int L, size_t sps)
-  :L(L), size(pow(sps, L)), ogwt(L), sps(sps){
+model::local_operator::local_operator(int leg, size_t sps)
+  :leg(leg), size(pow(sps, leg)), ogwt(leg), sps(sps){
 
-  if (sps<=1) size = pow(2,L); // default size is 2**L.
+  if (sps<=1) size = pow(2,leg); // default size is 2**leg.
   ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
   ham_vector = std::vector<double>(size*size, 0);
   diagonal_cum_weight = std::vector<double>(size, 0);
-  
-
 }
 
 

@@ -78,14 +78,13 @@ public:
   using VECD = std::vector<double>;
   using TPROB = std::vector<VECD>; //type for transition probability. typically, this is 2D matrix with 4 x 4 elements( check notebook for detail definition of this type).
 
-  int L; // number of site operator acts 
-  int size; // size of operator (2**L)
+  int leg; // leg size.
+  int size; // size of operator (2**leg)
   size_t sps;
   double ene_shift = 0; //energy shift to ensure that diagonal elements of hamiltonian are non-negative
   std::vector<std::vector<double>> ham;
   std::vector<std::vector<double>> ham_;
   std::vector<double> ham_vector;
-  std::vector<std::vector<double>> ori_trans_weights; //original weights, which can have negative elements;
   std::vector<int> signs; //list of sign defined via the sign of ham_;
   std::vector<TPROB> trans_prob; //num_configuration x 4 x 4 matrix.
   std::vector<double> diagonal_cum_weight; //normalized diagonal elements;
@@ -100,7 +99,7 @@ public:
   std::vector<markov_t> markov;
 
 
-  local_operator(int L, size_t sps = 0);
+  local_operator(int leg, size_t sps = 0);
   local_operator();
 
   void set_ham(double off_set = 0);

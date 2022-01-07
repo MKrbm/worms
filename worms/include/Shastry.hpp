@@ -35,5 +35,31 @@ public:
   } 
 };
 
+  class Shastry_2 :public base_spin_model<1>{
+public:
+    Shastry_2(int Lx, int Ly, double J1, double J2, double h); //(1) 
+    Shastry_2(int L, double J1, double J2 = 1, double h = 0)
+    :Shastry_2(L, L, J1, J2, h){}
+    int Lx, Ly;
+    const double J1,J2,h;
+    static lattice::graph return_lattice(int Lx, int Ly){
+      lattice::basis_t bs(2, 2); bs << 2, 0, 0, 2;
+      lattice::basis basis(bs);
+      lattice::unitcell unitcell(2);
+      unitcell.add_site(lattice::coordinate(1/4.0, 1/4.0), 0);
+      unitcell.add_site(lattice::coordinate(3/4.0, 3/4.0), 0);
+      unitcell.add_bond(0, 1, lattice::offset(0, 0), 0);
+      unitcell.add_bond(0, 1, lattice::offset(-1, 0), 0);
+      unitcell.add_bond(0, 1, lattice::offset(0, -1), 0);
+      unitcell.add_bond(0, 1, lattice::offset(-1, -1), 0);
+
+      lattice::span_t span(2, 2); span << Lx, 0, 0, Ly;
+      std::vector<lattice::boundary_t> boundary(2, lattice::boundary_t::periodic);
+      lattice::graph lat(basis, unitcell, span, boundary);
+      // lat.num_bonds()
+      return lat;
+    } 
+  };
+
 }
 

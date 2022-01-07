@@ -26,30 +26,47 @@ namespace spin_state{
   using size_t = std::size_t; 
   using STATE = model::STATE;
   using BOND = model::BOND;
-  using BaseStatePtr = std::shared_ptr<BaseState>;
-  using OpStatePtr = std::shared_ptr<OpState>;
-  using WormsPtr = std::shared_ptr<Worms>;
-  using BStatePtr = std::shared_ptr<BottomState>;
   using local_operator = model::local_operator;
   using WORM = std::tuple<int, int, double>;
   using WORM_ARR = std::vector<WORM>; //  site, spin, dot_label, tau (dot label is needed for reverse lookup)
   using DOT_ARR = std::vector<std::tuple<int,int,int,int>>;   //prev, next, dot_type, index, (index refers to the legs of the dot with respect to the class of dots)
 
-  /*
+  template<size_t sps> 
+  struct state_func{
+    static size_t state2num(STATE const& state, int L = -1){
+      size_t num = 0;
+      if (L < 0) L = state.size();
+      if (L == 0) return 0;
+      for (int i = L-1; i >= 0; i--) {
+        num *= sps;
+        num += state[i];
+      }
+      return num;
+    }
 
-  this function works even if L < state.size().
-  In this case, only consider state[:L]
+    static size_t state2num(STATE const& state, BOND const& bond){
+      size_t u = 0;
+      size_t S = bond.size()-1;
+      for (int i=0; i<bond.size(); i++){
+        // int tmp = cstate[bond[i]];
+        u *= sps;
+        u += state[bond[S-i]];
+      }
+      return u;
+    }
 
-  params
-  -----
-  int[] state : vector of 1 or -1. 
-  int L : size of state
 
-  return
-  ------
-  integer representation of state
+    static STATE num2state(int num, int L){
+      int coef = 1;
+      model::STATE state(L, 0); // all spin up
+      for (int i=0; i<L; i++){
+        state[i] = num%sps;
+        num /= sps;
+      }
+      return state;
+    }
+  };
 
-  */
   inline size_t state2num(STATE const& state, int L = -1){
     size_t num = 0;
     if (L < 0) L = state.size();
@@ -87,268 +104,8 @@ namespace spin_state{
   };
 
 
-  template<unsigned int NUM_LEGS, unsigned int DIM> struct spin_state;
-
-  template<>
-  struct spin_state<2, 2> {
-    static const int num_configurations = 16;
-    static const int num_candidates = 4;
-    static int p2c(int p, int l) { return (p >> l) & 1; }
-    static int p2u(int p, int d) { return (p >> (2 * d)) & 3; }
-    static int c2u(int c0, int c1) { return (c0 | (c1 << 1)); }
-    static int c2p(int c0, int c1, int c2, int c3) {
-      return (c0 | (c1 << 1) | (c2 << 2) | (c3 << 3));
-    }
-    static int u2p(int u0, int u1) { return (u0 | (u1 << 2)); }
-    static int candidate(int p, int g) { return p ^ (1<<g); }
-    static int maskp(int l) { return (1 << l); }
-    static bool is_diagonal(int p) { return p2u(p, 0) == p2u(p, 1); }
-  };
 }
 
-class spin_state::BaseState : public STATE
-{
-  typedef STATE vec;
-  public :
-  int L;
-  int _size;
-  const double tau;
-  const std::vector<int> bond;
-  local_operator* const plop;
-
-  BaseState() : tau(0), plop(nullptr){}
-
-  BaseState(int L, double tau = 0, local_operator* ptr = nullptr, std::vector<int> bond = std::vector<int>())
-  :vec(L, 0), L(L), _size(L), plop(ptr), bond(bond), tau(tau) {}
-
-  BaseState(STATE state, double tau = 0, local_operator* ptr = nullptr, std::vector<int> bond = std::vector<int>())
-  :vec(state), L(state.size()), _size(L), plop(ptr), bond(bond), tau(tau) {}
-
-
-  virtual std::ptrdiff_t GetIndex(SPIN* ptr, int dir_in = 0){
-    return std::distance(this->data(), ptr);
-  }
-
-  virtual SPIN* GetStatePtr(SPIN* ptr,int dir_in = 0){
-    return ptr;
-  }
-
-  virtual int GetLabel(int cindex, int nindex, int clabel){
-    // int cindex = GetIndex(ptr, 0);
-    std::cerr << "GetLabel is unavailable" << std::endl;
-    return 0;
-  }
-
-  virtual int GetNum(){
-    return state2num(*this, _size);
-  }
-
-  virtual bool is_off_diagonal(){
-    return true;
-  }
-  virtual bool is_diagonal(){
-    return true;
-  }
-  virtual ~BaseState(){
-    // cout << "Deconstructor was called" << endl;
-  }
-
-  void push_back (int x){
-    ASSERT(false, "push_back is unavailable"); //inorder to avoid pointer problem.
-  }
-
-  void resize (int x){
-    ASSERT(false, "resize is unavailable");
-  }
-
-  int get_size(){
-    return _size;
-  }
-
-};
-
-class spin_state::BottomState : public BaseState
-{
-  public :
-  BottomState(){}
-  BottomState(int L, double t=0):BaseState(L, t){}
-  ~BottomState(){
-  // cout << "Deconstructor (BottomState) was called" << endl;
-}
-};
-
-
-
-
-
-class spin_state::OpState : public BaseState
-{
-  public :
-
-  ~OpState(){
-    // cout << "Deconstructor (OpState) was called" << endl;
-  }
-  OpState(){}
-
-  OpState(int L_, local_operator* plop, std::vector<int> bond_, double t)
-  :BaseState(2*L_, t, plop, bond_)
-  {
-    BaseState::L = L_;
-    // ASSERT(l.size() == L_, "size of labels must be equal to given L");
-    ASSERT(bond.size() == plop->L, "size of bond must be equal to operator size");
-  }
-
-  OpState(STATE state, local_operator* plop
-          ,std::vector<int> bond_, double t)
-  :BaseState(state, t, plop, bond_)
-  {
-    BaseState::L = state.size()/2;
-    // ASSERT(l.size() == L, "size of labels must be equal to given L");
-    ASSERT(bond.size() == plop->L, "size of bond must be equal to operator size");
-    ASSERT(L == plop->L, "in consistent error");
-  }
-
-  OpState(double t): BaseState(0, t){} //* for append sentinels.
-  /*
-  int dir : 1 or 0, corresponds to upside or downside of state.
-  */
-  SPIN* GetStatePtr (SPIN* ptr, int dir_in) override{
-    return ptr + (SPIN)dir_in*L;
-  }
-
-  /*
-  return index of element
-  params
-  ------
-  int* ptr : ptr to element of state
-  int dir_in : direction (1 or 0) worm comes in.
-  */
-  std::ptrdiff_t GetIndex(SPIN* ptr, int dir_in) override{
-    ptr = GetStatePtr(ptr, dir_in);
-    return std::distance(this->data(), ptr);
-  }
-
-  /*
-  return label worm will move to
-  params
-  ------
-  cindex : current index (0 to 3). corresponds to which leg the worm comes in.
-  nindex : next index the worm goes out.
-  clabel : label of dot. (label doesn't distinguish the direction worm goes out or comes in)
-  L : number of site the operator acts, typically 2.
-
-  */
-  int GetLabel(int cindex, int nindex, int clabel) override{
-    // int cindex = GetIndex(ptr, 0);
-    cindex %= L;
-    nindex %= L;
-    return clabel + (nindex - cindex);
-  }
-
-  bool is_off_diagonal() override{
-    for (int i = 0; i<L; i++){
-      if ((*this)[i] != (*this)[i+L]) return true;
-    }
-    return false;
-  }
-
-  bool is_diagonal() override{
-    return !is_off_diagonal();
-  }
-
-  
-};
-
-class spin_state::Worms : public BaseState
-{
-  public :
-  const STATE& spin;
-  const std::vector<int>& site;
-  // std::vector<int> worm_site;
-  ~Worms(){
-    // cout << "Deconstructor (Worms) was called" << endl;
-  }
-  Worms():BaseState(), spin(*this), site(bond){}
-  Worms(int L)
-  :BaseState(L), spin(*this), site(bond){}
-
-  Worms(STATE spin_
-          ,std::vector<int> site_, double t)
-  :BaseState(spin_, t, nullptr, site_), spin(*this), site(bond)
-  {
-    BaseState::L = 1;
-    // ASSERT(l.size() == L, "size of labels must be equal to given L");
-    ASSERT(bond.size() == 1, "size of site (called bond here) must be equal to 1");
-    ASSERT(size() == 1, "the size ofspin (state) must be equal to 1");
-  }
-
-  Worms(int spin_
-          ,int site_, double t)
-  :BaseState(STATE(1,spin_), t, nullptr, std::vector<int>(1,site_)), spin(*this), site(bond)
-  {
-    BaseState::L = 1;
-    // ASSERT(l.size() == L, "size of labels must be equal to given L");
-    ASSERT(bond.size() == 1, "size of site (called bond here) must be equal to 1");
-    ASSERT(size() == 1, "the size ofspin (state) must be equal to 1");
-  }
-};
-
-
-
-/*
-params
-------
-int site : site the dot is at
-int tau : tau
-int prev : previous dot label
-int next : next dot label
-int% sptr : ptr to state
-BaseStatePtr typeptr : ptr to state type class
-int dot_type : state type 0 : bottom state, 1:operator, 2:worms;
-
-*/
-class spin_state::Dot
-{
-  private:
-  
-  public:
-  int prev;
-  int next = -1;
-  int site;
-  int dot_type;
-  int* sptr;
-  double tau;
-  BaseStatePtr typeptr;
-  Dot(int s, int p, int n, int* sptr, BaseState* type, int d)
-  :site(s),  prev(p), next(n), sptr(sptr), typeptr(BaseStatePtr(type)), dot_type(d)
-  {}
-
-  Dot(int s, int p, int n, int* sptr, BaseStatePtr type, int d)
-  :site(s),  prev(p), next(n), sptr(sptr), typeptr(type), dot_type(d)
-  {}
-
-  Dot(){}
-  
-  void set_next(int n){
-    next = n;
-  }
-  void set_prev(int p){
-    prev = p;
-  }
-
-  // static add_origin(int s, )
-
-  /*
-  int dir : direction worm goes
-  */
-  int move_next(int dir){
-    // if (dir == 1) return next;
-    // else if (dir == 0) return prev;
-    return (dir == 0) ? prev : next;
-    ASSERT(false, "dir can be 1 or 0");
-  }
-
-};
 
 /*
 params
