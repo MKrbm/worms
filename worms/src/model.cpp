@@ -10,14 +10,12 @@
 model::local_operator::local_operator()
   :local_operator(2){}
 
-model::local_operator::local_operator(int L)
-  :L(L), size(pow(2, L)), ogwt(L){
+model::local_operator::local_operator(int L, size_t sps)
+  :L(L), size(pow(sps, L)), ogwt(L), sps(sps){
+
+  if (sps<=1) size = pow(2,L); // default size is 2**L.
   ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
   ham_vector = std::vector<double>(size*size, 0);
-  trans_weights = std::vector<std::vector<double>>(
-          size*size,
-          std::vector<double>(2*L)
-          );
   diagonal_cum_weight = std::vector<double>(size, 0);
   
 
@@ -79,8 +77,6 @@ void model::local_operator::set_ham(double off_set){
   // auto xxx = markov[0](0, rand_src);
 
 
-  // set_trans_weights();//set trans_weights from ham_vector.
-  // set_trans_prob(); //set transition probability.
 
   // check_trans_prob(); // check if transition probability is consistent with the definition of transition matrix
 
@@ -88,42 +84,6 @@ void model::local_operator::set_ham(double off_set){
 
 
 
-void model::local_operator::set_trans_prob(){
-  trans_prob.resize(0);
-  int N = trans_weights.size(); // sizes*size
-  int M = trans_weights[0].size(); // 2 * L
-
-  for(const auto& x : trans_weights){
-    trans_prob.push_back(BC::st(x));
-  }
-}
-
-
-/*
-set weights for transition
-the first index represent the sate when the worm invade into the operator
-e.g.
-                     ↑
-                     + 
-1 0        1 0     1 1
----        -+-     ---
-1 0    →   0 0  →  0 0
-↑
-+
-
-In this case, first index = [1, 0, 0, 0] (1*2^3 + 0 + 0 + 0 = 8)
-and the second index represents which bond the worm choese;
-In above case, j = 3.
-*/
-void model::local_operator::set_trans_weights(){
-  // ham_vector.size() = size*size;
-  ori_trans_weights = trans_weights;
-  for(int i=0; i<ham_vector.size(); i++)
-    for (int j=0; j<2*L; j++){
-      trans_weights[i][j] = std::abs(ham_vector[i ^ (1<<j)]);
-      ori_trans_weights[i][j] = ham_vector[i ^ (1<<j)];
-    }
-}
 
 
 
@@ -158,17 +118,6 @@ void model::local_operator::check_trans_status(VECD weights, TPROB transition_ma
 }
 
 
-// check if transition probability is consistent with the definition of transition matrix
-void model::local_operator::check_trans_prob(){
-    int num_conf = trans_prob.size();
-    ASSERT(num_conf == trans_weights.size(),
-    "size of trans_prob and trans_weights must be the same");
-
-    for(int i=0; i<num_conf; i++){
-      ASSERT(BC::check(trans_weights[i], trans_prob[i])
-      , "condition of transition matrix is not satisfied" );
-    }
-  }
 
 // template<>
 // model::base_spin_model<1>::base_spin_model(lattice::graph lt)
