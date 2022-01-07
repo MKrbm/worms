@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 {
 
 
-  options opt(argc, argv, 16, 1, 1.0);
+  options opt(argc, argv, 16, 1, 1.0,"heisernberg");
   if (!opt.valid) std::exit(-1);
   double beta = 1 / opt.T;
   int L = opt.L;

@@ -62,6 +62,7 @@ int main(int argc, char* argv[])
 
   worm<decltype(spin_model)> solver(beta, spin_model); //template needs for std=14
   // std::vector<std::vector<int>> states;
+  spin_model.lattice.print(std::cout);
 
 
   #if MESTIME

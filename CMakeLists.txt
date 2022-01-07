@@ -22,7 +22,7 @@ check_language(Fortran)
 message(STATUS "${CMAKE_Fortran_COMPILER} is available")
 
 option(RANDOM_SEED "wether using random seed or not " ON)
-option(NDEBUG "wether using random seed or not " ON)
+# option(NDEBUG "wether using random seed or not " ON)
 
 
 #include find package
