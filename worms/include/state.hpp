@@ -11,15 +11,10 @@ using std::endl;
 
 
 namespace spin_state{
-  class BaseState;
-  class BottomState;
-  class OpState;
-  class Worms;
-  class Dot;
   class Dotv2;
-  class BottomStatev2;
   class OpStatev2;
   class Wormsv2;
+  template <size_t nls_=1>
   class Operatorv2;
   
   using SPIN = model::SPIN;
@@ -47,10 +42,9 @@ namespace spin_state{
 
     static size_t state2num(STATE const& state, BOND const& bond){
       size_t u = 0;
-      size_t S = bond.size()-1;
       for (int i=0; i<bond.size(); i++){
         // int tmp = cstate[bond[i]];
-        u += (state[bond[S-i]] << (nls*i));
+        u += (state[bond[i]] << (nls*i));
       }
       return u;
     }
@@ -60,8 +54,8 @@ namespace spin_state{
       int coef = 1;
       model::STATE state(L, 0); // all spin up
       for (int i=0; i<L; i++){
-        state[i] = num&(sps - 1);
-        num >>= nls;
+        state[i] = num&(sps-1);
+        num >>= (nls);
       }
       return state;
     }
@@ -176,10 +170,13 @@ public:
 
   the actual size of state (number of bits for expressing state ) is 2 * size
 */
+template <size_t nls_>
 class spin_state::Operatorv2{
   const BOND* const bond_ptr_;
   // size_t s0_;
   // size_t s1_;
+  static const size_t nls = nls_;
+  static const size_t sps = (1<<nls);
   size_t size_;
   size_t op_type_;
   size_t state_;
@@ -209,8 +206,8 @@ public:
   size_t op_type()const {return op_type_;}
   size_t state()const {return state_;}
   size_t state(size_t dir)const { // dir = 0 lower part, dir = 1 upper pirt
-    if (dir==0) return state_ & ((1<<size_)-1);
-    else if (dir == 1) return (state_ >> size_) & ((1<<size_)-1);
+    if (dir==0) return state_ & ((1<<size_*nls)-1);
+    else if (dir == 1) return (state_ >> size_*nls) & ((1<<size_*nls)-1);
     return -1;
   }
   double tau()const {return tau_;}
@@ -226,7 +223,19 @@ public:
   0  1.
   */
   void flip_state(size_t leg){ state_ ^= (1<<leg);} 
+
+  /*
+
+  *change state at leg by fl.
+
+  fl = [1, .., 2^nls - 1]
+  local_state = [0,1,..,2^nls - 1]
+  local state will update via ls = ls ^ fl;
+
+  */
+  void update_state(size_t leg, size_t fl=1){ state_ ^= (fl << (nls*leg)); }
   SPIN get_spin(size_t leg) const {return (state_>>leg) & 1;}
+  SPIN get_local_state(size_t leg) const {return ((state_>>(nls*leg)) & (sps-1)); }
   bool is_off_diagonal() const{ return (state(0) != state(1)); }
   bool is_diagonal()const{ return !is_off_diagonal();}
   static Operatorv2 sentinel(double tau = 1){ return Operatorv2(0, 0, 0, tau);}

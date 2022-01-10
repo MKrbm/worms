@@ -21,7 +21,9 @@
 #include <algorithm>
 #include <vector>
 
+template <std::size_t nls = 1>
 class outgoing_weight {
+  static const std::size_t sps = (1<<nls); //onsite Hilbert space dimension.
 public:
   template<typename WEIGHT>
   outgoing_weight(WEIGHT const& w, int L):L(L){ init_table(w); }
@@ -31,8 +33,9 @@ public:
     weights_.clear();
     weights_.resize(w.size());
     for (int s = 0; s < w.size(); ++s) {
-      weights_[s].resize(2*L);
-      for (int g = 0; g < 2*L; ++g) weights_[s][g] = w[s ^ (1<<g)];
+      weights_[s].resize(2*L*(sps-1));
+      for (int g = 0; g < 2*L; ++g)
+        for (int l = 0; l < sps-1; l++) weights_[s][g*(sps-1) + l] = w[s ^ ((l+1)<<(nls*g))];
     }
   }
   std::vector<double> const& operator[](int s) { return weights_[s]; }

@@ -94,7 +94,7 @@ public:
   // table for worm update
   typedef std::mt19937 engine_type;
   typedef bcl::markov<engine_type> markov_t;
-  outgoing_weight ogwt;
+  outgoing_weight<> ogwt;
   std::vector<markov_t> markov;
 
 
