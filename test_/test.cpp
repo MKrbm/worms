@@ -45,52 +45,29 @@ inline int getbit(int n, int p)
 int main(){
 
 
-  auto ss = model::Shastry_2(2, 2, 1, 0);
+  // auto ss = model::Shastry_2(2, 2, 1, 0);
+  // ss.lattice.print(std::cout);
 
-  // //latice
-  // // lattice::graph lat = lattice::graph::simple(1,16);
-  // lattice::basis_t bs(2, 2); bs << 2, 0, 0, 2;
-  // lattice::basis basis(bs);
-  // lattice::unitcell unitcell(2);
-  // unitcell.add_site(lattice::coordinate(0, 0), 1);
-  // unitcell.add_site(lattice::coordinate(0, 1.0/2), 1);
-  // unitcell.add_site(lattice::coordinate(1.0/2, 0), 0);
-  // unitcell.add_site(lattice::coordinate(1.0/2, 1.0/2), 0);
-  // unitcell.add_bond(0, 1, lattice::offset(0, 0), 0);
-  // unitcell.add_bond(0, 2, lattice::offset(0, 0), 0);
-  // unitcell.add_bond(1, 0, lattice::offset(0, 1), 0);
-  // unitcell.add_bond(2, 0, lattice::offset(1, 0), 0);
-  // unitcell.add_bond(2, 3, lattice::offset(0, 0), 0);
-  // unitcell.add_bond(1, 3, lattice::offset(0, 0), 0);
-  // unitcell.add_bond(3, 2, lattice::offset(0, 1), 0);
-  // unitcell.add_bond(3, 1, lattice::offset(1, 0), 0);
-  // unitcell.add_bond(0, 3, lattice::offset(0, 0), 1);
-  // unitcell.add_bond(1, 2, lattice::offset(-1, -1), 1);
+  std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+
+  int c = 0;
+  for (int i = 0; i < (int)1E6; i++){
+    int tmp = i % 100;
+    // c+= (tmp << (i%10));
+    c += tmp * std::pow((int)2, (int)(i%10));
+    // c %= (int)(1E6);
+  }
+
+
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / (double)1E3;
+  std::cout << " c = " << c << std::endl;
+  std::cout << "elapsed : " << elapsed << std::endl;
 
 
 
 
-
-  // lattice::span_t span(2, 2); span << 2, 0, 0, 2;
-  // std::vector<lattice::boundary_t> boundary(2, lattice::boundary_t::periodic);
-  // lattice::graph lat(basis, unitcell, span, boundary);
-  ss.lattice.print(std::cout);
-  // ss.lattice.bond_type(0)
-  // ss.lattice.c
-  // auto color = lattice::coloring(lat);
-
-  // lattice::basis_t bs(1, 1); bs << 2; // 1x1 matrix
-  // lattice::basis basis(bs);
-  // lattice::unitcell unitcell(1);
-  // unitcell.add_site(lattice::coordinate(0), 0);
-  // unitcell.add_site(lattice::coordinate(0.5), 0);
-  // unitcell.add_bond(0, 1, lattice::offset(0), 0);
-  // unitcell.add_bond(1, 0, lattice::offset(1), 0);
-  // lattice::span_t span(1, 1); span << 8; // 1x1 matrix
-  // std::vector<lattice::boundary_t> boundary(1, lattice::boundary_t::periodic);
-  // lattice::graph lat(basis, unitcell, span, boundary);
-  // lat.print(std::cout);
-  // std::cout << "bond_type of 0 is : " << lat.bond_type(0) << std::endl;;
 
   
   return 0;

@@ -40,7 +40,7 @@
 
 namespace model {
 
-  template <int N_op, size_t S>
+  template <int N_op, size_t nls = 1>
   class base_spin_model;
   class local_operator;
   
@@ -80,7 +80,7 @@ public:
 
   int leg; // leg size.
   int size; // size of operator (2**leg)
-  size_t sps;
+  size_t nls;
   double ene_shift = 0; //energy shift to ensure that diagonal elements of hamiltonian are non-negative
   std::vector<std::vector<double>> ham;
   std::vector<std::vector<double>> ham_;
@@ -98,7 +98,7 @@ public:
   std::vector<markov_t> markov;
 
 
-  local_operator(int leg, size_t sps = 0);
+  local_operator(int leg, size_t nls = 1);
   local_operator();
 
   void set_ham(double off_set = 0);
@@ -116,13 +116,13 @@ public:
 // map spin to binary number e.g. -1 \rightarrow 0, 1 \rightarrow 1
 * S is local freedomness. 
 */
-template <int N_op = 1, size_t _S = 2>
+template <int N_op, size_t _nls>
 class model::base_spin_model{
 public:
   const int L;
   const int Nb; // number of bonds.
   static const int Nop = N_op; //number of local operator (1 for heisenberg model)
-  static const size_t S = _S;
+  static const size_t nls = _nls;
   double rho = 0;
   std::vector<double> shifts;
   std::array<local_operator, N_op> loperators; //in case where there are three or more body interactions.

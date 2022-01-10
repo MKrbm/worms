@@ -10,10 +10,10 @@
 model::local_operator::local_operator()
   :local_operator(2){}
 
-model::local_operator::local_operator(int leg, size_t sps)
-  :leg(leg), size(pow(sps, leg)), ogwt(leg), sps(sps){
+model::local_operator::local_operator(int leg, size_t nls)
+  :leg(leg), size(1<<nls * leg), ogwt(leg), nls(nls){
 
-  if (sps<=1) size = pow(2,leg); // default size is 2**leg.
+  if (nls<=0) size = (1<<leg); // default size is 2**leg.
   ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
   ham_vector = std::vector<double>(size*size, 0);
 }

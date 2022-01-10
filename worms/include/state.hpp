@@ -31,14 +31,15 @@ namespace spin_state{
   using WORM_ARR = std::vector<WORM>; //  site, spin, dot_label, tau (dot label is needed for reverse lookup)
   using DOT_ARR = std::vector<std::tuple<int,int,int,int>>;   //prev, next, dot_type, index, (index refers to the legs of the dot with respect to the class of dots)
 
-  template<size_t sps> 
+  template<size_t nls> 
   struct state_func{
+    static const size_t sps = (1<<nls);
     static size_t state2num(STATE const& state, int L = -1){
       size_t num = 0;
       if (L < 0) L = state.size();
       if (L == 0) return 0;
       for (int i = L-1; i >= 0; i--) {
-        num *= sps;
+        num <<= (nls);
         num += state[i];
       }
       return num;
@@ -49,8 +50,7 @@ namespace spin_state{
       size_t S = bond.size()-1;
       for (int i=0; i<bond.size(); i++){
         // int tmp = cstate[bond[i]];
-        u *= sps;
-        u += state[bond[S-i]];
+        u += (state[bond[S-i]] << (nls*i));
       }
       return u;
     }
@@ -60,8 +60,8 @@ namespace spin_state{
       int coef = 1;
       model::STATE state(L, 0); // all spin up
       for (int i=0; i<L; i++){
-        state[i] = num%sps;
-        num /= sps;
+        state[i] = num&(sps - 1);
+        num >>= nls;
       }
       return state;
     }

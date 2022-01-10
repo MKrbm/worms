@@ -74,7 +74,7 @@ class worm{
   typedef typename MODEL::base_spin_model base_spin_model;
 
   // const spin_state::state_func func = {2};
-  typedef spin_state::state_func<base_spin_model::S> state_func;
+  typedef spin_state::state_func<base_spin_model::nls> state_func;
 
   //declaration for random number generator
   // typedef model::local_operator::engine_type engine_type;
