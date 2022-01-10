@@ -29,6 +29,17 @@ public:
   outgoing_weight(WEIGHT const& w, int L):L(L){ init_table(w); }
   outgoing_weight(int L):L(L){}
   template<typename WEIGHT>
+
+  /*
+
+  g : leg index where worm goes out
+  l : l \in [1, .., 2**nls - 1] state of worm; local state change its state according to this. 
+
+  e.g. in case of nls = 1.
+  if l = 1 = [0,1] in bit representation and local state = 2 = [1,0]
+  state -> [1,0] ^ [0,1] = [1,1] = 3.
+
+  */
   void init_table(WEIGHT const& w) {
     weights_.clear();
     weights_.resize(w.size());

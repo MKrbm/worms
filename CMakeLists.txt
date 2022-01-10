@@ -41,9 +41,11 @@ include(eigen3)
 message(STATUS "after include: ${CMAKE_Fortran_COMPILER} is available")
 
 include(lattice)
+include(npy)
 
 FetchContent_MakeAvailable(bcl)
 FetchContent_MakeAvailable(lattice)
+FetchContent_MakeAvailable(npy)
 include_directories(${FetchContent_includes})
 message(STATUS "after include directory: ${CMAKE_Fortran_COMPILER} is available")
 
@@ -81,6 +83,11 @@ ENDFOREACH(name)
 add_executable(test ./test_/test.cpp)
 target_compile_features(test PUBLIC cxx_std_14)
 target_link_libraries(test worm) # link library
+
+add_executable(npy ./test_/npy_test.cpp)
+target_compile_features(npy PUBLIC cxx_std_14)
+target_link_libraries(npy worm) # link library
+
 
 
 configure_file(MainConfig.h.in MainConfig.h)

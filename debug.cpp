@@ -55,10 +55,10 @@ int main(int argc, char* argv[])
   // }else if (model_name == "shastry"){
   // }
   //* choose model 
-  // model::heisenberg spin_model(L,h,dim);
+  model::heisenberg spin_model(L,h,dim);
   double J1 = 1;
   double J2 = 1;
-  model::Shastry spin_model(L, J1, J2);
+  // model::Shastry spin_model(L, J1, J2);
 
   worm<decltype(spin_model)> solver(beta, spin_model); //template needs for std=14
   // std::vector<std::vector<int>> states;
