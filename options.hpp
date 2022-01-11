@@ -57,7 +57,7 @@ struct options {
         case 'n' :
           if (++i == argc) { usage(); return; }
           sweeps = std::atoi(argv[i]); break;
-        case 'MN' :
+        case 'M' :
           if (++i == argc) { usage(); return; }
           MN = argv[i]; break;
         case 'h' :
