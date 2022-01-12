@@ -36,6 +36,7 @@ void exe_worm(SPINMODEL spin_model, options opt){
   BC::observable ene; // signed energy i.e. $\sum_i E_i S_i / N_MC$
   BC::observable umag; // uniform magnetization 
   BC::observable ave_sign; // average sign 
+  BC::observable umag2;
   double beta = 1 / opt.T;
 
 
@@ -91,6 +92,7 @@ void exe_worm(SPINMODEL spin_model, options opt){
       ave_sign << sign;
       mu /= spin_model.L;
       umag << mu * sign;
+      umag2 << mu * mu * sign;
     }
     if (i <= opt.therm / 2) {
       if (wcount > 0) wdensity = spin_model.lattice.num_bonds()/ (wlength / wcount);
@@ -119,12 +121,16 @@ void exe_worm(SPINMODEL spin_model, options opt){
             << ene.mean()/ave_sign.mean() / spin_model.lattice.num_sites() << " +- " 
             << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) / spin_model.lattice.num_sites()
             << std::endl
+            << "average sign           = "
+            << ave_sign.mean() << " +- " << ave_sign.error() << std::endl
             << "Uniform Magnetization  = "
             << umag.mean()/ave_sign.mean() << " +- " 
             << std::sqrt(std::pow(umag.error()/ave_sign.mean(), 2) + std::pow(umag.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2))
             << std::endl
-            << "average sign           = "
-            << ave_sign.mean() << " +- " << ave_sign.error() << std::endl;
+            << "Uniform Magnetization^2   = "
+            << umag2.mean()/ave_sign.mean() << " +- "
+            << std::sqrt(std::pow(umag2.error()/ave_sign.mean(), 2) + std::pow(umag2.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2))
+            << std::endl;
 }
 
 
