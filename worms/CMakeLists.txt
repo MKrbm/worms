@@ -9,7 +9,6 @@ project(worm_lib
 # list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 add_library(worm STATIC
-    ./src/worm.cpp 
     ./src/model.cpp
     ./src/BC.cpp
     ./src/state.cpp
