@@ -25,45 +25,21 @@
 
 #endif
 
-int main(int argc, char* argv[])
-{
 
 
-  options opt(argc, argv, 16, 1, 1.0, "heisernberg");
-  if (!opt.valid) std::exit(-1);
-  double beta = 1 / opt.T;
-  int L = opt.L;
-  int dim = opt.dim;
-  double J = 1;
-  double h = opt.H;
-  std::string model_name = opt.MN;
-
+template <typename SPINMODEL>
+void exe_worm(SPINMODEL spin_model, options opt){
 
   std::cout << "MC step : " << opt.sweeps << "\n" 
-            << "thermal size : " << opt.therm << std::endl;
+          << "thermal size : " << opt.therm << std::endl;
 
   BC::observable ene; // signed energy i.e. $\sum_i E_i S_i / N_MC$
   BC::observable umag; // uniform magnetization 
   BC::observable ave_sign; // average sign 
+  double beta = 1 / opt.T;
 
-  // std::cout << "size of int : " << sizeof(int8_t) << endl;
 
-
-  // std::mt19937 rand_src(12345);
-  // spin_model.lattice.print(std::cout);
-  // if (model_name == "heisernberg"){
-  // }else if (model_name == "shastry"){
-  // }
-  //* choose model 
-  // model::heisenberg spin_model(L,h,dim);
-  double J1 = 1;
-  double J2 = 1;
-  model::Shastry model_(L, J1, J2);
-  model::base_spin_model<model_.Nop, model_.nls>* pspin_model = &model_;
-
-  auto spin_model = *pspin_model;
-
-  worm<model::base_spin_model<model_.Nop, model_.nls>> solver(beta, spin_model); //template needs for std=14
+  worm<SPINMODEL> solver(beta, spin_model); //template needs for std=14
   // std::vector<std::vector<int>> states;
   spin_model.lattice.print(std::cout);
 
@@ -149,4 +125,41 @@ int main(int argc, char* argv[])
             << std::endl
             << "average sign           = "
             << ave_sign.mean() << " +- " << ave_sign.error() << std::endl;
+}
+
+
+
+int main(int argc, char* argv[])
+{
+
+
+  options opt(argc, argv, 16, 1, 1.0, "heisernberg");
+  if (!opt.valid) std::exit(-1);
+  int L = opt.L;
+  int dim = opt.dim;
+  double J = 1;
+  double h = opt.H;
+  std::string model_name = opt.MN;
+
+
+
+
+
+  if (model_name == "heisernberg"){
+    model::heisenberg spin_model(L,h,dim);
+    exe_worm(spin_model, opt);
+  }else if (model_name == "shastry"){
+    double J1 = 1;
+    double J2 = 1;
+    model::Shastry spin_model(L, J1, J2);
+    exe_worm(spin_model, opt);
+  }else if (model_name == "shastry_v2"){
+    double J1 = 1;
+    double J2 = 1;
+    model::Shastry_2 spin_model(L, J1, J2);
+    exe_worm(spin_model, opt);
+  }else{
+    std::cout << model_name << " is not avilable yet" << std::endl;
+  }
+
 }
