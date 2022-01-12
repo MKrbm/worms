@@ -314,7 +314,7 @@ class worm{
 
     // ASSERT(site == dot.site(), "site is not consistent");
     if (dot.at_origin()){ //n* if dot is state.
-      state[dot.label()] ^= 1; 
+      state[dot.label()] ^= fl; 
       wlength +=1;
       return;
     }
@@ -361,6 +361,7 @@ class worm{
       size_t dir = (size_t)2 * r;//n initial direction is 1.
       size_t ini_dir = dir;
       size_t fl = 1; //* for spin half model, fl is fixed to 1, which means 1 -> 0, 0 -> 1 at update step;
+      
       wcount += 1;
       wlength += (dir == 0) ? tau : -tau;
       do{

@@ -1,4 +1,5 @@
 #include "../include/Shastry.hpp"
+#include "../include/load_npy.hpp"
 
 model::Shastry::Shastry(int Lx, int Ly, double J1, double J2, double h)
 :Lx(Lx), Ly(Ly), J1(J1), J2(J2),
@@ -94,38 +95,42 @@ h(h), base_spin_model(return_lattice(Lx, Ly))
 
 
 
-  //* set bond operators. there are two types of such ops, depending on the coupling constant J1, J2.
-  int l = 2; //n*leg size (2 means operator is bond operator)
-  loperators[0] = local_operator(l); 
-  leg_size[0] = l;
-  //* bond b is assigined to i = bond_type(b) th local operator.
-
   std::vector<double> off_sets(1,0);
-
-  //* setting for type 1 bond operator.
-  //* local unitary transformation is applied beforehand so that off-diagonal terms have non-negative value.
-  //* we ignore h for now.
-  // auto* loperator = &loperators[0];
-  loperators[0].ham[0][0] = -1/4.0;
-  loperators[0].ham[1][1] = 1/4.0;
-  loperators[0].ham[2][2] = 1/4.0;
-  loperators[0].ham[3][3] = -1/4.0;
-  loperators[0].ham[1][2] = 1/2.0;
-  loperators[0].ham[2][1] = 1/2.0;
-  for (auto& row:loperators[0].ham)
-    for (auto& ele:row) ele *= J1;
-  off_sets[0] = 1/4.0;
-
+  
+  int local = 0;
+  for (auto path : {"../python/array/H.npy", "../python/array/H2.npy"}) {
+    auto pair = load_npy(path);
+    auto shape = pair.first;
+    auto data = pair.second;
+    int l = 2;
+    loperators[local] = local_operator(l, 2); 
+    leg_size[local] = l;
+    std::cout << "hamiltonian is read from " << path << std::endl;
+    for (int i=0; i<shape[0]; i++){
+      for (int j=0; j<shape[1]; j++)
+      {
+        auto x = data[i * shape[1] + j];
+        if (std::abs(x) > 1E-4) {
+          loperators[local].ham[j][i] = x;
+          printf("[%2d, %2d] : %3.1f\n", j, i, x);
+          }
+      }
+    }
+    std::cout << "\n\n" << std::endl;
+    local ++;
+  }
 
   
-  initial_setting(off_sets);
-  printf("local hamiltonian (type 1) / energy shift = %lf\n\n", shifts[0]);
-  for (int row=0; row<loperators[0].size; row++)
-  {
-    for(int column=0; column<loperators[0].size; column++) 
-      printf("%.2f   ", loperators[0].ham[row][column]);
-    printf("\n");
-  }
-  printf("\n\n");
+  initial_setting(off_sets);  
 
+  // for (int i=0; i<Nop; i++){
+  //   printf("local hamiltonian (type %d) / energy shift = %lf\n\n", i, shifts[i]);
+  //   for (int row=0; row<loperators[i].size; row++)
+  //   {
+  //     for(int column=0; column<loperators[i].size; column++) 
+  //       printf("%.2f   ", loperators[i].ham[row][column]);
+  //     printf("\n");
+  //   }
+  //   printf("\n\n");
+  // }
 }
