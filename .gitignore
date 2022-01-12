@@ -13,6 +13,7 @@ build/
 build_/
 # lib/
 
+*.npy
 #hidden folder
 #Exclude all dlls
 .*
