@@ -6,6 +6,7 @@
 #include <worm.hpp>
 #include <heisenberg.hpp>
 #include <Shastry.hpp>
+#include <testmodel.hpp>
 #include <string>
 #include <chrono>
 #include <observable.hpp>
@@ -58,11 +59,11 @@ void exe_worm(SPINMODEL spin_model, options opt){
   int n_kink=0;
   int cnt = 0;
   solver.init_states();
-  int spin = 1;
-  for (auto& s : solver.state){
-    s = spin;
-    spin^=1;
-  }
+  // int spin = 1;
+  // for (auto& s : solver.state){
+  //   s = spin;
+  //   spin^=1;
+  // }
   // worm statistics
   double wcount = 0;
   double wlength = 0;
@@ -163,6 +164,9 @@ int main(int argc, char* argv[])
     double J1 = 1;
     double J2 = 1;
     model::Shastry_2 spin_model(L, J1, J2);
+    exe_worm(spin_model, opt);
+  }else if (model_name == "test1"){
+    model::test spin_model(L);
     exe_worm(spin_model, opt);
   }else{
     std::cout << model_name << " is not avilable yet" << std::endl;

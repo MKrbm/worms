@@ -1,5 +1,6 @@
 #include <chrono>
-#include <Shastry.hpp>
+// #include <Shastry.hpp>
+#include <testmodel.hpp>
 // #include "npy.hpp"
 
 using namespace std::chrono;
@@ -18,8 +19,10 @@ using std::chrono::microseconds;
 int main(){
 
 
-  auto ss = model::Shastry_2(2, 2, 1, 0);
-  // ss.lattice.print(std::cout);
+  // auto ss = model::Shastry_2(2, 2, 1, 0);
+  auto test = model::test(3);
+
+  test.lattice.print(std::cout);
 
   // std::cout << "bonds : \n" ;
   // size_t ind;

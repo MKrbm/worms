@@ -35,7 +35,7 @@ public:
   } 
 };
 
-  class Shastry_2 :public base_spin_model<2>{
+  class Shastry_2 :public base_spin_model<2, 2>{
 public:
     Shastry_2(int Lx, int Ly, double J1, double J2, double h); //(1) 
     Shastry_2(int L, double J1, double J2 = 1, double h = 0)
