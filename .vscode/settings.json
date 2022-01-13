@@ -5,7 +5,7 @@
   "python.pythonPath": "/home/keisuke/miniconda3/envs/research/bin/python3",
   "editor.tabSize": 2,
   "cmake.debugConfig": {
-    "args": [ "-L", "2", "-T", "5", "-H", "0", "-D", "1" ,"-m", "10000", "-n", "1000000", "-M", "shastry_v2"],
+    "args": [ "-L", "6", "-T", "1", "-H", "0", "-D", "1" ,"-m", "10000", "-n", "100000", "-M", "heisernberg"],
       "externalConsole": false,
       "console" : "integratedTerminal",
       // "miDebuggerArgs": "-q -ex quit; wait() { fg >/dev/null; }; /bin/gdb -q --interpreter=mi"
