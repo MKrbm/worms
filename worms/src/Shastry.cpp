@@ -1,4 +1,5 @@
 #include "../include/Shastry.hpp"
+#include "../include/testmodel.hpp"
 #include "../include/load_npy.hpp"
 
 model::Shastry::Shastry(int Lx, int Ly, double J1, double J2, double h)
@@ -95,7 +96,7 @@ h(h), base_spin_model(return_lattice(Lx, Ly))
 
 
 
-  std::vector<double> off_sets(1,0);
+  std::vector<double> off_sets(2,0);
   
   int local = 0;
   for (auto path : {"../python/array/H.npy", "../python/array/H2.npy"}) {
@@ -123,6 +124,10 @@ h(h), base_spin_model(return_lattice(Lx, Ly))
   
   initial_setting(off_sets);  
 
+  for (int i=0; i<shifts.size(); i++){
+    printf("shifts[%d] = %f", i, shifts[i]);
+  }
+
   // for (int i=0; i<Nop; i++){
   //   printf("local hamiltonian (type %d) / energy shift = %lf\n\n", i, shifts[i]);
   //   for (int row=0; row<loperators[i].size; row++)
@@ -134,3 +139,38 @@ h(h), base_spin_model(return_lattice(Lx, Ly))
   //   printf("\n\n");
   // }
 }
+
+
+model::test::test(int L)
+  :base_spin_model(lattice::graph::simple(1, L))
+  {
+    int local = 0;
+    for (auto path : {"../python/array/test_model.npy"}) {
+      auto pair = load_npy(path);
+      auto shape = pair.first;
+      auto data = pair.second;
+      int l = 2; //* leg size
+      loperators[local] = local_operator(l, base_spin_model::nls); 
+      leg_size[local] = l;
+      std::cout << "hamiltonian is read from " << path << std::endl;
+      for (int i=0; i<shape[0]; i++){
+        for (int j=0; j<shape[1]; j++)
+        {
+          auto x = data[i * shape[1] + j];
+          if (std::abs(x) > 1E-4) {
+            loperators[local].ham[j][i] = x;
+            printf("[%2d, %2d] : %3.2f\n", j, i, x);
+            }
+        }
+      }
+      std::cout << "\n\n" << std::endl;
+      local ++;
+    }
+    std::vector<double> off_sets(1,0);
+
+    initial_setting(off_sets);  
+
+    for (int i=0; i<shifts.size(); i++){
+      printf("shifts[%d] = %f", i, shifts[i]);
+    }
+  }
