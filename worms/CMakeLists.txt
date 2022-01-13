@@ -14,6 +14,8 @@ add_library(worm STATIC
     ./src/state.cpp
     ./src/heisenberg.cpp
     ./src/Shastry.cpp
+    # ./src/testmodel.cpp
+
     )
 
 add_subdirectory(./lib/uftree) #call /uftree/CMakeLists.txst
