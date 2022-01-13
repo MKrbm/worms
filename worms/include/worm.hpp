@@ -289,6 +289,7 @@ class worm{
     // if (dot.at_worm()){ //n* if dot is at worm
     //   std::get<1>(worms_list[dot.label()]) = spin; // see the definition of WORM
     // }
+    size_t sps_prime = sps-1; // = 1 for spin half model
 
     if (dot.at_operator()){
       size_t dir_in = !dir; //n* direction the worm comes in from the view of operator.
@@ -299,9 +300,9 @@ class worm{
       // opstate.flip_state(cindex);
       opstate.update_state(cindex, fl);
       size_t num = opstate.state();
-      int tmp = loperators[opstate.op_type()].markov[num](cindex*(sps-1) + fl-1, rand_src);
-      int nindex = tmp/(sps-1);
-      fl = tmp % (sps-1) + 1;
+      int tmp = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + fl-1, rand_src);
+      int nindex = tmp/sps_prime;
+      fl = tmp % sps_prime + 1;
       // opstate.flip_state(nindex);
       opstate.update_state(nindex, fl);
 
