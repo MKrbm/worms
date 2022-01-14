@@ -166,11 +166,11 @@ model::test::test(int L)
       std::cout << "\n\n" << std::endl;
       local ++;
     }
-    std::vector<double> off_sets(1,0);
+    std::vector<double> off_sets(1,0.0);
 
     initial_setting(off_sets);  
 
     for (int i=0; i<shifts.size(); i++){
-      printf("shifts[%d] = %f", i, shifts[i]);
+      printf("shifts[%d] = %f\n\n", i, shifts[i]);
     }
   }

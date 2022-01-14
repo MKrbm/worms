@@ -59,6 +59,9 @@ void exe_worm(SPINMODEL spin_model, options opt){
   int n_kink=0;
   int cnt = 0;
   solver.init_states();
+  solver.state[0] = 3;
+  solver.state[1] = 1;
+  solver.state[2] = 0;
   // int spin = 1;
   // for (auto& s : solver.state){
   //   s = spin;
@@ -116,9 +119,15 @@ void exe_worm(SPINMODEL spin_model, options opt){
 
   double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / (double)1E3;
   #endif
+
+  std::cout << "Total Energy         = "
+          << ene.mean()/ave_sign.mean()<< " +- " 
+          << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2))
+          << std::endl;
+
   std::cout << "Elapsed time         = " << elapsed << " sec\n"
             << "Speed                = " << (opt.therm+opt.sweeps) / elapsed << " MCS/sec\n";
-  std::cout << "Energy               = "
+  std::cout << "Energy per site      = "
             << ene.mean()/ave_sign.mean() / spin_model.lattice.num_sites() << " +- " 
             << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) / spin_model.lattice.num_sites()
             << std::endl
