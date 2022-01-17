@@ -60,9 +60,9 @@ void exe_worm(SPINMODEL spin_model, options opt){
   int n_kink=0;
   int cnt = 0;
   solver.init_states();
-  solver.state[0] = 3;
-  solver.state[1] = 1;
-  solver.state[2] = 0;
+  // solver.state[0] = 3;
+  // solver.state[1] = 1;
+  // solver.state[2] = 0;
   // int spin = 1;
   // for (auto& s : solver.state){
   //   s = spin;

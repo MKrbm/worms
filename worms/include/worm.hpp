@@ -34,7 +34,7 @@
 #include "state.hpp"
 #include "model.hpp"
 #include "BC.hpp"
-#define SEED 2022
+#define SEED 2021
 /* inherit UnionFindTree and add find_and_flip function*/
 
 // template <typename MODEL>
@@ -89,7 +89,6 @@ class worm{
   engine_type rand_src = engine_type(static_cast <unsigned> (time(0)));
   #else
   engine_type rand_src = engine_type(SEED);
-  engine_type test_src = engine_type(SEED);
   #endif
 
 
@@ -201,7 +200,7 @@ class worm{
 
           r = uniform(rand_src);
           if (r < accept[u]){
-            append_ops(ops_main, spacetime_dots, &bond, (u<<bond.size() * nls) | u, lop_label, tau);
+            append_ops(ops_main, spacetime_dots, &bond, (u<<bond.size()) | u, lop_label, tau);
           }
         }
         tau += expdist(rand_src);
@@ -215,13 +214,6 @@ class worm{
         ++opi;
       }
     } //end of while loop
-
-    #ifndef NDEBUG
-    std::cout << "bond \n\n" ;
-    for (typename OPS::iterator opi = ops_main.begin(); opi != ops_main.end();++opi){
-      printf("[%lu, %lu]\n", opi->bond(0), opi->bond(1));
-    }
-    #endif 
   }
 
   // //*append to ops
@@ -309,18 +301,6 @@ class worm{
       opstate.update_state(cindex, fl);
       size_t num = opstate.state();
       int tmp = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + fl-1, rand_src);
-
-      #ifndef NDEBUG
-      int niter = 10;
-      std::cout << "\n\n" << std::endl;
-      for (int i=0; i<niter; i++){
-        int tmp_ = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + fl-1, test_src);
-        int nindex_ = tmp_/sps_prime;
-        int fl_ = tmp_ % sps_prime + 1;
-        printf("test tmp : %d, state : %d\n", tmp_, num ^ (fl_ << (nls*nindex_)));
-        
-      }
-      #endif 
       int nindex = tmp/sps_prime;
       fl = tmp % sps_prime + 1;
       // opstate.flip_state(nindex);
@@ -348,8 +328,7 @@ class worm{
       double r = uniform(rand_src);
       size_t dir = (size_t)2 * r;//n initial direction is 1.
       size_t ini_dir = dir;
-      size_t fl = 1;
-      if (nls != 1) fl = static_cast<size_t>((sps-1)*uniform(rand_src)) + 1;
+      size_t fl = 1; //* for spin half model, fl is fixed to 1, which means 1 -> 0, 0 -> 1 at update step;
       size_t ini_fl = fl;
 
       wcount += 1;
