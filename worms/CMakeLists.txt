@@ -14,6 +14,7 @@ add_library(worm STATIC
     ./src/state.cpp
     ./src/heisenberg.cpp
     ./src/Shastry.cpp
+    ./src/operator.cpp
     # ./src/testmodel.cpp
 
     )
