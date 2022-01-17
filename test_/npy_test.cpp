@@ -16,7 +16,7 @@ int main() {
   auto shape = pair.first;
   auto data = pair.second;
 
-  printf("shape : [%d, %d]  \n", shape[0], shape[1]);
+  printf("shape : [%lu, %lu]  \n", shape[0], shape[1]);
 
   printf("data : \n");
 

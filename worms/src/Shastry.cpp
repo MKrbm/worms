@@ -82,7 +82,7 @@ model::Shastry_2::Shastry_2(int Lx, int Ly, double J1, double J2, double h)
 :Lx(Lx), Ly(Ly), J1(J1), J2(J2),
 h(h), base_spin_model(return_lattice(Lx, Ly))
 {
-  std::cout << "model output" << std::endl;
+  std::cout << "\n\nmodel output" << std::endl;
   std::cout << "[Lx, Ly] : [" << Lx << ", "<< Ly << "]" << std::endl;
   std::cout << "[J1, J2] : [" << J1 << 
        ", " << J2 << "]" << std::endl;
@@ -125,7 +125,7 @@ h(h), base_spin_model(return_lattice(Lx, Ly))
   initial_setting(off_sets);  
 
   for (int i=0; i<shifts.size(); i++){
-    printf("shifts[%d] = %f", i, shifts[i]);
+    printf("shifts[%d] = %f\n", i, shifts[i]);
   }
 
 }
