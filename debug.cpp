@@ -7,6 +7,7 @@
 #include <heisenberg.hpp>
 #include <Shastry.hpp>
 #include <testmodel.hpp>
+#include <operator.hpp>
 #include <string>
 #include <chrono>
 #include <observable.hpp>
