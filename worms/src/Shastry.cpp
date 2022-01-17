@@ -128,16 +128,6 @@ h(h), base_spin_model(return_lattice(Lx, Ly))
     printf("shifts[%d] = %f", i, shifts[i]);
   }
 
-  // for (int i=0; i<Nop; i++){
-  //   printf("local hamiltonian (type %d) / energy shift = %lf\n\n", i, shifts[i]);
-  //   for (int row=0; row<loperators[i].size; row++)
-  //   {
-  //     for(int column=0; column<loperators[i].size; column++) 
-  //       printf("%.2f   ", loperators[i].ham[row][column]);
-  //     printf("\n");
-  //   }
-  //   printf("\n\n");
-  // }
 }
 
 
