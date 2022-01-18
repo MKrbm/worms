@@ -25,6 +25,8 @@ int main(int argc, char* argv[])
   int dim = opt.dim;
   double J = 1;
   double h = opt.H;
+  double J1 = opt.J1;
+  double J2 = opt.J2;
   std::string model_name = opt.MN;
 
 
@@ -35,13 +37,9 @@ int main(int argc, char* argv[])
     model::heisenberg spin_model(L,h,dim);
     exe_worm(spin_model, opt);
   }else if (model_name == "shastry"){
-    double J1 = 1;
-    double J2 = 1;
     model::Shastry spin_model(L, J1, J2);
     exe_worm(spin_model, opt);
   }else if (model_name == "shastry_v2"){
-    double J1 = 1;
-    double J2 = 1;
     model::Shastry_2 spin_model(L, J1, J2);
     exe_worm(spin_model, opt);
   }else if (model_name == "test1"){

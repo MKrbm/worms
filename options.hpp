@@ -26,13 +26,15 @@ struct options {
   unsigned int dim;
   double T;
   double H;
+  double J1;
+  double J2;
   unsigned int sweeps;
   unsigned int therm;
   std::string MN;
   bool valid;
 
   options(unsigned int argc, char *argv[], unsigned int L_def, unsigned int dim_def, double T_def, std::string M_def) :
-    L(L_def), T(T_def), H(0), sweeps(1 << 16), therm(sweeps >> 3), valid(true),
+    L(L_def), T(T_def), H(0), sweeps(1 << 16), therm(sweeps >> 3), valid(true),J1(1), J2(1),
     dim(dim_def), MN(M_def)
     {
     for (unsigned int i = 1; i < argc; ++i) {
@@ -60,6 +62,18 @@ struct options {
         case 'M' :
           if (++i == argc) { usage(); return; }
           MN = argv[i]; break;
+        case 'J' :
+          switch (argv[i][2]){
+            case '1':
+              if (++i == argc) { usage(); return; }
+              J1 = std::atof(argv[i]); break;
+            case '2':
+              if (++i == argc) { usage(); return; }
+              J2 = std::atof(argv[i]); break;
+            default :
+              usage(); return;
+          }
+          break;
         case 'h' :
           usage(std::cout); return;
         default :

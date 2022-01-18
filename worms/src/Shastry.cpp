@@ -99,7 +99,11 @@ h(h), base_spin_model(return_lattice(Lx, Ly))
   std::vector<double> off_sets(2,0);
   
   int local = 0;
-  for (auto path : {"../python/array/H.npy", "../python/array/H2.npy"}) {
+  std::string os_path = "../python/array/SS_onsite.npy";
+  auto pair = load_npy(os_path);
+  auto shape_os = pair.first;
+  auto data_os = pair.second;
+  for (auto path : {"../python/array/SS_bond1.npy", "../python/array/SS_bond2.npy"}) {
     auto pair = load_npy(path);
     auto shape = pair.first;
     auto data = pair.second;
@@ -110,7 +114,7 @@ h(h), base_spin_model(return_lattice(Lx, Ly))
     for (int i=0; i<shape[0]; i++){
       for (int j=0; j<shape[1]; j++)
       {
-        auto x = data[i * shape[1] + j];
+        auto x = J1*data[i * shape[1] + j] + J2*data_os[i * shape[1] + j];
         if (std::abs(x) > 1E-4) {
           loperators[local].ham[j][i] = x;
           printf("[%2d, %2d] : %3.1f\n", j, i, x);
