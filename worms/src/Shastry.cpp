@@ -99,11 +99,14 @@ h(h), base_spin_model(return_lattice(Lx, Ly))
   std::vector<double> off_sets(2,0);
   
   int local = 0;
+  // std::string os_path = "../python/array/SS_ori_onsite.npy";
   std::string os_path = "../python/array/SS_onsite.npy";
   auto pair = load_npy(os_path);
   auto shape_os = pair.first;
   auto data_os = pair.second;
   for (auto path : {"../python/array/SS_bond1.npy", "../python/array/SS_bond2.npy"}) {
+  // for (auto path : {"../python/array/SS_ori_bond1.npy", "../python/array/SS_ori_bond2.npy"}) {
+
     auto pair = load_npy(path);
     auto shape = pair.first;
     auto data = pair.second;
