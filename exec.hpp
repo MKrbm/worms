@@ -28,8 +28,11 @@
 #endif
 
 template <typename SPINMODEL>
-std::vector<double> exe_worm(SPINMODEL spin_model, options opt){
+std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr){
 
+  std::cout << "test L : " << opt_ptr -> MN << std::endl;
+
+  auto opt = *opt_ptr;
   std::cout << "MC step : " << opt.sweeps << "\n" 
           << "thermal size : " << opt.therm << std::endl;
 

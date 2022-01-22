@@ -32,6 +32,6 @@ int main(int argc, char* argv[])
 
 
   model::heisenberg spin_model(L,h,dim);
-  exe_worm(spin_model, config);
+  exe_worm(spin_model, &config);
 
 }
