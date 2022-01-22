@@ -19,34 +19,24 @@ int main(int argc, char* argv[])
 {
 
 
-  options opt(argc, argv, 16, 1, 1.0, "heisernberg");
-  if (!opt.valid) std::exit(-1);
-  int L = opt.L;
-  int dim = opt.dim;
+  // options opt(argc, argv, 16, 1, 1.0, "heisernberg");
+  readConfig config("../config/shastry.txt", 2, 1, 1.0, "shastry_v2");
+
+  if (!config.valid) std::exit(-1);
+  int L = config.L;
+  int dim = config.dim;
   double J = 1;
-  double h = opt.H;
-  double J1 = opt.J1;
-  double J2 = opt.J2;
-  std::string model_name = opt.MN;
+  double h = config.H;
+  double J1 = config.J1;
+  double J2 = config.J2;
+  std::string model_name = config.MN;
 
 
-
-
-
-  if (model_name == "heisernberg"){
-    model::heisenberg spin_model(L,h,dim);
-    exe_worm(spin_model, opt);
-  }else if (model_name == "shastry"){
+  if (model_name != "shastry_v2"){
     model::Shastry spin_model(L, J1, J2);
-    exe_worm(spin_model, opt);
-  }else if (model_name == "shastry_v2"){
-    model::Shastry_2 spin_model(L, J1, J2);
-    exe_worm(spin_model, opt);
-  }else if (model_name == "test1"){
-    model::test spin_model(L);
-    exe_worm(spin_model, opt);
+    exe_worm(spin_model, config);
   }else{
-    std::cout << model_name << " is not avilable yet" << std::endl;
+    model::Shastry_2 spin_model(L, J1, J2);
+    exe_worm(spin_model, config);
   }
-
 }
