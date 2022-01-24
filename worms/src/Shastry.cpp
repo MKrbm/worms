@@ -120,7 +120,7 @@ h(h), base_spin_model(return_lattice(Lx, Ly))
         auto x = J1*data[i * shape[1] + j] + J2*data_os[i * shape[1] + j];
         if (std::abs(x) > 1E-4) {
           loperators[local].ham[j][i] = x;
-          printf("[%2d, %2d] : %3.1f\n", j, i, x);
+          printf("[%2d, %2d] : %3.3f\n", j, i, x);
           }
       }
     }
@@ -132,7 +132,7 @@ h(h), base_spin_model(return_lattice(Lx, Ly))
   initial_setting(off_sets);  
 
   for (int i=0; i<shifts.size(); i++){
-    printf("shifts[%d] = %f\n", i, shifts[i]);
+    printf("shifts[%d] = %3.3f\n", i, shifts[i]);
   }
 
 }

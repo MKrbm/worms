@@ -139,7 +139,7 @@ class worm{
 
   void init_states(){ //* initialized to all up
   for (auto& x : state){
-    x = 0;
+    x = 1;
     }
   }
 
