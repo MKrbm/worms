@@ -23,12 +23,14 @@ int main(int argc, char* argv[])
 
   if (argc > 2) {
     std::cout << "read from args " << std::endl;  
-    options opt(argc, argv, 16, 1, 1.0, "heisernberg");
-    opt_ptr = &opt;
+    options * opt;
+    opt = new options(argc, argv, 16, 1, 1.0, "heisernberg");
+    opt_ptr = opt;
   }else{
     std::cout << "read txt file " << std::endl;  
-    readConfig config("../config/shastry.txt", 2, 1, 1.0, "shastry_v2");
-    opt_ptr = &config;
+    readConfig* config;
+    config = new readConfig("../config/shastry.txt", 2, 1, 1.0, "shastry_v2");
+    opt_ptr = (options*)config;
   }
 
 
@@ -51,4 +53,6 @@ int main(int argc, char* argv[])
     model::Shastry_2 spin_model(L, J1, J2);
     exe_worm(spin_model, opt_ptr);
   }
+
+  delete opt_ptr;
 }
