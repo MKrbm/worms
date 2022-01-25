@@ -134,12 +134,37 @@ The reason why almost all configurations are dimer singlet for J1 < 0.475 can be
 ***The problem*** is how dimer order-parameter relates to average sign?
 
 
+### modified model to SS
+Add $H[0,1] = H[1,0] = 0.5$ and $H[0,4] = H[4,0] = 0.5$. Local hams are listed under `/data` folder
+Theoritically, average sign goes down from 1 as $T \rightarrow 0$ for small $J_1$ 
+
+<center> J1 = 1 T = [0.1, ..., 1] </center>
+
+![](img/avesign_modham_J1=1.png)
 
 
+<br>
+<br>
 
+<center> J1 = 0.4 T = [0.1, ..., 1] </center>
+
+![](img/avesign_modham_J1=0.4.png)
+
+
+<br>
+<br>
+
+<center> J1 = 0.1 T = [0.1, ..., 1] </center>
+
+![](img/avesign_modham_J1=0.1.png)
+
+
+#### more detail
 ## Calculate in larger system size.
 
+<center> J1 = 0.1 T = [0.001, ..., 1] </center>
 
+![](img/avesign_modham_dtl_J1=0.1.png)
 
 
 

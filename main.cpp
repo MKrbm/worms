@@ -31,22 +31,22 @@ int main(int argc, char* argv[])
 
 
 
+  std::cout << "main.cpp no longer available" << std::endl;
 
-
-  if (model_name == "heisernberg"){
-    model::heisenberg spin_model(L,h,dim);
-    exe_worm(spin_model, &opt);
-  }else if (model_name == "shastry"){
-    model::Shastry spin_model(L, J1, J2);
-    exe_worm(spin_model, &opt);
-  }else if (model_name == "shastry_v2"){
-    model::Shastry_2 spin_model(L, J1, J2);
-    exe_worm(spin_model, &opt);
-  }else if (model_name == "test1"){
-    model::test spin_model(L);
-    exe_worm(spin_model, &opt);
-  }else{
-    std::cout << model_name << " is not avilable yet" << std::endl;
-  }
+  // if (model_name == "heisernberg"){
+  //   model::heisenberg spin_model(L,h,dim);
+  //   exe_worm(spin_model, &opt);
+  // }else if (model_name == "shastry"){
+  //   model::Shastry spin_model(L, J1, J2);
+  //   exe_worm(spin_model, &opt);
+  // }else if (model_name == "shastry_v2"){
+  //   model::Shastry_2 spin_model(L, J1, J2);
+  //   exe_worm(spin_model, &opt);
+  // }else if (model_name == "test1"){
+  //   model::test spin_model(L);
+  //   exe_worm(spin_model, &opt);
+  // }else{
+  //   std::cout << model_name << " is not avilable yet" << std::endl;
+  // }
 
 }

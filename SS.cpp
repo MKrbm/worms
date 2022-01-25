@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
   if (argc > 2) {
     std::cout << "read from args " << std::endl;  
     options * opt;
-    opt = new options(argc, argv, 16, 1, 1.0, "heisernberg");
+    opt = new options(argc, argv, 16, 1, 1.0, "shastry");
     opt_ptr = opt;
   }else{
     std::cout << "read txt file " << std::endl;  
@@ -34,7 +34,6 @@ int main(int argc, char* argv[])
   }
 
 
-
   if (!opt_ptr->valid) std::exit(-1);
   int L = opt_ptr->L;
   int dim = opt_ptr->dim;
@@ -42,15 +41,30 @@ int main(int argc, char* argv[])
   double h = opt_ptr->H;
   double J1 = opt_ptr->J1;
   double J2 = opt_ptr->J2;
+  double sft = opt_ptr->shift;
+  auto path_list = opt_ptr->path_list;
   std::string model_name = opt_ptr->MN;
   std::cout << "model name is : " << model_name << std::endl;
+
+  if (path_list.size()<3) path_list = std::vector<std::string>({
+    "../python/array/SS_bond1.npy",
+    "../python/array/SS_bond2.npy",
+    "../python/array/SS_onsite.npy",
+  });
+
+  // auto pl = std::vector<std::string>({
+  //   "../python/array/SS_bond1.npy ",
+  //   "../python/array/SS_bond2.npy",
+  //   "../python/array/SS_onsite.npy",
+  // });
+  std::cout << "path : " << path_list[2] << std::endl;
 
 
   if (model_name != "shastry_v2"){
     model::Shastry spin_model(L, J1, J2);
     exe_worm(spin_model, opt_ptr);
   }else{
-    model::Shastry_2 spin_model(L, J1, J2);
+    model::Shastry_2 spin_model(path_list, L, J1, J2,h,sft);
     exe_worm(spin_model, opt_ptr);
   }
 
