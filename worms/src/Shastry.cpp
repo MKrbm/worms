@@ -78,7 +78,7 @@ h(h), base_spin_model(return_lattice(Lx, Ly))
 }
 
 
-model::Shastry_2::Shastry_2(int Lx, int Ly, double J1, double J2, double h)
+model::Shastry_2::Shastry_2(std::vector<std::string> path_list, int Lx, int Ly, double J1, double J2, double h, double shift)
 :Lx(Lx), Ly(Ly), J1(J1), J2(J2),
 h(h), base_spin_model(return_lattice(Lx, Ly))
 {
@@ -96,15 +96,16 @@ h(h), base_spin_model(return_lattice(Lx, Ly))
 
 
 
-  std::vector<double> off_sets(2,0);
+  std::vector<double> off_sets(2,shift);
   
   int local = 0;
   // std::string os_path = "../python/array/SS_ori_onsite.npy";
-  std::string os_path = "../python/array/SS_onsite.npy";
+  std::string os_path = path_list[2];
   auto pair = load_npy(os_path);
   auto shape_os = pair.first;
   auto data_os = pair.second;
-  for (auto path : {"../python/array/SS_bond1.npy", "../python/array/SS_bond2.npy"}) {
+  // for (auto path : {"../python/array/SS_bond_test1.npy", "../python/array/SS_bond_test2.npy"}) {
+  for (auto path : {path_list[0], path_list[1]}) {
   // for (auto path : {"../python/array/SS_ori_bond1.npy", "../python/array/SS_ori_bond2.npy"}) {
 
     auto pair = load_npy(path);

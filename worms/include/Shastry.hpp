@@ -37,9 +37,9 @@ public:
 
   class Shastry_2 :public base_spin_model<2, 2>{
 public:
-    Shastry_2(int Lx, int Ly, double J1, double J2, double h); //(1) 
-    Shastry_2(int L, double J1, double J2 = 1, double h = 0)
-    :Shastry_2(L, L, J1, J2, h){}
+    Shastry_2(std::vector<std::string> path_list, int Lx, int Ly, double J1, double J2, double h, double s); //(1) 
+    Shastry_2(std::vector<std::string> path_list, int L, double J1, double J2 = 1, double h = 0, double s = 0)
+    :Shastry_2(path_list, L, L, J1, J2, h, s){}
     int Lx, Ly;
     const double J1,J2,h;
     static lattice::graph return_lattice(int Lx, int Ly){
@@ -60,6 +60,5 @@ public:
       return lat;
     } 
   };
-
 }
 
