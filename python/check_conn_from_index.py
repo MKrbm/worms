@@ -21,8 +21,8 @@ J1 = 0.4
 J2 = 1
 
 
-h1 = np.load("array/SS_bond1.npy").round(4)
-h2 = np.load("array/SS_bond2.npy").round(4)
+h1 = np.load("array/SS_bond_test1.npy").round(4)
+h2 = np.load("array/SS_bond_test2.npy").round(4)
 ho = np.load("array/SS_onsite.npy").round(4)
 H = sparse.csr_matrix(J1*h1 + J2*ho) #this is the hamiltonian you wanna check the connectivity.
 shift = -min(np.diagonal(H.toarray()).min(), 0)
