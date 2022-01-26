@@ -34,7 +34,7 @@
 #include "state.hpp"
 #include "model.hpp"
 #include "BC.hpp"
-#define SEED 2021
+#define SEED 1643186889
 /* inherit UnionFindTree and add find_and_flip function*/
 
 // template <typename MODEL>
@@ -86,9 +86,12 @@ class worm{
   //declaration for random number generator
   // typedef model::local_operator::engine_type engine_type;
   typedef std::mt19937 engine_type;
+  #ifndef NDEBUG
   engine_type test_src = engine_type(SEED);
+  #endif
   #ifdef RANDOM_SEED
-  engine_type rand_src = engine_type(static_cast <unsigned> (time(0)));
+  unsigned rseed = static_cast <unsigned> (time(0));
+  engine_type rand_src = engine_type(SEED);
   #else
   engine_type rand_src = engine_type(SEED);
   #endif
@@ -119,7 +122,10 @@ class worm{
   loperators(model.loperators), leg_sizes(model.leg_size),
   lop(loperators[0]),markov(lop.markov)
   {
-    cout << "beta : " << beta << endl;
+    cout << "beta        : " << beta << endl;
+    #ifdef RANDOM_SEED
+    cout << "seed number : " << rseed << endl;
+    #endif
     double max_diagonal_weight = loperators[0].max_diagonal_weight_;
     for (auto const& lop : loperators){
       max_diagonal_weight = std::max(max_diagonal_weight, lop.max_diagonal_weight_);
@@ -308,6 +314,9 @@ class worm{
     if (dot.at_operator()){
       size_t dir_in = !dir; //n* direction the worm comes in from the view of operator.
       auto & opstate = ops_main[dot.label()];
+      if (dot.label() == 205) {
+        int gg = 0;
+      }
       wlength += (dir==0) ? -opstate.tau() : opstate.tau();
       size_t size = opstate.size();
       size_t cindex = dot.leg(dir_in, size);
@@ -317,8 +326,12 @@ class worm{
       int tmp = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + fl-1, rand_src);
 
       #ifndef NDEBUG
-      int niter = 10;
-      std::cout << "\n\n" << std::endl;
+      int niter = 0;
+      if (dot.label() == 205) {
+        niter = 10;
+        int gg = 0;
+      }
+      // std::cout << "\n\n" << std::endl;
       for (int i=0; i<niter; i++){
         int tmp_ = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + fl-1, test_src);
         int nindex_ = tmp_/sps_prime;
@@ -360,8 +373,19 @@ class worm{
       
       wcount += 1;
       wlength += (dir == 0) ? tau : -tau;
+      int cnt=0;
       do{
         check_operators_while_update(w_label, dir ? d_label : dot->prev(), ini_dir, ini_fl, fl);
+        if (cnt++ % 1000 == 0) {
+          for (auto x : state) {
+            std::cout << x << " ";
+          }
+          std::cout << std::endl;
+        }
+        if (d_label == 425){
+          std::cout << "d_label is yoyo" << std::endl;
+        }
+        std::cout << "dlabel : " << d_label << std::endl;
         d_label = dot->move_next(dir);
         worm_process_op(d_label, dir, site, wlength, fl);
         dot = &spacetime_dots[d_label];

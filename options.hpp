@@ -35,6 +35,7 @@ struct options {
   double shift=0;
   unsigned int sweeps;
   unsigned int therm;
+  double wdty = 0;
   std::string MN;
   std::vector<std::string> path_list;
   bool valid;
@@ -124,6 +125,11 @@ struct options {
       }
       if (str.find("-shift") != std::string::npos){
         if (++i<argc) shift = std::atof(argv[i].c_str());
+        else usage();
+        continue;
+      }
+      if (str.find("-wdty") != std::string::npos){
+        if (++i<argc) wdty = std::atof(argv[i].c_str());
         else usage();
         continue;
       }

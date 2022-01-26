@@ -64,6 +64,7 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr){
   double wcount = 0;
   double wlength = 0;
   double wdensity = spin_model.lattice.num_bonds();
+  double wdty = opt_ptr->wdty;
   for (int i=0; i < opt.therm + opt.sweeps; i++){
     // solver.diagonal_update(); 
     solver.diagonal_update(wdensity); //n* need to be comment out 
@@ -186,10 +187,13 @@ std::vector<double> exe_worm<model::Shastry_2>(model::Shastry_2 spin_model, opti
   double wcount = 0;
   double wlength = 0;
   double wdensity = spin_model.lattice.num_bonds();
+  double wdty = opt_ptr->wdty;
   for (int i=0; i < opt.therm + opt.sweeps; i++){
     // solver.diagonal_update(); 
     solver.diagonal_update(wdensity); //n* need to be comment out 
+    printf("%dth iteration\n", i);
     solver.worm_update(wcount, wlength);
+    // printf("complete worm update\n");
     if (cnt >= opt.therm){
       int sign = 1;
       double n_neg = 0;
@@ -216,6 +220,7 @@ std::vector<double> exe_worm<model::Shastry_2>(model::Shastry_2 spin_model, opti
     }
     if (i <= opt.therm / 2) {
       if (wcount > 0) wdensity = spin_model.lattice.num_bonds()/ (wlength / wcount);
+      if (wdty>0) wdensity = wdty;
       if (i % (opt.therm / 8 + 1) == 0) {
         wcount /= 2;
         wlength /= 2;

@@ -24,7 +24,7 @@ J2 = 1
 h1 = np.load("array/SS_bond_test1.npy").round(4)
 h2 = np.load("array/SS_bond_test2.npy").round(4)
 ho = np.load("array/SS_onsite.npy").round(4)
-H = sparse.csr_matrix(J1*h1 + J2*ho) #this is the hamiltonian you wanna check the connectivity.
+H = sparse.csr_matrix(J1*h2 + J2*ho) #this is the hamiltonian you wanna check the connectivity.
 shift = -min(np.diagonal(H.toarray()).min(), 0)
 
 
@@ -36,7 +36,7 @@ print("\n\n", "-"*20, "\n\n")
 
 
 indices = (np.array((H_tmp).nonzero()).T).tolist()
-index = [0, 0]
+index = [14,14]
 index_ori = index.copy()
 assert index in indices, "index is not listed in non-zero index for the hamiltonian"
 
