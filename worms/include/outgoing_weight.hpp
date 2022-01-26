@@ -21,15 +21,27 @@
 #include <algorithm>
 #include <vector>
 
-template <std::size_t nls = 1>
 class outgoing_weight {
-  static const std::size_t sps = (1<<nls); //onsite Hilbert space dimension.
 public:
+
   template<typename WEIGHT>
-  outgoing_weight(WEIGHT const& w, int L):L(L){ init_table(w); }
-  outgoing_weight(int L):L(L){}
+  outgoing_weight(WEIGHT const& w, int L, int nls)
+    :L(L), sps(1<<nls), nls(nls){ init_table(w); }
+  outgoing_weight(int L, int nls)
+    :L(L), sps(1<<nls), nls(nls){}
   template<typename WEIGHT>
-  void init_table(WEIGHT const& w) {
+
+  /*
+
+  g : leg index where worm goes out
+  l : l \in [1, .., 2**nls - 1] state of worm; local state change its state according to this. 
+
+  e.g. in case of nls = 1.
+  if l = 1 = [0,1] in bit representation and local state = 2 = [1,0]
+  state -> [1,0] ^ [0,1] = [1,1] = 3.
+
+  */
+  void init_table(WEIGHT const& w){
     weights_.clear();
     weights_.resize(w.size());
     for (int s = 0; s < w.size(); ++s) {
@@ -43,4 +55,6 @@ public:
 private:
   std::vector<std::vector<double> > weights_;
   int L;
+  std::size_t sps; //onsite Hilbert space dimension.
+  std::size_t nls;
 };

@@ -8,6 +8,7 @@ public:
   Shastry(int L, double J1, double J2 = 1, double h = 0)
   :Shastry(L, L, J1, J2, h){}
   int Lx, Ly;
+  int pom=0;
   const double J1,J2,h;
   static lattice::graph return_lattice(int Lx, int Ly){
     lattice::basis_t bs(2, 2); bs << 2, 0, 0, 2;
@@ -35,23 +36,24 @@ public:
   } 
 };
 
-  class Shastry_2 :public base_spin_model<1>{
+  class Shastry_2 :public base_spin_model<2, 2>{
 public:
-    Shastry_2(int Lx, int Ly, double J1, double J2, double h); //(1) 
-    Shastry_2(int L, double J1, double J2 = 1, double h = 0)
-    :Shastry_2(L, L, J1, J2, h){}
+    Shastry_2(std::vector<std::string> path_list, int Lx, int Ly, double J1, double J2, double h, double s, int pom); //(1) 
+    Shastry_2(std::vector<std::string> path_list, int L, double J1, double J2 = 1, double h = 0, double s = 0, int pom = 0)
+    :Shastry_2(path_list, L, L, J1, J2, h, s, pom){}
     int Lx, Ly;
+    int pom;
     const double J1,J2,h;
     static lattice::graph return_lattice(int Lx, int Ly){
       lattice::basis_t bs(2, 2); bs << 2, 0, 0, 2;
       lattice::basis basis(bs);
       lattice::unitcell unitcell(2);
       unitcell.add_site(lattice::coordinate(1/4.0, 1/4.0), 0);
-      unitcell.add_site(lattice::coordinate(3/4.0, 3/4.0), 0);
+      unitcell.add_site(lattice::coordinate(3/4.0, 3/4.0), 1);
       unitcell.add_bond(0, 1, lattice::offset(0, 0), 0);
-      unitcell.add_bond(0, 1, lattice::offset(-1, 0), 0);
-      unitcell.add_bond(0, 1, lattice::offset(0, -1), 0);
-      unitcell.add_bond(0, 1, lattice::offset(-1, -1), 0);
+      unitcell.add_bond(1, 0, lattice::offset(1, 0), 0);
+      unitcell.add_bond(1, 0, lattice::offset(0, -1), 1);
+      unitcell.add_bond(0, 1, lattice::offset(-1, -1), 1);
 
       lattice::span_t span(2, 2); span << Lx, 0, 0, Ly;
       std::vector<lattice::boundary_t> boundary(2, lattice::boundary_t::periodic);
@@ -60,6 +62,5 @@ public:
       return lat;
     } 
   };
-
 }
 

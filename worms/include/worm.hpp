@@ -49,6 +49,7 @@ using spin_state::Dotv2;
 
 // using MODEL = model::heisenberg1D;
 using STATE = model::STATE;
+using SPIN = model::SPIN;
 using BOND = model::BOND;
 using WORMS = spin_state::WORM_ARR;
 using DOTS = std::vector<Dotv2>;
@@ -57,6 +58,7 @@ using size_t = std::size_t;
 
 template <typename MODEL>
 class worm{
+  public:
   typedef typename MODEL::base_spin_model base_spin_model;
   static const size_t nls = base_spin_model::nls;
   static const size_t sps = 1<<nls;
@@ -67,7 +69,6 @@ class worm{
   typedef spin_state::state_func<nls> state_func;
 
 
-  public:
   MODEL model;
   double beta;
   int L;
@@ -85,6 +86,7 @@ class worm{
   //declaration for random number generator
   // typedef model::local_operator::engine_type engine_type;
   typedef std::mt19937 engine_type;
+  engine_type test_src = engine_type(SEED);
   #ifdef RANDOM_SEED
   engine_type rand_src = engine_type(static_cast <unsigned> (time(0)));
   #else
@@ -138,7 +140,12 @@ class worm{
 
   void init_states(){ //* initialized to all up
   for (auto& x : state){
-    x = 0;
+    #ifdef RANDOM_SEED
+    x = static_cast<SPIN>(sps * uniform(rand_src));
+    
+    #else
+    x = 1;
+    #endif
     }
   }
 
@@ -200,26 +207,7 @@ class worm{
 
           r = uniform(rand_src);
           if (r < accept[u]){
-            append_ops(ops_main, spacetime_dots, &bond, (u<<bond.size()) | u, lop_label, tau);
-
-            if (lop_label == 1) {
-              int  x = 1;
-            }
-            //*append ops
-            // size_t s = bond.size();
-            // ops_main.push_back(OP_type(&bond, (u<<s) | u, s, lop_label, tau));
-            // size_t n = ops_main.size();
-            // size_t label = spacetime_dots.size();
-            // size_t site;
-
-            // for (size_t i=0; i<s; i++){
-            //   site = bond[i];
-            //   spacetime_dots.push_back( Dotv2(spacetime_dots[site].prev(), site, n-1,i, site));
-            //   spacetime_dots[spacetime_dots[site].prev()].set_next(label);
-            //   spacetime_dots[site].set_prev(label);
-            //   label += 1;
-            // }
-            //* end
+            append_ops(ops_main, spacetime_dots, &bond, (u<<bond.size() * nls) | u, lop_label, tau);
           }
         }
         tau += expdist(rand_src);
@@ -228,25 +216,18 @@ class worm{
           // auto const& bond = *opi->bond_ptr();
           update_state(opi, cstate);
           append_ops(ops_main, spacetime_dots, opi->bond_ptr(), opi->state(), opi->op_type(),opi->tau());
-          //* append ops
-          // size_t size = opi->size();
-          // ops_main.push_back(OP_type(opi->bond_ptr(), opi->state(), size, opi->op_type(), opi->tau()));
-          // size_t n = ops_main.size();
-          // size_t label = spacetime_dots.size();
-          // size_t site;
-          // for (size_t i=0; i<size; i++){
-          //   site = opi->bond(i);
-          //   spacetime_dots.push_back( Dotv2(spacetime_dots[site].prev(), site, n-1,i, site));
-          //   spacetime_dots[spacetime_dots[site].prev()].set_next(label);
-          //   spacetime_dots[site].set_prev(label);
-          //   label += 1;
-          // }
-          //* end append
           printStateAtTime(cstate, tau);
         }
         ++opi;
       }
     } //end of while loop
+
+    #ifndef NDEBUG
+    std::cout << "bond \n\n" ;
+    for (typename OPS::iterator opi = ops_main.begin(); opi != ops_main.end();++opi){
+      printf("[%lu, %lu]\n", opi->bond(0), opi->bond(1));
+    }
+    #endif 
   }
 
   // //*append to ops
@@ -314,7 +295,7 @@ class worm{
 
     // ASSERT(site == dot.site(), "site is not consistent");
     if (dot.at_origin()){ //n* if dot is state.
-      state[dot.label()] ^= 1; 
+      state[dot.label()] ^= fl; 
       wlength +=1;
       return;
     }
@@ -322,6 +303,7 @@ class worm{
     // if (dot.at_worm()){ //n* if dot is at worm
     //   std::get<1>(worms_list[dot.label()]) = spin; // see the definition of WORM
     // }
+    size_t sps_prime = sps-1; // = 1 for spin half model
 
     if (dot.at_operator()){
       size_t dir_in = !dir; //n* direction the worm comes in from the view of operator.
@@ -332,9 +314,21 @@ class worm{
       // opstate.flip_state(cindex);
       opstate.update_state(cindex, fl);
       size_t num = opstate.state();
-      int tmp = loperators[opstate.op_type()].markov[num](cindex, rand_src);
-      int nindex = tmp/(sps-1);
-      fl = tmp % (sps-1) + 1;
+      int tmp = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + fl-1, rand_src);
+
+      #ifndef NDEBUG
+      int niter = 10;
+      std::cout << "\n\n" << std::endl;
+      for (int i=0; i<niter; i++){
+        int tmp_ = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + fl-1, test_src);
+        int nindex_ = tmp_/sps_prime;
+        int fl_ = tmp_ % sps_prime + 1;
+        printf("test tmp : %d, state : %d\n", tmp_, num ^ (fl_ << (nls*nindex_)));
+        
+      }
+      #endif 
+      int nindex = tmp/sps_prime;
+      fl = tmp % sps_prime + 1;
       // opstate.flip_state(nindex);
       opstate.update_state(nindex, fl);
 
@@ -360,15 +354,18 @@ class worm{
       double r = uniform(rand_src);
       size_t dir = (size_t)2 * r;//n initial direction is 1.
       size_t ini_dir = dir;
-      size_t fl = 1; //* for spin half model, fl is fixed to 1, which means 1 -> 0, 0 -> 1 at update step;
+      size_t fl = 1;
+      if (nls != 1) fl = static_cast<size_t>((sps-1)*uniform(rand_src)) + 1;
+      size_t ini_fl = fl;
+      
       wcount += 1;
       wlength += (dir == 0) ? tau : -tau;
       do{
-        check_operators_while_update(w_label, dir ? d_label : dot->prev(), ini_dir);
+        check_operators_while_update(w_label, dir ? d_label : dot->prev(), ini_dir, ini_fl, fl);
         d_label = dot->move_next(dir);
         worm_process_op(d_label, dir, site, wlength, fl);
         dot = &spacetime_dots[d_label];
-      }while(d_label != w_label); 
+      }while(d_label != w_label || ini_fl != fl); 
       wlength += (dir == 0) ? -tau : tau;
     }
   }
@@ -435,7 +432,7 @@ class worm{
     int index = 0;
     auto const& bond = *(opi->bond_ptr());
     for (auto x : bond){
-      state[x] = opi->get_spin(bond.size() + index);
+      state[x] = opi->get_local_state(bond.size() + index);
       index++;
     }
   }
@@ -448,7 +445,7 @@ class worm{
   p_label : label of dot before reaching at the current position of worm.
 
   */
-  void check_operators_while_update(int worm_label, int p_label, int ini_dir){
+  void check_operators_while_update(int worm_label, int p_label, int ini_dir, int ini_fl, int fl){
     
     #ifndef NDEBUG
     auto state_ = state;
@@ -469,11 +466,11 @@ class worm{
         // int dot_spin = std::get<1>(worms_list[dot.label()]);
         // int spin = (worm_label == label) ? (ini_dir^(dot_spin)) : (dot_spin);
         // ASSERT(state_[dot.site()] == spin, "spin is not consistent");
-        if (worm_label == label) state_[dot.site()] = 1^state_[dot.site()];
+        if (worm_label == label) state_[dot.site()] ^= ini_fl;
       }
 
       if (p_label == label){
-        state_[dot.site()] = 1^state_[dot.site()];
+        state_[dot.site()] ^= fl;
       }
 
       label++;
@@ -490,13 +487,13 @@ class worm{
   }
 
   static bool is_same_state(int n, STATE state){
-    int m = spin_state::state2num(state, state.size());
+    int m = state_func::state2num(state, state.size());
     return n==m;
   }
 
   static bool is_same_state( STATE state_, STATE state){
-    int m = spin_state::state2num(state, state.size());
-    int n= spin_state::state2num(state_, state.size());
+    int m = state_func::state2num(state, state.size());
+    int n= state_func::state2num(state_, state.size());
     return n==m;
   }
   static void printStateAtTime(const STATE& state, double time){

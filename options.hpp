@@ -20,65 +20,133 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
+#include <fstream>
+#include <streambuf>
+#include <sstream>
 
 struct options {
   unsigned int L;
   unsigned int dim;
   double T;
   double H;
+  double J1;
+  double J2;
+  double shift=0;
   unsigned int sweeps;
   unsigned int therm;
   std::string MN;
+  std::vector<std::string> path_list;
   bool valid;
+  unsigned int argc;
+  int pom = 0;
 
-  options(unsigned int argc, char *argv[], unsigned int L_def, unsigned int dim_def, double T_def, std::string M_def) :
-    L(L_def), T(T_def), H(0), sweeps(1 << 16), therm(sweeps >> 3), valid(true),
-    dim(dim_def), MN(M_def)
-    {
-    for (unsigned int i = 1; i < argc; ++i) {
-      switch (argv[i][0]) {
-      case '-' :
-        switch (argv[i][1]) {
-        case 'L' :
-          if (++i == argc) { usage(); return; }
-          L = std::atoi(argv[i]); break;
-        case 'D' :
-          if (++i == argc) { usage(); return; }
-          dim = std::atoi(argv[i]); break;
-        case 'T' :
-          if (++i == argc) { usage(); return; }
-          T = std::atof(argv[i]); break;
-        case 'H' :
-          if (++i == argc) { usage(); return; }
-          H = std::atof(argv[i]); break;
-        case 'm' :
-          if (++i == argc) { usage(); return; }
-          therm = std::atoi(argv[i]); break;
-        case 'n' :
-          if (++i == argc) { usage(); return; }
-          sweeps = std::atoi(argv[i]); break;
-        case 'M' :
-          if (++i == argc) { usage(); return; }
-          MN = argv[i]; break;
-        case 'h' :
-          usage(std::cout); return;
-        default :
-          usage(); return;
-        }
-        break;
-      default :
-        usage(); return;
+
+  static int my_strlen(char *input_string)
+  {
+      int i;
+      for(i=0; input_string[i] != '\0'; i++);
+      return i;
+  }
+
+
+  static std::vector<std::string> argv2vector(unsigned int argc, char *argv[]){
+    std::vector<std::string> vec;
+
+    for (int i=0; i<argc; i++){
+      vec.push_back(argv[i]);
+    }
+    return vec;
+  }
+
+  options(unsigned int argc, char *argv[], unsigned int L_def, unsigned int dim_def, double T_def, std::string M_def)
+  :options(argv2vector(argc, argv), L_def, dim_def, T_def, M_def){}
+
+  options(std::vector<std::string> argv, unsigned int L_def, unsigned int dim_def, double T_def, std::string M_def)
+  :L(L_def), T(T_def), H(0), sweeps(1 << 16), therm(sweeps >> 3), valid(true),J1(1), J2(1),
+  dim(dim_def), MN(M_def), argc(argv.size())
+  {
+    auto argc = argv.size();
+    for (int i=0; i<argc; ++i){
+      auto str = argv[i];
+      if (str.find("#") != std::string::npos){
+        continue;
+      }
+      if (str.find("-L") != std::string::npos){
+        if (++i<argc) L = std::atoi(argv[i].c_str());
+        else usage();
+        continue;
+      }
+      if (str.find("-D") != std::string::npos){
+        if (++i<argc) dim = std::atoi(argv[i].c_str());
+        else usage();
+        continue;
+      }
+      if (str.find("-T") != std::string::npos){
+        if (++i<argc) T = std::atof(argv[i].c_str());
+        else usage();
+        continue;
+      }
+      if (str.find("-H") != std::string::npos){
+        if (++i<argc) H = std::atof(argv[i].c_str());
+        else usage();
+        continue;
+      }
+      if (str.find("-J1") != std::string::npos){
+        if (++i<argc) J1 = std::atof(argv[i].c_str());
+        else usage();
+        continue;
+      }
+      if (str.find("-J2") != std::string::npos){
+        if (++i<argc) J2 = std::atof(argv[i].c_str());
+        else usage();
+        continue;
+      }
+      if (str.find("-m") != std::string::npos){
+        if (++i<argc) therm = std::atoi(argv[i].c_str());
+        else usage();
+        continue;
+      }
+      if (str.find("-n") != std::string::npos){
+        if (++i<argc) sweeps = std::atoi(argv[i].c_str());
+        else usage();
+        continue;
+      }
+      if (str.find("-M") != std::string::npos){
+        if (++i<argc) MN = argv[i];
+        else usage();
+        continue;
+      }
+      if (str.find("-PATH") != std::string::npos){
+        if (++i<argc) path_list.push_back(argv[i]); 
+        else usage();
+        continue;
+      }
+      if (str.find("-shift") != std::string::npos){
+        if (++i<argc) shift = std::atof(argv[i].c_str());
+        else usage();
+        continue;
+      }
+      if (str.find("-pom") != std::string::npos){
+        if (++i<argc) pom = std::atoi(argv[i].c_str());
+        else usage();
+        continue;
+      }
+      if (str.find("-h") != std::string::npos){
+        usage(std::cout);
+        continue;
       }
     }
-    if (T <= 0 || sweeps == 0) {
-      std::cerr << "invalid parameter\n"; usage(); return;
-    }
-    std::cout << "System Linear Size     = " << L << '\n'
-              << "Temperature            = " << T << '\n'
-              << "Magnetic Field         = " << H << '\n'
-              << "MCS for Thermalization = " << therm << '\n'
-              << "MCS for Measurement    = " << sweeps << '\n';
+  if (T <= 0 || sweeps == 0) {
+    std::cerr << "invalid parameter\n"; usage(); return;
   }
+  std::cout << "System Linear Size     = " << L << '\n'
+            << "Temperature            = " << T << '\n'
+            << "Magnetic Field         = " << H << '\n'
+            << "MCS for Thermalization = " << therm << '\n'
+            << "MCS for Measurement    = " << sweeps << '\n';
+}
+
 
   void usage(std::ostream& os = std::cerr) {
     os << "[command line options]\n"
@@ -90,4 +158,39 @@ struct options {
        << "  -h        this help\n";
     valid = false;
   }
+};
+
+
+
+struct readConfig : options{
+  public:
+  static std::vector<std::string> string2path(std::string path){
+    std::ifstream t(path);
+    std::string str_((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+    std::cout << str_ << std::endl;
+    std::vector<std::string> vec;
+     
+    std::stringstream check(str_);
+     
+    std::string intermediate;
+    vec.push_back(path.c_str());
+     
+    while(getline(check, intermediate, ' '))
+    {
+      std::stringstream ss(intermediate);
+      std::string tmp;
+      while(getline(ss, tmp, '\n')){
+        if (tmp != "")
+        {
+          vec.push_back(tmp.c_str());
+        }
+      }
+    }
+    return vec;
+  }
+  
+
+  readConfig(std::string path ,unsigned int L_def, unsigned int dim_def, double T_def, std::string M_def)
+  :options(string2path(path), L_def, dim_def, T_def, M_def)
+  {}
 };

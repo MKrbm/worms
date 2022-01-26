@@ -28,8 +28,11 @@ namespace spin_state{
 
   template<size_t nls> 
   struct state_func{
+  public:
+    size_t nls_ = nls;
     static const size_t sps = (1<<nls);
     static size_t state2num(STATE const& state, int L = -1){
+      // std::cout << "nls = " << nls << std::endl;
       size_t num = 0;
       if (L < 0) L = state.size();
       if (L == 0) return 0;
@@ -167,7 +170,6 @@ public:
 };
 
 /*
-
   the actual size of state (number of bits for expressing state ) is 2 * size
 */
 template <size_t nls_>
@@ -222,35 +224,32 @@ public:
   ====
   0  1.
   */
+
   void flip_state(size_t leg){ state_ ^= (1<<leg);} 
 
   /*
-
-  *change state at leg by fl.
-
   fl = [1, .., 2^nls - 1]
   local_state = [0,1,..,2^nls - 1]
   local state will update via ls = ls ^ fl;
-
   */
+
   void update_state(size_t leg, size_t fl=1){ state_ ^= (fl << (nls*leg)); }
-  SPIN get_spin(size_t leg) const {return (state_>>leg) & 1;}
+  // SPIN get_spin(size_t leg) const {return (state_>>leg) & 1;}
   SPIN get_local_state(size_t leg) const {return ((state_>>(nls*leg)) & (sps-1)); }
   bool is_off_diagonal() const{ return (state(0) != state(1)); }
   bool is_diagonal()const{ return !is_off_diagonal();}
   static Operatorv2 sentinel(double tau = 1){ return Operatorv2(0, 0, 0, tau);}
   void print(std::ostream& os) const {
-    for (size_t i=0; i<size_*2; i++) os << get_spin(i) << " ";
+    for (size_t i=0; i<size_*2; i++) os << get_local_state(i) << " ";
     os << tau_;
   }
   friend std::ostream& operator<<(std::ostream& os, Operatorv2 const& op) {
     op.print(os);
     return os;
   }
-
   STATE const get_state_vec(){
     STATE state_vec(size_*2);
-    for (int i=0; i<size_*2; i++) state_vec[i] = get_spin(i);
+    for (int i=0; i<size_*2; i++) state_vec[i] = get_local_state(i);
     return state_vec;
   }
 
