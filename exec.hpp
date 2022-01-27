@@ -191,7 +191,7 @@ std::vector<double> exe_worm<model::Shastry_2>(model::Shastry_2 spin_model, opti
   for (int i=0; i < opt.therm + opt.sweeps; i++){
     // solver.diagonal_update(); 
     solver.diagonal_update(wdensity); //n* need to be comment out 
-    printf("%dth iteration\n", i);
+    // printf("%dth iteration\n", i);
     solver.worm_update(wcount, wlength);
     // printf("complete worm update\n");
     if (cnt >= opt.therm){

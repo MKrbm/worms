@@ -91,7 +91,7 @@ class worm{
   #endif
   #ifdef RANDOM_SEED
   unsigned rseed = static_cast <unsigned> (time(0));
-  engine_type rand_src = engine_type(SEED);
+  engine_type rand_src = engine_type(rseed);
   #else
   engine_type rand_src = engine_type(SEED);
   #endif
@@ -314,9 +314,9 @@ class worm{
     if (dot.at_operator()){
       size_t dir_in = !dir; //n* direction the worm comes in from the view of operator.
       auto & opstate = ops_main[dot.label()];
-      if (dot.label() == 205) {
-        int gg = 0;
-      }
+      // if (dot.label() == 205) {
+      //   int gg = 0;
+      // }
       wlength += (dir==0) ? -opstate.tau() : opstate.tau();
       size_t size = opstate.size();
       size_t cindex = dot.leg(dir_in, size);
@@ -376,16 +376,17 @@ class worm{
       int cnt=0;
       do{
         check_operators_while_update(w_label, dir ? d_label : dot->prev(), ini_dir, ini_fl, fl);
-        if (cnt++ % 1000 == 0) {
-          for (auto x : state) {
-            std::cout << x << " ";
-          }
-          std::cout << std::endl;
-        }
-        if (d_label == 425){
-          std::cout << "d_label is yoyo" << std::endl;
-        }
-        std::cout << "dlabel : " << d_label << std::endl;
+
+        // if (cnt++ % 1000 == 0) {
+        //   for (auto x : state) {
+        //     std::cout << x << " ";
+        //   }
+        //   std::cout << std::endl;
+        // }
+        // if (d_label == 425){
+        //   std::cout << "d_label is yoyo" << std::endl;
+        // }
+        // std::cout << "dlabel : " << d_label << std::endl;
         d_label = dot->move_next(dir);
         worm_process_op(d_label, dir, site, wlength, fl);
         dot = &spacetime_dots[d_label];
