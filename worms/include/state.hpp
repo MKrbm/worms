@@ -14,7 +14,7 @@ namespace spin_state{
   class Dotv2;
   class OpStatev2;
   class Wormsv2;
-  template <size_t nls_=1>
+  template <size_t nls_=1, size_t max_L = 4>
   class Operatorv2;
   
   using SPIN = model::SPIN;
@@ -101,6 +101,14 @@ namespace spin_state{
   };
 
 
+  template <size_t max_L = 4>
+  std::array<size_t, max_L+1> pows_array(size_t sps = 2){
+    std::array<size_t, max_L+1> arr; size_t x = 1;
+    for (int i=0; i<max_L+1; i++){ 
+      arr[i]=x; x*=sps;
+    }
+    return arr;
+  }
 }
 
 
@@ -172,13 +180,14 @@ public:
 /*
   the actual size of state (number of bits for expressing state ) is 2 * size
 */
-template <size_t nls_>
+template <size_t nls_, size_t max_L>
 class spin_state::Operatorv2{
   const BOND* const bond_ptr_;
   // size_t s0_;
   // size_t s1_;
   static const size_t nls = nls_;
   static const size_t sps = (1<<nls);
+  static const std::array<size_t, max_L+1> pows;
   size_t size_;
   size_t op_type_;
   size_t state_;
@@ -208,8 +217,8 @@ public:
   size_t op_type()const {return op_type_;}
   size_t state()const {return state_;}
   size_t state(size_t dir)const { // dir = 0 lower part, dir = 1 upper pirt
-    if (dir==0) return state_ & ((1<<size_*nls)-1);
-    else if (dir == 1) return (state_ >> size_*nls) & ((1<<size_*nls)-1);
+    if (dir==0) return state_ % pows[size_];
+    else if (dir == 1) return state_ / pows[size_];
     return -1;
   }
   double tau()const {return tau_;}
@@ -225,17 +234,17 @@ public:
   0  1.
   */
 
-  void flip_state(size_t leg){ state_ ^= (1<<leg);} 
-
-  /*
-  fl = [1, .., 2^nls - 1]
-  local_state = [0,1,..,2^nls - 1]
-  local state will update via ls = ls ^ fl;
-  */
-
-  void update_state(size_t leg, size_t fl=1){ state_ ^= (fl << (nls*leg)); }
+  void update_state(size_t leg, size_t fl=1)
+    {
+    size_t t = pows[leg+1];
+    size_t a = pows[leg];
+    state_ = (state_/t)*t + (state_%t+fl*a) % t;
+    //  state_ ^= (fl << (nls*leg)); 
+    }
   // SPIN get_spin(size_t leg) const {return (state_>>leg) & 1;}
-  SPIN get_local_state(size_t leg) const {return ((state_>>(nls*leg)) & (sps-1)); }
+  SPIN get_local_state(size_t leg) const {
+    return (state_ % pows[leg]); 
+  }
   bool is_off_diagonal() const{ return (state(0) != state(1)); }
   bool is_diagonal()const{ return !is_off_diagonal();}
   static Operatorv2 sentinel(double tau = 1){ return Operatorv2(0, 0, 0, tau);}
@@ -272,3 +281,7 @@ public:
     return clabel + (nindex - cindex);
   }
 };
+
+
+template <size_t nls_, size_t max_L>
+const std::array<size_t, max_L+1> spin_state::Operatorv2<nls_, max_L>::pows = pows_array<max_L>(sps);

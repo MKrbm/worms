@@ -20,15 +20,19 @@
 
 #include <algorithm>
 #include <vector>
+// #include <state.hpp>
 
+template <size_t max_L = 4>
 class outgoing_weight {
 public:
 
   template<typename WEIGHT>
   outgoing_weight(WEIGHT const& w, int L, int nls)
-    :L(L), sps(1<<nls), nls(nls){ init_table(w); }
+    :L(L), sps(1<<nls), nls(nls),
+    pows(pows_array(sps)){ init_table(w); }
   outgoing_weight(int L, int nls)
-    :L(L), sps(1<<nls), nls(nls){}
+    :L(L), sps(1<<nls), nls(nls), 
+    pows(pows_array(sps)) {}
   template<typename WEIGHT>
 
   /*
@@ -46,9 +50,23 @@ public:
     weights_.resize(w.size());
     for (int s = 0; s < w.size(); ++s) {
       weights_[s].resize(2*L*(sps-1));
-      for (int g = 0; g < 2*L; ++g)
-        for (int l = 0; l < sps-1; l++) weights_[s][g*(sps-1) + l] = w[s ^ ((l+1)<<(nls*g))];
+      for (int g = 0; g < 2*L; ++g){
+        size_t t = pows[g+1];
+        size_t a = pows[g];
+        for (int l = 0; l < sps-1; l++) {
+          size_t tmp = (s/t)*t + (s%t+(l+1)*a) % t;
+          weights_[s][g*(sps-1) + l] = w[tmp];
+        }
+      }
     }
+  }
+
+  static std::array<size_t, max_L+1> pows_array(size_t sps = 2){
+    std::array<size_t, max_L+1> arr; size_t x = 1;
+    for (int i=0; i<max_L+1; i++) {
+      arr[i]=x; x*=sps;
+    };
+    return arr;
   }
   std::vector<double> const& operator[](int s) { return weights_[s]; }
   int size(){return weights_.size();}
@@ -57,4 +75,5 @@ private:
   int L;
   std::size_t sps; //onsite Hilbert space dimension.
   std::size_t nls;
+  std::array<size_t, max_L+1> pows;
 };

@@ -34,7 +34,7 @@
 #include "state.hpp"
 #include "model.hpp"
 #include "BC.hpp"
-#define SEED 1643186889
+#define SEED 20017
 /* inherit UnionFindTree and add find_and_flip function*/
 
 // template <typename MODEL>
@@ -301,7 +301,7 @@ class worm{
 
     // ASSERT(site == dot.site(), "site is not consistent");
     if (dot.at_origin()){ //n* if dot is state.
-      state[dot.label()] ^= fl; 
+      state[dot.label()] = (state[dot.label()] + fl) % sps; 
       wlength +=1;
       return;
     }
@@ -323,17 +323,17 @@ class worm{
       // opstate.flip_state(cindex);
       opstate.update_state(cindex, fl);
       size_t num = opstate.state();
-      int tmp = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + fl-1, rand_src);
+      int tmp = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + sps-fl-1, rand_src);
 
       #ifndef NDEBUG
       int niter = 0;
-      if (dot.label() == 205) {
-        niter = 10;
-        int gg = 0;
-      }
+      // if (dot.label() == 205) {
+      //   niter = 10;
+      //   int gg = 0;
+      // }
       // std::cout << "\n\n" << std::endl;
       for (int i=0; i<niter; i++){
-        int tmp_ = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + fl-1, test_src);
+        int tmp_ = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + sps-fl-1, test_src);
         int nindex_ = tmp_/sps_prime;
         int fl_ = tmp_ % sps_prime + 1;
         printf("test tmp : %d, state : %d\n", tmp_, num ^ (fl_ << (nls*nindex_)));
@@ -376,17 +376,6 @@ class worm{
       int cnt=0;
       do{
         check_operators_while_update(w_label, dir ? d_label : dot->prev(), ini_dir, ini_fl, fl);
-
-        // if (cnt++ % 1000 == 0) {
-        //   for (auto x : state) {
-        //     std::cout << x << " ";
-        //   }
-        //   std::cout << std::endl;
-        // }
-        // if (d_label == 425){
-        //   std::cout << "d_label is yoyo" << std::endl;
-        // }
-        // std::cout << "dlabel : " << d_label << std::endl;
         d_label = dot->move_next(dir);
         worm_process_op(d_label, dir, site, wlength, fl);
         dot = &spacetime_dots[d_label];
@@ -491,11 +480,12 @@ class worm{
         // int dot_spin = std::get<1>(worms_list[dot.label()]);
         // int spin = (worm_label == label) ? (ini_dir^(dot_spin)) : (dot_spin);
         // ASSERT(state_[dot.site()] == spin, "spin is not consistent");
-        if (worm_label == label) state_[dot.site()] ^= ini_fl;
+        std::cout << "sps : " << sps << std::endl;
+        if (worm_label == label) state_[dot.site()] = (state_[dot.site()] + ini_fl) % sps;
       }
 
       if (p_label == label){
-        state_[dot.site()] ^= fl;
+        state_[dot.site()] = (state_[dot.site()] + fl)%sps;
       }
 
       label++;
