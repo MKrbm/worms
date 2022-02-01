@@ -80,6 +80,7 @@ class worm{
   
   std::vector<size_t> pres = std::vector<size_t>(0);
   std::vector<size_t> psop = std::vector<size_t>(0);
+  // std::vector<size_t> st_cnt = std::vector<size_t>(0);
   double beta;
   size_t d_cnt=0;
   int L;
@@ -315,13 +316,13 @@ class worm{
     if (dot.at_operator()){
       size_t dir_in = !dir; //n* direction the worm comes in from the view of operator.
       auto & opstate = ops_main[dot.label()];
-      opstate.add_cnt();
-      if (opstate.cnt()==1){
+      if (opstate.cnt()==0){
         psop.push_back(dot.label());
         pres.push_back(opstate.state());
       }
+      opstate.add_cnt();
 
-      if (opstate.cnt() > 100){
+      if (opstate.cnt() > 10){
         return 1;
       }
       
@@ -382,11 +383,11 @@ class worm{
       size_t fl = 1;
       if (nls != 1) fl = static_cast<size_t>((sps-1)*uniform(rand_src)) + 1;
       size_t ini_fl = fl;
-      auto state_ = state;
-      
+      std::copy(state.begin(), state.end(), cstate.begin());
       pres.resize(0);
       psop.resize(0);
       int wl = wlength;
+      int br = 0;
       wcount += 1;
       wlength += (dir == 0) ? tau : -tau;
       do{
@@ -395,12 +396,16 @@ class worm{
           wlength = wl - ((dir == 0) ? -tau : tau);
           wcount--;
           reset_ops();
-          state = state_;
-          std::cout << "reset triggered" << std::endl;
+          std::copy(cstate.begin(), cstate.end(), state.begin());
+          // std::cout << "reset triggered" << std::endl;
+          br = 1;
           break;
         }
+        if(br==1){std::cout << "what!?" << std::endl;}
         dot = &spacetime_dots[d_label];
-      }while(d_label != w_label || ((ini_dir == dir ? -1 : 1)*ini_fl + fl)%sps !=0); 
+      }while((d_label != w_label || ((ini_dir == dir ? -1 : 1)*ini_fl + fl)%sps !=0)&&(br==0)); 
+      if(br==1){std::cout << "breakout from loop" << std::endl;}
+      
       wlength += (dir == 0) ? -tau : tau;
       check_operators_while_update(w_label, dir ? d_label : dot->prev(), ini_dir, ini_fl, fl, dir);
     }

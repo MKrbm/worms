@@ -1,5 +1,5 @@
 -L  2 
--T  1
+-T  0.01
 -H  0
 -D  2 
 -J1 1
@@ -7,7 +7,7 @@
 -m  10000 
 -n  100000
 -M  shastry_v2
--PATH1 ../python/array/SS_bond1.npy 
--PATH2 ../python/array/SS_bond2.npy
+-PATH1 ../python/array/SS_bond_test1.npy 
+-PATH2 ../python/array/SS_bond_test2.npy
 -PATH3 ../python/array/SS_onsite.npy
 -shift 0
