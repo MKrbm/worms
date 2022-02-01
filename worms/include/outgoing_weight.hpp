@@ -22,7 +22,6 @@
 #include <vector>
 // #include <state.hpp>
 
-template <size_t max_L = 4>
 class outgoing_weight {
 public:
 
@@ -61,9 +60,9 @@ public:
     }
   }
 
-  static std::array<size_t, max_L+1> pows_array(size_t sps = 2){
-    std::array<size_t, max_L+1> arr; size_t x = 1;
-    for (int i=0; i<max_L+1; i++) {
+  std::vector<size_t> pows_array(size_t sps = 2){
+    std::vector<size_t> arr(2*L+1); size_t x = 1;
+    for (int i=0; i<2*L+1; i++) {
       arr[i]=x; x*=sps;
     };
     return arr;
@@ -75,5 +74,5 @@ private:
   int L;
   std::size_t sps; //onsite Hilbert space dimension.
   std::size_t nls;
-  std::array<size_t, max_L+1> pows;
+  std::vector<size_t> pows;
 };

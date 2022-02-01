@@ -40,7 +40,7 @@
 
 namespace model {
 
-  template <int N_op, size_t nls = 1>
+  template <int N_op, size_t nls = 1, size_t max_L = 4>
   class base_spin_model;
   class local_operator;
   
@@ -94,7 +94,7 @@ public:
   // table for worm update
   typedef std::mt19937 engine_type;
   typedef bcl::markov<engine_type> markov_t;
-  outgoing_weight<> ogwt;
+  outgoing_weight ogwt;
   std::vector<markov_t> markov;
 
 
@@ -116,10 +116,11 @@ public:
 // map spin to binary number e.g. -1 \rightarrow 0, 1 \rightarrow 1
 * S is local freedomness. 
 */
-template <int N_op, size_t _nls>
+template <int N_op, size_t _nls, size_t _max_L>
 class model::base_spin_model{
 public:
   const int L;
+  static const size_t max_L = _max_L;
   const int Nb; // number of bonds.
   static const int Nop = N_op; //number of local operator (1 for heisenberg model)
   static const size_t nls = _nls;

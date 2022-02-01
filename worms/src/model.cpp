@@ -65,7 +65,7 @@ void model::local_operator::set_ham(double off_set){
 
   // set transition probability
   ogwt.init_table(ham_vector);
-  for (int c = 0; c < ogwt.size(); ++c) markov.push_back(markov_t(bcl::st2010(), ogwt[c]));
+  for (int c = 0; c < ogwt.size(); ++c) markov.push_back(markov_t(bcl::heatbath(), ogwt[c]));
 
   // auto rand_src = engine_type(2021);
   // auto xxx = markov[0](0, rand_src);

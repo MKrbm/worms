@@ -2,7 +2,7 @@
 #include "model.hpp"
 
 namespace model{
-  class Shastry :public base_spin_model<2>{
+  class Shastry :public base_spin_model<2,1,4>{
 public:
   Shastry(int Lx, int Ly, double J1, double J2, double h); //(1) 
   Shastry(int L, double J1, double J2 = 1, double h = 0)
@@ -36,7 +36,7 @@ public:
   } 
 };
 
-  class Shastry_2 :public base_spin_model<2, 2>{
+  class Shastry_2 :public base_spin_model<2, 2, 4>{
 public:
     Shastry_2(std::vector<std::string> path_list, int Lx, int Ly, double J1, double J2, double h, double s, int pom); //(1) 
     Shastry_2(std::vector<std::string> path_list, int L, double J1, double J2 = 1, double h = 0, double s = 0, int pom = 0)

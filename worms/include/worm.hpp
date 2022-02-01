@@ -60,8 +60,9 @@ class worm{
   public:
   typedef typename MODEL::base_spin_model base_spin_model;
   static const size_t nls = base_spin_model::nls;
+  static const size_t max_L = base_spin_model::max_L;
   static const size_t sps = 1<<nls;
-  typedef Operatorv2<nls> OP_type;
+  typedef Operatorv2<nls, max_L> OP_type;
   typedef std::vector<OP_type> OPS;
 
   // const spin_state::state_func func = {2};
