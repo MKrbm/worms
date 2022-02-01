@@ -5,7 +5,6 @@
 #pragma once
 #include <string.h>
 #include <iostream>
-#include <uftree.hpp>
 #include <vector>
 #include <random>
 #include <fstream>
@@ -34,7 +33,7 @@
 #include "state.hpp"
 #include "model.hpp"
 #include "BC.hpp"
-#define SEED 20017
+#define SEED 1643698133
 /* inherit UnionFindTree and add find_and_flip function*/
 
 // template <typename MODEL>
@@ -71,6 +70,7 @@ class worm{
 
   MODEL model;
   double beta;
+  size_t d_cnt=0;
   int L;
   OPS ops_main; //contains operators.
   OPS ops_sub; // for sub.
@@ -91,7 +91,7 @@ class worm{
   #endif
   #ifdef RANDOM_SEED
   unsigned rseed = static_cast <unsigned> (time(0));
-  engine_type rand_src = engine_type(rseed);
+  engine_type rand_src = engine_type(SEED);
   #else
   engine_type rand_src = engine_type(SEED);
   #endif
@@ -375,12 +375,12 @@ class worm{
       wlength += (dir == 0) ? tau : -tau;
       int cnt=0;
       do{
-        check_operators_while_update(w_label, dir ? d_label : dot->prev(), ini_dir, ini_fl, fl);
         d_label = dot->move_next(dir);
         worm_process_op(d_label, dir, site, wlength, fl);
         dot = &spacetime_dots[d_label];
-      }while(d_label != w_label || ini_fl != fl); 
+      }while(d_label != w_label || ((ini_dir == dir ? -1 : 1)*ini_fl + fl)%sps !=0); 
       wlength += (dir == 0) ? -tau : tau;
+      check_operators_while_update(w_label, dir ? d_label : dot->prev(), ini_dir, ini_fl, fl, dir);
     }
   }
 
@@ -459,12 +459,17 @@ class worm{
   p_label : label of dot before reaching at the current position of worm.
 
   */
-  void check_operators_while_update(int worm_label, int p_label, int ini_dir, int ini_fl, int fl){
+  void check_operators_while_update(int worm_label, int p_label, int ini_dir, int ini_fl, int fl, int dir){
     
     #ifndef NDEBUG
     auto state_ = state;
 
     int label = 0;
+    std::cout << "debug cnt = " << d_cnt << std::endl;
+    if (d_cnt == 9){
+      int eee;
+    }
+    d_cnt ++;
     for (const auto& dot:spacetime_dots){
 
 
@@ -476,17 +481,17 @@ class worm{
         int dot_spin = state[dot.label()];
         ASSERT(state_[dot.site()] == dot_spin, "spin is not consistent");
       }
-      else if (dot.at_worm()){
-        // int dot_spin = std::get<1>(worms_list[dot.label()]);
-        // int spin = (worm_label == label) ? (ini_dir^(dot_spin)) : (dot_spin);
-        // ASSERT(state_[dot.site()] == spin, "spin is not consistent");
-        std::cout << "sps : " << sps << std::endl;
-        if (worm_label == label) state_[dot.site()] = (state_[dot.site()] + ini_fl) % sps;
-      }
+      // else if (dot.at_worm()){
+      //   // int dot_spin = std::get<1>(worms_list[dot.label()]);
+      //   // int spin = (worm_label == label) ? (ini_dir^(dot_spin)) : (dot_spin);
+      //   // ASSERT(state_[dot.site()] == spin, "spin is not consistent");
+      //   // std::cout << "sps : " << sps << std::endl;
+      //   if (worm_label == label) state_[dot.site()] = (state_[dot.site()] + ini_fl*(ini_dir ? 1 : -1)) % sps;
+      // }
 
-      if (p_label == label){
-        state_[dot.site()] = (state_[dot.site()] + fl)%sps;
-      }
+      // if (p_label == label){
+      //   state_[dot.site()] = (state_[dot.site()] - fl * (dir ? 1 : -1))%sps;
+      // }
 
       label++;
     }

@@ -243,7 +243,8 @@ public:
     }
   // SPIN get_spin(size_t leg) const {return (state_>>leg) & 1;}
   SPIN get_local_state(size_t leg) const {
-    return (state_ % pows[leg]); 
+    // std::cout << "sps : " << sps << std::endl;
+    return (state_ / pows[leg]) % sps; 
   }
   bool is_off_diagonal() const{ return (state(0) != state(1)); }
   bool is_diagonal()const{ return !is_off_diagonal();}
@@ -258,7 +259,9 @@ public:
   }
   STATE const get_state_vec(){
     STATE state_vec(size_*2);
-    for (int i=0; i<size_*2; i++) state_vec[i] = get_local_state(i);
+    for (int i=0; i<size_*2; i++) {
+      state_vec[i] = get_local_state(i);
+    }
     return state_vec;
   }
 
