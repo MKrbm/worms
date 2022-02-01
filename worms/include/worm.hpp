@@ -66,7 +66,12 @@ class worm{
   typedef std::vector<OP_type> OPS;
   typedef spin_state::state_func<nls> state_func;
 
+
   MODEL model;
+  double beta;
+  size_t d_cnt=0;
+  size_t L;
+  
   OPS ops_main; //contains operators.
   OPS ops_sub; // for sub.
   STATE state;
@@ -76,12 +81,6 @@ class worm{
 
   std::vector< BOND > bonds;
   std::vector<size_t> bond_type;
-
-
-  double beta;
-  size_t d_cnt=0;
-  int L;
-
   //declaration for random number generator
   // typedef model::local_operator::engine_type engine_type;
   typedef std::mt19937 engine_type;
@@ -116,12 +115,12 @@ class worm{
   std::vector<markov_t> markov;
 
   worm(double beta, MODEL model_)
-  :model(model_), L(model.L), beta(beta), rho(-1),
-  // dist(0, model.Nb-1), worm_dist(0.0, beta),
-  bonds(model.bonds),bond_type(model.bond_type) ,state(L),cstate(L),
+  :model(model_), L(model_.L), beta(beta), rho(-1),
+  bonds(model_.bonds),bond_type(model_.bond_type) ,state(model_.L),cstate(model_.L),
   loperators(model.loperators), leg_sizes(model.leg_size),
   lop(loperators[0]),markov(lop.markov)
   {
+    cout << "L is        : " << L << endl;
     cout << "beta        : " << beta << endl;
     #ifdef RANDOM_SEED
     cout << "seed number : " << rseed << endl;

@@ -67,8 +67,8 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr){
   double wdty = opt_ptr->wdty;
   for (int i=0; i < opt.therm + opt.sweeps; i++){
     // solver.diagonal_update(); 
-    solver.worm_update(wcount, wlength);
     solver.diagonal_update(wdensity); //n* need to be comment out 
+    solver.worm_update(wcount, wlength);
     if (cnt >= opt.therm){
       int sign = 1;
       double mu = 0;
