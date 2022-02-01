@@ -20,13 +20,14 @@ add_library(worm STATIC
 
     )
 
-add_subdirectory(./lib/uftree) #call /uftree/CMakeLists.txst
-target_link_libraries(worm uftree) # link library
+add_subdirectory(./lib/bcl) #call /lib/bcl/CMakeLists.txst
+target_link_libraries(worm bcl) # link library
 
 
 
 # target_compile_features(worm PRIVATE cxx_std_14)
 target_include_directories(worm INTERFACE ./include)
+# target_include_directories(worm INTERFACE ./include)
 # target_compile_options(worm PRIVATE -O3 -Wall)
 
 set_target_properties(worm

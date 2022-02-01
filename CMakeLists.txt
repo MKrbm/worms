@@ -36,14 +36,14 @@ option(RANDOM_SEED "wether using random seed or not " ON)
 include_directories(${worms_SOURCE_DIR})
 
 #include libraries
-include(bcl)
+# include(bcl)
 include(eigen3)
 message(STATUS "after include: ${CMAKE_Fortran_COMPILER} is available")
 
 include(lattice)
 include(npy)
 
-FetchContent_MakeAvailable(bcl)
+# FetchContent_MakeAvailable(bcl)
 FetchContent_MakeAvailable(lattice)
 FetchContent_MakeAvailable(npy)
 include_directories(${FetchContent_includes})
