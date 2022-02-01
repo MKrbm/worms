@@ -110,6 +110,7 @@ class worm{
   double rho;
   model::local_operator lop;
   std::vector<std::vector<double>> accepts; //normalized diagonal elements;
+  int cnt=0;
 
   typedef bcl::markov<engine_type> markov_t;
   std::vector<markov_t> markov;
@@ -376,7 +377,10 @@ class worm{
         d_label = dot->move_next(dir);
         worm_process_op(d_label, dir, site, wlength, fl);
         dot = &spacetime_dots[d_label];
+
       }while(d_label != w_label || ((ini_dir == dir ? -1 : 1)*ini_fl + fl)%sps !=0); 
+      // std::cout << "cnt=" << cnt << std::endl;
+      cnt++;
       wlength += (dir == 0) ? -tau : tau;
       check_operators_while_update(w_label, dir ? d_label : dot->prev(), ini_dir, ini_fl, fl, dir);
     }
