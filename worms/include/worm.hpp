@@ -64,15 +64,9 @@ class worm{
   static const size_t sps = 1<<nls;
   typedef Operatorv2<nls, max_L> OP_type;
   typedef std::vector<OP_type> OPS;
-
-  // const spin_state::state_func func = {2};
   typedef spin_state::state_func<nls> state_func;
 
-
   MODEL model;
-  double beta;
-  size_t d_cnt=0;
-  int L;
   OPS ops_main; //contains operators.
   OPS ops_sub; // for sub.
   STATE state;
@@ -83,6 +77,12 @@ class worm{
   std::vector< BOND > bonds;
   std::vector<size_t> bond_type;
 
+  std::vector<size_t> psop;
+  std::vector<size_t> pres;
+
+  double beta;
+  size_t d_cnt=0;
+  int L;
 
   //declaration for random number generator
   // typedef model::local_operator::engine_type engine_type;
