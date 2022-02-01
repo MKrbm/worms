@@ -77,8 +77,6 @@ class worm{
   std::vector< BOND > bonds;
   std::vector<size_t> bond_type;
 
-  std::vector<size_t> psop;
-  std::vector<size_t> pres;
 
   double beta;
   size_t d_cnt=0;
@@ -374,7 +372,6 @@ class worm{
       
       wcount += 1;
       wlength += (dir == 0) ? tau : -tau;
-      int cnt=0;
       do{
         d_label = dot->move_next(dir);
         worm_process_op(d_label, dir, site, wlength, fl);
