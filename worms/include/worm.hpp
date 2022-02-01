@@ -12,6 +12,7 @@
 #include <strstream>
 #include <sstream>
 #include <algorithm>
+#include <utility>
 #include <bcl.hpp>
 
 #ifdef __APPLE__
@@ -76,10 +77,9 @@ class worm{
 
   std::vector< BOND > bonds;
   std::vector<size_t> bond_type;
-
-  std::vector<size_t> psop;
-  std::vector<size_t> pres;
-
+  
+  std::vector<size_t> pres = std::vector<size_t>(0);
+  std::vector<size_t> psop = std::vector<size_t>(0);
   double beta;
   size_t d_cnt=0;
   int L;
@@ -119,7 +119,7 @@ class worm{
   worm(double beta, MODEL model_)
   :model(model_), L(model.L), beta(beta), rho(-1),
   // dist(0, model.Nb-1), worm_dist(0.0, beta),
-  bonds(model.bonds),bond_type(model.bond_type) ,state(L),cstate(L),
+  bonds(model.bonds),bond_type(model.bond_type) ,state(model.L),cstate(model.L),
   loperators(model.loperators), leg_sizes(model.leg_size),
   lop(loperators[0]),markov(lop.markov)
   {
@@ -295,7 +295,7 @@ class worm{
   params(member variables)
   ------
   */
-  void worm_process_op(size_t& next_dot, size_t& dir, size_t& site, double& wlength, size_t& fl){
+  int worm_process_op(size_t& next_dot, size_t& dir, size_t& site, double& wlength, size_t& fl){
 
     size_t clabel = next_dot;
     auto& dot = spacetime_dots[clabel];
@@ -304,7 +304,7 @@ class worm{
     if (dot.at_origin()){ //n* if dot is state.
       state[dot.label()] = (state[dot.label()] + fl) % sps; 
       wlength +=1;
-      return;
+      return 0;
     }
 
     // if (dot.at_worm()){ //n* if dot is at worm
@@ -315,6 +315,16 @@ class worm{
     if (dot.at_operator()){
       size_t dir_in = !dir; //n* direction the worm comes in from the view of operator.
       auto & opstate = ops_main[dot.label()];
+      opstate.add_cnt();
+      if (opstate.cnt()==1){
+        psop.push_back(dot.label());
+        pres.push_back(opstate.state());
+      }
+
+      if (opstate.cnt() > 100){
+        return 1;
+      }
+      
       // if (dot.label() == 205) {
       //   int gg = 0;
       // }
@@ -351,8 +361,9 @@ class worm{
       wlength += (dir==0) ? opstate.tau() : -opstate.tau();
       site = opstate.bond(nindex%size);
       next_dot = opstate.next_dot(cindex, nindex, clabel);
-      return;
+      return 0;
     }
+    return 0;
   }
 
   /*
@@ -371,13 +382,23 @@ class worm{
       size_t fl = 1;
       if (nls != 1) fl = static_cast<size_t>((sps-1)*uniform(rand_src)) + 1;
       size_t ini_fl = fl;
+      auto state_ = state;
       
+      pres.resize(0);
+      psop.resize(0);
+      int wl = wlength;
       wcount += 1;
       wlength += (dir == 0) ? tau : -tau;
-      int cnt=0;
       do{
         d_label = dot->move_next(dir);
-        worm_process_op(d_label, dir, site, wlength, fl);
+        if (worm_process_op(d_label, dir, site, wlength, fl) == 1){
+          wlength = wl - ((dir == 0) ? -tau : tau);
+          wcount--;
+          reset_ops();
+          state = state_;
+          std::cout << "reset triggered" << std::endl;
+          break;
+        }
         dot = &spacetime_dots[d_label];
       }while(d_label != w_label || ((ini_dir == dir ? -1 : 1)*ini_fl + fl)%sps !=0); 
       wlength += (dir == 0) ? -tau : tau;
@@ -467,7 +488,7 @@ class worm{
 
     int label = 0;
     std::cout << "debug cnt = " << d_cnt << std::endl;
-    if (d_cnt == 9){
+    if (d_cnt == 8){
       int eee;
     }
     d_cnt ++;
@@ -500,6 +521,13 @@ class worm{
     // std::cout << "hihi" << std::endl;
     #endif 
     return;
+  }
+
+
+  void reset_ops(){
+    for (size_t i=0; i<psop.size(); i++){
+      ops_main[psop[i]].set_state(pres[i]);
+    }
   }
 
 
