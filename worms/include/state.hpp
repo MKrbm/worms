@@ -21,7 +21,8 @@ namespace spin_state{
   using size_t = std::size_t; 
   using STATE = model::STATE;
   using BOND = model::BOND;
-  using local_operator = model::local_operator;
+  template <class MC>
+  using local_operator = model::local_operator<MC>;
   using WORM = std::tuple<int, int, double>;
   using WORM_ARR = std::vector<WORM>; //  site, spin, dot_label, tau (dot label is needed for reverse lookup)
   using DOT_ARR = std::vector<std::tuple<int,int,int,int>>;   //prev, next, dot_type, index, (index refers to the legs of the dot with respect to the class of dots)

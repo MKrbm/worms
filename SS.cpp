@@ -61,10 +61,10 @@ int main(int argc, char* argv[])
 
 
   if (model_name != "shastry_v2"){
-    model::Shastry spin_model(L, J1, J2);
+    model::Shastry<bcl::st2010> spin_model(L, J1, J2);
     exe_worm(spin_model, opt_ptr);
   }else{
-    model::Shastry_2 spin_model(path_list, L, J1, J2,h,sft, opt_ptr->pom);
+    model::Shastry_2<bcl::st2010> spin_model(path_list, L, J1, J2,h,sft, opt_ptr->pom);
     exe_worm(spin_model, opt_ptr);
   }
 

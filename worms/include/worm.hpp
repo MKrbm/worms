@@ -33,7 +33,6 @@
 
 #include "state.hpp"
 #include "model.hpp"
-#include "BC.hpp"
 #define SEED 1643698133
 /* inherit UnionFindTree and add find_and_flip function*/
 
@@ -56,10 +55,10 @@ using DOTS = std::vector<Dotv2>;
 using size_t = std::size_t;
 
 
-template <typename MODEL>
+template <class MODEL>
 class worm{
   public:
-  typedef typename MODEL::base_spin_model base_spin_model;
+  typedef typename MODEL::MDT base_spin_model;
   static const size_t nls = base_spin_model::nls;
   static const size_t max_L = base_spin_model::max_L;
   static const size_t sps = 1<<nls;
@@ -68,6 +67,7 @@ class worm{
   typedef spin_state::state_func<nls> state_func;
 
   MODEL model;
+  typedef typename base_spin_model::MCT MCT;
   OPS ops_main; //contains operators.
   OPS ops_sub; // for sub.
   STATE state;
@@ -108,21 +108,18 @@ class worm{
   static const int N_op = MODEL::Nop;
   // static const int N_op = 1;
 
-  std::array<model::local_operator, N_op>& loperators; //holds multiple local operators
+  std::array<model::local_operator<MCT>, N_op>& loperators; //holds multiple local operators
   std::array<int, N_op>& leg_sizes; //leg size of local operators;
   double rho;
-  model::local_operator lop;
   std::vector<std::vector<double>> accepts; //normalized diagonal elements;
 
   typedef bcl::markov<engine_type> markov_t;
-  std::vector<markov_t> markov;
 
   worm(double beta, MODEL model_)
   :model(model_), L(model.L), beta(beta), rho(-1),
   // dist(0, model.Nb-1), worm_dist(0.0, beta),
   bonds(model.bonds),bond_type(model.bond_type) ,state(model.L),cstate(model.L),
-  loperators(model.loperators), leg_sizes(model.leg_size),
-  lop(loperators[0]),markov(lop.markov)
+  loperators(model.loperators), leg_sizes(model.leg_size)
   {
     cout << "beta        : " << beta << endl;
     #ifdef RANDOM_SEED
@@ -233,7 +230,7 @@ class worm{
     #ifndef NDEBUG
     std::cout << "bond \n\n" ;
     for (typename OPS::iterator opi = ops_main.begin(); opi != ops_main.end();++opi){
-      printf("[%lu, %lu]\n", opi->bond(0), opi->bond(1));
+      printf("[%d, %d]\n", opi->bond(0), opi->bond(1));
     }
     #endif 
   }
@@ -322,7 +319,7 @@ class worm{
       }
       opstate.add_cnt();
 
-      if (opstate.cnt() > 10){
+      if (opstate.cnt() > 1000){
         return 1;
       }
       

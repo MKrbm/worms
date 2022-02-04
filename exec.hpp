@@ -13,6 +13,12 @@
 #include <observable.hpp>
 #include <lattice/graph.hpp>
 #include <lattice/coloring.hpp>
+#include <bcl.hpp>
+#include <type_traits>
+#include <string>
+
+
+
 
 // #define DEBUG 1
 #define MESTIME 1
@@ -26,6 +32,13 @@
   using std::chrono::microseconds;
 
 #endif
+
+template <class, template <class> class>
+struct is_instance : public std::false_type {};
+
+template <class T, template <class> class U>
+struct is_instance<U<T>, U> : public std::true_type {};
+
 
 template <typename SPINMODEL>
 std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr){
@@ -67,8 +80,8 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr){
   double wdty = opt_ptr->wdty;
   for (int i=0; i < opt.therm + opt.sweeps; i++){
     // solver.diagonal_update(); 
-    solver.worm_update(wcount, wlength);
     solver.diagonal_update(wdensity); //n* need to be comment out 
+    solver.worm_update(wcount, wlength);
     if (cnt >= opt.therm){
       int sign = 1;
       double mu = 0;
@@ -148,10 +161,10 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr){
 }
 
 
-template<>
-std::vector<double> exe_worm<model::Shastry_2>(model::Shastry_2 spin_model, options* opt_ptr){
+template <typename SPINMODEL>
+std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
+  typename std::enable_if<is_instance<SPINMODEL,model::Shastry_2>::value>::type){
 
-  typedef model::Shastry_2 SPINMODEL;
   auto opt = *opt_ptr;
   std::cout << "MC step : " << opt.sweeps << "\n" 
           << "thermal size : " << opt.therm << std::endl;

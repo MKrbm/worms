@@ -40,8 +40,10 @@
 
 namespace model {
 
-  template <int N_op, size_t nls = 1, size_t max_L = 4>
+  template <int N_op, size_t nls = 1, size_t max_L = 4, class MC = bcl::st2010>
   class base_spin_model;
+
+  template <class MC = bcl::st2010>
   class local_operator;
   
   using SPIN = unsigned short;
@@ -73,11 +75,12 @@ namespace model {
 
 
 
+template <class MC>
 class model::local_operator{
 public:
   using VECD = std::vector<double>;
   using TPROB = std::vector<VECD>; //type for transition probability. typically, this is 2D matrix with 4 x 4 elements( check notebook for detail definition of this type).
-
+  typedef MC MCT;
   int leg; // leg size.
   int size; // size of operator (2**leg)
   size_t nls;
@@ -103,7 +106,6 @@ public:
 
   void set_ham(double off_set = 0);
   void set_trans_weights();
-  void check_trans_status(VECD, TPROB);
   void check_trans_prob();
   int index2num(std::array<int, 2> index);
 
@@ -116,7 +118,7 @@ public:
 // map spin to binary number e.g. -1 \rightarrow 0, 1 \rightarrow 1
 * S is local freedomness. 
 */
-template <int N_op, size_t _nls, size_t _max_L>
+template <int N_op, size_t _nls, size_t _max_L, class MC>
 class model::base_spin_model{
 public:
   const int L;
@@ -126,7 +128,8 @@ public:
   static const size_t nls = _nls;
   double rho = 0;
   std::vector<double> shifts;
-  std::array<local_operator, N_op> loperators; //in case where there are three or more body interactions.
+  typedef MC MCT;
+  std::array<local_operator<MCT>, N_op> loperators; //in case where there are three or more body interactions.
   std::array<int, N_op> leg_size; //size of local operators;
   const std::vector<BOND> bonds;
   const std::vector<size_t> bond_type;
@@ -173,7 +176,100 @@ public:
 
 
 
+// define functions for lolcal_operator class
+template <class MC>
+model::local_operator<MC>::local_operator()
+  :local_operator(2){}
 
+template <class MC>
+model::local_operator<MC>::local_operator(int leg, size_t nls)
+  :leg(leg), size(1<<nls * leg), ogwt(leg, nls), nls(nls){
+
+  if (nls<=0) size = (1<<leg); // default size is 2**leg.
+  ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
+  ham_vector = std::vector<double>(size*size, 0);
+}
+
+
+/*
+setting various variable for local_operators 
+this function should be called after manually define 2D local hamiltonian.
+
+- set 1D hamiltonian 
+*/
+template <class MC>
+void model::local_operator<MC>::set_ham(double off_set){
+  int N = ham_vector.size();
+  ene_shift=0;
+  ham_ = ham;
+
+  for (int i=0; i<ham_.size();i++){
+    ene_shift = std::min(ene_shift, ham[i][i]);
+  }
+  ene_shift *= -1;
+  ene_shift += off_set;
+  for (int i=0; i<ham_.size();i++){
+    ham_[i][i] = ham_[i][i] + ene_shift;
+  }
+
+  for (int i=0; i<N; i++){
+    auto index = num2index(i);
+    ham_vector[i] = ham_[index[0]][index[1]];
+  }
+
+
+  total_weights = 0;
+  // for (int i=0; i<size; i++) total_weights+= ham[i][i];
+
+  double tmp=0;
+  max_diagonal_weight_ = 0;
+  for (int i=0; i<size; i++) {
+    tmp += ham_[i][i];
+    max_diagonal_weight_ = std::max(max_diagonal_weight_, ham_[i][i]);
+  }
+
+
+
+  // max_diagonal_weight_ = std::max(max_diagonal_weight_, weights_[p]);
+
+  for (auto& x : ham_vector){
+    signs.push_back(x >= 0 ? 1 : -1);
+    x = std::abs(x);
+  }
+
+  // set transition probability
+  ogwt.init_table(ham_vector);
+  for (int c = 0; c < ogwt.size(); ++c) markov.push_back(markov_t(bcl::st2010(),ogwt[c]));
+
+  // auto rand_src = engine_type(2021);
+  // auto xxx = markov[0](0, rand_src);
+
+
+
+  // check_trans_prob(); // check if transition probability is consistent with the definition of transition matrix
+
+}
+
+
+
+
+template <class MC>
+std::array<int, 2> model::local_operator<MC>::num2index(int num){
+  ASSERT(num < size*size, "num is invalid");
+  std::array<int, 2> index;
+  index[0] = num%size;
+  index[1] = num/size;
+  return index;
+}
+
+template <class MC>
+int model::local_operator<MC>::index2num(std::array<int, 2> index){
+  ASSERT(index[0] < size && index[1] < size, "index is invalid");
+  int num = 0;
+  num += index[0];
+  num += index[1] * size;
+  return num;
+}
 
 
 

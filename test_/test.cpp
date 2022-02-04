@@ -1,10 +1,12 @@
 // #include <chrono>
-// #include <Shastry.hpp>
+#include <Shastry.hpp>
 // #include <ladder.hpp>
 // #include "npy.hpp"
 #include <iostream>
 #include <chrono>
 #include <array>
+#include <type_traits>
+#include <string>
 
 using namespace std::chrono;
 
@@ -18,6 +20,12 @@ using std::chrono::duration_cast;
 using std::chrono::duration;
 using std::chrono::milliseconds;
 using std::chrono::microseconds;
+
+template <class, template <class> class>
+struct is_instance : public std::false_type {};
+
+template <class T, template <class> class U>
+struct is_instance<U<T>, U> : public std::true_type {};
 
 std::array<size_t, 5> pows = {1, 4, 16, 4*16, 16*16};
 
@@ -33,7 +41,10 @@ size_t update_state_2(size_t s, size_t leg, size_t fl=1){
 
 int main(){
 
+  using A = model::Shastry_2<bcl::st2010>;
+  using B = model::Shastry_2<void>;
 
+  std::cout << is_instance<A, model::Shastry_2>::value << std::endl;
   // auto test = model::ladder(4,1,1,1,0);
   // // test.lattice.print(std::cout);
   // for (int i=0; i<test.bonds.size(); i++){
