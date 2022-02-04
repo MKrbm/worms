@@ -31,7 +31,7 @@ def l2nl(ham, L, bond = [], nls = 1):
   assert ham.shape[0] == 1<<(len(bond)*nls)
   for b in bond:
     assert (b < L) & (b >= 0), "site is inconsistent with L"
-  H = sparse.csr_matrix((1<<(L*nls),1<<(L*nls)), dtype = np.float64)
+  H = sparse.csr_matrix((1<<(L*nls),1<<(L*nls)), dtype = np.complex128)
   L_rem = L-len(bond)
   state = np.zeros(L, dtype = np.int64)
   for i in range(1<<(L_rem*nls)):
@@ -40,9 +40,6 @@ def l2nl(ham, L, bond = [], nls = 1):
     state = np.zeros(L, dtype=np.int64)
     for j in range(L):
       if j not in bond:
-        # print(j)
-        # print(state)
-        # print(tmp)
         state[j] = tmp[cnt]
         cnt+=1
     for a, b, ele in zip(index[0], index[1], index[2]):

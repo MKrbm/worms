@@ -299,8 +299,8 @@ public:
 
   template<class CONT>
   void init(CONT const& weights) {
-    static_assert(std::numeric_limits<IntType>::is_integer);
-    static_assert(!std::numeric_limits<RealType>::is_integer);
+    static_assert(std::numeric_limits<IntType>::is_integer,"");
+    static_assert(!std::numeric_limits<RealType>::is_integer,"");
     if (weights.size() == 0)
       throw std::invalid_argument("random_choice_bsearch::init");
     RealType norm = 0;
@@ -385,8 +385,8 @@ public:
 
   template<class CONT>
   void init(CONT const& weights) {
-    static_assert(std::numeric_limits<IntType>::is_integer);
-    static_assert(!std::numeric_limits<RealType>::is_integer);
+    static_assert(std::numeric_limits<IntType>::is_integer,"");
+    static_assert(!std::numeric_limits<RealType>::is_integer,"");
     if (weights.size() == 0)
       throw std::invalid_argument("random_choice_lsearch::init");
     double norm = 0;

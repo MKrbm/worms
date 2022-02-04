@@ -236,8 +236,8 @@ public:
 
   void update_state(size_t leg, size_t fl=1)
     {
-    size_t t = pows[leg+1];
     size_t a = pows[leg];
+    size_t t = pows[leg+1];
     state_ = (state_/t)*t + (state_%t+fl*a) % t;
     //  state_ ^= (fl << (nls*leg)); 
     }
