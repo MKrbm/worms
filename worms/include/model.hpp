@@ -40,10 +40,10 @@
 
 namespace model {
 
-  template <int N_op, size_t nls = 1, size_t max_L = 4, class MC = bcl::st2010>
+  template <int N_op, size_t nls = 1, size_t max_L = 4, class MC = bcl::heatbath>
   class base_spin_model;
 
-  template <class MC = bcl::st2010>
+  template <class MC = bcl::heatbath>
   class local_operator;
   
   using SPIN = unsigned short;
@@ -236,7 +236,7 @@ void model::local_operator<MC>::set_ham(double off_set){
 
   // set transition probability
   ogwt.init_table(ham_vector);
-  for (int c = 0; c < ogwt.size(); ++c) markov.push_back(markov_t(bcl::st2010(),ogwt[c]));
+  for (int c = 0; c < ogwt.size(); ++c) markov.push_back(markov_t(MC(),ogwt[c]));
 
   // auto rand_src = engine_type(2021);
   // auto xxx = markov[0](0, rand_src);

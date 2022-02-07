@@ -36,6 +36,7 @@ struct options {
   double shift=0;
   unsigned int sweeps;
   unsigned int therm;
+  size_t co = SIZE_MAX;
   double wdty = 0;
   std::string MN;
   std::vector<std::string> path_list;
@@ -141,6 +142,11 @@ struct options {
       }
       if (str.find("-pom") != std::string::npos){
         if (++i<argc) pom = std::atoi(argv[i].c_str());
+        else usage();
+        continue;
+      }
+      if (str.find("-co") != std::string::npos){
+        if (++i<argc) co = std::atoll(argv[i].c_str());
         else usage();
         continue;
       }

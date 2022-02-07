@@ -84,6 +84,8 @@ class worm{
   double beta;
   size_t d_cnt=0;
   int L;
+  size_t bocnt = 0;
+  size_t cutoff_length; //cut_off length
 
   //declaration for random number generator
   // typedef model::local_operator::engine_type engine_type;
@@ -93,7 +95,7 @@ class worm{
   #endif
   #ifdef RANDOM_SEED
   unsigned rseed = static_cast <unsigned> (time(0));
-  engine_type rand_src = engine_type(SEED);
+  engine_type rand_src = engine_type(rseed);
   #else
   engine_type rand_src = engine_type(SEED);
   #endif
@@ -115,13 +117,13 @@ class worm{
 
   typedef bcl::markov<engine_type> markov_t;
 
-  worm(double beta, MODEL model_)
+  worm(double beta, MODEL model_, size_t co = SIZE_MAX)
   :model(model_), L(model.L), beta(beta), rho(-1),
-  // dist(0, model.Nb-1), worm_dist(0.0, beta),
-  bonds(model.bonds),bond_type(model.bond_type) ,state(model.L),cstate(model.L),
+  bonds(model.bonds),bond_type(model.bond_type) ,state(model.L),cstate(model.L), cutoff_length(co),
   loperators(model.loperators), leg_sizes(model.leg_size)
   {
-    cout << "beta        : " << beta << endl;
+    cout << "beta          : " << beta << endl;
+    cout << "cutoff length : " << cutoff_length << endl;
     #ifdef RANDOM_SEED
     cout << "seed number : " << rseed << endl;
     #endif
@@ -319,7 +321,7 @@ class worm{
       }
       opstate.add_cnt();
 
-      if (opstate.cnt() > 1000){
+      if (opstate.cnt() > cutoff_length){
         return 1;
       }
       
@@ -368,6 +370,9 @@ class worm{
   *update worm for W times.
   */
   void worm_update(double& wcount, double& wlength){
+    std::copy(state.begin(), state.end(), cstate.begin());
+    pres.resize(0);
+    psop.resize(0);
     for (WORMS::iterator wsi = worms_list.begin(); wsi != worms_list.end(); ++wsi){
       size_t w_label, site;
       double tau;
@@ -380,9 +385,7 @@ class worm{
       size_t fl = 1;
       if (nls != 1) fl = static_cast<size_t>((sps-1)*uniform(rand_src)) + 1;
       size_t ini_fl = fl;
-      std::copy(state.begin(), state.end(), cstate.begin());
-      pres.resize(0);
-      psop.resize(0);
+
       int wl = wlength;
       int br = 0;
       wcount += 1;
@@ -398,10 +401,12 @@ class worm{
           br = 1;
           break;
         }
-        if(br==1){std::cout << "what!?" << std::endl;}
         dot = &spacetime_dots[d_label];
       }while((d_label != w_label || ((ini_dir == dir ? -1 : 1)*ini_fl + fl)%sps !=0)&&(br==0)); 
-      if(br==1){std::cout << "breakout from loop" << std::endl;}
+      if(br==1){
+        bocnt++;
+        break;
+      }
       
       wlength += (dir == 0) ? -tau : tau;
       check_operators_while_update(w_label, dir ? d_label : dot->prev(), ini_dir, ini_fl, fl, dir);
