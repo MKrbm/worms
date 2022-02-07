@@ -4,8 +4,13 @@
 
 #include <iostream>
 #include <worm.hpp>
+
+
 #include <heisenberg.hpp>
 #include <Shastry.hpp>
+#include <ladder.hpp>
+
+
 #include <testmodel.hpp>
 #include <operator.hpp>
 #include <string>
@@ -41,7 +46,8 @@ struct is_instance<U<T>, U> : public std::true_type {};
 
 
 template <typename SPINMODEL>
-std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr){
+std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
+  typename std::enable_if<!(is_instance<SPINMODEL,model::Shastry_2>::value||is_instance<SPINMODEL,model::ladder_v2>::value),std::nullptr_t>::type = nullptr){
 
   // std::cout << "test L : " << opt_ptr -> sweeps << std::endl;
 
@@ -163,7 +169,10 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr){
 
 template <typename SPINMODEL>
 std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
-  typename std::enable_if<is_instance<SPINMODEL,model::Shastry_2>::value>::type){
+  typename std::enable_if<is_instance<SPINMODEL,model::Shastry_2>::value||is_instance<SPINMODEL,model::ladder_v2>::value,std::nullptr_t>::type = nullptr){
+
+
+  std::cout << "this is called" << std::endl;
 
   auto opt = *opt_ptr;
   std::cout << "MC step : " << opt.sweeps << "\n" 
