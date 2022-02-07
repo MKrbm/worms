@@ -108,9 +108,6 @@ public:
   void set_trans_weights();
   void check_trans_prob();
   int index2num(std::array<int, 2> index);
-
-
-
 };
 
 /*
@@ -121,14 +118,14 @@ public:
 template <int N_op, size_t _nls, size_t _max_L, class MC>
 class model::base_spin_model{
 public:
-  const int L;
-  static const size_t max_L = _max_L;
-  const int Nb; // number of bonds.
+  static const size_t max_L = _max_L; // # of max leg size typically 4.
   static const int Nop = N_op; //number of local operator (1 for heisenberg model)
-  static const size_t nls = _nls;
+  static const size_t nls = _nls; // number of local site
+  typedef MC MCT;
+  const int L;
+  const int Nb; // number of bonds.
   double rho = 0;
   std::vector<double> shifts;
-  typedef MC MCT;
   std::array<local_operator<MCT>, N_op> loperators; //in case where there are three or more body interactions.
   std::array<int, N_op> leg_size; //size of local operators;
   const std::vector<BOND> bonds;

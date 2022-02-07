@@ -1,12 +1,13 @@
 // #include <chrono>
-#include <Shastry.hpp>
-// #include <ladder.hpp>
+// #include <Shastry.hpp>
+#include <ladder.hpp>
 // #include "npy.hpp"
 #include <iostream>
 #include <chrono>
 #include <array>
 #include <type_traits>
 #include <string>
+#include <vector>
 
 using namespace std::chrono;
 
@@ -41,12 +42,17 @@ size_t update_state_2(size_t s, size_t leg, size_t fl=1){
 
 int main(){
 
-  using A = model::Shastry_2<bcl::st2010>;
-  using B = model::Shastry_2<void>;
+  // using A = model::Shastry_2<bcl::st2010>;
+  // using B = model::Shastry_2<void>;
 
-  std::cout << is_instance<A, model::Shastry_2>::value << std::endl;
-  // auto test = model::ladder(4,1,1,1,0);
-  // // test.lattice.print(std::cout);
+  // std::cout << is_instance<A, model::Shastry_2>::value << std::endl;
+  std::vector<std::string> path_list = std::vector<std::string>({
+    "../python/array/lad_bond_ori0.npy",
+    "../python/array/lad_bond_ori1.npy",
+    "../python/array/lad_bond_ori2.npy",
+  });
+  auto test = model::ladder_v2<bcl::st2010>(path_list, 4,1,1,1,0);
+  // test.lattice.print(std::cout);
   // for (int i=0; i<test.bonds.size(); i++){
   //   printf("[%lu, %lu, %lu]\n", test.bonds[i][0], test.bonds[i][1], test.bond_type[i]);
   // }
@@ -61,27 +67,27 @@ int main(){
   //     // if ((update_state_1(s, j, (i%4))) != (update_state_2(s, j, (i%4)))) printf("%lu, %lu, %d\n", s, j, (i%4));
   //   }
   //   sum_ %= 999;
-  // }
-  cout << update_state_1(s, 0, 0) << endl;
-  cout << update_state_1(s, 0, 1) << endl;
-  cout << update_state_1(s, 0, 2) << endl;
-  cout << update_state_1(s, 0, 3) << endl;
-  cout << update_state_1(s, 1, 1) << endl;
-  cout << update_state_1(s, 1, 2) << endl;
-  cout << update_state_1(s, 1, 3) << endl;
-  cout << update_state_1(s, 2, 1) << endl;
-  cout << update_state_1(s, 2, 2) << endl;
-  cout << update_state_1(s, 2, 3) << endl;
-  cout << update_state_1(s, 3, 1) << endl;
+  // // }
+  // cout << update_state_1(s, 0, 0) << endl;
+  // cout << update_state_1(s, 0, 1) << endl;
+  // cout << update_state_1(s, 0, 2) << endl;
+  // cout << update_state_1(s, 0, 3) << endl;
+  // cout << update_state_1(s, 1, 1) << endl;
+  // cout << update_state_1(s, 1, 2) << endl;
+  // cout << update_state_1(s, 1, 3) << endl;
+  // cout << update_state_1(s, 2, 1) << endl;
+  // cout << update_state_1(s, 2, 2) << endl;
+  // cout << update_state_1(s, 2, 3) << endl;
+  // cout << update_state_1(s, 3, 1) << endl;
 
 
 
-  auto t2 = high_resolution_clock::now();
-  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  // auto t2 = high_resolution_clock::now();
+  // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-  double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() / (double)1E3;
-  std::cout << sum_ << std::endl;
-  cout << "Elapsed : " << elapsed << endl;
+  // double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() / (double)1E3;
+  // std::cout << sum_ << std::endl;
+  // cout << "Elapsed : " << elapsed << endl;
 
 
 

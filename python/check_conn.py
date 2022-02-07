@@ -16,14 +16,14 @@ def state_update(index, leg, fl):
     index[d] = index[d] ^ (fl << (l * 2))
     return index
 
-J1 = 0.4
-J2 = 1
+J1 = 1
+J2 = 0
+J3 = 0
 
-
-h1 = np.load("array/SS_bond1.npy").round(4)
-h2 = np.load("array/SS_bond2.npy").round(4)
-ho = np.load("array/SS_onsite.npy").round(4)
-H = sparse.csr_matrix(J1*h1 + J2*ho) #this is the hamiltonian you wanna check the connectivity.
+h0 = np.load("array/lad_bond_ori0.npy").round(4)
+h1 = np.load("array/lad_bond_ori1.npy").round(4)
+h2 = np.load("array/lad_bond_ori2.npy").round(4)
+H = sparse.csr_matrix(J1 * h0 + (J2+J3)/2 * h1 + (J2-J3)/2 * h2) #this is the hamiltonian you wanna check the connectivity.
 shift = -min(np.diagonal(H.toarray()).min(), 0)
 
 

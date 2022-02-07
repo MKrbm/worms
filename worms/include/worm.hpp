@@ -149,7 +149,7 @@ class worm{
     x = static_cast<SPIN>(sps * uniform(rand_src));
     
     #else
-    x = 1;
+    x = 0;
     #endif
     }
   }
