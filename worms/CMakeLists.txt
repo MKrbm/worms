@@ -11,7 +11,6 @@ project(worm_lib
 add_library(worm STATIC
     ./src/state.cpp
     ./src/operator.cpp
-    ./src/ladder.cpp
     # ./src/testmodel.cpp
 
     )

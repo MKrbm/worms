@@ -1,37 +1,9 @@
 import numpy as np
 from scipy import sparse
 import os
+from functions import *
 
-def num2state(s, L = 4):
-    state = []
-    for i in range(L):
-        state.append(s%4)
-        s >>= 2
-    return state[::-1]
 
-def state2num(state):
-    s = 0
-    for i in range(len(state)):
-        s <<=2
-        s += state[i]
-    return s
-
-def beauty_array(H_tmp, path = "array.txt"):
-  try:
-    H_tmp = H_tmp.toarray()
-  except:
-    pass
-  with open(path, 'w') as f:
-      f.write("{:>6} ".format(""))
-      for j in range(H_tmp.shape[1]):
-          f.write("{:>6}  ".format(str(num2state(j, 2))))
-
-      f.write("\n")
-      for i in range(H_tmp.shape[0]):
-          f.write("{:>6}".format(str(num2state(i, 2))))
-          for j in range(H_tmp.shape[1]):    
-              f.write("{:>6.3f}, ".format(H_tmp[i,j]))
-          f.write("\n")
 
 I = np.identity(2)
 Sz = np.zeros([2,2])
@@ -97,7 +69,7 @@ on_site = h3/4 + h4/4
 u = np.array([
     [0,1,0,0],
     [1/np.sqrt(2), 0, 1/np.sqrt(2), 0],
-    [-1/np.sqrt(2), 0, 1/np.sqrt(2), 0],
+    [1/np.sqrt(2), 0, -1/np.sqrt(2), 0],
     [0,0,0,1]
 ])
 
