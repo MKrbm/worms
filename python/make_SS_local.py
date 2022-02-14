@@ -60,16 +60,15 @@ h2_ = -(sparse.kron(sparse.kron(I,Sz,format='csr'), sparse.kron(I,Sz,format='csr
 
 
 h = h1 + h2
- 
+
 h_ = h1_ + h2_
 
 on_site = h3/4 + h4/4
 
-
 u = np.array([
     [0,1,0,0],
     [1/np.sqrt(2), 0, 1/np.sqrt(2), 0],
-    [1/np.sqrt(2), 0, -1/np.sqrt(2), 0],
+    [-1/np.sqrt(2), 0, 1/np.sqrt(2), 0],
     [0,0,0,1]
 ])
 
@@ -81,22 +80,23 @@ H = U.T @ h @ U
 H2 = U.T @ h_ @ U
 ON = U.T @ on_site @ U
 
-a = -0.5
-H[state2num([0,0]), state2num([0,1])] = a
-H[state2num([0,1]), state2num([0,0])] = a
-H[state2num([0,0]), state2num([1,0])] = a
-H[state2num([1,0]), state2num([0,0])] = a
+# a = -0.5
+# H[state2num([0,0]), state2num([0,1])] = a
+# H[state2num([0,1]), state2num([0,0])] = a
+# H[state2num([0,0]), state2num([1,0])] = a
+# H[state2num([1,0]), state2num([0,0])] = a
 
 
-H2[state2num([0,0]), state2num([0,1])] = a
-H2[state2num([0,1]), state2num([0,0])] = a
-H2[state2num([0,0]), state2num([1,0])] = a
-H2[state2num([1,0]), state2num([0,0])] = a
+# H2[state2num([0,0]), state2num([0,1])] = a
+# H2[state2num([0,1]), state2num([0,0])] = a
+# H2[state2num([0,0]), state2num([1,0])] = a
+# H2[state2num([1,0]), state2num([0,0])] = a
 
 index = sparse.find(H+ON)
 print("type 1 bond operator\n")
 for i,j, ele in zip(index[0], index[1], index[2]):
     print(num2state(i, 2), num2state(j, 2), "\t {:.3f}".format(ele))
+
 
 print("--"*10)
 print("type 2 bond operator\n")
@@ -108,7 +108,7 @@ for i,j, ele in zip(index[0], index[1], index[2]):
 
 
 
-path1 = "array/SS_bond_test1"
+path1 = "array/SS_bond1"
 if not os.path.isfile(path1):
   np.save(path1,H.toarray())
   print(H[0,1])
@@ -116,7 +116,7 @@ if not os.path.isfile(path1):
   beauty_array(H,path1 + ".txt")
 
 
-path2 = "array/SS_bond_test2"
+path2 = "array/SS_bond2"
 if not os.path.isfile(path2):
   np.save(path2,H2.toarray())
   print("save : ", path2+".npy")
