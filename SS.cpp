@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
   //   "../python/array/SS_onsite.npy",
   // });
   std::cout << "path : " << path_list[2] << std::endl;
-  typedef bcl::st2010 bcl_t;
+  typedef bcl::st2013 bcl_t;
 
   if (model_name != "shastry_v2"){
     model::Shastry<bcl_t> spin_model(L, J1, J2);

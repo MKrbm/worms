@@ -267,7 +267,8 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
   double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / (double)1E3;
   #endif
 
-  double r = solver.bocnt/ (double)(opt.therm+opt.sweeps);
+  double r = 1-solver.bocnt/ (double)(opt.therm+opt.sweeps);
+  // double r_ = 1-r_;
 
   std::vector<double> return_value;
   return_value.push_back(ene.mean()/ave_sign.mean());
@@ -299,6 +300,6 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
             << "# of neg sign op     = "
             << n_neg_ele.mean() << std::endl
             << "breakout rate        = "
-            << r << std::endl;
+            << 1-r << std::endl;
   return return_value;
 }

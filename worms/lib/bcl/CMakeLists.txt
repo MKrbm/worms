@@ -9,4 +9,4 @@ add_library(bcl INTERFACE)
 target_include_directories(bcl INTERFACE .)
 set_target_properties(bcl
     PROPERTIES
-    VERSION ${PROJECT_VERSION})
+    INTERFACE_VERSION ${PROJECT_VERSION})
