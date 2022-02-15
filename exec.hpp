@@ -4,8 +4,13 @@
 
 #include <iostream>
 #include <worm.hpp>
+
+
 #include <heisenberg.hpp>
 #include <Shastry.hpp>
+#include <ladder.hpp>
+
+
 #include <testmodel.hpp>
 #include <operator.hpp>
 #include <string>
@@ -13,6 +18,12 @@
 #include <observable.hpp>
 #include <lattice/graph.hpp>
 #include <lattice/coloring.hpp>
+#include <bcl.hpp>
+#include <type_traits>
+#include <string>
+
+
+
 
 // #define DEBUG 1
 #define MESTIME 1
@@ -27,8 +38,16 @@
 
 #endif
 
+template <class, template <class> class>
+struct is_instance : public std::false_type {};
+
+template <class T, template <class> class U>
+struct is_instance<U<T>, U> : public std::true_type {};
+
+
 template <typename SPINMODEL>
-std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr){
+std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
+  typename std::enable_if<!(is_instance<SPINMODEL,model::Shastry_2>::value||is_instance<SPINMODEL,model::ladder_v2>::value),std::nullptr_t>::type = nullptr){
 
   // std::cout << "test L : " << opt_ptr -> sweeps << std::endl;
 
@@ -41,9 +60,10 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr){
   BC::observable ave_sign; // average sign 
   BC::observable umag2;
   double beta = 1 / opt.T;
+  size_t co = opt.co;
 
 
-  worm<SPINMODEL> solver(beta, spin_model); //template needs for std=14
+  worm<SPINMODEL> solver(beta, spin_model, co); //template needs for std=14
   // std::vector<std::vector<int>> states;
   spin_model.lattice.print(std::cout);
 
@@ -106,6 +126,7 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr){
 
 
   
+  double r = 1-solver.bocnt/ (double)(opt.therm+opt.sweeps);
 
   #if MESTIME
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
@@ -116,7 +137,7 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr){
   std::vector<double> return_value;
   return_value.push_back(ene.mean()/ave_sign.mean());
   return_value.push_back(
-    std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2))
+    std::sqrt(std::pow(ene.error(r)/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2))
   );
   return_value.push_back(elapsed);
   return_value.push_back((opt.therm+opt.sweeps) / elapsed);
@@ -125,33 +146,38 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr){
 
   std::cout << "Total Energy         = "
           << ene.mean()/ave_sign.mean()<< " +- " 
-          << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2))
+          << std::sqrt(std::pow(ene.error(r)/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2))
           << std::endl;
 
   std::cout << "Elapsed time         = " << elapsed << " sec\n"
             << "Speed                = " << (opt.therm+opt.sweeps) / elapsed << " MCS/sec\n";
   std::cout << "Energy per site      = "
             << ene.mean()/ave_sign.mean() / spin_model.lattice.num_sites() << " +- " 
-            << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) / spin_model.lattice.num_sites()
+            << std::sqrt(std::pow(ene.error(r)/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2)) / spin_model.lattice.num_sites()
             << std::endl
-            << "average sign           = "
-            << ave_sign.mean() << " +- " << ave_sign.error() << std::endl
-            << "Uniform Magnetization  = "
+            << "average sign              = "
+            << ave_sign.mean() << " +- " << ave_sign.error(r) << std::endl
+            << "Uniform Magnetization     = "
             << umag.mean()/ave_sign.mean() << " +- " 
-            << std::sqrt(std::pow(umag.error()/ave_sign.mean(), 2) + std::pow(umag.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2))
+            << std::sqrt(std::pow(umag.error(r)/ave_sign.mean(), 2) + std::pow(umag.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2))
             << std::endl
             << "Uniform Magnetization^2   = "
             << umag2.mean()/ave_sign.mean() << " +- "
-            << std::sqrt(std::pow(umag2.error()/ave_sign.mean(), 2) + std::pow(umag2.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2))
-            << std::endl;
+            << std::sqrt(std::pow(umag2.error(r)/ave_sign.mean(), 2) + std::pow(umag2.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2))
+            << std::endl            
+            << "breakout rate             = "
+            << 1-r << std::endl;
   return return_value;
 }
 
 
-template<>
-std::vector<double> exe_worm<model::Shastry_2>(model::Shastry_2 spin_model, options* opt_ptr){
+template <typename SPINMODEL>
+std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
+  typename std::enable_if<is_instance<SPINMODEL,model::Shastry_2>::value||is_instance<SPINMODEL,model::ladder_v2>::value,std::nullptr_t>::type = nullptr){
 
-  typedef model::Shastry_2 SPINMODEL;
+
+  std::cout << "this is called" << std::endl;
+
   auto opt = *opt_ptr;
   std::cout << "MC step : " << opt.sweeps << "\n" 
           << "thermal size : " << opt.therm << std::endl;
@@ -164,9 +190,10 @@ std::vector<double> exe_worm<model::Shastry_2>(model::Shastry_2 spin_model, opti
 
 
   double beta = 1 / opt.T;
+  size_t co = opt.co;
 
 
-  worm<SPINMODEL> solver(beta, spin_model); //template needs for std=14
+  worm<SPINMODEL> solver(beta, spin_model, co); //template needs for std=14
   // std::vector<std::vector<int>> states;
   spin_model.lattice.print(std::cout);
 
@@ -233,7 +260,6 @@ std::vector<double> exe_worm<model::Shastry_2>(model::Shastry_2 spin_model, opti
   }
 
 
-  
 
   #if MESTIME
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
@@ -241,10 +267,13 @@ std::vector<double> exe_worm<model::Shastry_2>(model::Shastry_2 spin_model, opti
   double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / (double)1E3;
   #endif
 
+  double r = 1-solver.bocnt/ (double)(opt.therm+opt.sweeps);
+  // double r_ = 1-r_;
+
   std::vector<double> return_value;
   return_value.push_back(ene.mean()/ave_sign.mean());
   return_value.push_back(
-    std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2))
+    std::sqrt(std::pow(ene.error(r)/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2))
   );
   return_value.push_back(elapsed);
   return_value.push_back((opt.therm+opt.sweeps) / elapsed);
@@ -253,22 +282,24 @@ std::vector<double> exe_worm<model::Shastry_2>(model::Shastry_2 spin_model, opti
 
   std::cout << "Total Energy         = "
           << ene.mean()/ave_sign.mean()<< " +- " 
-          << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2))
+          << std::sqrt(std::pow(ene.error(r)/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2))
           << std::endl;
 
   std::cout << "Elapsed time         = " << elapsed << " sec\n"
             << "Speed                = " << (opt.therm+opt.sweeps) / elapsed << " MCS/sec\n";
   std::cout << "Energy per site      = "
             << ene.mean()/ave_sign.mean() / spin_model.lattice.num_sites() << " +- " 
-            << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) / spin_model.lattice.num_sites()
+            << std::sqrt(std::pow(ene.error(r)/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2)) / spin_model.lattice.num_sites()
             << std::endl
             << "average sign         = "
-            << ave_sign.mean() << " +- " << ave_sign.error() << std::endl
+            << ave_sign.mean() << " +- " << ave_sign.error(r) << std::endl
             << "dimer operator       = "
             << sglt.mean() << std::endl 
             << "# of operators       = "
             << n_ops.mean() << std::endl
             << "# of neg sign op     = "
-            << n_neg_ele.mean() << std::endl;
+            << n_neg_ele.mean() << std::endl
+            << "breakout rate        = "
+            << 1-r << std::endl;
   return return_value;
 }

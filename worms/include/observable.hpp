@@ -7,9 +7,9 @@ namespace BC {
     observable() : count_(0), sum_(0), esq_(0) {}
     void operator<<(double x) { sum_ += x; esq_ += x * x; ++count_; }
     double mean() const { return (count_ > 0) ? (sum_ / count_) : 0.; }
-    double error() const {
+    double error(double r = 1) const {
       return (count_ > 1) ?
-        std::sqrt((esq_ / count_ - mean() * mean()) / (count_ - 1)) : 0.;
+        std::sqrt((esq_ / count_ - mean() * mean()) / (count_*r - 1)) : 0.;
     }
   private:
     unsigned int count_;

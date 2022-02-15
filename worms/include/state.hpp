@@ -21,7 +21,8 @@ namespace spin_state{
   using size_t = std::size_t; 
   using STATE = model::STATE;
   using BOND = model::BOND;
-  using local_operator = model::local_operator;
+  template <class MC>
+  using local_operator = model::local_operator<MC>;
   using WORM = std::tuple<int, int, double>;
   using WORM_ARR = std::vector<WORM>; //  site, spin, dot_label, tau (dot label is needed for reverse lookup)
   using DOT_ARR = std::vector<std::tuple<int,int,int,int>>;   //prev, next, dot_type, index, (index refers to the legs of the dot with respect to the class of dots)
@@ -191,6 +192,7 @@ class spin_state::Operatorv2{
   size_t size_;
   size_t op_type_;
   size_t state_;
+  size_t cnt_;
   double tau_;
 public:
   Operatorv2() :bond_ptr_(nullptr){}
@@ -199,20 +201,26 @@ public:
 
   //bond_, dot_labels_, size_, op_type, state_,tau_;
   Operatorv2(const BOND* const bp , size_t st,
-            size_t si, size_t o, double t):bond_ptr_(bp), state_(st), size_(si), op_type_(o), tau_(t)
+            size_t si, size_t o, double t):bond_ptr_(bp), state_(st), size_(si), op_type_(o), tau_(t), cnt_(0)
   {
     ASSERT(size_ == bp->size(), "bond size and size is inconsistent");
   }
 
   //size_, op_type, state_,tau_;
   Operatorv2(size_t st, size_t si, size_t o, double t)
-  :state_(st), size_(si), op_type_(o), tau_(t), bond_ptr_(nullptr)
+  :state_(st), size_(si), op_type_(o), tau_(t), bond_ptr_(nullptr), cnt_(0)
   {
     // ASSERT(size_ == bond_.size(), "bond size and size is inconsistent");
   }
 
   
   // void set_state(size_t sp) { state_ = sp; }
+  size_t cnt() const {return cnt_;}
+  void set_state(size_t s) {
+    state_ = s;
+    cnt_ = 0;
+  }
+  void add_cnt() {cnt_++;}
   size_t size() const {return size_;}
   size_t op_type()const {return op_type_;}
   size_t state()const {return state_;}

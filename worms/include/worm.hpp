@@ -12,6 +12,7 @@
 #include <strstream>
 #include <sstream>
 #include <algorithm>
+#include <utility>
 #include <bcl.hpp>
 
 #ifdef __APPLE__
@@ -32,7 +33,6 @@
 
 #include "state.hpp"
 #include "model.hpp"
-#include "BC.hpp"
 #define SEED 1643698133
 /* inherit UnionFindTree and add find_and_flip function*/
 
@@ -55,10 +55,10 @@ using DOTS = std::vector<Dotv2>;
 using size_t = std::size_t;
 
 
-template <typename MODEL>
+template <class MODEL>
 class worm{
   public:
-  typedef typename MODEL::base_spin_model base_spin_model;
+  typedef typename MODEL::MDT base_spin_model;
   static const size_t nls = base_spin_model::nls;
   static const size_t max_L = base_spin_model::max_L;
   static const size_t sps = 1<<nls;
@@ -68,10 +68,7 @@ class worm{
 
 
   MODEL model;
-  double beta;
-  size_t d_cnt=0;
-  size_t L;
-  
+  typedef typename base_spin_model::MCT MCT;
   OPS ops_main; //contains operators.
   OPS ops_sub; // for sub.
   STATE state;
@@ -81,6 +78,16 @@ class worm{
 
   std::vector< BOND > bonds;
   std::vector<size_t> bond_type;
+  
+  std::vector<size_t> pres = std::vector<size_t>(0);
+  std::vector<size_t> psop = std::vector<size_t>(0);
+  // std::vector<size_t> st_cnt = std::vector<size_t>(0);
+  double beta;
+  size_t d_cnt=0;
+  int L;
+  size_t bocnt = 0;
+  size_t cutoff_length; //cut_off length
+
   //declaration for random number generator
   // typedef model::local_operator::engine_type engine_type;
   typedef std::mt19937 engine_type;
@@ -89,7 +96,7 @@ class worm{
   #endif
   #ifdef RANDOM_SEED
   unsigned rseed = static_cast <unsigned> (time(0));
-  engine_type rand_src = engine_type(SEED);
+  engine_type rand_src = engine_type(rseed);
   #else
   engine_type rand_src = engine_type(SEED);
   #endif
@@ -104,24 +111,21 @@ class worm{
   static const int N_op = MODEL::Nop;
   // static const int N_op = 1;
 
-  std::array<model::local_operator, N_op>& loperators; //holds multiple local operators
+  std::array<model::local_operator<MCT>, N_op>& loperators; //holds multiple local operators
   std::array<int, N_op>& leg_sizes; //leg size of local operators;
   double rho;
-  model::local_operator lop;
   std::vector<std::vector<double>> accepts; //normalized diagonal elements;
   int cnt=0;
 
   typedef bcl::markov<engine_type> markov_t;
-  std::vector<markov_t> markov;
 
-  worm(double beta, MODEL model_)
-  :model(model_), L(model_.L), beta(beta), rho(-1),
-  bonds(model_.bonds),bond_type(model_.bond_type) ,state(model_.L),cstate(model_.L),
-  loperators(model.loperators), leg_sizes(model.leg_size),
-  lop(loperators[0]),markov(lop.markov)
+  worm(double beta, MODEL model_, size_t co = SIZE_MAX)
+  :model(model_), L(model.L), beta(beta), rho(-1),
+  bonds(model.bonds),bond_type(model.bond_type) ,state(model.L),cstate(model.L), cutoff_length(co),
+  loperators(model.loperators), leg_sizes(model.leg_size)
   {
-    cout << "L is        : " << L << endl;
-    cout << "beta        : " << beta << endl;
+    cout << "beta          : " << beta << endl;
+    cout << "cutoff length : " << cutoff_length << endl;
     #ifdef RANDOM_SEED
     cout << "seed number : " << rseed << endl;
     #endif
@@ -147,9 +151,8 @@ class worm{
   for (auto& x : state){
     #ifdef RANDOM_SEED
     x = static_cast<SPIN>(sps * uniform(rand_src));
-    
     #else
-    x = 1;
+    x = 0;
     #endif
     }
   }
@@ -230,7 +233,7 @@ class worm{
     #ifndef NDEBUG
     std::cout << "bond \n\n" ;
     for (typename OPS::iterator opi = ops_main.begin(); opi != ops_main.end();++opi){
-      printf("[%lu, %lu]\n", opi->bond(0), opi->bond(1));
+      printf("[%d, %d]\n", opi->bond(0), opi->bond(1));
     }
     #endif 
   }
@@ -293,7 +296,7 @@ class worm{
   params(member variables)
   ------
   */
-  void worm_process_op(size_t& next_dot, size_t& dir, size_t& site, double& wlength, size_t& fl){
+  int worm_process_op(size_t& next_dot, size_t& dir, size_t& site, double& wlength, size_t& fl){
 
     size_t clabel = next_dot;
     auto& dot = spacetime_dots[clabel];
@@ -302,7 +305,7 @@ class worm{
     if (dot.at_origin()){ //n* if dot is state.
       state[dot.label()] = (state[dot.label()] + fl) % sps; 
       wlength +=1;
-      return;
+      return 0;
     }
 
     // if (dot.at_worm()){ //n* if dot is at worm
@@ -313,6 +316,16 @@ class worm{
     if (dot.at_operator()){
       size_t dir_in = !dir; //n* direction the worm comes in from the view of operator.
       auto & opstate = ops_main[dot.label()];
+      if (opstate.cnt()==0){
+        psop.push_back(dot.label());
+        pres.push_back(opstate.state());
+      }
+      opstate.add_cnt();
+
+      if (opstate.cnt() > cutoff_length){
+        return 1;
+      }
+      
       // if (dot.label() == 205) {
       //   int gg = 0;
       // }
@@ -349,14 +362,18 @@ class worm{
       wlength += (dir==0) ? opstate.tau() : -opstate.tau();
       site = opstate.bond(nindex%size);
       next_dot = opstate.next_dot(cindex, nindex, clabel);
-      return;
+      return 0;
     }
+    return 0;
   }
 
   /*
   *update worm for W times.
   */
   void worm_update(double& wcount, double& wlength){
+    std::copy(state.begin(), state.end(), cstate.begin());
+    pres.resize(0);
+    psop.resize(0);
     for (WORMS::iterator wsi = worms_list.begin(); wsi != worms_list.end(); ++wsi){
       size_t w_label, site;
       double tau;
@@ -369,17 +386,29 @@ class worm{
       size_t fl = 1;
       if (nls != 1) fl = static_cast<size_t>((sps-1)*uniform(rand_src)) + 1;
       size_t ini_fl = fl;
-      
+
+      int wl = wlength;
+      int br = 0;
       wcount += 1;
       wlength += (dir == 0) ? tau : -tau;
       do{
         d_label = dot->move_next(dir);
-        worm_process_op(d_label, dir, site, wlength, fl);
+        if (worm_process_op(d_label, dir, site, wlength, fl) == 1){
+          wlength = wl - ((dir == 0) ? -tau : tau);
+          wcount--;
+          reset_ops();
+          std::copy(cstate.begin(), cstate.end(), state.begin());
+          // std::cout << "reset triggered" << std::endl;
+          br = 1;
+          break;
+        }
         dot = &spacetime_dots[d_label];
-
-      }while(d_label != w_label || ((ini_dir == dir ? -1 : 1)*ini_fl + fl)%sps !=0); 
-      // std::cout << "cnt=" << cnt << std::endl;
-      cnt++;
+      }while((d_label != w_label || ((ini_dir == dir ? -1 : 1)*ini_fl + fl)%sps !=0)&&(br==0)); 
+      if(br==1){
+        bocnt++;
+        break;
+      }
+      
       wlength += (dir == 0) ? -tau : tau;
       check_operators_while_update(w_label, dir ? d_label : dot->prev(), ini_dir, ini_fl, fl, dir);
     }
@@ -467,7 +496,7 @@ class worm{
 
     int label = 0;
     std::cout << "debug cnt = " << d_cnt << std::endl;
-    if (d_cnt == 9){
+    if (d_cnt == 8){
       int eee;
     }
     d_cnt ++;
@@ -500,6 +529,13 @@ class worm{
     // std::cout << "hihi" << std::endl;
     #endif 
     return;
+  }
+
+
+  void reset_ops(){
+    for (size_t i=0; i<psop.size(); i++){
+      ops_main[psop[i]].set_state(pres[i]);
+    }
   }
 
 

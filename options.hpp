@@ -32,9 +32,11 @@ struct options {
   double H;
   double J1;
   double J2;
+  double J3;
   double shift=0;
   unsigned int sweeps;
   unsigned int therm;
+  size_t co = SIZE_MAX;
   double wdty = 0;
   std::string MN;
   std::vector<std::string> path_list;
@@ -64,7 +66,7 @@ struct options {
   :options(argv2vector(argc, argv), L_def, dim_def, T_def, M_def){}
 
   options(std::vector<std::string> argv, unsigned int L_def, unsigned int dim_def, double T_def, std::string M_def)
-  :L(L_def), T(T_def), H(0), sweeps(1 << 16), therm(sweeps >> 3), valid(true),J1(1), J2(1),
+  :L(L_def), T(T_def), H(0), sweeps(1 << 16), therm(sweeps >> 3), valid(true),J1(1), J2(1), J3(1),
   dim(dim_def), MN(M_def), argc(argv.size())
   {
     auto argc = argv.size();
@@ -103,6 +105,11 @@ struct options {
         else usage();
         continue;
       }
+      if (str.find("-J3") != std::string::npos){
+        if (++i<argc) J3 = std::atof(argv[i].c_str());
+        else usage();
+        continue;
+      }
       if (str.find("-m") != std::string::npos){
         if (++i<argc) therm = std::atoi(argv[i].c_str());
         else usage();
@@ -135,6 +142,11 @@ struct options {
       }
       if (str.find("-pom") != std::string::npos){
         if (++i<argc) pom = std::atoi(argv[i].c_str());
+        else usage();
+        continue;
+      }
+      if (str.find("-co") != std::string::npos){
+        if (++i<argc) co = std::atoll(argv[i].c_str());
         else usage();
         continue;
       }

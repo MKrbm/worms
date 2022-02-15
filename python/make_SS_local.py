@@ -1,37 +1,9 @@
 import numpy as np
 from scipy import sparse
 import os
+from functions import *
 
-def num2state(s, L = 4):
-    state = []
-    for i in range(L):
-        state.append(s%4)
-        s >>= 2
-    return state[::-1]
 
-def state2num(state):
-    s = 0
-    for i in range(len(state)):
-        s <<=2
-        s += state[i]
-    return s
-
-def beauty_array(H_tmp, path = "array.txt"):
-  try:
-    H_tmp = H_tmp.toarray()
-  except:
-    pass
-  with open(path, 'w') as f:
-      f.write("{:>6} ".format(""))
-      for j in range(H_tmp.shape[1]):
-          f.write("{:>6}  ".format(str(num2state(j, 2))))
-
-      f.write("\n")
-      for i in range(H_tmp.shape[0]):
-          f.write("{:>6}".format(str(num2state(i, 2))))
-          for j in range(H_tmp.shape[1]):    
-              f.write("{:>6.3f}, ".format(H_tmp[i,j]))
-          f.write("\n")
 
 I = np.identity(2)
 Sz = np.zeros([2,2])
@@ -88,11 +60,10 @@ h2_ = -(sparse.kron(sparse.kron(I,Sz,format='csr'), sparse.kron(I,Sz,format='csr
 
 
 h = h1 + h2
- 
+
 h_ = h1_ + h2_
 
 on_site = h3/4 + h4/4
-
 
 u = np.array([
     [0,1,0,0],
@@ -109,22 +80,23 @@ H = U.T @ h @ U
 H2 = U.T @ h_ @ U
 ON = U.T @ on_site @ U
 
-a = -0.5
-H[state2num([0,0]), state2num([0,1])] = a
-H[state2num([0,1]), state2num([0,0])] = a
-H[state2num([0,0]), state2num([1,0])] = a
-H[state2num([1,0]), state2num([0,0])] = a
+# a = -0.5
+# H[state2num([0,0]), state2num([0,1])] = a
+# H[state2num([0,1]), state2num([0,0])] = a
+# H[state2num([0,0]), state2num([1,0])] = a
+# H[state2num([1,0]), state2num([0,0])] = a
 
 
-H2[state2num([0,0]), state2num([0,1])] = a
-H2[state2num([0,1]), state2num([0,0])] = a
-H2[state2num([0,0]), state2num([1,0])] = a
-H2[state2num([1,0]), state2num([0,0])] = a
+# H2[state2num([0,0]), state2num([0,1])] = a
+# H2[state2num([0,1]), state2num([0,0])] = a
+# H2[state2num([0,0]), state2num([1,0])] = a
+# H2[state2num([1,0]), state2num([0,0])] = a
 
 index = sparse.find(H+ON)
 print("type 1 bond operator\n")
 for i,j, ele in zip(index[0], index[1], index[2]):
     print(num2state(i, 2), num2state(j, 2), "\t {:.3f}".format(ele))
+
 
 print("--"*10)
 print("type 2 bond operator\n")
@@ -136,7 +108,7 @@ for i,j, ele in zip(index[0], index[1], index[2]):
 
 
 
-path1 = "array/SS_bond_test1"
+path1 = "array/SS_bond1"
 if not os.path.isfile(path1):
   np.save(path1,H.toarray())
   print(H[0,1])
@@ -144,7 +116,7 @@ if not os.path.isfile(path1):
   beauty_array(H,path1 + ".txt")
 
 
-path2 = "array/SS_bond_test2"
+path2 = "array/SS_bond2"
 if not os.path.isfile(path2):
   np.save(path2,H2.toarray())
   print("save : ", path2+".npy")

@@ -169,3 +169,12 @@ Theoritically, average sign goes down from 1 as $T \rightarrow 0$ for small $J_1
 
 
 
+
+## Larger system size
+
+
+
+<center> T = 0.1 J1 = [0, 0.1, .., 1] </center>
+
+![](img/avesign_L=8_T=0.1.png)
+![](img/avesign_L=8_T=0.05.png)

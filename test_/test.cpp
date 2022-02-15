@@ -5,6 +5,9 @@
 #include <iostream>
 #include <chrono>
 #include <array>
+#include <type_traits>
+#include <string>
+#include <vector>
 
 using namespace std::chrono;
 
@@ -18,6 +21,12 @@ using std::chrono::duration_cast;
 using std::chrono::duration;
 using std::chrono::milliseconds;
 using std::chrono::microseconds;
+
+template <class, template <class> class>
+struct is_instance : public std::false_type {};
+
+template <class T, template <class> class U>
+struct is_instance<U<T>, U> : public std::true_type {};
 
 std::array<size_t, 5> pows = {1, 4, 16, 4*16, 16*16};
 
@@ -33,17 +42,32 @@ size_t update_state_2(size_t s, size_t leg, size_t fl=1){
 
 int main(){
 
+  // using A = model::Shastry_2<bcl::st2010>;
+  // using B = model::Shastry_2<void>;
 
-  auto test = model::ladder(4,1,1,1,0);
+  // std::cout << is_instance<A, model::Shastry_2>::value << std::endl;
+  std::vector<std::string> path_list = std::vector<std::string>({
+    "../python/array/lad_bond_ori0.npy",
+    "../python/array/lad_bond_ori1.npy",
+    "../python/array/lad_bond_ori2.npy",
+  });
+  auto test = model::ladder_v2<bcl::st2010>(path_list, 4,1,1,1,0);
   // test.lattice.print(std::cout);
-  for (int i=0; i<test.bonds.size(); i++){
-    printf("[%lu, %lu, %lu]\n", test.bonds[i][0], test.bonds[i][1], test.bond_type[i]);
-  }
-
-
-  // size_t sum_=0;
-  // size_t s = 10;
-  // auto t1 = high_resolution_clock::now();
+  // for (int i=0; i<test.bonds.size(); i++){
+  //   printf("[%lu, %lu, %lu]\n", test.bonds[i][0], test.bonds[i][1], test.bond_type[i]);
+  // }
+  size_t sum_=0;
+  size_t s = 10;
+  auto t1 = high_resolution_clock::now();
+  // for (int i=0; i<(int)1E7; i++){
+  //   for (int j=0; j<4; j++){
+  //     s = update_state_2(s, j, ((3+i)%4));
+  //     sum_ += s;
+  //     // cout << sum_ << endl;
+  //     // if ((update_state_1(s, j, (i%4))) != (update_state_2(s, j, (i%4)))) printf("%lu, %lu, %d\n", s, j, (i%4));
+  //   }
+  //   sum_ %= 999;
+  // // }
   // cout << update_state_1(s, 0, 0) << endl;
   // cout << update_state_1(s, 0, 1) << endl;
   // cout << update_state_1(s, 0, 2) << endl;

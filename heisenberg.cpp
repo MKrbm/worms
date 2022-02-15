@@ -1,5 +1,6 @@
 // #define RANDOM_SEED 0
 #include "exec.hpp"
+#include "heisenberg.hpp"
 
 // #define DEBUG 1
 #define MESTIME 1
@@ -31,7 +32,7 @@ int main(int argc, char* argv[])
   double J2 = config.J2;
 
 
-  model::heisenberg spin_model(L,h,dim);
+  model::heisenberg<bcl::heatbath> spin_model(L,h,dim);
   exe_worm(spin_model, &config);
 
 }

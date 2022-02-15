@@ -70,7 +70,7 @@ add_subdirectory(./worms) #call /LoopAlgo/CMakeLists.txst
 
 
 # add executable
-FOREACH(name main debug heisernberg SS)
+FOREACH(name main debug heisenberg SS ladder)
     add_executable(${name} ${name}.cpp)
     target_link_libraries(${name} worm)
     target_include_directories(${name} PUBLIC

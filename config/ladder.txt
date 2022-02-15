@@ -1,0 +1,15 @@
+-L  4
+-T  1
+-H  0
+-D  1
+-J1 2
+-J2 1 
+-J3 1
+-m  10000 
+-n  100000
+-M  ladder_v2
+-shift 0
+-PATH1 ../python/array/lad_bond_0.npy 
+-PATH2 ../python/array/lad_bond_1.npy
+-PATH3 ../python/array/lad_bond_2.npy
+-pom 1
