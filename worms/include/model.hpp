@@ -40,7 +40,7 @@
 
 namespace model {
 
-  template <int N_op, size_t nls = 1, size_t max_L = 4, class MC = bcl::heatbath>
+  template <int N_op, size_t max_L = 4, class MC = bcl::heatbath>
   class base_spin_model;
 
   template <class MC = bcl::heatbath>
@@ -74,16 +74,30 @@ namespace model {
 }
 
 
+/*
+*params
+-------
+leg : number of sites bond operato acts on. typically 2.
+size : number of hilbert space of bond operator.
+sps : spin freedom per site.
 
+*template argument
+-------
+MC : type of algorithm for generating transition matrix
+
+*variables
+-------
+TPROB : type of transition matrix
+*/
 template <class MC>
 class model::local_operator{
 public:
   using VECD = std::vector<double>;
   using TPROB = std::vector<VECD>; //type for transition probability. typically, this is 2D matrix with 4 x 4 elements( check notebook for detail definition of this type).
   typedef MC MCT;
+  size_t sps;
   int leg; // leg size.
   int size; // size of operator (2**leg)
-  size_t nls;
   double ene_shift = 0; //energy shift to ensure that diagonal elements of hamiltonian are non-negative
   std::vector<std::vector<double>> ham;
   std::vector<std::vector<double>> ham_;
@@ -101,7 +115,7 @@ public:
   std::vector<markov_t> markov;
 
 
-  local_operator(int leg, size_t nls = 1);
+  local_operator(int leg, size_t sps = 2);
   local_operator();
 
   void set_ham(double off_set = 0);
@@ -113,25 +127,46 @@ public:
 /*
 //$\hat{H} = \sum_{<i,j>} [J \vec{S}_i \dot \vec{S}_j - h/Nb (S_i^z + S_j^z)]$ 
 // map spin to binary number e.g. -1 \rightarrow 0, 1 \rightarrow 1
-* S is local freedomness. 
+* S is local freedomness.
+
+*params
+------
+sps : spin freedom per site.
+
+*member variables
+loperators : lists of local operator. the size of lists corresponds to N_op.
+sps_lists : lists of sps. size is the same as number of sites. typically, all the elements share the same value.
+
+*template arguments
+------
+N_op : number of types of operatos. (heisernberg = 1, shastry = 2)
+max_L : maximum leg size of bond operators. typically 4. 
+MC : type of algorithm for generating transition matrix
+
+
 */
-template <int N_op, size_t _nls, size_t _max_L, class MC>
+template <int N_op, size_t _max_L, class MC>
 class model::base_spin_model{
+protected:
+  std::vector<size_t> sps_lists;
 public:
-  static const size_t max_L = _max_L; // # of max leg size typically 4.
-  static const int Nop = N_op; //number of local operator (1 for heisenberg model)
-  static const size_t nls = _nls; // number of local site
+  static const size_t max_L = _max_L;
+  static const int Nop = N_op;
   typedef MC MCT;
+
   const int L;
   const int Nb; // number of bonds.
-  double rho = 0;
-  std::vector<double> shifts;
-  std::array<local_operator<MCT>, N_op> loperators; //in case where there are three or more body interactions.
-  std::array<int, N_op> leg_size; //size of local operators;
   const std::vector<BOND> bonds;
   const std::vector<size_t> bond_type;
+
+  double rho = 0;
+
+  std::array<local_operator<MCT>, N_op> loperators;
+  std::array<int, N_op> leg_size; //size of local operators;
   std::array<size_t, N_op> bond_t_size;
+  std::vector<double> shifts;
   lattice::graph lattice;
+
   base_spin_model(int L_, int Nb_, std::vector<BOND> bonds)
   :L(L_), Nb(Nb_), bonds(bonds){}
 
@@ -167,6 +202,8 @@ public:
       i++;
     }
   }
+
+  size_t sps(size_t i){return sps_lists[i];}
 };
 
 
@@ -179,10 +216,10 @@ model::local_operator<MC>::local_operator()
   :local_operator(2){}
 
 template <class MC>
-model::local_operator<MC>::local_operator(int leg, size_t nls)
-  :leg(leg), size(1<<nls * leg), ogwt(leg, nls), nls(nls){
+model::local_operator<MC>::local_operator(int leg, size_t sps)
+  :leg(leg), size(pow(sps, leg)), ogwt(leg, sps), sps(sps){
 
-  if (nls<=0) size = (1<<leg); // default size is 2**leg.
+  if (sps<=0) size = (1<<leg); // default size is 2**leg.
   ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
   ham_vector = std::vector<double>(size*size, 0);
 }

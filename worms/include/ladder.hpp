@@ -31,12 +31,12 @@ public:
 
 
   template <class MC>
-  class ladder_v2 :public base_spin_model<1, 2, 4, MC>{
+  class ladder_v2 :public base_spin_model<1, 4, MC>{
 public:
   ladder_v2(std::vector<std::string> path_list, int L, double J1, double J2, double J3, double h, double shift=0, int pom=1);
   int L;
   const double J1,J2,J3,h;
-  typedef base_spin_model<1, 2, 4, MC> MDT; 
+  typedef base_spin_model<1, 4, MC> MDT; 
   static lattice::graph return_lattice(int L){
     lattice::basis_t bs(1, 1);
     bs << 1;

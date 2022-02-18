@@ -5,7 +5,7 @@
 -J1 0.4
 -J2 1 
 -m  10000 
--n  100000
+-n  1000000
 -M  shastry_v2
 -PATH1 ../python/array/SS_bond1.npy 
 -PATH2 ../python/array/SS_bond2.npy

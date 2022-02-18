@@ -26,12 +26,10 @@ class outgoing_weight {
 public:
 
   template<typename WEIGHT>
-  outgoing_weight(WEIGHT const& w, int L, int nls)
-    :L(L), sps(1<<nls), nls(nls),
-    pows(pows_array(sps)){ init_table(w); }
-  outgoing_weight(int L, int nls)
-    :L(L), sps(1<<nls), nls(nls), 
-    pows(pows_array(sps)) {}
+  outgoing_weight(WEIGHT const& w, int L, int sps)
+    :L(L), sps(sps), pows(pows_array(sps)){ init_table(w); }
+  outgoing_weight(int L, int sps)
+    :L(L), sps(sps), pows(pows_array(sps)) {}
   template<typename WEIGHT>
 
   /*
@@ -73,6 +71,5 @@ private:
   std::vector<std::vector<double> > weights_;
   int L;
   std::size_t sps; //onsite Hilbert space dimension.
-  std::size_t nls;
   std::vector<size_t> pows;
 };

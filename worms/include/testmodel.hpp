@@ -3,8 +3,8 @@
 #include "Shastry.hpp"
 
 namespace model{
-  class test :public base_spin_model<1, 2, 4, bcl::st2010>{
-    typedef base_spin_model<1, 2, 4, bcl::st2010> MCT;
+  class test :public base_spin_model<1, 4, bcl::st2010>{
+    typedef base_spin_model<1, 4, bcl::st2010> MCT;
 public:
     test(int L);
   };
@@ -20,7 +20,7 @@ model::test::test(int L)
     auto shape = pair.first;
     auto data = pair.second;
     int l = 2; //* leg size
-    loperators[local] = local_operator<bcl::st2010>(l, base_spin_model::nls); 
+    loperators[local] = local_operator<bcl::st2010>(l, 4); 
     leg_size[local] = l;
     std::cout << "hamiltonian is read from " << path << std::endl;
     for (int i=0; i<shape[0]; i++){
