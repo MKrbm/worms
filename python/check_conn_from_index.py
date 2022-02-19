@@ -36,7 +36,7 @@ print("\n\n", "-"*20, "\n\n")
 
 
 indices = (np.array((H_tmp).nonzero()).T).tolist()
-index = [14, 12]
+index = [0, 0]
 index_ori = index.copy()
 assert index in indices, "index is not listed in non-zero index for the hamiltonian"
 

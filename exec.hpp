@@ -214,10 +214,11 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
   double wcount = 0;
   double wlength = 0;
   double wdensity = spin_model.lattice.num_bonds();
+  double wdensity_fix = wdensity;
   double wdty = opt_ptr->wdty;
   for (int i=0; i < opt.therm + opt.sweeps; i++){
     // solver.diagonal_update(); 
-    solver.diagonal_update(wdensity); //n* need to be comment out 
+    solver.diagonal_update(wdensity_fix); //n* need to be comment out 
     // printf("%dth iteration\n", i);
     solver.worm_update(wcount, wlength);
     // printf("complete worm update\n");

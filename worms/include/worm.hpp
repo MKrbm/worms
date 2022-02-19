@@ -149,6 +149,7 @@ class worm{
   for (auto& x : state){
     #ifdef RANDOM_SEED
     x = static_cast<SPIN>(sps * uniform(rand_src));
+    // x = 0;
     
     #else
     x = 0;
