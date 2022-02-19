@@ -126,7 +126,7 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
 
 
   
-  double r = solver.bocnt/ (double)(opt.therm+opt.sweeps);
+  double r = 1 - solver.bocnt/ (double)(opt.therm+opt.sweeps);
 
   #if MESTIME
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
@@ -166,7 +166,7 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
             << std::sqrt(std::pow(umag2.error(r)/ave_sign.mean(), 2) + std::pow(umag2.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2))
             << std::endl            
             << "breakout rate             = "
-            << r << std::endl;
+            << 1-r << std::endl;
   return return_value;
 }
 
