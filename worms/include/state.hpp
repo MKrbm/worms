@@ -14,13 +14,14 @@ namespace spin_state{
   class Dotv2;
   class OpStatev2;
   class Wormsv2;
-  template <size_t nls_=1, size_t max_L = 4>
+  template <size_t sps_=2, size_t max_L = 4>
   class Operatorv2;
   
   using SPIN = model::SPIN;
   using size_t = std::size_t; 
   using STATE = model::STATE;
   using BOND = model::BOND;
+  using SPS_ARR = std::vector<size_t>;
   template <class MC>
   using local_operator = model::local_operator<MC>;
   using WORM = std::tuple<int, int, double>;
@@ -63,7 +64,30 @@ namespace spin_state{
       }
       return state;
     }
+
+    static size_t state2num(STATE const& state, BOND const& bond, SPS_ARR const& sps_base){
+      size_t u = 0;
+      for (int i=0; i<bond.size(); i++){
+        // int tmp = cstate[bond[i]];
+        u += (state[bond[i]] * sps_base[i]);
+      }
+      return u;
+  }
+  
+
+    static STATE num2state(int num, int L, SPS_ARR const& sps_base){
+      int coef = 1;
+      model::STATE state(L, 0); // all spin up
+      for (int i=0; i<L; i++){
+        state[L-i-1] = num/sps_base[L-i-1];
+        num%=sps_base[L-i-1];
+      }
+      return state;
+    }
   };
+
+
+  //* old stuff
 
   inline size_t state2num(STATE const& state, int L = -1){
     size_t num = 0;
@@ -75,6 +99,8 @@ namespace spin_state{
     }
     return num;
   }
+
+  //* old stuff
 
   inline size_t state2num(STATE const& state, BOND const& bond){
     size_t u = 0;
@@ -181,13 +207,12 @@ public:
 /*
   the actual size of state (number of bits for expressing state ) is 2 * size
 */
-template <size_t nls_, size_t max_L>
+template <size_t sps_, size_t max_L>
 class spin_state::Operatorv2{
   const BOND* const bond_ptr_;
   // size_t s0_;
   // size_t s1_;
-  static const size_t nls = nls_;
-  static const size_t sps = (1<<nls);
+  static const size_t sps = sps_;
   static const std::array<size_t, max_L+1> pows;
   size_t size_;
   size_t op_type_;
@@ -294,5 +319,5 @@ public:
 };
 
 
-template <size_t nls_, size_t max_L>
-const std::array<size_t, max_L+1> spin_state::Operatorv2<nls_, max_L>::pows = pows_array<max_L>(sps);
+template <size_t sps_, size_t max_L>
+const std::array<size_t, max_L+1> spin_state::Operatorv2<sps_, max_L>::pows = pows_array<max_L>(sps);

@@ -149,6 +149,8 @@ template <int N_op, size_t _max_L, class MC>
 class model::base_spin_model{
 protected:
   std::vector<size_t> sps_lists;
+  void set_sps(std::vector<size_t> sps_) { sps_lists = sps_; }
+
 public:
   static const size_t max_L = _max_L;
   static const int Nop = N_op;
@@ -169,6 +171,11 @@ public:
 
   base_spin_model(int L_, int Nb_, std::vector<BOND> bonds)
   :L(L_), Nb(Nb_), bonds(bonds){}
+
+  base_spin_model(lattice::graph lt, size_t sps_)
+  :base_spin_model(lt){
+    sps_lists = std::vector<size_t>(sps_, lt.num_sites());
+  }
 
   base_spin_model(lattice::graph lt)
   :L(lt.num_sites()), Nb(lt.num_bonds()), lattice(lt), 

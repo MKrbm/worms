@@ -39,7 +39,7 @@ namespace model{
 template <class MC>
 model::heisenberg<MC>::heisenberg(int L, double Jz, double Jxy, double h, int dim)
   :Jz(Jz), Jxy(Jxy), dim(dim),
-  h(h), MDT(lattice::graph::simple(dim, L))
+  h(h), MDT(lattice::graph::simple(dim, L), 2)
 {
   std::cout << "model output" << std::endl;
   std::cout << "L : " << L << std::endl;

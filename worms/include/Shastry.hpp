@@ -165,19 +165,25 @@ std::cout << "end \n" << std::endl;
 if (J1 < 0 || J2 < 0) std::cerr << "J1 and J2 must have non-negative value in this setting" << std::endl;
 
 
+//* create sps vector.
+std::vector<size_t> spsl(4, MDT::L);
+MDT::set_sps(spsl);
 
+
+
+//*set offset
 std::vector<double> off_sets(2,shift);
 
-int local = 0;
-// std::string os_path = "../python/array/SS_ori_onsite.npy";
+//* read onsite hamiltonian
 std::string os_path = path_list[2];
 auto pair = load_npy(os_path);
 auto shape_os = pair.first;
 auto data_os = pair.second;
-// for (auto path : {"../python/array/SS_bond_test1.npy", "../python/array/SS_bond_test2.npy"}) {
+
+//* set loperators vector
 auto& loperators = MDT::loperators;
+int local = 0;
 for (auto path : {path_list[0], path_list[1]}) {
-// for (auto path : {"../python/array/SS_ori_bond1.npy", "../python/array/SS_ori_bond2.npy"}) {
 
   auto pair = load_npy(path);
   auto shape = pair.first;

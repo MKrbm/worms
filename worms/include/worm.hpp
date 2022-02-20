@@ -59,10 +59,9 @@ template <class MODEL>
 class worm{
   public:
   typedef typename MODEL::MDT base_spin_model;
-  static const size_t nls = base_spin_model::nls;
   static const size_t max_L = base_spin_model::max_L;
-  static const size_t sps = 1<<nls;
-  typedef Operatorv2<nls, max_L> OP_type;
+  static const size_t sps = 2;
+  typedef Operatorv2<sps, max_L> OP_type;
   typedef std::vector<OP_type> OPS;
   typedef spin_state::state_func<nls> state_func;
 
