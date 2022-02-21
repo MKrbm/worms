@@ -60,7 +60,8 @@ class worm{
   public:
   typedef typename MODEL::MDT base_spin_model;
   static const size_t max_L = base_spin_model::max_L;
-  static const size_t sps = 2;
+  static const size_t sps = 4;
+  static const size_t nls = sps>>1;
   typedef Operatorv2<sps, max_L> OP_type;
   typedef std::vector<OP_type> OPS;
   typedef spin_state::state_func<nls> state_func;
@@ -382,8 +383,8 @@ class worm{
       double r = uniform(rand_src);
       size_t dir = (size_t)2 * r;//n initial direction is 1.
       size_t ini_dir = dir;
-      size_t fl = 1;
-      if (nls != 1) fl = static_cast<size_t>((sps-1)*uniform(rand_src)) + 1;
+      // size_t fl = 1;
+      size_t fl = static_cast<size_t>((sps-1)*uniform(rand_src)) + 1;
       size_t ini_fl = fl;
 
       int wl = wlength;

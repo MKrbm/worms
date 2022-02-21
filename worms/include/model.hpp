@@ -94,25 +94,26 @@ class model::local_operator{
 public:
   using VECD = std::vector<double>;
   using TPROB = std::vector<VECD>; //type for transition probability. typically, this is 2D matrix with 4 x 4 elements( check notebook for detail definition of this type).
+  typedef std::mt19937 engine_type;
+  typedef bcl::markov<engine_type> markov_t;
   typedef MC MCT;
+  outgoing_weight ogwt;
+
   size_t sps;
   int leg; // leg size.
   int size; // size of operator (2**leg)
   double ene_shift = 0; //energy shift to ensure that diagonal elements of hamiltonian are non-negative
+  double max_diagonal_weight_;
+  double total_weights; //sum of diagonal elemtns of ham
+
   std::vector<std::vector<double>> ham;
   std::vector<std::vector<double>> ham_;
   std::vector<double> ham_vector;
   std::vector<int> signs; //list of sign defined via the sign of ham_;
   std::vector<TPROB> trans_prob; //num_configuration x 4 x 4 matrix.
-  double max_diagonal_weight_;
-  double total_weights; //sum of diagonal elemtns of ham
   std::array<int, 2> num2index(int num);
-  // craete markov
-  // table for worm update
-  typedef std::mt19937 engine_type;
-  typedef bcl::markov<engine_type> markov_t;
-  outgoing_weight ogwt;
   std::vector<markov_t> markov;
+  std::vector<size_t> sps_base;
 
 
   local_operator(int leg, size_t sps = 2);

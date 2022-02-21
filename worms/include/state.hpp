@@ -320,4 +320,4 @@ public:
 
 
 template <size_t sps_, size_t max_L>
-const std::array<size_t, max_L+1> spin_state::Operatorv2<sps_, max_L>::pows = pows_array<max_L>(sps);
+const std::array<size_t, max_L+1> spin_state::Operatorv2<sps_, max_L>::pows = pows_array<max_L>(sps_);
