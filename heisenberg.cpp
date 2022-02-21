@@ -21,18 +21,50 @@ int main(int argc, char* argv[])
 
 
   // options opt(argc, argv, 16, 1, 1.0, "heisernberg");
-  readConfig config("../config/heisernberg.txt", 16, 1, 1.0, "heisernberg");
+  // readConfig config("../config/heisernberg.txt", 16, 1, 1.0, "heisernberg");
 
-  if (!config.valid) std::exit(-1);
-  int L = config.L;
-  int dim = config.dim;
+  options* opt_ptr;
+
+  if (argc > 2) {
+    std::cout << "read from args " << std::endl;  
+    options * opt;
+    opt = new options(argc, argv, 16, 1, 1.0, "shastry");
+    opt_ptr = opt;
+  }else{
+    std::cout << "read txt file " << std::endl;  
+    readConfig* config;
+    config = new readConfig("../config/heisernberg.txt", 2, 1, 1.0, "heisernberg");
+    opt_ptr = (options*)config;
+  }
+
+
+  if (!opt_ptr->valid) std::exit(-1);
+  int L = opt_ptr->L;
+  int dim = opt_ptr->dim;
   double J = 1;
-  double h = config.H;
-  double J1 = config.J1;
-  double J2 = config.J2;
+  double h = opt_ptr->H;
+  double J1 = opt_ptr->J1;
+  double J2 = opt_ptr->J2;
+  double sft = opt_ptr->shift;
+  auto path_list = opt_ptr->path_list;
+  std::string model_name = opt_ptr->MN;
+  std::cout << "model name is : " << model_name << std::endl;
+  if (path_list.size()<3) path_list = std::vector<std::string>({
+    "../python/array/H_bond_z.npy",
+    "../python/array/H_bond_x.npy",
+    "../python/array/H_bond_y.npy",
+  });
 
 
-  model::heisenberg<bcl::heatbath> spin_model(L,h,dim);
-  exe_worm(spin_model, &config);
+  typedef bcl::st2013 bcl_t;
+  // model::heisenberg<bcl_t> spin_model(L,h,dim);
 
+  if (model_name != "heisernberg_v2"){
+    // model::Shastry<bcl_t> spin_model(L, J1, J2);
+    model::heisenberg<bcl_t> spin_model(L,J1, J2, h,dim);
+    exe_worm(spin_model, opt_ptr);
+  }else{
+    model::heisenberg_v2<bcl_t> spin_model(path_list, L, J1, J2, h, dim, sft, opt_ptr->pom);
+    exe_worm(spin_model, opt_ptr);
+  }
 }

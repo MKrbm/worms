@@ -108,46 +108,56 @@ model::heisenberg_v2<MC>::heisenberg_v2(std::vector<std::string> path_list, int 
        ", " << Jxy << ", " << Jxy << "]" << std::endl;
   std::cout << "h : " << h << std::endl;
   std::cout << "end \n" << std::endl;
-  std::vector<double> J = {Jz, Jxy, Jxy};
+  std::vector<double> J = {Jz, Jxy, Jxy, h/(2*dim)};
 
-  int l = 2;
   auto& loperators = MDT::loperators;
-  std::vector<double> off_sets(1,shift);
-  loperators[0] = local_operator<MC>(l);
-  MDT::leg_size[0] = l;
-  auto& loperator = loperators[0];
-  int is_bip = 1;
-  for (int i=0; i<loperators[0].size; i++)
-    for (int j=0; j<loperators[0].size; j++)  loperators[0].ham[j][i] = 0;
-  //end
+  auto& leg_size = MDT::leg_size;
+  leg_size[0] = 2; //there is only one type of operator.
+  auto type_list = std::vector<size_t>(path_list.size(), 0); // size is equal to N_op
 
-  int op_label = 0 ;
-  for (auto path : path_list) {
-    auto pair = load_npy(path);
-    auto shape = pair.first;
-    auto data = pair.second;
-    int l = 2;
-    std::cout << "hamiltonian is read from " << path << std::endl;
-    for (int i=0; i<shape[0]; i++){
-      for (int j=0; j<shape[1]; j++)
-      {
-        auto x = J[op_label]*data[i * shape[1] + j];
-        if (std::abs(x) > 1E-5) {
-          loperators[0].ham[j][i] += x;
-        }
-      }
-    }
-    op_label++;
-  }
-  
-  MDT::initial_setting(off_sets);  
+  set_hamiltonian<MDT::Nop, MDT::max_sps, MDT::max_L, typename MDT::MCT>(
+    loperators,
+    leg_size,
+    path_list,
+    type_list,
+    J
+  );
+  // int l = 2;
+  // loperators[0] = local_operator<MC>(l);
+  // leg_size[0] = l;
+  // auto& loperator = loperators[0];
+  // int is_bip = 1;
+  // for (int i=0; i<loperators[0].size; i++)
+  //   for (int j=0; j<loperators[0].size; j++)  loperators[0].ham[j][i] = 0;
+  // //end
+
+  // int op_label = 0 ;
+  // for (auto path : path_list) {
+  //   auto pair = load_npy(path);
+  //   auto shape = pair.first;
+  //   auto data = pair.second;
+  //   int l = 2;
+  //   std::cout << "hamiltonian is read from " << path << std::endl;
+  //   for (int i=0; i<shape[0]; i++){
+  //     for (int j=0; j<shape[1]; j++)
+  //     {
+  //       auto x = J[op_label]*data[i * shape[1] + j];
+  //       if (std::abs(x) > 1E-5) {
+  //         loperators[0].ham[j][i] += x;
+  //       }
+  //     }
+  //   }
+  //   op_label++;
+  // }
+  std::vector<double> off_sets(MDT::Nop, shift);
+  MDT::initial_setting(off_sets);
   if (pom){
     for (int i=0; i<MDT::shifts.size(); i++){
       printf("shifts[%d] = %3.3f\n", i, MDT::shifts[i]);
     }
     for (int i=0; i<loperators[0].size; i++)
       for (int j=0; j<loperators[0].size; j++) if (std::abs(loperators[0].ham[j][i]) > 1E-5) {
-          printf("[%2d, %2d] : %3.3f\n", j, i, loperators[0].ham[j][i]);
+          printf("[%2d, %2d] : %3.5f\n", j, i, loperators[0].ham[j][i]);
         }
   }
 

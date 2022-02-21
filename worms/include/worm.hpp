@@ -347,7 +347,7 @@ class worm{
         int tmp_ = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + sps-fl-1, test_src);
         int nindex_ = tmp_/sps_prime;
         int fl_ = tmp_ % sps_prime + 1;
-        printf("test tmp : %d, state : %d\n", tmp_, num ^ (fl_ << (nls*nindex_)));
+        // printf("test tmp : %d, state : %d\n", tmp_, num ^ (fl_ << (nls*nindex_)));
         
       }
       #endif 

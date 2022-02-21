@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <assert.h> 
 #include "outgoing_weight.hpp"
+#include "load_npy.hpp"
 
 
 #ifndef NDEBUG
@@ -41,7 +42,7 @@
 
 namespace model {
 
-  template <int N_op, size_t max_sps = 2, size_t max_L = 4, class MC = bcl::heatbath>
+  template <int N_op, size_t _max_sps = 2, size_t _max_L = 4, class MC = bcl::heatbath>
   class base_spin_model;
 
   template <class MC = bcl::heatbath>
@@ -72,6 +73,51 @@ namespace model {
     auto it = std::unique(bond_type.begin(), bond_type.end());
     return std::distance(bond_type.begin(), it);
   }
+
+  template <int N_op, size_t max_sps, size_t max_L, class MC>
+  void set_hamiltonian(
+    std::array<local_operator<MC>, N_op>& loperators, 
+    std::array<int, N_op>& leg_size,
+    std::vector<std::string> path_list, 
+    std::vector<size_t> type_list,
+    std::vector<double> coupling_list,
+    double threshold = 1E-5
+    ){
+    ASSERT(path_list.size() == type_list.size(), "");
+    ASSERT(leg_size.size() == N_op, "");
+    ASSERT((size_t)N_op == 1+*std::max_element(type_list.begin(), type_list.end()), " ");
+
+    for (int l=0; l<N_op; l++)
+    {  
+      loperators[l] = local_operator<MC>(leg_size[l], max_sps);
+      ASSERT(loperators[l].size == pow(max_sps, leg_size[l]),"size is inconsistent, the size of hamiltonian should be fixed to max_sps ** leg");
+      for (int i=0; i<loperators[l].size; i++)
+        for (int j=0; j<loperators[l].size; j++)  loperators[l].ham[j][i] = 0;
+    }
+
+    int op_label = 0;
+    for (auto path : path_list) {
+      auto pair = load_npy(path);
+      auto shape = pair.first;
+      auto data = pair.second;
+      // int l = 2;
+      size_t op_type = type_list[op_label];
+      std::cout << "hamiltonian is read from " << path << std::endl;
+      ASSERT(shape[0] == shape[1],"loaded local hamiltonian is not squared matrix");
+      ASSERT(loperators[op_type].size == shape[0], "loaded local hamiltonian conflict with loperator in size");
+      for (int i=0; i<shape[0]; i++){
+        for (int j=0; j<shape[1]; j++)
+        {
+          auto x = coupling_list[op_label]*data[i * shape[1] + j];
+          if (std::abs(x) > threshold) {
+            loperators[op_type].ham[j][i] += x;
+          }
+        }
+      }
+      op_label++;
+    }
+
+  };
 }
 
 
@@ -154,6 +200,7 @@ public:
   static const size_t max_L = _max_L;
   static const int Nop = N_op;
   static const size_t max_sps = _max_sps;
+  static const size_t max_sps2 = _max_sps;
   typedef MC MCT;
 
   const int L;
@@ -174,8 +221,9 @@ public:
   :L(L_), Nb(Nb_), bonds(bonds){}
 
   base_spin_model(lattice::graph lt, std::vector<size_t> sps_list)
+  :base_spin_model(lt)
   {
-    ASSERT("size of sps_list is inconsistent with model size L " , sps_list.size() == L);
+    ASSERT(sps_list.size() == L, "size of sps_list is inconsistent with model size L " );
     sps_sites = sps_list;
   }
 
@@ -203,7 +251,7 @@ public:
       std::terminate();
     }
 
-    sps_sites = std::vector<size_t>(L, max_sps);
+    sps_sites = std::vector<size_t>(L, _max_sps);
   }
   void initial_setting(std::vector<double>off_sets = std::vector<double>(N_op,0)){
     int i = 0;

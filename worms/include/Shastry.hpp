@@ -1,6 +1,5 @@
 #pragma once
 #include "model.hpp"
-#include "load_npy.hpp"
 
 
 namespace model{
