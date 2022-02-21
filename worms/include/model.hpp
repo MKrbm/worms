@@ -12,6 +12,7 @@
 #include <lattice/graph.hpp>
 #include <lattice/coloring.hpp>
 #include <algorithm>
+#include <assert.h> 
 #include "outgoing_weight.hpp"
 
 
@@ -40,7 +41,7 @@
 
 namespace model {
 
-  template <int N_op, size_t max_L = 4, class MC = bcl::heatbath>
+  template <int N_op, size_t max_sps = 2, size_t max_L = 4, class MC = bcl::heatbath>
   class base_spin_model;
 
   template <class MC = bcl::heatbath>
@@ -136,7 +137,6 @@ sps : spin freedom per site.
 
 *member variables
 loperators : lists of local operator. the size of lists corresponds to N_op.
-sps_lists : lists of sps. size is the same as number of sites. typically, all the elements share the same value.
 
 *template arguments
 ------
@@ -146,21 +146,21 @@ MC : type of algorithm for generating transition matrix
 
 
 */
-template <int N_op, size_t _max_L, class MC>
+template <int N_op, size_t _max_sps, size_t _max_L, class MC>
 class model::base_spin_model{
 protected:
-  std::vector<size_t> sps_lists;
-  void set_sps(std::vector<size_t> sps_) { sps_lists = sps_; }
 
 public:
   static const size_t max_L = _max_L;
   static const int Nop = N_op;
+  static const size_t max_sps = _max_sps;
   typedef MC MCT;
 
   const int L;
   const int Nb; // number of bonds.
   const std::vector<BOND> bonds;
   const std::vector<size_t> bond_type;
+  std::vector<size_t> sps_sites; 
 
   double rho = 0;
 
@@ -173,10 +173,12 @@ public:
   base_spin_model(int L_, int Nb_, std::vector<BOND> bonds)
   :L(L_), Nb(Nb_), bonds(bonds){}
 
-  base_spin_model(lattice::graph lt, size_t sps_)
-  :base_spin_model(lt){
-    sps_lists = std::vector<size_t>(sps_, lt.num_sites());
+  base_spin_model(lattice::graph lt, std::vector<size_t> sps_list)
+  {
+    ASSERT("size of sps_list is inconsistent with model size L " , sps_list.size() == L);
+    sps_sites = sps_list;
   }
+
 
   base_spin_model(lattice::graph lt)
   :L(lt.num_sites()), Nb(lt.num_bonds()), lattice(lt), 
@@ -200,6 +202,8 @@ public:
       std::cerr << "something wrong in bond_type" << std::endl;
       std::terminate();
     }
+
+    sps_sites = std::vector<size_t>(L, max_sps);
   }
   void initial_setting(std::vector<double>off_sets = std::vector<double>(N_op,0)){
     int i = 0;
@@ -211,7 +215,6 @@ public:
     }
   }
 
-  size_t sps(size_t i){return sps_lists[i];}
 };
 
 

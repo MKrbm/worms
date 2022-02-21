@@ -3,8 +3,8 @@
 #include "Shastry.hpp"
 
 namespace model{
-  class test :public base_spin_model<1, 4, bcl::st2010>{
-    typedef base_spin_model<1, 4, bcl::st2010> MCT;
+  class test :public base_spin_model<1, 2, 4, bcl::st2010>{
+    typedef base_spin_model<1, 2, 4, bcl::st2010> MCT;
 public:
     test(int L);
   };

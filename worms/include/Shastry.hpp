@@ -5,9 +5,9 @@
 
 namespace model{
   template <class MC>
-  class Shastry :public base_spin_model<2, 4, MC>{
+  class Shastry :public base_spin_model<2, 2, 4, MC>{
 public:
-  typedef base_spin_model<2,4,MC> MDT; 
+  typedef base_spin_model<2,2,4,MC> MDT; 
   Shastry(int Lx, int Ly, double J1, double J2, double h); //(1) 
   Shastry(int L, double J1, double J2 = 1, double h = 0)
   :Shastry(L, L, J1, J2, h){}
@@ -41,9 +41,9 @@ public:
 };
 
   template <class MC>
-  class Shastry_2 :public base_spin_model<2, 4, MC>{
+  class Shastry_2 :public base_spin_model<2, 4, 4, MC>{
 public:
-    typedef base_spin_model<2, 4, MC> MDT; 
+    typedef base_spin_model<2, 4, 4, MC> MDT; 
     Shastry_2(std::vector<std::string> path_list, int Lx, int Ly, double J1, double J2, double h, double s, int pom); //(1) 
     Shastry_2(std::vector<std::string> path_list, int L, double J1, double J2 = 1, double h = 0, double s = 0, int pom = 0)
     :Shastry_2(path_list, L, L, J1, J2, h, s, pom){}
@@ -163,12 +163,6 @@ printf("bond num : [type0, type1] = [%lu, %lu] \n", MDT::bond_t_size[0], MDT::bo
 std::cout << "end \n" << std::endl;
 
 if (J1 < 0 || J2 < 0) std::cerr << "J1 and J2 must have non-negative value in this setting" << std::endl;
-
-
-//* create sps vector.
-std::vector<size_t> spsl(4, MDT::L);
-MDT::set_sps(spsl);
-
 
 
 //*set offset

@@ -60,11 +60,10 @@ class worm{
   public:
   typedef typename MODEL::MDT base_spin_model;
   static const size_t max_L = base_spin_model::max_L;
-  static const size_t sps = 4;
-  static const size_t nls = sps>>1;
+  static const size_t sps = base_spin_model::max_sps;
   typedef Operatorv2<sps, max_L> OP_type;
   typedef std::vector<OP_type> OPS;
-  typedef spin_state::state_func<nls> state_func;
+  typedef spin_state::state_func<sps, max_L> state_func;
 
 
   MODEL model;
@@ -215,7 +214,7 @@ class worm{
 
           r = uniform(rand_src);
           if (r < accept[u]){
-            append_ops(ops_main, spacetime_dots, &bond, (u<<bond.size() * nls) | u, lop_label, tau);
+            append_ops(ops_main, spacetime_dots, &bond, u * state_func::pows[bond.size()] + u, lop_label, tau);
           }
         }
         tau += expdist(rand_src);
@@ -384,7 +383,7 @@ class worm{
       size_t dir = (size_t)2 * r;//n initial direction is 1.
       size_t ini_dir = dir;
       // size_t fl = 1;
-      size_t fl = static_cast<size_t>((sps-1)*uniform(rand_src)) + 1;
+      size_t fl = static_cast<size_t>((model.sps_sites[site]-1)*uniform(rand_src)) + 1;
       size_t ini_fl = fl;
 
       int wl = wlength;

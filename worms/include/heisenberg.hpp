@@ -5,9 +5,9 @@
 
 namespace model{
   template <class MC>
-  class heisenberg :public base_spin_model<1, 4, MC>{
+  class heisenberg :public base_spin_model<1, 2, 4, MC>{
   public:
-    typedef base_spin_model<1, 4, MC> MDT; 
+    typedef base_spin_model<1, 2, 4, MC> MDT; 
     heisenberg(int L, double Jz, double Jxy, double h, int dim); //(1) 
     heisenberg(int L, double h, int dim = 1, double Jz=1) : heisenberg(L, Jz, -Jz, h, dim) {} //(2) : pass arguments to (1) constructor. This is for AFH.
 
@@ -18,9 +18,9 @@ namespace model{
 
 
   template <class MC>
-  class heisenberg_v2 :public base_spin_model<1, 4, MC>{
+  class heisenberg_v2 :public base_spin_model<1, 2, 4, MC>{
   public:
-    typedef base_spin_model<1, 4, MC> MDT; 
+    typedef base_spin_model<1, 2, 4, MC> MDT; 
     heisenberg_v2(std::vector<std::string> path_list, int L, double Jz, double Jxy, double h, int dim, double shift=0, int pom = 1); //(1) 
     heisenberg_v2(std::vector<std::string> path_list, int L, double h, int dim = 1, double Jz=1, double shift=0, int pom = 1) : heisenberg_v2(path_list, L, Jz, -Jz, h, dim, shift, pom) {} //(2) : pass arguments to (1) constructor. This is for AFH.
 
@@ -39,7 +39,7 @@ namespace model{
 template <class MC>
 model::heisenberg<MC>::heisenberg(int L, double Jz, double Jxy, double h, int dim)
   :Jz(Jz), Jxy(Jxy), dim(dim),
-  h(h), MDT(lattice::graph::simple(dim, L), 2)
+  h(h), MDT(lattice::graph::simple(dim, L))
 {
   std::cout << "model output" << std::endl;
   std::cout << "L : " << L << std::endl;

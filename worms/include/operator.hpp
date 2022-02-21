@@ -15,9 +15,9 @@ namespace obs{
   using BOND = model::BOND;
   //* definition depends on number of spins per site (nls).
 
-  template <size_t nls>
+  template <size_t nls, size_t max_L = 4>
   int magnetization(STATE state){
-    typedef spin_state::state_func<1> func;
+    typedef spin_state::state_func<nls, max_L> func;
 
     int mu;
     for (auto x : state) {

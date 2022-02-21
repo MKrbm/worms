@@ -28,59 +28,38 @@ namespace spin_state{
   using WORM_ARR = std::vector<WORM>; //  site, spin, dot_label, tau (dot label is needed for reverse lookup)
   using DOT_ARR = std::vector<std::tuple<int,int,int,int>>;   //prev, next, dot_type, index, (index refers to the legs of the dot with respect to the class of dots)
 
-  template<size_t nls> 
+  template<size_t _sps, size_t max_L> 
   struct state_func{
   public:
-    size_t nls_ = nls;
-    static const size_t sps = (1<<nls);
+    static const std::array<size_t, max_L+1> pows;
+    static const size_t sps = _sps;
     static size_t state2num(STATE const& state, int L = -1){
-      // std::cout << "nls = " << nls << std::endl;
       size_t num = 0;
       if (L < 0) L = state.size();
       if (L == 0) return 0;
+      size_t x = 1;
       for (int i = L-1; i >= 0; i--) {
-        num <<= (nls);
-        num += state[i];
+        num += x*state[i];
+        x*=sps;
       }
       return num;
     }
 
     static size_t state2num(STATE const& state, BOND const& bond){
       size_t u = 0;
+      // for(auto x : pows) cout << x << endl;
       for (int i=0; i<bond.size(); i++){
-        // int tmp = cstate[bond[i]];
-        u += (state[bond[i]] << (nls*i));
-      }
-      return u;
-    }
-
-
-    static STATE num2state(int num, int L){
-      int coef = 1;
-      model::STATE state(L, 0); // all spin up
-      for (int i=0; i<L; i++){
-        state[i] = num&(sps-1);
-        num >>= (nls);
-      }
-      return state;
-    }
-
-    static size_t state2num(STATE const& state, BOND const& bond, SPS_ARR const& sps_base){
-      size_t u = 0;
-      for (int i=0; i<bond.size(); i++){
-        // int tmp = cstate[bond[i]];
-        u += (state[bond[i]] * sps_base[i]);
+        u += (state[bond[i]] * pows[i]);
       }
       return u;
   }
   
-
-    static STATE num2state(int num, int L, SPS_ARR const& sps_base){
+    static STATE num2state(int num, int L){
       int coef = 1;
       model::STATE state(L, 0); // all spin up
       for (int i=0; i<L; i++){
-        state[L-i-1] = num/sps_base[L-i-1];
-        num%=sps_base[L-i-1];
+        state[L-i-1] = num/pows[L-i-1];
+        num%=pows[L-i-1];
       }
       return state;
     }
@@ -138,6 +117,8 @@ namespace spin_state{
   }
 }
 
+template <size_t sps_, size_t max_L>
+const std::array<size_t, max_L+1> spin_state::state_func<sps_, max_L>::pows = pows_array<max_L>(sps_);
 
 /*
 params
