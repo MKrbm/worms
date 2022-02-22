@@ -221,6 +221,9 @@ class worm{
       }else{ //*if tau went over the operator time.
         if (opi->is_off_diagonal()) {
           // auto const& bond = *opi->bond_ptr();
+          if (opi->state() == 1){
+            cout << "stop" << endl;
+          }
           update_state(opi, cstate);
           append_ops(ops_main, spacetime_dots, opi->bond_ptr(), opi->state(), opi->op_type(),opi->tau());
           printStateAtTime(cstate, tau);

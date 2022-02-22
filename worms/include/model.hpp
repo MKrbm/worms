@@ -80,8 +80,7 @@ namespace model {
     std::array<int, N_op>& leg_size,
     std::vector<std::string> path_list, 
     std::vector<size_t> type_list,
-    std::vector<double> coupling_list,
-    double threshold = 1E-5
+    std::vector<double> coupling_list
     ){
     ASSERT(path_list.size() == type_list.size(), "");
     ASSERT(leg_size.size() == N_op, "");
@@ -109,14 +108,11 @@ namespace model {
         for (int j=0; j<shape[1]; j++)
         {
           auto x = coupling_list[op_label]*data[i * shape[1] + j];
-          if (std::abs(x) > threshold) {
-            loperators[op_type].ham[j][i] += x;
-          }
+          loperators[op_type].ham[j][i] += x;
         }
       }
       op_label++;
     }
-
   };
 }
 
@@ -166,7 +162,7 @@ public:
   local_operator(int leg, size_t sps = 2);
   local_operator();
 
-  void set_ham(double off_set = 0);
+  void set_ham(double off_set = 0, double thres = 1E-8);
   void set_trans_weights();
   void check_trans_prob();
   int index2num(std::array<int, 2> index);
@@ -253,11 +249,11 @@ public:
 
     sps_sites = std::vector<size_t>(L, _max_sps);
   }
-  void initial_setting(std::vector<double>off_sets = std::vector<double>(N_op,0)){
+  void initial_setting(std::vector<double>off_sets = std::vector<double>(N_op,0), double thres = 1E-8){
     int i = 0;
     double tmp=0;
     for (auto& x : loperators){
-      x.set_ham(off_sets[i]);
+      x.set_ham(off_sets[i], thres);
       shifts.push_back(x.ene_shift);
       i++;
     }
@@ -291,7 +287,7 @@ this function should be called after manually define 2D local hamiltonian.
 - set 1D hamiltonian 
 */
 template <class MC>
-void model::local_operator<MC>::set_ham(double off_set){
+void model::local_operator<MC>::set_ham(double off_set, double thres){
   int N = ham_vector.size();
   ene_shift=0;
   ham_ = ham;
@@ -308,6 +304,7 @@ void model::local_operator<MC>::set_ham(double off_set){
   for (int i=0; i<N; i++){
     auto index = num2index(i);
     ham_vector[i] = ham_[index[0]][index[1]];
+    if (std::abs(ham_vector[i]) < thres) ham_vector[i] = 0;
   }
 
 

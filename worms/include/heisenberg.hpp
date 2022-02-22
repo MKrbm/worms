@@ -114,14 +114,13 @@ model::heisenberg_v2<MC>::heisenberg_v2(std::vector<std::string> path_list, int 
   auto& leg_size = MDT::leg_size;
   leg_size[0] = 2; //there is only one type of operator.
   auto type_list = std::vector<size_t>(path_list.size(), 0); // size is equal to N_op
-
+  double thres = 1E-8;
   set_hamiltonian<MDT::Nop, MDT::max_sps, MDT::max_L, typename MDT::MCT>(
     loperators,
     leg_size,
     path_list,
     type_list,
-    J
-  );
+    J);
   // int l = 2;
   // loperators[0] = local_operator<MC>(l);
   // leg_size[0] = l;
@@ -150,7 +149,7 @@ model::heisenberg_v2<MC>::heisenberg_v2(std::vector<std::string> path_list, int 
   //   op_label++;
   // }
   std::vector<double> off_sets(MDT::Nop, shift);
-  MDT::initial_setting(off_sets);
+  MDT::initial_setting(off_sets, thres);
   if (pom){
     for (int i=0; i<MDT::shifts.size(); i++){
       printf("shifts[%d] = %3.3f\n", i, MDT::shifts[i]);
