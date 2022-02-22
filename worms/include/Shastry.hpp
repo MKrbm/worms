@@ -151,64 +151,79 @@ model::Shastry_2<MC>::Shastry_2(std::vector<std::string> path_list, int Lx, int 
 :Lx(Lx), Ly(Ly), J1(J1), J2(J2),pom(pom),
 h(h), MDT(return_lattice(Lx, Ly))
 {
-std::cout << "\n\nmodel output" << std::endl;
-std::cout << "[Lx, Ly] : [" << Lx << ", "<< Ly << "]" << std::endl;
-std::cout << "[J1, J2] : [" << J1 << 
-      ", " << J2 << "]" << std::endl;
+  std::cout << "\n\nmodel output" << std::endl;
+  std::cout << "[Lx, Ly] : [" << Lx << ", "<< Ly << "]" << std::endl;
+  std::cout << "[J1, J2] : [" << J1 << 
+        ", " << J2 << "]" << std::endl;
 
-std::cout << "h : " << h << std::endl;
-std::cout << "num local operators : " << MDT::Nop << std::endl;
-printf("bond num : [type0, type1] = [%lu, %lu] \n", MDT::bond_t_size[0], MDT::bond_t_size[1]);
-std::cout << "end \n" << std::endl;
+  std::cout << "h : " << h << std::endl;
+  std::cout << "num local operators : " << MDT::Nop << std::endl;
+  printf("bond num : [type0, type1] = [%lu, %lu] \n", MDT::bond_t_size[0], MDT::bond_t_size[1]);
+  std::cout << "end \n" << std::endl;
 
-if (J1 < 0 || J2 < 0) std::cerr << "J1 and J2 must have non-negative value in this setting" << std::endl;
+  if (J1 < 0 || J2 < 0) std::cerr << "J1 and J2 must have non-negative value in this setting" << std::endl;
 
-
-//*set offset
-std::vector<double> off_sets(2,shift);
-
-//* read onsite hamiltonian
-std::string os_path = path_list[2];
-auto pair = load_npy(os_path);
-auto shape_os = pair.first;
-auto data_os = pair.second;
-
-//* set loperators vector
-auto& loperators = MDT::loperators;
-int local = 0;
-for (auto path : {path_list[0], path_list[1]}) {
-
-  auto pair = load_npy(path);
-  auto shape = pair.first;
-  auto data = pair.second;
-  int l = 2;
-  loperators[local] = local_operator<MC>(l, 4); 
-  MDT::leg_size[local] = l;
-  std::cout << "hamiltonian is read from " << path << std::endl;
+  auto& loperators = MDT::loperators;
+  auto& leg_size = MDT::leg_size;
+  leg_size[0] = 2;
+  leg_size[1] = 2;
 
 
 
-  for (int i=0; i<shape[0]; i++){
-    for (int j=0; j<shape[1]; j++)
-    {
-      auto x = J1*data[i * shape[1] + j] + J2*data_os[i * shape[1] + j];
-      if (std::abs(x) > 1E-4) {
-        loperators[local].ham[j][i] = x;
-        if (pom) printf("[%2d, %2d] : %3.3f\n", j, i, x);
-        }
+  std::vector<double> J = {J1, J1, J2, J2};
+  std::vector<std::string> path_list_ = { path_list[0], path_list[1], path_list[2], path_list[2] };
+  std::vector<size_t> type_list = { 0, 1, 0, 1 };
+  double thres = 1E-8;
+  set_hamiltonian<MDT::Nop, MDT::max_sps, MDT::max_L, typename MDT::MCT>(
+    loperators,
+    leg_size,
+    path_list_,
+    type_list,
+    J);
+  //*set offset
+  std::vector<double> off_sets(MDT::Nop,shift);
+
+  // //* read onsite hamiltonian
+  // std::string os_path = path_list[2];
+  // auto pair = load_npy(os_path);
+  // auto shape_os = pair.first;
+  // auto data_os = pair.second;
+
+  // //* set loperators vector
+  // int local = 0;
+  // for (auto path : {path_list[0], path_list[1]}) {
+
+  //   auto pair = load_npy(path);
+  //   auto shape = pair.first;
+  //   auto data = pair.second;
+  //   int l = 2;
+  //   loperators[local] = local_operator<MC>(l, 4); 
+  //   MDT::leg_size[local] = l;
+  //   std::cout << "hamiltonian is read from " << path << std::endl;
+
+
+
+  //   for (int i=0; i<shape[0]; i++){
+  //     for (int j=0; j<shape[1]; j++)
+  //     {
+  //       auto x = J1*data[i * shape[1] + j] + J2*data_os[i * shape[1] + j];
+  //       if (std::abs(x) > 1E-4) {
+  //         loperators[local].ham[j][i] = x;
+  //         if (pom) printf("[%2d, %2d] : %3.3f\n", j, i, x);
+  //         }
+  //     }
+  //   }
+  //   if (pom)  std::cout << "\n\n" << std::endl;
+  //   local ++;
+  // }
+
+  MDT::initial_setting(off_sets, thres, true);  
+
+  if (pom){
+    for (int i=0; i<MDT::shifts.size(); i++){
+      printf("shifts[%d] = %3.3f\n", i, MDT::shifts[i]);
     }
   }
-  if (pom)  std::cout << "\n\n" << std::endl;
-  local ++;
-}
-
-MDT::initial_setting(off_sets);  
-
-if (pom){
-  for (int i=0; i<MDT::shifts.size(); i++){
-    printf("shifts[%d] = %3.3f\n", i, MDT::shifts[i]);
-  }
-}
 
 }
 

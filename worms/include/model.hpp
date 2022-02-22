@@ -162,7 +162,7 @@ public:
   local_operator(int leg, size_t sps = 2);
   local_operator();
 
-  void set_ham(double off_set = 0, double thres = 1E-8);
+  void set_ham(double off_set = 0, double thres = 1E-8, bool dw = false);
   void set_trans_weights();
   void check_trans_prob();
   int index2num(std::array<int, 2> index);
@@ -249,11 +249,11 @@ public:
 
     sps_sites = std::vector<size_t>(L, _max_sps);
   }
-  void initial_setting(std::vector<double>off_sets = std::vector<double>(N_op,0), double thres = 1E-8){
+  void initial_setting(std::vector<double>off_sets = std::vector<double>(N_op,0), double thres = 1E-8, bool dw = false){
     int i = 0;
     double tmp=0;
     for (auto& x : loperators){
-      x.set_ham(off_sets[i], thres);
+      x.set_ham(off_sets[i], thres, dw);
       shifts.push_back(x.ene_shift);
       i++;
     }
@@ -287,7 +287,7 @@ this function should be called after manually define 2D local hamiltonian.
 - set 1D hamiltonian 
 */
 template <class MC>
-void model::local_operator<MC>::set_ham(double off_set, double thres){
+void model::local_operator<MC>::set_ham(double off_set, double thres, bool dw){
   int N = ham_vector.size();
   ene_shift=0;
   ham_ = ham;
@@ -328,7 +328,7 @@ void model::local_operator<MC>::set_ham(double off_set, double thres){
   }
 
   // set transition probability
-  ogwt.init_table(ham_vector);
+  ogwt.init_table(ham_vector, dw);
   for (int c = 0; c < ogwt.size(); ++c) markov.push_back(markov_t(MC(),ogwt[c]));
 
   // auto rand_src = engine_type(2021);

@@ -33,7 +33,7 @@
 
 #include "state.hpp"
 #include "model.hpp"
-#define SEED 1643698133
+#define SEED 1645523933
 /* inherit UnionFindTree and add find_and_flip function*/
 
 // template <typename MODEL>
@@ -61,6 +61,8 @@ class worm{
   typedef typename MODEL::MDT base_spin_model;
   static const size_t max_L = base_spin_model::max_L;
   static const size_t sps = base_spin_model::max_sps;
+  static const size_t sps_prime = sps-1; // = 1 for spin half model
+
   typedef Operatorv2<sps, max_L> OP_type;
   typedef std::vector<OP_type> OPS;
   typedef spin_state::state_func<sps, max_L> state_func;
@@ -221,9 +223,9 @@ class worm{
       }else{ //*if tau went over the operator time.
         if (opi->is_off_diagonal()) {
           // auto const& bond = *opi->bond_ptr();
-          if (opi->state() == 1){
-            cout << "stop" << endl;
-          }
+          // if (opi->state() == 1){
+          //   // cout << "stop" << endl;
+          // }
           update_state(opi, cstate);
           append_ops(ops_main, spacetime_dots, opi->bond_ptr(), opi->state(), opi->op_type(),opi->tau());
           printStateAtTime(cstate, tau);
@@ -298,7 +300,7 @@ class worm{
   params(member variables)
   ------
   */
-  int worm_process_op(size_t& next_dot, size_t& dir, size_t& site, double& wlength, size_t& fl){
+  int worm_process_op(size_t& next_dot, size_t& dir, size_t& site, double& wlength, size_t& fl, double& tau_prime){
 
     size_t clabel = next_dot;
     auto& dot = spacetime_dots[clabel];
@@ -306,14 +308,15 @@ class worm{
     // ASSERT(site == dot.site(), "site is not consistent");
     if (dot.at_origin()){ //n* if dot is state.
       state[dot.label()] = (state[dot.label()] + fl) % sps; 
-      wlength +=1;
+      if (dir||tau_prime==0) wlength += 1 - tau_prime;
+      else wlength += tau_prime;
+      tau_prime = 0;
       return 0;
     }
 
     // if (dot.at_worm()){ //n* if dot is at worm
     //   std::get<1>(worms_list[dot.label()]) = spin; // see the definition of WORM
     // }
-    size_t sps_prime = sps-1; // = 1 for spin half model
 
     if (dot.at_operator()){
       size_t dir_in = !dir; //n* direction the worm comes in from the view of operator.
@@ -331,13 +334,25 @@ class worm{
       // if (dot.label() == 205) {
       //   int gg = 0;
       // }
-      wlength += (dir==0) ? -opstate.tau() : opstate.tau();
+      // wlength += (dir==0) ? -opstate.tau() : opstate.tau();
       size_t size = opstate.size();
       size_t cindex = dot.leg(dir_in, size);
       // opstate.flip_state(cindex);
       opstate.update_state(cindex, fl);
       size_t num = opstate.state();
-      int tmp = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + sps-fl-1, rand_src);
+      int tmp = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + sps-fl, rand_src);
+
+      int tmp_wlength = opstate.tau() - tau_prime;
+      if (!(dir^(tmp_wlength>0)) & tmp_wlength!=0) wlength += std::abs(tmp_wlength);
+      else wlength += (1 - std::abs(tmp_wlength));
+      tau_prime = opstate.tau();
+
+      //* if worm stop at this operator
+      if (tmp == 0){
+        return 2;
+      }
+
+      tmp--;
 
       #ifndef NDEBUG
       int niter = 0;
@@ -361,9 +376,10 @@ class worm{
 
       //n* assigin for next step
       dir = nindex/(size);
-      wlength += (dir==0) ? opstate.tau() : -opstate.tau();
       site = opstate.bond(nindex%size);
       next_dot = opstate.next_dot(cindex, nindex, clabel);
+      // wlength += (dir==0) ? opstate.tau() : -opstate.tau();
+
       return 0;
     }
     return 0;
@@ -388,30 +404,48 @@ class worm{
       // size_t fl = 1;
       size_t fl = static_cast<size_t>((model.sps_sites[site]-1)*uniform(rand_src)) + 1;
       size_t ini_fl = fl;
-
       int wl = wlength;
       int br = 0;
+      bool wh = true; //* worm head still exists.
+      double wlength_prime = 0;
       wcount += 1;
-      wlength += (dir == 0) ? tau : -tau;
+      // wlength_prime = (dir == 0) ? tau : -tau;
       do{
         d_label = dot->move_next(dir);
-        if (worm_process_op(d_label, dir, site, wlength, fl) == 1){
-          wlength = wl - ((dir == 0) ? -tau : tau);
-          wcount--;
-          reset_ops();
-          std::copy(cstate.begin(), cstate.end(), state.begin());
-          // std::cout << "reset triggered" << std::endl;
-          br = 1;
-          break;
+        size_t status = worm_process_op(d_label, dir, site, wlength_prime, fl, tau);
+        if (status != 0){
+          if (status == 1){
+            // wlength = wl - ((dir == 0) ? -tau : tau);
+            wlength_prime = 0;
+            // wcount--;
+            reset_ops();
+            std::copy(cstate.begin(), cstate.end(), state.begin());
+            br = 1;
+            break;
+          }
+          if (status == 2){ //*worm is deleted
+            if (wh) {
+              wh = false;
+              std::tie(site, w_label , tau) = *wsi;
+              d_label = w_label;
+              dot = &spacetime_dots[d_label];
+              dir = !ini_dir;
+              fl = ini_fl;
+            }
+            else{
+              break;
+            }
+          }
         }
         dot = &spacetime_dots[d_label];
-      }while((d_label != w_label || ((ini_dir == dir ? -1 : 1)*ini_fl + fl)%sps !=0)&&(br==0)); 
+      }while((d_label != w_label || ((ini_dir == dir ? -1 : 1)*ini_fl + fl)%sps !=0)||(!wh)); 
       if(br==1){
         bocnt++;
         break;
       }
       
-      wlength += (dir == 0) ? -tau : tau;
+      // wlength += (dir == 0) ? -tau : tau;
+      wlength += wlength_prime;
       check_operators_while_update(w_label, dir ? d_label : dot->prev(), ini_dir, ini_fl, fl, dir);
     }
   }
@@ -498,8 +532,9 @@ class worm{
 
     int label = 0;
     std::cout << "debug cnt = " << d_cnt << std::endl;
-    if (d_cnt == 8){
-      int eee;
+    if (d_cnt == 3){
+      int eee = 3;
+      cout << eee << endl;
     }
     d_cnt ++;
     for (const auto& dot:spacetime_dots){

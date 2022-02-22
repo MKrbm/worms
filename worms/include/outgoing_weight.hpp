@@ -41,19 +41,25 @@ public:
   if l = 1 = [0,1] in bit representation and local state = 2 = [1,0]
   state -> [1,0] ^ [0,1] = [1,1] = 3.
 
+  *params
+  -------
+  w : list of weights.
+  boolean dw : 1 = have a chance to delete a worm while updating.
   */
-  void init_table(WEIGHT const& w){
+  void init_table(WEIGHT const& w, bool dw = false){
     weights_.clear();
     weights_.resize(w.size());
     for (int s = 0; s < w.size(); ++s) {
-      weights_[s].resize(2*L*(sps-1));
+      weights_[s].resize(2*L*(sps-1) + 1);
       for (int g = 0; g < 2*L; ++g){
         size_t t = pows[g+1];
         size_t a = pows[g];
         for (int l = 0; l < sps-1; l++) {
           size_t tmp = (s/t)*t + (s%t+(l+1)*a) % t;
-          weights_[s][g*(sps-1) + l] = w[tmp];
+          weights_[s][g*(sps-1) + l + 1] = w[tmp];
         }
+        if (dw) weights_[s][0] = w[s];
+        else weights_[s][0] = 0;
       }
     }
   }

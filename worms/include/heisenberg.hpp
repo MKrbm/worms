@@ -149,7 +149,7 @@ model::heisenberg_v2<MC>::heisenberg_v2(std::vector<std::string> path_list, int 
   //   op_label++;
   // }
   std::vector<double> off_sets(MDT::Nop, shift);
-  MDT::initial_setting(off_sets, thres);
+  MDT::initial_setting(off_sets, thres, true);
   if (pom){
     for (int i=0; i<MDT::shifts.size(); i++){
       printf("shifts[%d] = %3.3f\n", i, MDT::shifts[i]);
