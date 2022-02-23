@@ -83,6 +83,7 @@ namespace model {
     std::vector<double> coupling_list
     ){
     ASSERT(path_list.size() == type_list.size(), "");
+    ASSERT(path_list.size() == coupling_list.size(), "");
     ASSERT(leg_size.size() == N_op, "");
     ASSERT((size_t)N_op == 1+*std::max_element(type_list.begin(), type_list.end()), " ");
 

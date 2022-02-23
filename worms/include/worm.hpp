@@ -33,7 +33,7 @@
 
 #include "state.hpp"
 #include "model.hpp"
-#define SEED 1645523933
+#define SEED 1645589968
 /* inherit UnionFindTree and add find_and_flip function*/
 
 // template <typename MODEL>
@@ -224,7 +224,7 @@ class worm{
         if (opi->is_off_diagonal()) {
           // auto const& bond = *opi->bond_ptr();
           // if (opi->state() == 1){
-          //   // cout << "stop" << endl;
+          //   cout << "stop" << endl;
           // }
           update_state(opi, cstate);
           append_ops(ops_main, spacetime_dots, opi->bond_ptr(), opi->state(), opi->op_type(),opi->tau());
@@ -337,22 +337,40 @@ class worm{
       // wlength += (dir==0) ? -opstate.tau() : opstate.tau();
       size_t size = opstate.size();
       size_t cindex = dot.leg(dir_in, size);
-      // opstate.flip_state(cindex);
-      opstate.update_state(cindex, fl);
-      size_t num = opstate.state();
-      int tmp = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + sps-fl, rand_src);
+
+      size_t num;
+      int tmp;
+      if (fl!=0){
+        opstate.update_state(cindex, fl);
+        num = opstate.state();
+        tmp = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + sps-fl, rand_src);
+      }else{
+        num = opstate.state();
+        tmp = loperators[opstate.op_type()].markov[num](0, rand_src);
+      }
 
       int tmp_wlength = opstate.tau() - tau_prime;
-      if (!(dir^(tmp_wlength>0)) & tmp_wlength!=0) wlength += std::abs(tmp_wlength);
+      if (!(dir^(tmp_wlength>0)) & (tmp_wlength!=0)) wlength += std::abs(tmp_wlength);
       else wlength += (1 - std::abs(tmp_wlength));
       tau_prime = opstate.tau();
 
+      int nindex;
       //* if worm stop at this operator
       if (tmp == 0){
-        return 2;
+        nindex = static_cast<size_t>((2 * size)*uniform(rand_src));
+        dir = nindex/(size);
+        site = opstate.bond(nindex%size);
+        fl = 0;
+      }else{
+        tmp--;
+        nindex = tmp/sps_prime;
+        fl = tmp % sps_prime + 1;
+        opstate.update_state(nindex, fl);
+        //n* assigin for next step
+        dir = nindex/(size);
+        site = opstate.bond(nindex%size);
       }
 
-      tmp--;
 
       #ifndef NDEBUG
       int niter = 0;
@@ -369,17 +387,7 @@ class worm{
         
       }
       #endif 
-      int nindex = tmp/sps_prime;
-      fl = tmp % sps_prime + 1;
-      // opstate.flip_state(nindex);
-      opstate.update_state(nindex, fl);
-
-      //n* assigin for next step
-      dir = nindex/(size);
-      site = opstate.bond(nindex%size);
       next_dot = opstate.next_dot(cindex, nindex, clabel);
-      // wlength += (dir==0) ? opstate.tau() : -opstate.tau();
-
       return 0;
     }
     return 0;
@@ -410,35 +418,23 @@ class worm{
       double wlength_prime = 0;
       wcount += 1;
       // wlength_prime = (dir == 0) ? tau : -tau;
+    if (d_cnt == 1309){
+      cout << "stop" << endl;
+    }
       do{
         d_label = dot->move_next(dir);
         size_t status = worm_process_op(d_label, dir, site, wlength_prime, fl, tau);
         if (status != 0){
           if (status == 1){
-            // wlength = wl - ((dir == 0) ? -tau : tau);
             wlength_prime = 0;
-            // wcount--;
             reset_ops();
             std::copy(cstate.begin(), cstate.end(), state.begin());
             br = 1;
             break;
+           }
           }
-          if (status == 2){ //*worm is deleted
-            if (wh) {
-              wh = false;
-              std::tie(site, w_label , tau) = *wsi;
-              d_label = w_label;
-              dot = &spacetime_dots[d_label];
-              dir = !ini_dir;
-              fl = ini_fl;
-            }
-            else{
-              break;
-            }
-          }
-        }
         dot = &spacetime_dots[d_label];
-      }while((d_label != w_label || ((ini_dir == dir ? -1 : 1)*ini_fl + fl)%sps !=0)||(!wh)); 
+      }while((d_label != w_label || ((ini_dir == dir ? -1 : 1)*ini_fl + fl)%sps !=0)); 
       if(br==1){
         bocnt++;
         break;
@@ -532,9 +528,8 @@ class worm{
 
     int label = 0;
     std::cout << "debug cnt = " << d_cnt << std::endl;
-    if (d_cnt == 3){
-      int eee = 3;
-      cout << eee << endl;
+    if (d_cnt == 1308){
+      cout << "stop" << endl;
     }
     d_cnt ++;
     for (const auto& dot:spacetime_dots){
