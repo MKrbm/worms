@@ -29,11 +29,11 @@ A = np.zeros((2,2),dtype=np.float128)
 A[1,0] = 1
 A[0,1] = -1
 
-p = expm(-np.random.rand(1)*A)
-# p = np.random.rand(4).reshape(2,2)
+# p = expm(-np.random.rand(1)*A)
+p = np.random.rand(4).reshape(2,2)
 P = np.kron(p,p)
 P_inv = np.linalg.inv(P)
-P_inv = P.T
+# P_inv = P.T
 
 path = "array/H_bond_z"
 if not os.path.isfile(path):
@@ -64,7 +64,7 @@ if not os.path.isfile(path):
 
 path = "array/HP_bond_z"
 h = P @ (-SzSz) @ P_inv
-h = np.abs(h)
+# h = np.abs(h)
 if not os.path.isfile(path):
   np.save(path,h.astype(np.float64))
   print("save : ", path+".npy")
@@ -73,7 +73,7 @@ if not os.path.isfile(path):
 
 path = "array/HP_bond_x"
 h = P @ (-SxSx) @ P_inv
-h = np.abs(h)
+# h = np.abs(h)
 if not os.path.isfile(path):
   np.save(path,h.astype(np.float64))
   print("save : ", path+".npy")
@@ -81,7 +81,7 @@ if not os.path.isfile(path):
 
 path = "array/HP_bond_y"
 h = P @ (-SySy) @ P_inv
-h = np.abs(h)
+# h = np.abs(h)
 if not os.path.isfile(path):
   np.save(path,h.astype(np.float64))
   print("save : ", path+".npy")
@@ -89,7 +89,7 @@ if not os.path.isfile(path):
 
 path = "array/HP_onsite"
 h = P @ (m) @ P_inv
-h = np.abs(h)
+# h = np.abs(h)
 if not os.path.isfile(path):
   np.save(path,h.astype(np.float64))
   print("save : ", path+".npy")
