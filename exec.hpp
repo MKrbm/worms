@@ -59,6 +59,7 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
   BC::observable umag2;
   double beta = 1 / opt.T;
   size_t co = opt.co;
+  bool fix_wdensity = opt.fix_wdensity;
 
 
   worm<SPINMODEL> solver(beta, spin_model, co); //template needs for std=14
@@ -111,15 +112,19 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
       umag2 << mu * mu * sign;
     }
     if (i <= opt.therm / 2) {
-      if (wcount > 0) wdensity = spin_model.lattice.num_bonds()/ (wlength / wcount);
-      if (i % (opt.therm / 8 + 1) == 0) {
-        wcount /= 2;
-        wlength /= 2;
+      if (!fix_wdensity){
+        if (wcount > 0) wdensity = spin_model.lattice.num_bonds()/ (wlength / wcount);
+        if (i % (opt.therm / 8 + 1) == 0) {
+          wcount /= 2;
+          wlength /= 2;
+        }
       }
     }
-    if (i == opt.therm / 2)
-    std::cout << "Info: average number worms per MCS is reset from " << spin_model.L
-              << " to " << wdensity << "\n\n";
+    if (i == opt.therm / 2){
+      if (!fix_wdensity) std::cout << "Info: average number worms per MCS is reset from " << spin_model.L
+                << " to " << wdensity << "\n\n";
+      else std::cout << "Info: average number worms per MCS is " << wdensity << "\n\n";
+    }
     cnt++;
   }
 
@@ -186,6 +191,7 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
   BC::observable sglt; 
   BC::observable n_neg_ele; 
   BC::observable n_ops; 
+  bool fix_wdensity = opt.fix_wdensity;
 
 
   double beta = 1 / opt.T;
@@ -245,11 +251,12 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
       n_ops << n_op;
     }
     if (i <= opt.therm / 2) {
-      if (wcount > 0) wdensity = spin_model.lattice.num_bonds()/ (wlength / wcount);
-      if (wdty>0) wdensity = wdty;
-      if (i % (opt.therm / 8 + 1) == 0) {
-        wcount /= 2;
-        wlength /= 2;
+      if (!fix_wdensity){
+        if (wcount > 0) wdensity = spin_model.lattice.num_bonds()/ (wlength / wcount);
+        if (i % (opt.therm / 8 + 1) == 0) {
+          wcount /= 2;
+          wlength /= 2;
+        }
       }
     }
     if (i == opt.therm / 2)

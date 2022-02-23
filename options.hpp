@@ -44,6 +44,7 @@ struct options {
   unsigned int argc;
   int pom = 0;
   bool zero_fl = false;
+  bool fix_wdensity = false;
 
 
   static int my_strlen(char *input_string)
@@ -140,6 +141,12 @@ struct options {
       }
       if (str.find("-z") != std::string::npos){
         if (++i<argc) zero_fl = std::atoi(argv[i].c_str());
+        else usage();
+        to_break(i, argv);
+        continue;
+      }
+      if (str.find("-fw") != std::string::npos){
+        if (++i<argc) fix_wdensity = std::atoi(argv[i].c_str());
         else usage();
         to_break(i, argv);
         continue;
