@@ -5,7 +5,7 @@
 -J1 1 
 -J2 0.35
 -m 100000 
--n 10000000
+-n 50000000
 -M heisernberg_v2
 -PATH1  ../python/array/HP_bond_z.npy
 -PATH2  ../python/array/HP_bond_x.npy
@@ -19,4 +19,4 @@
 #-co 100
 -pom 1
 -z 1
-# -fw 1
+-fw 0
