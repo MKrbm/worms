@@ -1,11 +1,11 @@
 -L 2
--T 0.05
+-T 0.1
 -H 0
 -D 1
 -J1 1 
 -J2 0
 -m 10000 
--n 10000000
+-n 100000
 -M heisernberg_v2
 -PATH1  ../python/array/HP_bond_z.npy
 -PATH2  ../python/array/HP_bond_x.npy
@@ -19,3 +19,4 @@
 -shift 0
 #-co 100
 -pom 1
+-z 1
