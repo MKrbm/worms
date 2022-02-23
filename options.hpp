@@ -43,6 +43,7 @@ struct options {
   bool valid;
   unsigned int argc;
   int pom = 0;
+  bool zero_fl = false;
 
 
   static int my_strlen(char *input_string)
@@ -117,6 +118,11 @@ struct options {
       }
       if (str.find("-n") != std::string::npos){
         if (++i<argc) sweeps = std::atoi(argv[i].c_str());
+        else usage();
+        continue;
+      }
+      if (str.find("-z") != std::string::npos){
+        if (++i<argc) zero_fl = std::atoi(argv[i].c_str());
         else usage();
         continue;
       }

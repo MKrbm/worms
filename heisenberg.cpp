@@ -45,7 +45,6 @@ int main(int argc, char* argv[])
   double h = opt_ptr->H;
   double J1 = opt_ptr->J1;
   double J2 = opt_ptr->J2;
-  double sft = opt_ptr->shift;
   auto path_list = opt_ptr->path_list;
   std::string model_name = opt_ptr->MN;
   std::cout << "model name is : " << model_name << std::endl;
@@ -64,7 +63,7 @@ int main(int argc, char* argv[])
     model::heisenberg<bcl_t> spin_model(L,J1, J2, h,dim);
     exe_worm(spin_model, opt_ptr);
   }else{
-    model::heisenberg_v2<bcl_t> spin_model(path_list, L, J1, J2, h, dim, sft, opt_ptr->pom);
+    model::heisenberg_v2<bcl_t> spin_model(path_list, L, J1, J2, h, dim, opt_ptr->zero_fl ,opt_ptr->shift, opt_ptr->pom);
     exe_worm(spin_model, opt_ptr);
   }
 }
