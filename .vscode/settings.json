@@ -122,4 +122,5 @@
       "cinttypes": "cpp",
       "alignedvector3": "cpp"
     },
+    "python.defaultInterpreterPath": "/home/keisuke/miniconda3/envs/quspin/bin/python",
 }

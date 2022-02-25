@@ -7,8 +7,10 @@
   - can deal with similarity-transformed hamiltonian.
 
 - ## 
-
+  - reduce probability of zero-worm
+  - warp zero-worm
+  - delete worm
 
 - ## v4.2
   - automatically reduce sign.
-    - chose unit cell by ourself, then find the best local similarity transformation.
+    - chose unit cell by ourself, then find the best local similarity transformation.7

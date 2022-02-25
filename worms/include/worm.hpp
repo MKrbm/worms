@@ -418,9 +418,6 @@ class worm{
       double wlength_prime = 0;
       wcount += 1;
       // wlength_prime = (dir == 0) ? tau : -tau;
-    if (d_cnt == 1309){
-      cout << "stop" << endl;
-    }
       do{
         d_label = dot->move_next(dir);
         size_t status = worm_process_op(d_label, dir, site, wlength_prime, fl, tau);
