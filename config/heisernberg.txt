@@ -5,16 +5,16 @@
 -J1 1 
 -J2 0.35
 -m 100000 
--n 50000000
+-n 1000000000
 -M heisernberg_v2
-# -PATH1  ../python/array/HP_bond_z.npy
-# -PATH2  ../python/array/HP_bond_x.npy
-# -PATH3  ../python/array/HP_bond_y.npy
-# -PATH4  ../python/array/HP_onsite.npy
--PATH1  ../python/array/H_bond_z.npy
--PATH2  ../python/array/H_bond_x.npy
--PATH3  ../python/array/H_bond_y.npy
--PATH4  ../python/array/H_onsite.npy
+-PATH1  ../python/array/HP_bond_z.npy
+-PATH2  ../python/array/HP_bond_x.npy
+-PATH3  ../python/array/HP_bond_y.npy
+-PATH4  ../python/array/HP_onsite.npy
+# -PATH1  ../python/array/H_bond_z.npy
+# -PATH2  ../python/array/H_bond_x.npy
+# -PATH3  ../python/array/H_bond_y.npy
+# -PATH4  ../python/array/H_onsite.npy
 -shift 0
 #-co 100
 -pom 1
