@@ -1,4 +1,5 @@
 import numpy as np
+from pyrsistent import v
 from scipy.linalg import expm
 import torch
 from torch import nn
@@ -41,7 +42,7 @@ class unitary_solver(torch.nn.Module):
         assert x.shape[0] == x.shape[1], "require square matrix"
         assert x.shape[0] == self._size
         M = self.matrix
-        x = M @ x @ torch.inverse(M)
+        x = M @ x @ M.T
         return x
     
     @property
@@ -148,7 +149,7 @@ class matrix_solver(torch.nn.Module):
         assert x.shape[0] == x.shape[1], "require square matrix"
         assert x.shape[0] == self._size
         M = self.matrix
-        x = M @ x @ M.T
+        x = M @ x @ torch.inverse(M)
         return x
     
     @property
@@ -162,6 +163,7 @@ class matrix_solver(torch.nn.Module):
     def set_params(self, params):
         self._params[:] = params[:]
     
+    @property
     def matrix(self):
         if self._syms:
             return self._get_sym_matrix()
@@ -194,7 +196,7 @@ class matrix_solver(torch.nn.Module):
         U_return3 = torch.eye(1)
         tmp = torch.diag(self._params3[:])
         # tmp = tmp.sum(axis=0)x
-        self._one_site_matrix3 = torch.matrix_exp(tmp)
+        self._one_site_matrix3 = tmp
         for _ in range(len(self.sps_list)):
             U_return3 = torch.kron(U_return3, self._one_site_matrix3)
         return U_return1 @ U_return3 @ U_return2     
@@ -222,6 +224,108 @@ class matrix_solver(torch.nn.Module):
             ind += n
             U_return3 = torch.kron(U_return3, tmp)
         return U_return1 @ U_return3 @ U_return2
+    @staticmethod
+    def make_generator(N):
+        tmp_list = []
+        for i, j in [[i,j] for i in range(N) for j in range(i+1,N)]:
+            tmp = np.zeros((N,N), dtype=np.float64)
+            tmp[i,j] = 1
+            tmp[j,i] = -1
+            tmp_list.append(tmp)
+        return np.array(tmp_list)
+
+
+
+class diagonal_solver(torch.nn.Module):
+    def __init__(self,sps_list, syms = False):
+        super(diagonal_solver, self).__init__()
+
+        self.sps_list = sps_list
+        self._n_params3 = []
+        self._matrix = None
+        self._syms = syms
+
+        if syms:
+            N = sps_list[0]
+            assert np.all(np.array(sps_list) == N), "parameter symmetrization can only be applied to the sps_list with all elements being the same"
+            self._n_params3 = [N]
+
+        else:
+            for N in sps_list:
+                self._n_params3.append(N)
+
+
+        
+
+        tmp = torch.ones(np.sum(self._n_params3),dtype=torch.float64)
+        self._params3 = torch.nn.Parameter(tmp)
+    
+        self._size = np.prod(sps_list)
+
+
+    def forward(self, x):
+        assert x.shape[0] == x.shape[1], "require square matrix"
+        assert x.shape[0] == self._size
+        M, M_inv = self.matrix()
+        x = M @ x @ M_inv
+        return x
+    
+    @property
+    def params(self):
+        return self._params
+    
+    @property
+    def n_params(self):
+        return self._n_params
+    
+    @property
+    def set_params(self, params):
+        self._params[:] = params[:]
+    
+    def matrix(self):
+        if self._syms:
+            return self._get_sym_matrix()
+        else:
+            return self._get_matrix()
+    
+    @property
+    def one_site_matrix(self):
+        if not self._syms:
+            raise NameError("this method is unavailable for syms = False")
+        else:
+            return self._one_site_matrix
+
+
+    def _get_sym_matrix(self):
+
+        U_return = torch.eye(1)
+        U_inv = torch.eye(1)
+        tmp = torch.diag(self._params3)
+        tmpinv = torch.diag(1/self._params3)
+        # tmp = tmp.sum(axis=0)x
+        self._one_site_matrix3 = tmp
+        self._one_site_matrix_inv3 = tmpinv
+        for _ in range(len(self.sps_list)):
+            U_return = torch.kron(U_return, self._one_site_matrix3)
+            U_inv = torch.kron(U_inv, self._one_site_matrix_inv3)
+        return U_return, U_inv
+    
+
+    def _get_matrix(self):
+        ind = 0
+        U_return = torch.eye(1)
+        U_inv = torch.eye(1)
+        for i, n in enumerate(self._n_params3):
+            tmp = torch.diag(self._params3[ind:ind+n])
+            tmp_inv = torch.diag(1/self._params3[ind:ind+n])
+            ind += n
+            U_return = torch.kron(U_return, tmp)
+            U_inv = torch.kron(U_inv,tmp_inv)
+        self.U_return = U_return
+        self.U_inv = U_inv
+
+
+
     @staticmethod
     def make_generator(N):
         tmp_list = []
