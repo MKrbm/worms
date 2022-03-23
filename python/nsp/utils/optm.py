@@ -12,6 +12,12 @@ def loss_1(A):
 #     A = -A**2
     A = torch.nn.ReLU()(-A)
     return - torch.trace(A) + A.sum()
+
+
+def loss_eig(A):
+#     A = -A**2
+    B = torch.abs(A)
+    return torch.linalg.eigvalsh(B)[-1]
     
     
 class unitary_solver(torch.nn.Module):
@@ -335,3 +341,47 @@ class diagonal_solver(torch.nn.Module):
             tmp[j,i] = -1
             tmp_list.append(tmp)
         return np.array(tmp_list)
+
+
+def get_mat_status(X):
+    X = np.array(X)
+    L = X.shape[0]
+    lps = int(np.sqrt(L))
+    if lps**2 != L:
+        print("! ---- This matrix might not be the bond operator ---- !")
+    if not np.all(np.diag(X)>=0):
+        print("! ---- diagonal elements of the local hamiltonian should be non negative ---- !")
+        
+    E, V = np.linalg.eigh(X)
+    return L, lps, E
+
+def optim_matrix_symm(X, N_iter, lr, 
+        optm_method = torch.optim.Adam, 
+        loss_func = loss_eig,
+        print_status = True,
+        ):
+    L, lps, E = get_mat_status(X)
+    model = unitary_solver([lps,lps],syms=True)
+    optimizer = optm_method(model.parameters(), lr=lr)
+    
+    print("target loss : {:.3f}\n".format(E[-1]))
+    
+    print("-"*10, "iteration start", "-"*10)
+    
+    for t in range(N_iter):
+        y = model(X)
+        loss = loss_func(y)
+        if t % 1000 == 0:
+            print("iteration : {:4d}   loss : {:.3f}".format(t,loss.item()))
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+    if print_status:
+        E2, V2 = np.linalg.eigh(np.abs(np.array(X.data)))
+        E3, V3 = np.linalg.eigh(np.abs(np.array(y.data)))
+
+        print("\n","-"*14, "results", "-"*14)
+        print("target loss      : {:.3f}".format(E[-1]))
+        print("loss before optm : {:.3f}".format(E2[-1]))
+        print("loss after optm  : {:.3f}".format(E3[-1]))
+    return model
