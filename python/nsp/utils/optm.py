@@ -14,7 +14,7 @@ def loss_1(A):
     return - torch.trace(A) + A.sum()
 
 
-def loss_eig(A, beta):
+def loss_eig(A):
 #     A = -A**2
     B = torch.zeros(1)
     if A.ndim!=3:
@@ -23,11 +23,12 @@ def loss_eig(A, beta):
         for a in A:
             a_ = torch.abs(a)
             eigs = torch.linalg.eigvalsh(a_)
-            # Z = eigs*torch.exp(beta*(eigs.data))
-            # B += torch.sum(eigs*Z) / torch.sum(Z)
-            # print(B)
             B += eigs[-1]
     return B
+
+def loss_eig_np(A):
+    A = np.abs(A)
+    return np.sum(np.linalg.eigvalsh(A)[:,-1])
     
     
 class unitary_solver(torch.nn.Module):
@@ -61,7 +62,7 @@ class unitary_solver(torch.nn.Module):
                 self.generators.append(torch.tensor(self.make_generator(N), requires_grad=False))
                 self._n_params.append(int(N*(N-1)/self.denominator))
         
-        torch.manual_seed(seed)
+        # torch.manual_seed(seed)
         tmp = torch.rand(np.sum(self._n_params))
         # tmp = torch.zeros(np.sum(self._n_params))
         self._params = torch.nn.Parameter(tmp)
@@ -414,6 +415,7 @@ def optim_matrix_symm(X, N_iter,
         print_status = True,
         seed = 0,
         beta = 10,
+        init_params = None,
         **kwargs,
         ):
     X = torch.stack(X)
@@ -421,6 +423,10 @@ def optim_matrix_symm(X, N_iter,
         X = X[None,:]
     L, lps, E = get_mat_status(X)
     model = unitary_solver([lps,lps],syms=True, seed = seed)
+    N_params = len(model._params)
+    if init_params is not None:
+        assert N_params == len(init_params), "inconsistent"
+        model._params = torch.nn.Parameter(torch.tensor(init_params))
     optimizer = optm_method(model.parameters(), **kwargs)
     
     np.set_printoptions(precision=3)
@@ -439,7 +445,7 @@ def optim_matrix_symm(X, N_iter,
     beta_list = np.linspace(10, 1000, N_iter)
     for t in range(N_iter):
         y= model(X)
-        loss = loss_func(y,beta_list[t])
+        loss = loss_func(y)
         loss_ = loss
         if t % 1000 == 0:
             print("iteration : {:4d}   loss : {:.3f}".format(t,loss_.item()))
@@ -465,7 +471,33 @@ def optim_matrix_symm(X, N_iter,
         E3 = np.array(E3)
 
         print("\n","-"*14, "results", "-"*14)
-        print("target loss      : {:.3f}".format(np.sum(E[:,-1])))
-        print("loss before optm : {:.3f}".format(np.sum(E2[:,-1])))
-        print("loss after optm  : {:.3f}".format(np.sum(E3[:,-1])))
+        print("target loss      : {:.10f}".format(np.sum(E[:,-1])))
+        print("loss before optm : {:.10f}".format(np.sum(E2[:,-1])))
+        print("loss after optm  : {:.10f}".format(np.sum(E3[:,-1])))
     return model, grad_list
+
+
+
+class unitary_optm:
+
+    def __init__(self, X, init_param = None):
+        X = np.array(X)
+        if X.ndim != 3:
+            X = X[None, :, :]
+        self.X = X
+        N = self.X.shape[-1]
+        L, lps, E = get_mat_status(self.X)
+        self._n_params = [int(lps*(lps-1)/2)]
+        print(self._n_params)
+        model = unitary_solver([lps,lps],syms=True, seed = 0)
+        self.generators = model.make_generator(lps)
+        self.params = init_param
+
+    def __call__(self, param):
+        assert (len(param) == self._n_params[0]), "inconsistent"
+        param = np.array(param)
+        tmp = param[:, None, None] * self.generators 
+        onesite_mat = expm(tmp.sum(axis=0))
+        U = np.kron(onesite_mat, onesite_mat)[None, :, :]
+        return loss_eig_np(U @ self.X @ U.swapaxes(1,2))
+
