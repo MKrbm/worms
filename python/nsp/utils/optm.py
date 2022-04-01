@@ -6,29 +6,11 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import ToTensor, Lambda
+from .optm_method import *
+from .lossfunc import *
 # import torch.kron
 
-def loss_1(A):
-#     A = -A**2
-    A = torch.nn.ReLU()(-A)
-    return - torch.trace(A) + A.sum()
 
-
-def loss_eig(A):
-#     A = -A**2
-    B = torch.zeros(1)
-    if A.ndim!=3:
-        A = A[None,:]
-    else:
-        for a in A:
-            a_ = torch.abs(a)
-            eigs = torch.linalg.eigvalsh(a_)
-            B += eigs[-1]
-    return B
-
-def loss_eig_np(A):
-    A = np.abs(A)
-    return np.sum(np.linalg.eigvalsh(A)[:,-1])
     
     
 class unitary_solver(torch.nn.Module):
@@ -398,12 +380,17 @@ def get_mat_status(X):
     assert X.ndim==3, "dimension of X must be 3"
 
     E = []    
+    V = []
     for x in X:
         if not np.all(np.diag(x)>=0):
             print("! ---- diagonal elements of the local hamiltonian should be non negative ---- !")
-        e, V = np.linalg.eigh(x)
+        e, v = np.linalg.eigh(x)
         E.append(e)
-    return L, lps, np.array(E)
+        V.append(v)
+    return L, lps, np.array(E), np.array(V)
+
+
+    
 
 def energy(E, beta):
     Z = np.exp(-beta*E)
@@ -421,8 +408,8 @@ def optim_matrix_symm(X, N_iter,
     X = torch.stack(X)
     if X.ndim!=3:
         X = X[None,:]
-    L, lps, E = get_mat_status(X)
-    model = unitary_solver([lps,lps],syms=True, seed = seed)
+    L, lps, E, _ = get_mat_status(X)
+    model = unitary_solver([lps, lps],syms=True, seed = seed)
     N_params = len(model._params)
     if init_params is not None:
         assert N_params == len(init_params), "inconsistent"
@@ -436,8 +423,15 @@ def optim_matrix_symm(X, N_iter,
     E_exp = 0
     for e in E:
         E_exp += e[-1]
-    print("target loss : {:.3f}\n".format(E_exp))
-    
+    print("target loss : {:.3f}".format(E_exp))
+
+    E2 = []
+    for x in X.data:
+        e2, V2 = np.linalg.eigh(np.abs(np.array(x.data)))
+        E2.append(e2)
+
+    E2 = np.array(E2)
+    print("loss before optm : {:.10f}\n".format(np.sum(E2[:,-1])))
     print("-"*10, "iteration start", "-"*10)
     
     mu = 10
@@ -448,7 +442,10 @@ def optim_matrix_symm(X, N_iter,
         loss = loss_func(y)
         loss_ = loss
         if t % 1000 == 0:
-            print("iteration : {:4d}   loss : {:.3f}".format(t,loss_.item()))
+            print("iteration : {:8d}   loss : {:.3f}".format(t,loss_.item()), end="")
+            if type(optimizer) is scheme1:
+                print("\tgamma = {:.6}".format(optimizer.gamma), end="")
+            print("")
         optimizer.zero_grad()
         loss_.backward()
         model.set_loss(loss.data)
@@ -479,14 +476,49 @@ def optim_matrix_symm(X, N_iter,
 
 
 class unitary_optm:
+    
+    def __init__(self, X, n_params, init_param = None, index = None):
+        X = np.array(X)
+        if X.ndim != 3:
+            X = X[None, :, :]
+        self.X = X
+        N = self.X.shape[-1]
+        L, lps, E, V = get_mat_status(self.X)
+        self._n_params = [int(lps*(lps-1)/2)]
+        model = unitary_solver([lps,lps],syms=True, seed = 0)
+        self.generators = model.make_generator(lps)
+        if init_param is not None:
+            assert len(init_param) == n_params
+            self.params = np.array(init_param)
+        else:
+            self.params = 2*np.pi*np.random.rand(n_params)
+        self.index = index
 
+    def __call__(self, param):
+        if self.index is None:
+            assert (len(param) == self._n_params[0]), "inconsistent"
+        else:
+            assert len(self.index) == len(param)
+
+        params = np.copy(self.params)
+        param[np.abs(param) < 1e-5] = 0 
+        params[self.index] += np.array(param)
+        # self.params[self.index] %= 2*np.pi    
+        tmp = params[:, None, None] * self.generators 
+        onesite_mat = expm(tmp.sum(axis=0))
+        U = np.kron(onesite_mat, onesite_mat)[None, :, :]
+        return loss_eig_np(U @ self.X @ U.swapaxes(1,2))
+
+
+class unitary_optm2:
+    
     def __init__(self, X, init_param = None):
         X = np.array(X)
         if X.ndim != 3:
             X = X[None, :, :]
         self.X = X
         N = self.X.shape[-1]
-        L, lps, E = get_mat_status(self.X)
+        L, lps, E, V = get_mat_status(self.X)
         self._n_params = [int(lps*(lps-1)/2)]
         print(self._n_params)
         model = unitary_solver([lps,lps],syms=True, seed = 0)
@@ -500,4 +532,140 @@ class unitary_optm:
         onesite_mat = expm(tmp.sum(axis=0))
         U = np.kron(onesite_mat, onesite_mat)[None, :, :]
         return loss_eig_np(U @ self.X @ U.swapaxes(1,2))
+
+
+class unitary_solver2(torch.nn.Module):
+    def __init__(self, X, sps_list, syms = False, seed = 2022, dtype = torch.float64):
+        super(unitary_solver2, self).__init__()
+
+        self.sps_list = sps_list
+        self.generators = []
+        self._n_params = []
+        self._matrix = None
+        self._syms = syms
+        self._loss = None
+        self.dtype = dtype
+        
+
+
+        if dtype == torch.float64:
+            self.denominator = 2
+            self.complex = False
+            self.npdtype = np.float64
+        elif dtype == torch.complex128:
+            self.complex = True
+            self.denominator = 1
+            self.npdtype = np.complex128
+        if syms:
+            N = sps_list[0]
+            assert np.all(np.array(sps_list) == N), "parameter symmetrization can only be applied to the sps_list with all elements being the same"
+            self._n_params = [int(N*(N-1)/self.denominator)]
+            self.generators.append(torch.tensor(self.make_generator(N), requires_grad=False))
+        else:
+            for N in sps_list:
+                self.generators.append(torch.tensor(self.make_generator(N), requires_grad=False))
+                self._n_params.append(int(N*(N-1)/self.denominator))
+        
+        # torch.manual_seed(seed)
+        tmp = torch.rand(np.sum(self._n_params))
+        # tmp = torch.zeros(np.sum(self._n_params))
+        self._params = torch.nn.Parameter(tmp)
+        self._size = np.prod(sps_list)
+
+        if X.ndim != 3:
+            X = X[None, :, :]
+
+        self.X = []
+        self.eigV = []
+        self.Ec = []
+        for x in X:
+            self.X.append(x.type(self.dtype))
+            Ec, Vc = np.linalg.eigh(x)
+            index = np.where(np.abs(Ec - Ec[-1]) < 1e-9)
+            eigV = Vc[:, index[0]]
+            eigV[np.abs(eigV) < 1E-10] = 0
+            self.eigV.append(torch.tensor(eigV, dtype=dtype))
+            self.Ec.append(Ec[index[0]])
+    
+    def forward(self):
+        M = self.matrix
+        return_mat = []
+        return_vec = []
+        for i in range(len(self.X)):
+            return_mat.append(M @ self.X[i] @ M.T.conj())
+            return_vec.append(M @ self.eigV[i])
+        return return_mat, return_vec
+
+    def set_loss(self, loss):
+        self._loss = loss
+
+
+    @property
+    def get_loss(self):
+        return self._loss
+
+
+    @property
+    def params(self):
+        return self._params
+    
+    @property
+    def n_params(self):
+        return self._n_params
+    
+    def set_params(self, params):
+        self._params[:] = params[:]
+    
+    @property
+    def matrix(self):
+        if self._syms:
+            return self._get_sym_matrix()
+        else:
+            return self._get_matrix()
+    
+    @property
+    def one_site_matrix(self):
+        if not self._syms:
+            raise NameError("this method is unavailable for syms = False")
+        else:
+            return self._one_site_matrix
+
+
+    def _get_sym_matrix(self):
+        ind = 0
+        U_return = torch.eye(1)
+        N = self.n_params[0]
+        tmp = self._params[:,None,None] * self.generators[0]
+        tmp = tmp.sum(axis=0)
+        self._one_site_matrix = torch.matrix_exp(tmp)
+        for _ in range(len(self.sps_list)):
+            U_return = torch.kron(U_return, self._one_site_matrix)
+        return U_return     
+    
+
+    def _get_matrix(self):
+        ind = 0
+        U_return = torch.eye(1)
+        for i, n in enumerate(self._n_params):
+            tmp = self._params[ind:ind+n,None,None] * self.generators[i]
+            ind += n
+            U_return = torch.kron(U_return, torch.matrix_exp(tmp.sum(axis=0)))
+        return U_return
+
+    def make_generator(self, N):
+        tmp_list = []
+        for i, j in [[i,j] for i in range(N) for j in range(i+1,N)]:
+            tmp = np.zeros((N,N), dtype=self.npdtype)
+            tmp[i,j] = 1
+            tmp[j,i] = -1
+            tmp_list.append(tmp)
+            if self.complex:
+                tmp[i,j] = 1j
+                tmp[j,i] = 1j
+                tmp_list.append(tmp)
+        return np.array(tmp_list)
+
+
+
+
 
