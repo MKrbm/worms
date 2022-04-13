@@ -17,8 +17,8 @@ class scheme1:
     def step(self, alpha = None):
         for p in self.param:
             if alpha is None:
-                # alpha = 5*np.random.rand(p.shape[0])
-                alpha = np.random.normal(1, 1, p.shape[0])
+                alpha = np.random.rand(p.shape[0])
+                # alpha = np.abs(np.random.normal(1, 0.5, p.shape[0]))
                 # alpha = np.random.rand(1)
             alpha = torch.tensor(alpha)
             assert alpha.shape[0] == p.shape[0] or alpha.shape[0] == 1

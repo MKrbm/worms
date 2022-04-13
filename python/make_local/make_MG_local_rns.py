@@ -74,28 +74,33 @@ Dual Annealing
 
 targets_da = []
 
-# def callbackF(x, f, context):
-#     if context == 1:
-#         print("target value : {:.5f} in the context {}".format(f,context))
-#     targets_da.append(f)
+def callbackF(x, f, context):
+    if context == 1:
+        print("target value : {:.5f} in the context {}".format(f,context))
+    targets_da.append(f)
 
-# func = optm.unitary_optm([X1, X2], 28, add = True)
-# import scipy.optimize as optimize
-# bounds = [[-100, 100] for _ in range(28)]
-# ret = optimize.dual_annealing(
-#     func, bounds = bounds, restart_temp_ratio = 1e-5, visit = 2.7, initial_temp = 3*10**4, maxiter = 500, callback = callbackF)
+func = optm.unitary_optm([X1, X2], 28, add = True)
+import scipy.optimize as optimize
+bounds = [[-100, 100] for _ in range(28)]
+ret = optimize.dual_annealing(
+    func, bounds = bounds, restart_temp_ratio = 1e-5, visit = 2.7, initial_temp = 3*10**4, maxiter = 5000, callback = callbackF)
 
-# func(ret.x)
-# X_da = np.zeros_like(X1)
-# for mat in [X1, X2]:
-#     X_da += make_positive_np(func.U @ mat @ func.U.T)
-# E_da = np.linalg.eigvalsh(X_da)[-1]
-# print("dual annealing loss               : ", E_da)
+func(ret.x)
+X = np.zeros_like(X1)
+for mat in [X1, X2]:
+    X += make_positive_np(func.U @ mat @ func.U.T)
+
+
+path = "../array/MG_union_rns3_bond"
+if not os.path.isfile(path):
+  np.save(path,X)
+  print("save : ", path+".npy")
+  beauty_array(X,path + ".txt")
 
 
 # model, gl = optm.optim_matrix_symm(
-#     [torch.tensor(X1), torch.tensor(X2)], 100000,
-#     optm_method = torch.optim.SGD, seed = 10, 
+#     [torch.tensor(X1), torch.tensor(X2)], 40000,
+#     optm_method = torch.optim.SGD, seed = 14, 
 #     lr = 0.001, add = True)
 
 # U = model.matrix
@@ -107,20 +112,24 @@ targets_da = []
 
 
 import torch.optim
-model, gl = optm.optim_matrix_symm(
-        [torch.tensor(X)],
-        40000, 
-        optm_method = optm.scheme1, 
-        add = True,
-        # seed = 10,
-        gamma = 0.0001,
-        r = 1,
-        )
-U = model.matrix
+# model, gl = optm.optim_matrix_symm(
+#         [torch.tensor(X1), torch.tensor(X2)],
+#         40000, 
+#         optm_method = optm.scheme1, 
+#         add = True,
+#         seed = 15,
+#         # seed = 15,
+#         # seed = 30003223,
+#         gamma = 0.0002,
+#         r = 1,
+#         )
 
-X = np.array(model(torch.tensor(X)).data[0], dtype=np.float64)
-path = "../array/MG_union_rns_bond"
-if not os.path.isfile(path):
-  np.save(path,X)
-  print("save : ", path+".npy")
-  beauty_array(X,path + ".txt")
+
+# U = model.matrix
+
+# X = np.array(model(torch.tensor(X1)).data[0], dtype=np.float64)
+# path = "../array/MG_union_rns2_bond"
+# if not os.path.isfile(path):
+#   np.save(path,X)
+#   print("save : ", path+".npy")
+#   beauty_array(X,path + ".txt")

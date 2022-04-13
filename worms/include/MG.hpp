@@ -114,7 +114,7 @@ model::MG_2<MC>::MG_2(
   auto& loperators = MDT::loperators;
   auto& leg_size = MDT::leg_size;
   leg_size[0] = 2;
-  std::vector<double> J = {1/2.0};
+  std::vector<double> J = {1};
   std::vector<std::string> path_list_ = { path_list[0]};
   std::vector<size_t> type_list = {0};
   double thres = 1E-8;

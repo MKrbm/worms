@@ -44,7 +44,7 @@ class unitary_solver(torch.nn.Module):
                 self.generators.append(torch.tensor(self.make_generator(N), requires_grad=False))
                 self._n_params.append(int(N*(N-1)/self.denominator))
         
-        # torch.manual_seed(seed)
+        torch.manual_seed(seed)
         tmp = torch.rand(np.sum(self._n_params))
         # tmp = torch.zeros(np.sum(self._n_params))
         self._params = torch.nn.Parameter(tmp)
@@ -432,9 +432,17 @@ def optim_matrix_symm(X, N_iter,
     print("target loss : {:.3f}".format(E_exp))
 
     E2 = []
-    for x in X.data:
-        e2 = np.array(torch.linalg.eigvalsh(make_positive(x)))
+    if not add:
+        for x in X.data:
+            e2 = np.array(torch.linalg.eigvalsh(make_positive(x)))
+            E2.append(e2)
+    else:
+        X_list = np.zeros_like(X.data[0])
+        for x in X.data:
+            X_list += make_positive_np(np.array(x))
+        e2 = np.array(np.linalg.eigvalsh(X_list))
         E2.append(e2)
+    
 
     E2 = np.array(E2)
     print("loss before optm : {:.10f}\n".format(np.sum(E2[:,-1])))
