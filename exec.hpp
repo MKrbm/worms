@@ -9,6 +9,8 @@
 #include <heisenberg.hpp>
 #include <Shastry.hpp>
 #include <ladder.hpp>
+#include <MG.hpp>
+
 
 
 #include <testmodel.hpp>
@@ -45,7 +47,7 @@ struct is_instance<U<T>, U> : public std::true_type {};
 
 template <typename SPINMODEL>
 std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
-  typename std::enable_if<!(is_instance<SPINMODEL,model::Shastry_2>::value||is_instance<SPINMODEL,model::ladder_v2>::value),std::nullptr_t>::type = nullptr){
+  typename std::enable_if<(is_instance<SPINMODEL,model::heisenberg>::value||is_instance<SPINMODEL,model::heisenberg_v2>::value),std::nullptr_t>::type = nullptr){
 
   // std::cout << "test L : " << opt_ptr -> sweeps << std::endl;
 
@@ -177,7 +179,7 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
 
 template <typename SPINMODEL>
 std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
-  typename std::enable_if<is_instance<SPINMODEL,model::Shastry_2>::value||is_instance<SPINMODEL,model::ladder_v2>::value,std::nullptr_t>::type = nullptr){
+  typename std::enable_if<!(is_instance<SPINMODEL,model::heisenberg>::value||is_instance<SPINMODEL,model::heisenberg_v2>::value),std::nullptr_t>::type = nullptr){
 
 
   std::cout << "this is called" << std::endl;
@@ -259,9 +261,11 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
         }
       }
     }
-    if (i == opt.therm / 2)
-    std::cout << "Info: average number worms per MCS is reset from " << spin_model.L
-              << " to " << wdensity << "\n\n";
+    if (i == opt.therm / 2){
+      if (!fix_wdensity) std::cout << "Info: average number worms per MCS is reset from " << spin_model.L
+                << " to " << wdensity << "\n\n";
+      else std::cout << "Info: average number worms per MCS is " << wdensity << "\n\n";
+    }
     cnt++;
   }
 
