@@ -2,8 +2,11 @@ import numpy as np
 import scipy
 from scipy import sparse
 from scipy.sparse import linalg
+import sys
+sys.path.insert(0, "../") 
 from functions import *
 import os
+
 
 I = np.identity(2)
 Sz = np.zeros([2,2])

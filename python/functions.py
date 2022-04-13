@@ -35,7 +35,7 @@ def l2nl(ham, L, bond = [], sps = 2):
     
     for b in bond:
         assert (b < L) & (b >= 0), "site is inconsistent with L"
-    H = sparse.csr_matrix((sps**L,sps**L), dtype = np.complex128)
+    H = sparse.csr_matrix((sps**L,sps**L), dtype = ham.dtype)
     L_rem = L-len(bond)
     size_rem = sps ** L_rem
     state = np.zeros(L, dtype = np.int64)
