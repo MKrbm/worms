@@ -139,7 +139,7 @@ struct options {
         to_break(i, argv);
         continue;
       }
-      if (str.find("-z") != std::string::npos){
+      if (str.find("-zw") != std::string::npos){
         if (++i<argc) zero_fl = std::atoi(argv[i].c_str());
         else usage();
         to_break(i, argv);

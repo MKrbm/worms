@@ -13,25 +13,36 @@
   using std::chrono::microseconds;
 
 #endif
+using std::cout;
+using std::endl;
 
 
 int main(int argc, char* argv[])
 {
 
 
-  options opt(argc, argv, 16, 1, 1.0, "heisernberg");
-  if (!opt.valid) std::exit(-1);
-  int L = opt.L;
-  int dim = opt.dim;
-  double J = 1;
-  double h = opt.H;
-  double J1 = opt.J1;
-  double J2 = opt.J2;
-  std::string model_name = opt.MN;
+  std::vector<std::string> path_list = {"../python/array/MG_ori_bond.npy"};
+  size_t L = 6;
+  double sft = 0;
+  bool pom = 1;
+  typedef bcl::st2013 bcl_t;
+  model::MG<bcl_t> spin_model(path_list, L, sft, pom);
+  lattice::graph lattice = spin_model.lattice;
+  lattice.print();
+
+  // options opt(argc, argv, 16, 1, 1.0, "heisernberg");
+  // if (!opt.valid) std::exit(-1);
+  // int L = opt.L;
+  // int dim = opt.dim;
+  // double J = 1;
+  // double h = opt.H;
+  // double J1 = opt.J1;
+  // double J2 = opt.J2;
+  // std::string model_name = opt.MN;
 
 
 
-  std::cout << "main.cpp no longer available" << std::endl;
+  // std::cout << "main.cpp no longer available" << std::endl;
 
   // if (model_name == "heisernberg"){
   //   model::heisenberg spin_model(L,h,dim);

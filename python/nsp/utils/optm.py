@@ -369,11 +369,11 @@ class diagonal_solver(torch.nn.Module):
         return np.array(tmp_list)
 
 
-def get_mat_status(X):
+def get_mat_status(X, N):
     X = np.array(X)
     L = X.shape[1]
-    lps = int(np.sqrt(L))
-    if lps**2 != L:
+    lps = int(np.round(L**(1/N)))
+    if lps**N != L:
         print("! ---- This matrix might not be the bond operator ---- !")
 
 
@@ -403,13 +403,19 @@ def optim_matrix_symm(X, N_iter,
         seed = 0,
         beta = 10,
         init_params = None,
+        add = False,
+        N = 2,
         **kwargs,
         ):
     X = torch.stack(X)
     if X.ndim!=3:
         X = X[None,:]
-    L, lps, E, _ = get_mat_status(X)
-    model = unitary_solver([lps, lps],syms=True, seed = seed)
+
+    if add:
+        print("add all matrix after positive map")
+    
+    L, lps, E, _ = get_mat_status(X, N)
+    model = unitary_solver([lps for _ in range(N)],syms=True, seed = seed)
     N_params = len(model._params)
     if init_params is not None:
         assert N_params == len(init_params), "inconsistent"
@@ -427,7 +433,7 @@ def optim_matrix_symm(X, N_iter,
 
     E2 = []
     for x in X.data:
-        e2, V2 = np.linalg.eigh(np.abs(np.array(x.data)))
+        e2 = np.array(torch.linalg.eigvalsh(make_positive(x)))
         E2.append(e2)
 
     E2 = np.array(E2)
@@ -439,7 +445,7 @@ def optim_matrix_symm(X, N_iter,
     beta_list = np.linspace(10, 1000, N_iter)
     for t in range(N_iter):
         y= model(X)
-        loss = loss_func(y)
+        loss = loss_func(y, add)
         loss_ = loss
         if t % 1000 == 0:
             print("iteration : {:8d}   loss : {:.3f}".format(t,loss_.item()), end="")
@@ -477,13 +483,14 @@ def optim_matrix_symm(X, N_iter,
 
 class unitary_optm:
     
-    def __init__(self, X, n_params, init_param = None, index = None):
+    def __init__(self, X, n_params, init_param = None, index = None, add = False, N = 2):
+        self.add = add
         X = np.array(X)
         if X.ndim != 3:
             X = X[None, :, :]
         self.X = X
-        N = self.X.shape[-1]
-        L, lps, E, V = get_mat_status(self.X)
+        L, lps, E, V = get_mat_status(self.X, N)
+        print(lps, N)
         self._n_params = [int(lps*(lps-1)/2)]
         model = unitary_solver([lps,lps],syms=True, seed = 0)
         self.generators = model.make_generator(lps)
@@ -493,6 +500,7 @@ class unitary_optm:
         else:
             self.params = 2*np.pi*np.random.rand(n_params)
         self.index = index
+        self.N = N
 
     def __call__(self, param):
         if self.index is None:
@@ -506,14 +514,17 @@ class unitary_optm:
         # self.params[self.index] %= 2*np.pi    
         tmp = params[:, None, None] * self.generators 
         onesite_mat = expm(tmp.sum(axis=0))
-        U = np.kron(onesite_mat, onesite_mat)[None, :, :]
-        return loss_eig_np(U @ self.X @ U.swapaxes(1,2))
+        self.U = onesite_mat
+        for _ in range(self.N-1):
+            self.U = np.kron(self.U, onesite_mat)
+        return loss_eig_np(self.U[None, :, :] @ self.X @ self.U[None, :, :].swapaxes(1,2), self.add)
 
 
 class unitary_optm2:
     
-    def __init__(self, X, init_param = None):
+    def __init__(self, X, init_param = None, add = False):
         X = np.array(X)
+        self.add = False
         if X.ndim != 3:
             X = X[None, :, :]
         self.X = X
