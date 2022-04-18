@@ -8,6 +8,7 @@ from torchvision import datasets
 from torchvision.transforms import ToTensor, Lambda
 from .optm_method import *
 from .lossfunc import *
+from .functions import *
 # import torch.kron
 
 
@@ -434,12 +435,12 @@ def optim_matrix_symm(X, N_iter,
     E2 = []
     if not add:
         for x in X.data:
-            e2 = np.array(torch.linalg.eigvalsh(make_positive(x)))
+            e2 = np.array(torch.linalg.eigvalsh(positive_map(x)))
             E2.append(e2)
     else:
         X_list = np.zeros_like(X.data[0])
         for x in X.data:
-            X_list += make_positive_np(np.array(x))
+            X_list += positive_map_np(np.array(x))
         e2 = np.array(np.linalg.eigvalsh(X_list))
         E2.append(e2)
     
@@ -473,8 +474,8 @@ def optim_matrix_symm(X, N_iter,
         E2 = []
         E3 = []
         for x, yy in zip(X.data,y.data):
-            e2, V2 = np.linalg.eigh(np.abs(np.array(x.data)))
-            e3, V3 = np.linalg.eigh(np.abs(np.array(yy.data)))
+            e2, V2 = np.linalg.eigh(positive_map_np(np.array(x.data)))
+            e3, V3 = np.linalg.eigh(positive_map_np(np.array(yy.data)))
             E2.append(e2)
             E3.append(e3)
 
