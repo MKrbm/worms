@@ -29,36 +29,48 @@ def loss_eig(A, add):
     else:
         if add:
             for a in A:
-                a_ = make_positive(a)
+                a_ = positive_map(a)
                 eigs = torch.linalg.eigvalsh(a_)
                 B += eigs[-1]
         else:
             a_ = torch.zeros_like(A[0])
             for a in A:
-                a_ += make_positive(a)
+                a_ += positive_map(a)
             eigs = torch.linalg.eigvalsh(a_)
             B += eigs[-1]
     return B
 
-def make_positive(A):
-    # a = torch.min(torch.diag(A))* torch.eye(A.shape[0])
-    # return torch.abs(A-a) + a
+
+
+def abs_map(A):
     return torch.abs(A)
 
-def make_positive_np(A):
-    # a = np.eye(A.shape[0])*np.min(np.diag(A))
-    # return np.abs(A-a) + a
+def abs_map_np(A):
     return np.abs(A)
+
+def positive_map(A, abs=False):
+    if abs:
+        return abs_map(A)
+    a = torch.min(torch.diag(A))* torch.eye(A.shape[0])
+    return torch.abs(A-a) + a
+
+def positive_map_np(A, abs=False):
+    if abs:
+        return abs_map_np(A)
+    a = np.eye(A.shape[0])*np.min(np.diag(A))
+    return np.abs(A-a) + a
+
+
 
 def loss_eig_np(A, add):
     if not add:
         for i in range(A.shape[0]):
-            A[i] = make_positive_np(A[i])
+            A[i] = positive_map_np(A[i])
         return np.sum(np.linalg.eigvalsh(A)[:,-1])
     else:
         B = np.zeros_like(A[0])
         for a in A:
-            B+=make_positive_np(a)
+            B+=positive_map_np(a)
         return np.linalg.eigvalsh(B)[-1]
 def loss_2(M, V):
     assert len(M) == len(V), "inconsistent"
