@@ -8,10 +8,11 @@ import sys
 import torch
 import torch.optim
 
+
 sys.path.insert(0, "../") 
-from nsp.utils.lossfunc import make_positive_np
+from nsp.utils.lossfunc import positive_map, positive_map_np, abs_map, abs_map_np
 from nsp.utils import optm
-from functions import *
+from nsp.utils.functions import *
 
 
 
@@ -55,11 +56,15 @@ H += l2nl(LH, 2, [0, 1], sps = 8)
 H += l2nl(LH, 2, [1, 0], sps = 8)
 
 LH2 = l2nl(LH, 2, [1, 0], sps = 8)
-X = -H.toarray()
-X1 = -LH.toarray()
-X2 = -LH2.toarray()
+X = -H
+X1 = -LH
+X2 = -LH2
+X, x = set_origin(X, True)
+X1, x1 = set_origin(X1, True)
+X2, x2 = set_origin(X2, True)
 
-Y = make_positive_np(X)
+
+Y = positive_map_np(X)
 
 
 E = np.linalg.eigvalsh(X)[-1]
@@ -72,30 +77,30 @@ print("initial loss                     : ", E_init)
 Dual Annealing
 """
 
-targets_da = []
+# targets_da = []
 
-def callbackF(x, f, context):
-    if context == 1:
-        print("target value : {:.5f} in the context {}".format(f,context))
-    targets_da.append(f)
+# def callbackF(x, f, context):
+#     if context == 1:
+#         print("target value : {:.5f} in the context {}".format(f,context))
+#     targets_da.append(f)
 
-func = optm.unitary_optm([X1, X2], 28, add = True)
-import scipy.optimize as optimize
-bounds = [[-100, 100] for _ in range(28)]
-ret = optimize.dual_annealing(
-    func, bounds = bounds, restart_temp_ratio = 1e-5, visit = 2.7, initial_temp = 3*10**4, maxiter = 5000, callback = callbackF)
+# func = optm.unitary_optm([X1, X2], 28, add = True)
+# import scipy.optimize as optimize
+# bounds = [[-100, 100] for _ in range(28)]
+# ret = optimize.dual_annealing(
+#     func, bounds = bounds, restart_temp_ratio = 1e-5, visit = 2.7, initial_temp = 3*10**4, maxiter = 5000, callback = callbackF)
 
-func(ret.x)
-X = np.zeros_like(X1)
-for mat in [X1, X2]:
-    X += make_positive_np(func.U @ mat @ func.U.T)
+# func(ret.x)
+# X = np.zeros_like(X1)
+# for mat in [X1, X2]:
+#     X += positive_map_np(func.U @ mat @ func.U.T)
 
 
-path = "../array/MG_union_rns3_bond"
-if not os.path.isfile(path):
-  np.save(path,X)
-  print("save : ", path+".npy")
-  beauty_array(X,path + ".txt")
+# path = "../array/MG_union_rns3_bond"
+# if not os.path.isfile(path):
+#   np.save(path,X)
+#   print("save : ", path+".npy")
+#   beauty_array(X,path + ".txt")
 
 
 # model, gl = optm.optim_matrix_symm(
@@ -103,33 +108,33 @@ if not os.path.isfile(path):
 #     optm_method = torch.optim.SGD, seed = 14, 
 #     lr = 0.001, add = True)
 
-# U = model.matrix
-# X_loss1 = np.zeros_like(X1)
-# for mat in [X1, X2]:
-#     X_loss1 += make_positive_np(U @ mat @ U.T)
-# E_loss1 = np.linalg.eigvalsh(X_loss1)[-1]
-# print("dual annealing loss               : ", E_loss1)
+
 
 
 import torch.optim
-# model, gl = optm.optim_matrix_symm(
-#         [torch.tensor(X1), torch.tensor(X2)],
-#         40000, 
-#         optm_method = optm.scheme1, 
-#         add = True,
-#         seed = 15,
-#         # seed = 15,
-#         # seed = 30003223,
-#         gamma = 0.0002,
-#         r = 1,
-#         )
+model, gl = optm.optim_matrix_symm(
+        [torch.tensor(X1), torch.tensor(X2)],
+        20000, 
+        optm_method = optm.scheme1, 
+        add = True,
+        seed = 15,
+        # seed = 15,
+        # seed = 30003223,
+        gamma = 0.0002,
+        r = 1,
+        )
 
 
-# U = model.matrix
+U = np.array(model.matrix.data)
+X_loss1 = np.zeros_like(X1)
+for mat in [X1, X2]:
+    X_loss1 += positive_map_np(U @ mat @ U.T)
+E_loss2 = np.linalg.eigvalsh(X_loss1)[-1]
+print("scheme2 loss               : ", E_loss2)
 
-# X = np.array(model(torch.tensor(X1)).data[0], dtype=np.float64)
-# path = "../array/MG_union_rns2_bond"
-# if not os.path.isfile(path):
-#   np.save(path,X)
-#   print("save : ", path+".npy")
-#   beauty_array(X,path + ".txt")
+X = np.array(model(torch.tensor(X1+x1)).data[0], dtype=np.float64)
+path = "../array/MG_union_rns5_bond"
+if not os.path.isfile(path):
+  np.save(path,X)
+  print("save : ", path+".npy")
+  beauty_array(X,path + ".txt")

@@ -1,7 +1,7 @@
--L  12
--T  1
--m  100000
--n  1000000
+-L  6
+-T  0.5
+-m  10000
+-n  100000
 -M  MG_2
 -PATH1 ../python/array/MG_union_rns2_bond.npy 
 -shift 0

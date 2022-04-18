@@ -9,9 +9,9 @@ import torch
 import torch.optim
 
 sys.path.insert(0, "../") 
-from nsp.utils.lossfunc import make_positive_np
+from nsp.utils.lossfunc import positive_map_np
 from nsp.utils import optm
-from functions import *
+from nsp.utils.functions import *
 
 
 
@@ -50,16 +50,16 @@ LH += l2nl(LH_, 6, [2, 3, 4], sps = 2)
 LH += l2nl(LH_/2, 6, [3, 4, 5], sps = 2)
 
 
-H = sparse.csr_matrix((2**12,2**12), dtype = np.float64)
-H += l2nl(LH, 4, [0, 1], sps = 8)
-H += l2nl(LH, 4, [1, 2], sps = 8)
+H = sparse.csr_matrix((2**6,2**6), dtype = np.float64)
+H += l2nl(LH, 2, [0, 1], sps = 8)
+H += l2nl(LH, 2, [1, 0], sps = 8)
 
 # LH2 = l2nl(LH, 2, [1, 0], sps = 8)
-X = -H.toarray()
+X = -H
 # X1 = -LH.toarray()
 # X2 = -LH2.toarray()
 
-Y = make_positive_np(X)
+Y = positive_map_np(X)
 
 
 E = np.linalg.eigvalsh(X)[-1]
@@ -109,15 +109,27 @@ targets_da = []
 import torch.optim
 model, gl = optm.optim_matrix_symm(
         [torch.tensor(X)],
-        10000, 
+        20000, 
         optm_method = optm.scheme1, 
-        gamma = 0.001,
+        add = True,
+        seed = 15,
+        # seed = 15,
+        # seed = 30003223,
+        gamma = 0.0002,
         r = 1,
         )
-U = model.matrix
+
+U = np.array(model.matrix.data)
 
 X = np.array(model(torch.tensor(X)).data[0], dtype=np.float64)
 path = "../array/MG_union_rns2_bond"
+if not os.path.isfile(path):
+  np.save(path,X)
+  print("save : ", path+".npy")
+  beauty_array(X,path + ".txt")
+
+X = np.array(U, dtype=np.float64)
+path = "../array/MG_union_mat"
 if not os.path.isfile(path):
   np.save(path,X)
   print("save : ", path+".npy")
