@@ -689,3 +689,76 @@ class unitary_solver2(torch.nn.Module):
 
 
 
+
+class reweight_solver(torch.nn.Module):
+
+    def __init__(self, X):
+        super(reweight_solver, self).__init__()
+        self.X = torch.tensor(X)
+        assert np.all(X.T == X), "X must be symmetrix"
+        self.target = np.max(np.linalg.eigvalsh(X))
+        self.index = np.argwhere(np.abs(X) > 1E-8)
+        self.n_param = self.index.shape[0]
+        tmp = torch.rand(self.n_param,dtype=torch.float64)
+        self._params = torch.nn.Parameter(tmp)
+
+    def _get_matrix(self):
+        
+        Y = torch.zeros_like(self.X)
+        Y[self.index[:,0], self.index[:,1]] = torch.abs(self._params)
+
+        return Y
+
+    @property
+    def matrix(self):
+        return self._get_matrix()
+
+class reweight_solver2(torch.nn.Module):
+
+    def __init__(self, X):
+        super(reweight_solver2, self).__init__()
+        self.X = torch.tensor(X)
+        assert np.all(X.T == X), "X must be symmetrix"
+        self.target = np.max(np.linalg.eigvalsh(X))
+        self.index = np.arange(self.X.shape[0])
+        self.n_param = self.X.shape[0]
+        tmp = torch.rand(self.n_param,dtype=torch.float64)
+        self._params = torch.nn.Parameter(tmp)
+        self.Y = (self.X).clone()
+
+    def _get_matrix(self):
+        
+        Y = positive_map((self.X).clone())
+        Y[self.index, self.index] = self._params
+
+        return Y
+
+    @property
+    def matrix(self):
+        return self._get_matrix()
+
+
+class reweight_solver3(torch.nn.Module):
+
+    def __init__(self, X):
+        super(reweight_solver3, self).__init__()
+        self.X = torch.tensor(X)
+        assert np.all(X.T == X), "X must be symmetrix"
+        self.target = np.max(np.linalg.eigvalsh(X))
+        self.index = np.argwhere(np.abs(X) > 1E-8)
+        self.n_param = self.index.shape[0]
+        tmp = torch.rand(self.n_param,dtype=torch.float64)
+        self._params = torch.nn.Parameter(tmp)
+
+    def _get_matrix(self):
+        
+        Y = torch.zeros_like(self.X)
+        Y[self.index[:,0], self.index[:,1]] += torch.abs(self._params)
+        Y[self.index[:,1], self.index[:,0]] += torch.abs(self._params)
+
+
+        return Y
+
+    @property
+    def matrix(self):
+        return self._get_matrix()

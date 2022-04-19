@@ -81,3 +81,28 @@ def loss_2(M, V):
         for v in vs.T:
             r += v @ m @ v
     return r
+
+
+def reweight_loss(A, E_t, X = None, lam = 1, thres = 1E-8, type_ = 0, prod = 0):
+    E = torch.max(torch.linalg.eigvals(A).real)
+    
+    loss = torch.maximum(E-E_t, torch.tensor(0))
+    assert 0 <= prod <= 1, "prod is [0, 1)"
+    if X is None:
+        return loss
+    else:
+        index = np.argwhere(torch.abs(A) > thres)
+        wr = torch.abs(X[index[0,:], index[1,:]] / A[index[0,:], index[1,:]])
+
+        if type_ == 2:
+            add = torch.max(wr)
+
+        if prod and type_ == 1:
+            r_index = np.random.choice(wr.shape[0],size=int(wr.shape[0]*prod), replace=True)
+
+            add = torch.maximum(wr[r_index].prod()*lam, torch.tensor(lam))
+            # print(wr[r_index])
+        else:
+            add = wr.sum()
+
+        return loss + add * lam, loss

@@ -74,6 +74,17 @@ namespace model {
     return std::distance(bond_type.begin(), it);
   }
 
+  /*
+  params
+  ------
+  leg_size : list of legsize. legsize is number of leg for operator. 2 for bond opeerator
+  
+  type_list : list of types. type specify which local hamiltonian is applied to which bond type. 
+
+  path_list : list of real local hamiltonian. ham_rate holds the rate local/virtual.
+  path_list2 : list of virtual local hamiltonian. loperator.ham holds this value.
+  */
+
   template <int N_op, size_t max_sps, size_t max_L, class MC>
   void set_hamiltonian(
     std::array<local_operator<MC>, N_op>& loperators, 
@@ -372,6 +383,8 @@ void model::local_operator<MC>::set_ham(double off_set, double thres, bool dw){
 
     if (y!=0 && x == 0){
       std::cerr << "cannot reweighting since support doesn't cover the original matrix" << std::endl;
+      std::cerr << "y : " << y << "  x : " << x << std::endl;
+      std::terminate();
     }
     if (x!= 0) y = y/x;
   }

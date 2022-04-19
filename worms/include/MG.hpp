@@ -28,11 +28,23 @@ public:
     } 
   };
 
+/*
+
+params
+------
+path_list : list of path to the local hamiltonian. If n_path is given, then this list can contain virtual hamiltonian. e.g. [H_r_1, H_r_2, H_v_1, H_v_2]
+L : system size
+n_path : # of real local hamiltonian. 
+
+
+
+*/
+
   template <class MC>
   class MG_2 :public base_spin_model<1, 8, 4, MC>{
 public:
     typedef base_spin_model<1,8,4,MC> MDT; 
-    MG_2(std::vector<std::string> path_list, int L, int n_path, double s = 0, int pom = 0);
+    MG_2(std::vector<std::string> path_list, int L, int n_path = 0, double s = 0, int pom = 0);
     int L;
     int pom=0;
     double sft = 0;
@@ -77,7 +89,7 @@ model::MG<MC>::MG(
   std::vector<double> J = {1, 1/2.0};
   std::vector<std::string> path_list_ = { path_list[0], path_list[0]};
   std::vector<size_t> type_list = {0, 1};
-  double thres = 1E-8;
+  double thres = 1E-10;
   set_hamiltonian<MDT::Nop, MDT::max_sps, MDT::max_L, typename MDT::MCT>(
     loperators,
     leg_size,
@@ -108,6 +120,7 @@ model::MG_2<MC>::MG_2(
   cout << "num local operators : " << MDT::Nop << endl;
   cout << "end \n" << endl;
 
+  if (!(n_path > 0)) n_path = path_list.size();
   // ASSERT(path_list.size() == 1, "size of pathlist is 1 for MG");
 
 
@@ -124,7 +137,7 @@ model::MG_2<MC>::MG_2(
     k++;
   }
   std::vector<size_t> type_list = {0};
-  double thres = 1E-8;
+  double thres = 1E-10;
   set_hamiltonian<MDT::Nop, MDT::max_sps, MDT::max_L, typename MDT::MCT>(
     loperators,
     leg_size,

@@ -298,7 +298,7 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
 
   std::cout << "Total Energy         = "
           << ene.mean()/ave_weight.mean()<< " +- " 
-          << std::sqrt(std::pow(ene.error(r)/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2))
+          << std::sqrt(std::pow(ene.error(r)/ave_weight.mean(), 2) + std::pow(ene.mean()/std::pow(ave_weight.mean(),2) * ave_weight.error(r),2))
           << std::endl;
 
   std::cout << "Elapsed time         = " << elapsed << " sec\n"

@@ -133,7 +133,7 @@ E_loss2 = np.linalg.eigvalsh(X_loss1)[-1]
 print("scheme2 loss               : ", E_loss2)
 
 X = np.array(model(torch.tensor(X1+x1)).data[0], dtype=np.float64)
-path = "../array/MG_union_rns5_bond"
+path = "../array/MG_union_rns_bond"
 if not os.path.isfile(path):
   np.save(path,X)
   print("save : ", path+".npy")
