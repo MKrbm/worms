@@ -2,7 +2,7 @@ import sys
 sys.path.append('..')
 
 import numpy as np
-import functions as f
+from utils import functions as f
 from importlib import reload
 from scipy import sparse
 import scipy.sparse.linalg
@@ -34,7 +34,7 @@ for i in range(L):
     H += f.l2nl(lh, L, [i,(i+1)%L], sps = 2)
     H += f.l2nl(lh/2, L, [i,(i+2)%L], sps = 2)   
 
-E_MG = np.linalg.eigvalsh(H.toarray())
+E_MG = np.linalg.eigvalsh(H)
 
 LH_ = sparse.csr_matrix((2**3,2**3), dtype = np.float64)
 i = 0
@@ -52,7 +52,7 @@ H = sparse.csr_matrix((2**6,2**6), dtype = np.float64)
 H += f.l2nl(LH, 2, [0, 1], sps = 8)
 H += f.l2nl(LH, 2, [1, 0], sps = 8)
 LH2 = f.l2nl(LH, 2, [1, 0], sps = 8)
-X = -H.toarray()
-X1 = -LH.toarray()
-X2 = -LH2.toarray()
+X = -H
+X1 = -LH
+X2 = -LH2
 # np.save("../doc/data/MG_exact.npy")

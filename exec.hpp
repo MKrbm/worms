@@ -193,6 +193,7 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
   BC::observable sglt; 
   BC::observable n_neg_ele; 
   BC::observable n_ops; 
+  BC::observable ave_weight; 
   bool fix_wdensity = opt.fix_wdensity;
 
 
@@ -230,6 +231,7 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
     // printf("complete worm update\n");
     if (cnt >= opt.therm){
       int sign = 1;
+      double w_rate = 1;
       double n_neg = 0;
       double n_op = 0;
       double sglt_ = 0;
@@ -241,13 +243,17 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
         sign *= sign_;
         if (sign_ == -1) n_neg++;
         n_op++;
+        w_rate *= spin_model.loperators[op.op_type()].ham_rate_vector[op.state()];
+        // cout << spin_model.loperators[op.op_type()].ham_rate_vector[op.state()]<< endl;
       }
       double ene_tmp = - (double)solver.ops_main.size() / beta;
       for (int e=0; e<spin_model.Nop; e++){
         ene_tmp += spin_model.shifts[e] * spin_model.bond_t_size[e];
       }
-      ene << ene_tmp * sign;
+      // ene << ene_tmp * sign;
+      ene << ene_tmp * w_rate;
       ave_sign << sign;
+      ave_weight << w_rate;
       sglt << sglt_ / spin_model.lattice.num_sites();
       n_neg_ele << n_neg;
       n_ops << n_op;
@@ -291,7 +297,7 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
 
 
   std::cout << "Total Energy         = "
-          << ene.mean()/ave_sign.mean()<< " +- " 
+          << ene.mean()/ave_weight.mean()<< " +- " 
           << std::sqrt(std::pow(ene.error(r)/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2))
           << std::endl;
 
@@ -303,6 +309,8 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
             << std::endl
             << "average sign         = "
             << ave_sign.mean() << " +- " << ave_sign.error(r) << std::endl
+            << "average weight rate  = "
+            << ave_weight.mean() << " +- " << ave_weight.error(r) << std::endl
             << "dimer operator       = "
             << sglt.mean() << std::endl 
             << "# of operators       = "

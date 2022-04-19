@@ -34,6 +34,7 @@ struct options {
   double J2;
   double J3;
   double shift=0;
+  size_t n_path = 0;
   unsigned int sweeps;
   unsigned int therm;
   size_t co = SIZE_MAX;
@@ -85,114 +86,120 @@ struct options {
     for (int i=0; i<argc; ++i){
       auto str = argv[i];
       if (str.find("#") != std::string::npos){
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-L") != std::string::npos){
         if (++i<argc) L = std::atoi(argv[i].c_str());
         else usage();
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-D") != std::string::npos){
         if (++i<argc) dim = std::atoi(argv[i].c_str());
         else usage();
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-T") != std::string::npos){
         if (++i<argc) T = std::atof(argv[i].c_str());
         else usage();
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-H") != std::string::npos){
         if (++i<argc) H = std::atof(argv[i].c_str());
         else usage();
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-J1") != std::string::npos){
         if (++i<argc) J1 = std::atof(argv[i].c_str());
         else usage();
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-J2") != std::string::npos){
         if (++i<argc) J2 = std::atof(argv[i].c_str());
         else usage();
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-J3") != std::string::npos){
         if (++i<argc) J3 = std::atof(argv[i].c_str());
         else usage();
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-m") != std::string::npos){
         if (++i<argc) therm = std::atoi(argv[i].c_str());
         else usage();
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-n") != std::string::npos){
         if (++i<argc) sweeps = std::atoi(argv[i].c_str());
         else usage();
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-zw") != std::string::npos){
         if (++i<argc) zero_fl = std::atoi(argv[i].c_str());
         else usage();
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-fw") != std::string::npos){
         if (++i<argc) fix_wdensity = std::atoi(argv[i].c_str());
         else usage();
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-M") != std::string::npos){
         if (++i<argc) MN = argv[i];
         else usage();
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
+        continue;
+      }
+      if (str.find("-N_PATH") != std::string::npos){
+        if (++i<argc) n_path = std::atoi(argv[i].c_str());
+        else usage();
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-PATH") != std::string::npos){
         if (++i<argc) path_list.push_back(argv[i]); 
         else usage();
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-shift") != std::string::npos){
         if (++i<argc) shift = std::atof(argv[i].c_str());
         else usage();
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-wdty") != std::string::npos){
         if (++i<argc) wdty = std::atof(argv[i].c_str());
         else usage();
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-pom") != std::string::npos){
         if (++i<argc) pom = std::atoi(argv[i].c_str());
         else usage();
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-co") != std::string::npos){
         if (++i<argc) co = std::atoll(argv[i].c_str());
         else usage();
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
       if (str.find("-h") != std::string::npos){
         usage(std::cout);
-        if (from_txt) to_break(i, argv);;
+        if (from_txt) to_break(i, argv);
         continue;
       }
     }
@@ -226,7 +233,6 @@ struct readConfig : options{
   static std::vector<std::string> string2path(std::string path){
     std::ifstream t(path);
     std::string str_((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-    std::cout << str_ << std::endl;
     std::vector<std::string> vec;
      
     std::stringstream check(str_);

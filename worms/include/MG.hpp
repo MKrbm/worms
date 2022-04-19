@@ -9,7 +9,7 @@ namespace model{
   class MG :public base_spin_model<2, 2, 4, MC>{
 public:
     typedef base_spin_model<2,2,4,MC> MDT; 
-    MG(std::vector<std::string> path_list, int L, double s = 0, int pom = 0);
+    MG(std::vector<std::string> path_list, int L, int n_path, double s = 0, int pom = 0);
     int L;
     int pom=0;
     double sft = 0;
@@ -32,7 +32,7 @@ public:
   class MG_2 :public base_spin_model<1, 8, 4, MC>{
 public:
     typedef base_spin_model<1,8,4,MC> MDT; 
-    MG_2(std::vector<std::string> path_list, int L, double s = 0, int pom = 0);
+    MG_2(std::vector<std::string> path_list, int L, int n_path, double s = 0, int pom = 0);
     int L;
     int pom=0;
     double sft = 0;
@@ -56,7 +56,7 @@ public:
 
 template <class MC>
 model::MG<MC>::MG(
-  std::vector<std::string> path_list, int L, 
+  std::vector<std::string> path_list, int L, int n_path, 
   double s, int pom )
 :L(L), sft(s), pom(pom), MDT(return_lattice(L))
 {
@@ -96,7 +96,7 @@ model::MG<MC>::MG(
 
 template <class MC>
 model::MG_2<MC>::MG_2(
-  std::vector<std::string> path_list, int L, 
+  std::vector<std::string> path_list, int L, int n_path,
   double s, int pom )
 :L(L), sft(s), pom(pom), MDT(return_lattice(L))
 {
@@ -108,22 +108,30 @@ model::MG_2<MC>::MG_2(
   cout << "num local operators : " << MDT::Nop << endl;
   cout << "end \n" << endl;
 
-  ASSERT(path_list.size() == 1, "size of pathlist is 1 for MG");
+  // ASSERT(path_list.size() == 1, "size of pathlist is 1 for MG");
 
 
   auto& loperators = MDT::loperators;
   auto& leg_size = MDT::leg_size;
   leg_size[0] = 2;
   std::vector<double> J = {1};
-  std::vector<std::string> path_list_ = { path_list[0]};
+  std::vector<std::string> path_list_1;
+  std::vector<std::string> path_list_2;
+  int k=0;
+  for (auto path : path_list){
+    if (k<n_path) path_list_1.push_back(path);
+    else path_list_2.push_back(path);
+    k++;
+  }
   std::vector<size_t> type_list = {0};
   double thres = 1E-8;
   set_hamiltonian<MDT::Nop, MDT::max_sps, MDT::max_L, typename MDT::MCT>(
     loperators,
     leg_size,
-    path_list_,
+    path_list_1,
     type_list,
-    J);
+    J,
+    path_list_2);
   std::vector<double> off_sets(MDT::Nop,sft);
   MDT::initial_setting(off_sets, thres, true);  
   if (pom){

@@ -142,3 +142,8 @@ def set_origin(X, return_shift = False):
         return X, x
     else:
         return X
+
+def exp_energy(E, beta):
+    Z = np.exp(-beta*E)
+    EZ = E*Z
+    return np.sum(EZ)/np.sum(Z)

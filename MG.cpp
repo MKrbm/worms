@@ -35,6 +35,7 @@ int main(int argc, char* argv[])
     readConfig* config;
     config = new readConfig("../config/MG.txt", 2, 1, 1.0, "MG");
     opt_ptr = (options*)config;
+    cout << "end read txt file" << endl;
   }
 
 
@@ -42,6 +43,8 @@ int main(int argc, char* argv[])
   int L = opt_ptr->L;
   double sft = opt_ptr->shift;
   auto path_list = opt_ptr->path_list;
+  auto path_list2 = opt_ptr->path_list;
+
   std::string model_name = opt_ptr->MN;
   std::cout << "model name is : " << model_name << std::endl;
 
@@ -52,10 +55,10 @@ int main(int argc, char* argv[])
   typedef bcl::st2013 bcl_t;
 
   if (model_name == "MG"){
-    model::MG<bcl_t> spin_model(path_list, L, sft, opt_ptr->pom);
+    model::MG<bcl_t> spin_model(path_list, L, opt_ptr->n_path, sft, opt_ptr->pom);
     exe_worm(spin_model, opt_ptr);
   }else if (model_name == "MG_2"){
-    model::MG_2<bcl_t> spin_model(path_list, L, sft, opt_ptr->pom);
+    model::MG_2<bcl_t> spin_model(path_list, L, opt_ptr->n_path, sft, opt_ptr->pom);
     exe_worm(spin_model, opt_ptr);
   }
   delete opt_ptr;
