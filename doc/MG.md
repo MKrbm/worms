@@ -47,3 +47,25 @@ $$
 
 ### energy vs T
 ![](img/MG_energy_L18.png)
+
+
+## Reweighting 
+
+$$
+\begin{align*}
+\langle E \rangle &= \frac{\sum_c n W(c)}{\sum_c W(c)}  \\
+& = \frac{\sum_c  [n\frac{W(c)}{W^\prime(c)} ] W^\prime(c) 
+}{\sum_c W^\prime(c)} 
+\times 
+\frac{\sum_c W^\prime(c) }
+{\sum_c[\frac{W(c)}{W^\prime(c)}]  W^\prime(c) }
+\end{align*}
+$$
+
+
+### L = 6, energy, T = [0.25, ...., 0.5]
+
+![](img/energy_MG_reweight.png)
+
+### average sign
+![](img/avesign_MG_reweight.png)
