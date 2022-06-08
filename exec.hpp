@@ -9,6 +9,8 @@
 #include <heisenberg.hpp>
 #include <Shastry.hpp>
 #include <ladder.hpp>
+#include <MG.hpp>
+
 
 
 #include <testmodel.hpp>
@@ -45,7 +47,7 @@ struct is_instance<U<T>, U> : public std::true_type {};
 
 template <typename SPINMODEL>
 std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
-  typename std::enable_if<!(is_instance<SPINMODEL,model::Shastry_2>::value||is_instance<SPINMODEL,model::ladder_v2>::value),std::nullptr_t>::type = nullptr){
+  typename std::enable_if<(is_instance<SPINMODEL,model::heisenberg>::value||is_instance<SPINMODEL,model::heisenberg_v2>::value),std::nullptr_t>::type = nullptr){
 
   // std::cout << "test L : " << opt_ptr -> sweeps << std::endl;
 
@@ -177,7 +179,7 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
 
 template <typename SPINMODEL>
 std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
-  typename std::enable_if<is_instance<SPINMODEL,model::Shastry_2>::value||is_instance<SPINMODEL,model::ladder_v2>::value,std::nullptr_t>::type = nullptr){
+  typename std::enable_if<!(is_instance<SPINMODEL,model::heisenberg>::value||is_instance<SPINMODEL,model::heisenberg_v2>::value),std::nullptr_t>::type = nullptr){
 
 
   std::cout << "this is called" << std::endl;
@@ -191,6 +193,7 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
   BC::observable sglt; 
   BC::observable n_neg_ele; 
   BC::observable n_ops; 
+  BC::observable ave_weight; 
   bool fix_wdensity = opt.fix_wdensity;
 
 
@@ -228,6 +231,7 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
     // printf("complete worm update\n");
     if (cnt >= opt.therm){
       int sign = 1;
+      double w_rate = 1;
       double n_neg = 0;
       double n_op = 0;
       double sglt_ = 0;
@@ -239,13 +243,17 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
         sign *= sign_;
         if (sign_ == -1) n_neg++;
         n_op++;
+        w_rate *= spin_model.loperators[op.op_type()].ham_rate_vector[op.state()];
+        // cout << spin_model.loperators[op.op_type()].ham_rate_vector[op.state()]<< endl;
       }
       double ene_tmp = - (double)solver.ops_main.size() / beta;
       for (int e=0; e<spin_model.Nop; e++){
         ene_tmp += spin_model.shifts[e] * spin_model.bond_t_size[e];
       }
-      ene << ene_tmp * sign;
+      // ene << ene_tmp * sign;
+      ene << ene_tmp * w_rate;
       ave_sign << sign;
+      ave_weight << w_rate;
       sglt << sglt_ / spin_model.lattice.num_sites();
       n_neg_ele << n_neg;
       n_ops << n_op;
@@ -259,9 +267,11 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
         }
       }
     }
-    if (i == opt.therm / 2)
-    std::cout << "Info: average number worms per MCS is reset from " << spin_model.L
-              << " to " << wdensity << "\n\n";
+    if (i == opt.therm / 2){
+      if (!fix_wdensity) std::cout << "Info: average number worms per MCS is reset from " << spin_model.L
+                << " to " << wdensity << "\n\n";
+      else std::cout << "Info: average number worms per MCS is " << wdensity << "\n\n";
+    }
     cnt++;
   }
 
@@ -287,8 +297,8 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
 
 
   std::cout << "Total Energy         = "
-          << ene.mean()/ave_sign.mean()<< " +- " 
-          << std::sqrt(std::pow(ene.error(r)/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2))
+          << ene.mean()/ave_weight.mean()<< " +- " 
+          << std::sqrt(std::pow(ene.error(r)/ave_weight.mean(), 2) + std::pow(ene.mean()/std::pow(ave_weight.mean(),2) * ave_weight.error(r),2))
           << std::endl;
 
   std::cout << "Elapsed time         = " << elapsed << " sec\n"
@@ -299,6 +309,8 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
             << std::endl
             << "average sign         = "
             << ave_sign.mean() << " +- " << ave_sign.error(r) << std::endl
+            << "average weight rate  = "
+            << ave_weight.mean() << " +- " << ave_weight.error(r) << std::endl
             << "dimer operator       = "
             << sglt.mean() << std::endl 
             << "# of operators       = "

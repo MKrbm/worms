@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.linalg import expm, sinm, cosm
 from scipy import sparse
+import sys
+sys.path.insert(0, "../") 
 from functions import *
 import os 
 

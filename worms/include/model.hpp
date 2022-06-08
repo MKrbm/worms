@@ -74,16 +74,31 @@ namespace model {
     return std::distance(bond_type.begin(), it);
   }
 
+  /*
+  params
+  ------
+  leg_size : list of legsize. legsize is number of leg for operator. 2 for bond opeerator
+  
+  type_list : list of types. type specify which local hamiltonian is applied to which bond type. 
+
+  path_list : list of real local hamiltonian. ham_rate holds the rate local/virtual.
+  path_list2 : list of virtual local hamiltonian. loperator.ham holds this value.
+  */
+
   template <int N_op, size_t max_sps, size_t max_L, class MC>
   void set_hamiltonian(
     std::array<local_operator<MC>, N_op>& loperators, 
     std::array<int, N_op>& leg_size,
     std::vector<std::string> path_list, 
     std::vector<size_t> type_list,
-    std::vector<double> coupling_list
+    std::vector<double> coupling_list, 
+    std::vector<std::string> path_list2 = std::vector<std::string>()
     ){
     ASSERT(path_list.size() == type_list.size(), "");
     ASSERT(path_list.size() == coupling_list.size(), "");
+
+    if (path_list2.size() == 0) path_list2 = path_list;
+    ASSERT(path_list2.size() == path_list.size(), "");
     ASSERT(leg_size.size() == N_op, "");
     ASSERT((size_t)N_op == 1+*std::max_element(type_list.begin(), type_list.end()), " ");
 
@@ -92,14 +107,26 @@ namespace model {
       loperators[l] = local_operator<MC>(leg_size[l], max_sps);
       ASSERT(loperators[l].size == pow(max_sps, leg_size[l]),"size is inconsistent, the size of hamiltonian should be fixed to max_sps ** leg");
       for (int i=0; i<loperators[l].size; i++)
-        for (int j=0; j<loperators[l].size; j++)  loperators[l].ham[j][i] = 0;
+        for (int j=0; j<loperators[l].size; j++) { loperators[l].ham[j][i] = 0; loperators[l].ham_rate[j][i] = 0;}
     }
 
     int op_label = 0;
-    for (auto path : path_list) {
+
+
+    for (int i=0; i<path_list.size(); i++) {
+      auto path = path_list[i];
       auto pair = load_npy(path);
       auto shape = pair.first;
       auto data = pair.second;
+
+      auto path2 = path_list2[i];
+      auto pair2 = load_npy(path2);
+      auto shape2 = pair2.first;
+      auto data2 = pair2.second;
+
+      if (shape[0]!=shape2[0] || shape[1]!=shape2[1]){
+         std::cerr << "shape is inconsistent" << std::endl;
+      }
       // int l = 2;
       size_t op_type = type_list[op_label];
       std::cout << "hamiltonian is read from " << path << std::endl;
@@ -109,11 +136,16 @@ namespace model {
         for (int j=0; j<shape[1]; j++)
         {
           auto x = coupling_list[op_label]*data[i * shape[1] + j];
-          loperators[op_type].ham[j][i] += x;
+          auto x2 = coupling_list[op_label]*data2[i * shape[1] + j];
+
+          loperators[op_type].ham_rate[j][i] += x;
+          loperators[op_type].ham[j][i] += x2;
+        
         }
       }
       op_label++;
     }
+
   };
 }
 
@@ -153,6 +185,8 @@ public:
   std::vector<std::vector<double>> ham;
   std::vector<std::vector<double>> ham_;
   std::vector<double> ham_vector;
+  std::vector<double> ham_rate_vector;
+  std::vector<std::vector<double>> ham_rate;
   std::vector<int> signs; //list of sign defined via the sign of ham_;
   std::vector<TPROB> trans_prob; //num_configuration x 4 x 4 matrix.
   std::array<int, 2> num2index(int num);
@@ -250,6 +284,13 @@ public:
 
     sps_sites = std::vector<size_t>(L, _max_sps);
   }
+
+  /*
+  *params
+  ------
+  boolean dw : 1 = have a chance to delete a worm while updating.
+  */
+
   void initial_setting(std::vector<double>off_sets = std::vector<double>(N_op,0), double thres = 1E-8, bool dw = false){
     int i = 0;
     double tmp=0;
@@ -277,7 +318,10 @@ model::local_operator<MC>::local_operator(int leg, size_t sps)
 
   if (sps<=0) size = (1<<leg); // default size is 2**leg.
   ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
+  ham_rate = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
   ham_vector = std::vector<double>(size*size, 0);
+  ham_rate_vector = std::vector<double>(size*size, 0);
+
 }
 
 
@@ -286,6 +330,10 @@ setting various variable for local_operators
 this function should be called after manually define 2D local hamiltonian.
 
 - set 1D hamiltonian 
+
+*params
+------
+boolean dw : 1 = have a chance to delete a worm while updating.
 */
 template <class MC>
 void model::local_operator<MC>::set_ham(double off_set, double thres, bool dw){
@@ -295,17 +343,21 @@ void model::local_operator<MC>::set_ham(double off_set, double thres, bool dw){
 
   for (int i=0; i<ham_.size();i++){
     ene_shift = std::min(ene_shift, ham[i][i]);
+    ene_shift = std::min(ene_shift, ham_rate[i][i]);
   }
   ene_shift *= -1;
   ene_shift += off_set;
   for (int i=0; i<ham_.size();i++){
-    ham_[i][i] = ham_[i][i] + ene_shift;
+    ham_[i][i] += ene_shift;
+    ham_rate[i][i] += ene_shift;
   }
 
   for (int i=0; i<N; i++){
     auto index = num2index(i);
     ham_vector[i] = ham_[index[0]][index[1]];
+    ham_rate_vector[i] = ham_rate[index[0]][index[1]];
     if (std::abs(ham_vector[i]) < thres) ham_vector[i] = 0;
+    if (std::abs(ham_rate_vector[i]) < thres) ham_rate_vector[i] = 0;
   }
 
 
@@ -323,9 +375,18 @@ void model::local_operator<MC>::set_ham(double off_set, double thres, bool dw){
 
   // max_diagonal_weight_ = std::max(max_diagonal_weight_, weights_[p]);
 
-  for (auto& x : ham_vector){
+  for (int i=0; i<ham_vector.size(); i++){
+    auto& x = ham_vector[i];
+    auto& y = ham_rate_vector[i];
     signs.push_back(x >= 0 ? 1 : -1);
     x = std::abs(x);
+
+    if (y!=0 && x == 0){
+      std::cerr << "cannot reweighting since support doesn't cover the original matrix" << std::endl;
+      std::cerr << "y : " << y << "  x : " << x << std::endl;
+      std::terminate();
+    }
+    if (x!= 0) y = y/x;
   }
 
   // set transition probability

@@ -37,7 +37,8 @@
     "xshrim.txt-syntax",
     "eamodio.gitlens",
     "mhutchie.git-graph",
-    "bierner.markdown-preview-github-styles"
+    "bierner.markdown-preview-github-styles",
+    "GitHub.vscode-pull-request-github"
 	],
 	
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.

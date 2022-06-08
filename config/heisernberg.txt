@@ -18,5 +18,5 @@
 -shift 0
 #-co 100
 -pom 1
--z 1
+-zw 1
 -fw 0
