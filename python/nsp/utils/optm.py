@@ -26,7 +26,7 @@ class unitary_solver(torch.nn.Module):
         self._loss = None
         self.dtype = dtype
 
-
+        add = 0
         if dtype == torch.float64:
             self.denominator = 2
             self.complex = False
@@ -38,12 +38,12 @@ class unitary_solver(torch.nn.Module):
         if syms:
             N = sps_list[0]
             assert np.all(np.array(sps_list) == N), "parameter symmetrization can only be applied to the sps_list with all elements being the same"
-            self._n_params = [int(N*(N-1)/self.denominator)]
+            self._n_params = [int(N*(N-1)/self.denominator + (N if self.complex else 0))]
             self.generators.append(torch.tensor(self.make_generator(N), requires_grad=False))
         else:
             for N in sps_list:
                 self.generators.append(torch.tensor(self.make_generator(N), requires_grad=False))
-                self._n_params.append(int(N*(N-1)/self.denominator))
+                self._n_params.append(int(N*(N-1)/self.denominator) + (N if self.complex else 0))
         
         torch.manual_seed(seed)
         tmp = torch.rand(np.sum(self._n_params))
@@ -82,7 +82,13 @@ class unitary_solver(torch.nn.Module):
         return self._n_params
     
     def set_params(self, params):
-        self._params[:] = params[:]
+        if (type(params)==torch.nn.parameter.Parameter):
+            self._params.data[:] = params.data[:]
+        elif(type(params) == torch.Tensor):
+            self._params.data[:] = params[:]
+        else:
+            params = torch.tensor(params)
+            self._params.data[:] = params[:]
     
     @property
     def matrix(self):
@@ -90,6 +96,10 @@ class unitary_solver(torch.nn.Module):
             return self._get_sym_matrix()
         else:
             return self._get_matrix()
+
+    @property
+    def np_array(self):
+        return np.array(self.matrix.data)
     
     @property
     def one_site_matrix(self):
@@ -128,8 +138,14 @@ class unitary_solver(torch.nn.Module):
             tmp[j,i] = -1
             tmp_list.append(tmp)
             if self.complex:
+                tmp = np.zeros((N,N), dtype=self.npdtype)
                 tmp[i,j] = 1j
                 tmp[j,i] = 1j
+                tmp_list.append(tmp)
+        if self.complex:
+            for i in range(N):
+                tmp = np.zeros((N,N), dtype=self.npdtype)
+                tmp[i,i] = 1j
                 tmp_list.append(tmp)
         return np.array(tmp_list)
 
