@@ -505,44 +505,65 @@ def optim_matrix_symm(X, N_iter,
     return model, grad_list
 
 
+"""
+class hold unitary matrix for basis rotation and target hamiltonian.
 
+params
+
+------
+N : choose the number of local unitary matrix consisting global unitary matrix. (assume all local matrix are the same)
+init_param : if given, initialize optimizing parameters
+index : if given, params only at the index are changeable
+add : what is it?
+"""
 class unitary_optm:
     
-    def __init__(self, X, n_params, init_param = None, index = None, add = False, N = 2):
+    def __init__(self, X, init_param = None, index = None, add = False, N = 2, dtype = torch.float64):
         self.add = add
         X = np.array(X)
         if X.ndim != 3:
             X = X[None, :, :]
         self.X = X
         L, lps, E, V = get_mat_status(self.X, N)
-        print(lps, N)
+        self.E = E[-1]
+        print(f"lps = {lps}, N = {N}")
         self._n_params = [int(lps*(lps-1)/2)]
-        model = unitary_solver([lps,lps],syms=True, seed = 0)
+        model = unitary_solver([lps,lps],syms=True, seed = 0, dtype = dtype)
+        n_params = model.n_params[0]
         self.generators = model.make_generator(lps)
         if init_param is not None:
             assert len(init_param) == n_params
             self.params = np.array(init_param)
         else:
-            self.params = 2*np.pi*np.random.rand(n_params)
+            self.params = np.random.rand(n_params)
+        self.c_params = (self.params).copy()
         self.index = index
         self.N = N
 
-    def __call__(self, param):
-        if self.index is None:
-            assert (len(param) == self._n_params[0]), "inconsistent"
-        else:
-            assert len(self.index) == len(param)
 
-        params = np.copy(self.params)
-        param[np.abs(param) < 1e-5] = 0 
-        params[self.index] += np.array(param)
-        # self.params[self.index] %= 2*np.pi    
-        tmp = params[:, None, None] * self.generators 
+    def matrix(self, param = None):
+        if param is not None:
+            param = np.array(param)
+            self.c_params[:] = self.params[:]
+            param[np.abs(param) < 1e-5] = 0 
+            if self.index is None:
+                assert (len(param) == self._n_params[0]), "inconsistent"
+                self.c_params[:] = np.array(param)[:]
+            else:
+                assert len(self.index) == len(param)
+                self.c_params[self.index] = np.array(param)
+
+        tmp = self.c_params[:, None, None] * self.generators 
         onesite_mat = expm(tmp.sum(axis=0))
         self.U = onesite_mat
         for _ in range(self.N-1):
             self.U = np.kron(self.U, onesite_mat)
-        return loss_eig_np(self.U[None, :, :] @ self.X @ self.U[None, :, :].swapaxes(1,2), self.add)
+        return self.U
+
+    def __call__(self, param):
+        U = self.matrix(param)
+        return loss_eig_np(U[None, :, :] @ self.X @ U[None, :, :].swapaxes(1,2), self.add)
+
 
 
 class unitary_optm2:
@@ -554,7 +575,7 @@ class unitary_optm2:
             X = X[None, :, :]
         self.X = X
         N = self.X.shape[-1]
-        L, lps, E, V = get_mat_status(self.X)
+        L, lps,  V = get_mat_status(self.X)
         self._n_params = [int(lps*(lps-1)/2)]
         print(self._n_params)
         model = unitary_solver([lps,lps],syms=True, seed = 0)

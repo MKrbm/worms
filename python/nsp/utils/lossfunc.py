@@ -62,7 +62,9 @@ def positive_map_np(A, abs=False):
 
 
 
-def loss_eig_np(A, add):
+def loss_eig_np(A, add = False):
+    if (A.ndim == 2):
+        A = A[None, :, :]
     if not add:
         for i in range(A.shape[0]):
             A[i] = positive_map_np(A[i])
