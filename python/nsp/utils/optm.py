@@ -2,22 +2,23 @@ import numpy as np
 from pyrsistent import v
 from scipy.linalg import expm
 import torch
-from torch import nn
+from torch import nn, no_grad
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import ToTensor, Lambda
 from .optm_method import *
 from .lossfunc import *
 from .functions import *
+from . import n_sphere
 # import torch.kron
 
 
     
     
 class unitary_solver(torch.nn.Module):
-    def __init__(self,sps_list, syms = False, seed = 2022, dtype = torch.float64):
+    def __init__(self,sps_list, syms = False, seed = 2022, dtype = torch.float64, spherical = True):
         super(unitary_solver, self).__init__()
-
+        self.spherical = spherical #use spherical coordinate for parameters
         self.sps_list = sps_list
         self.generators = []
         self._n_params = []
@@ -49,6 +50,10 @@ class unitary_solver(torch.nn.Module):
         tmp = torch.rand(np.sum(self._n_params))
         # tmp = torch.zeros(np.sum(self._n_params))
         self._params = torch.nn.Parameter(tmp)
+        if spherical:
+            self._params.data[1:-1] = self._params.data[1:-1] * np.pi
+            self._params.data[-1] = self._params.data[-1] * np.pi * 2
+            self._params.data[0] = self._params.data[0] * np.pi * 2
         self._size = np.prod(sps_list)
     
     def forward(self, x):
@@ -518,25 +523,35 @@ add : what is it?
 """
 class unitary_optm:
     
-    def __init__(self, X, init_param = None, index = None, add = False, N = 2, dtype = torch.float64):
+    def __init__(self, X, init_param = None, index = None, add = False, N = 2, dtype = np.float64, spherical = True):
         self.add = add
+        if dtype == np.float64:
+            dtype = torch.float64
+        elif dtype == np.complex128:
+            dtype = torch.complex128
+        else:
+            raise NameError("dtype must be either float or complex")
         X = np.array(X)
         if X.ndim != 3:
             X = X[None, :, :]
         self.X = X
         L, lps, E, V = get_mat_status(self.X, N)
-        self.E = E[-1]
+        self.E_t = E[0][-1]
         print(f"lps = {lps}, N = {N}")
-        self._n_params = [int(lps*(lps-1)/2)]
-        model = unitary_solver([lps,lps],syms=True, seed = 0, dtype = dtype)
-        n_params = model.n_params[0]
+        model = unitary_solver([lps]*N,syms=True, seed = 0, dtype = dtype)
+        self.n_params = model.n_params[0]
+        self.spherical = spherical & (self.n_params != 1)
+
         self.generators = model.make_generator(lps)
         if init_param is not None:
-            assert len(init_param) == n_params
+            assert len(init_param) == self.n_params
             self.params = np.array(init_param)
         else:
-            self.params = np.random.rand(n_params)
-        self.c_params = (self.params).copy()
+            self.params = np.random.rand(self.n_params)
+            if self.spherical:
+                self.params[1:-1] = self.params[1:-1] * np.pi
+                self.params[-1] = self.params[-1] * np.pi * 2
+                self.params[0] = self.params[0] * np.pi * 2
         self.index = index
         self.N = N
 
@@ -544,16 +559,19 @@ class unitary_optm:
     def matrix(self, param = None):
         if param is not None:
             param = np.array(param)
-            self.c_params[:] = self.params[:]
             param[np.abs(param) < 1e-5] = 0 
             if self.index is None:
-                assert (len(param) == self._n_params[0]), "inconsistent"
-                self.c_params[:] = np.array(param)[:]
+                assert (len(param) == self.n_params), "inconsistent"
+                self.params[:] = np.array(param)[:]
             else:
                 assert len(self.index) == len(param)
-                self.c_params[self.index] = np.array(param)
+                self.params[self.index] = np.array(param)
 
-        tmp = self.c_params[:, None, None] * self.generators 
+        if self.spherical:
+            self.coord = n_sphere.convert_rectangular(self.params)
+        else:
+            self.coord = self.params
+        tmp = self.coord[:, None, None] * self.generators 
         onesite_mat = expm(tmp.sum(axis=0))
         self.U = onesite_mat
         for _ in range(self.N-1):
@@ -562,7 +580,7 @@ class unitary_optm:
 
     def __call__(self, param):
         U = self.matrix(param)
-        return loss_eig_np(U[None, :, :] @ self.X @ U[None, :, :].swapaxes(1,2), self.add)
+        return loss_eig_np(U[None, :, :] @ self.X @ (U.T.conj())[None, :, :], self.add) - self.E_t
 
 
 
