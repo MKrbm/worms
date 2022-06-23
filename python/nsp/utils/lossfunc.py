@@ -7,6 +7,28 @@ from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import ToTensor, Lambda
 from .optm_method import *
+import abc
+
+
+class base_ulf(abc.ABC):
+    """Abstract class for unitary loss function. This class prototypes the methods
+    needed by a class satisfying the Operator concept.
+    """
+    def __init__(self, X, act:list):
+        if X.ndim != 2 | X.shape[0]!=X.shape[1]:
+            # X = X[None, :, :]
+            raise ValueError("X must be a 2D square matrix")
+        self.X = X
+        self.act = act
+        if (X.shape[0] == np.prod(self.act)):
+            raise ValueError("act on list is inconsistent with X")
+
+    @abc.abstractmethod
+    def __call__(self, U):
+        """
+        return loss function based_on given unitary matrix
+        """
+
 
 
 def loss_1(A, add = False):
@@ -74,6 +96,42 @@ def loss_eig_np(A, add = False):
         for a in A:
             B+=positive_map_np(a)
         return np.linalg.eigvalsh(B)[-1]
+
+
+def get_mat_status(X, N):
+    X = np.array(X)
+    L = X.shape[1]
+    lps = int(np.round(L**(1/N)))
+    if lps**N != L:
+        print("! ---- This matrix might not be the bond operator ---- !")
+
+
+    assert X.ndim==3, "dimension of X must be 3"
+
+    E = []    
+    V = []
+    for x in X:
+        if not np.all(np.diag(x)>=0):
+            print("! ---- diagonal elements of the local hamiltonian should be non negative ---- !")
+        e, v = np.linalg.eigh(x)
+        E.append(e)
+        V.append(v)
+    return L, lps, np.array(E), np.array(V)
+
+
+    
+"""
+wrapper for loss_eig_np
+"""
+class abs_max_eig():
+    def __init__(self, X):
+        X = np.array(X)
+        if X.ndim != 3:
+            X = X[None, :, :]
+        self.X = X
+        L, lps, E, V = get_mat_status(self.X, N)
+        self.E_t = E[0][-1]
+
 def loss_2(M, V):
     assert len(M) == len(V), "inconsistent"
     r = torch.zeros(1)
