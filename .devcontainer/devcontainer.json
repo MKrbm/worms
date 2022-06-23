@@ -1,25 +1,12 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.209.6/containers/cpp
 {
-	"name": "C++",
-	// "build": {
-	// 	"dockerfile": "Dockerfile",
-	// 	// Update 'VARIANT' to pick an Debian / Ubuntu OS version: debian-11, debian-10, debian-9, ubuntu-21.04, ubuntu-20.04, ubuntu-18.04
-	// 	// Use Debian 11, Debian 9, Ubuntu 18.04 or Ubuntu 21.04 on local arm64/Apple Silicon
-	// 	"args": { "VARIANT": "ubuntu-20.04" }
-	// },
+	"name": "worms",
 	"dockerComposeFile": [
-		"docker-compose.yml",
+		"docker-compose.yml"
 	],
-
-	"service": "worm",
-	"workspaceFolder": "/home/keisuke/worms",
-
-	// "runArgs": ["--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined"],
-
-	// Set *default* container specific settings.json values on container create.
-	
-	// Add the IDs of extensions you want installed when the container is created.
+	"service": "main",
+	"workspaceFolder": "/home/user/project",
 	"extensions": [
 		"ms-vscode.cpptools",
 		"ms-vscode.cmake-tools",
@@ -32,7 +19,12 @@
 		"ms-vscode-remote.remote-ssh-edit",
 		"ms-vscode-remote.remote-wsl",
 		"austin.code-gnu-global",
-		"aaron-bond.better-comments"
+		"aaron-bond.better-comments",
+    "ms-python.python",
+    "xshrim.txt-syntax",
+    "mhutchie.git-graph",
+    "bierner.markdown-preview-github-styles",
+    "GitHub.vscode-pull-request-github"
 	],
 	
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
@@ -64,7 +56,7 @@
 			"editor.hoverHighlightBackground": "#4e5f5a",
 			"editor.selectionHighlightBackground": "#907f4c",
 			"editorCursor.foreground": "#c291b4",
-			"terminalCursor.foreground": "#72b9fb",
+			"terminalCursor.foreground": "#72b9fb"
 		
 		},
 		"better-comments.tags": [
@@ -112,7 +104,7 @@
 		"cmake.loggingLevel": "debug",
 		"cmake.debugConfig": {
 			"externalConsole": false,
-			"console" : "integratedTerminal",
+			"console" : "integratedTerminal"
 			// "miDebuggerArgs": "-q -ex quit; wait() { fg >/dev/null; }; /bin/gdb -q --interpreter=mi"
 			},
 		"git.autofetch": true,
@@ -125,6 +117,8 @@
 		"search.useIgnoreFiles": false,
 		"cmake.configureOnEdit": false, 
 		"C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
-		"C_Cpp.default.compilerPath": "/usr/bin/gcc"
-	},
+		"C_Cpp.default.compilerPath": "/usr/bin/gcc",
+        "files.autoSave": "afterDelay",
+        "files.autoSaveDelay": 500
+	}
 }

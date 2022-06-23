@@ -1,31 +1,33 @@
 version: '3.4'
 
 services:
-  worm:
-    image: worm_cpp
+  main:
     container_name: worms
     build:
       context: .
       dockerfile: ./Dockerfile
       args:
-        VARIANT: ubuntu-20.04
+        VARIANT: ubuntu-22.04
+        USERNAME: user
+        GROUPNAME: user
+
     volumes:
-      - ../:/home/keisuke/worms:delegated
+      - ../:/home/user/project:delegated
       - type: bind
         source: ~/.ssh
-        target: /home/keisuke/.ssh
+        target: /home/user/.ssh
         read_only: true
       - type: bind
         source: ~/.gitconfig
         target: /etc/gitconfig
         read_only: true
     ports:
-      - "8887:8888"
-    # cap_add: 
-    #   - SYS_PTRACE
+      - "8887:8888" #set by yourself
+    cap_add: 
+      - SYS_PTRACE
     privileged: true
     security_opt: 
       - seccomp:unconfined
     stdin_open: true
     tty: true
-    working_dir: /home/keisuke/worms
+    working_dir: /home/user/project
