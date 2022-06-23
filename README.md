@@ -15,3 +15,13 @@
   - automatically reduce sign.
     - chose unit cell by ourself, then find the best local similarity transformation.7
   - make container handle cuda.
+
+
+# environment preparation
+
+- ## Docker
+  - use docker container inside `.devcontainer`
+
+- ## python
+  - anaconda
+    - 
