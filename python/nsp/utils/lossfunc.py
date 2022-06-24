@@ -70,10 +70,15 @@ def abs_map(A):
 def abs_map_np(A):
     return np.abs(A)
 
+def torch_complex_min(A):
+    idx = torch.argmin(A.real).item()
+    return A[idx]
+
+
 def positive_map(A, abs=False):
     if abs:
         return abs_map(A)
-    a = torch.min(torch.diag(A))* torch.eye(A.shape[0])
+    a = torch_complex_min(torch.diag(A))* torch.eye(A.shape[0])
     return torch.abs(A-a) + a
 
 def positive_map_np(A, abs=False):
