@@ -104,13 +104,12 @@ def l2nl(ham, L, bond = [], sps = 2, thres=1e-10):
     bond = np.array(bond)
     if isinstance(ham, np.ndarray):
         return _l2nl(ham, L, bond , sps, thres)
+    elif isinstance(ham, sparse.csr.csr_matrix):
+        ham = ham.toarray()
+        return sparse.csr_matrix(_l2nl(ham, L, bond , sps, thres))
     else:
-        try:
-            ham = ham.toarray()
-            return _l2nl(ham, L, bond , sps, thres)
-        except:
-            ham = np.array(ham)
-            return _l2nl(ham, L, bond , sps, thres)
+        ham = np.array(ham)
+        return _l2nl(ham, L, bond , sps, thres)
     
 
 def beauty_array(H_tmp, path = "array.txt"):
