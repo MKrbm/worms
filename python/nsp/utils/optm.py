@@ -10,6 +10,7 @@ from .optm_method import *
 from .lossfunc import *
 from .functions import *
 from . import n_sphere
+import copy
 # import torch.kron
 
 
@@ -28,6 +29,7 @@ class unitary_solver(torch.nn.Module):
         self.dtype = dtype
 
         add = 0
+        diff_params = 0
         if dtype == torch.float64:
             self.denominator = 2
             self.complex = False
@@ -39,33 +41,25 @@ class unitary_solver(torch.nn.Module):
         if syms:
             N = sps_list[0]
             assert np.all(np.array(sps_list) == N), "parameter symmetrization can only be applied to the sps_list with all elements being the same"
-            self._n_params = [int(N*(N-1)/self.denominator + (N if self.complex else 0))]
+            self._n_params = [int(N*(N-1)/self.denominator + (N - 1 if self.complex else 0))]
+            diff_params += 1
             self.generators.append(torch.tensor(self.make_generator(N), requires_grad=False))
         else:
             for N in sps_list:
                 self.generators.append(torch.tensor(self.make_generator(N), requires_grad=False))
-                self._n_params.append(int(N*(N-1)/self.denominator) + (N if self.complex else 0))
+                self._n_params.append(int(N*(N-1)/self.denominator) + (N - 1 if self.complex else 0))
+                diff_params += 1
         
         torch.manual_seed(seed)
         tmp = torch.rand(np.sum(self._n_params))
         self._params = torch.nn.Parameter(tmp)
-        # if dtype == torch.float64:
-        #     self._paramsf = self._params
-        # elif dtype == torch.complex128:
-        #     self._paramsf = torch.tensor(len(self._params)+len(sps_list))
-        #     j=0
-        #     for N in sps_list:
-        #         for i in range(N):
-        #             self._paramsf[i] = self._params[i]
-        #             self._paramsf[j+N] -= self._params[i]
-        #             j+=1
-        #         j+=N
 
-        if spherical:
-            self._params.data[1:-1] = self._params.data[1:-1] * np.pi
-            self._params.data[-1] = self._params.data[-1] * np.pi * 2
-            self._params.data[0] = self._params.data[0] * np.pi * 2
-        self._size = np.prod(sps_list)
+
+        # if spherical:
+        #     self._params.data[1:-1] = self._params.data[1:-1] * np.pi
+        #     self._params.data[-1] = self._params.data[-1] * np.pi * 2
+        #     self._params.data[0] = self._params.data[0] * np.pi * 2
+        # self._size = np.prod(sps_list)
     
     def forward(self, x):
         if x.ndim != 3:
@@ -73,7 +67,7 @@ class unitary_solver(torch.nn.Module):
 
         x = x.type(self.dtype)
         assert x.shape[1] == x.shape[2], "require square matrix"
-        assert x.shape[1] == self._size
+        assert x.shape[1] == np.prod(self.sps_list)
         M = self.matrix[None, :, :]
         x = M @ x @ M.transpose(1,2).conj()
 
@@ -124,12 +118,24 @@ class unitary_solver(torch.nn.Module):
         else:
             return self._one_site_matrix
 
-
+    def params_mod(self):
+        if not self.complex:
+            self._paramsf = self._params
+        else:
+            self._paramsf = torch.zeros(np.sum(np.array(self._n_params)+1))
+            j=0
+            for N in self._n_params:
+                for i in range(N):
+                    self._paramsf[i] = self._params[i]
+                    self._paramsf[j+N] -= self._params[i]
+                j+=N
+        return self._paramsf
     def _get_sym_matrix(self):
         ind = 0
         U_return = torch.eye(1)
-        N = self.n_params[0]
-        tmp = self._params[:,None,None] * self.generators[0]
+        params = self.params_mod()
+        N = params[0]
+        tmp = params[:,None,None] * self.generators[0]
         tmp = tmp.sum(axis=0)
         self._one_site_matrix = torch.matrix_exp(tmp)
         for _ in range(len(self.sps_list)):
@@ -140,8 +146,11 @@ class unitary_solver(torch.nn.Module):
     def _get_matrix(self):
         ind = 0
         U_return = torch.eye(1)
+        params = self.params_mod()
         for i, n in enumerate(self._n_params):
-            tmp = self._params[ind:ind+n,None,None] * self.generators[i]
+            if self.complex:
+                n+=1
+            tmp = params[ind:ind+n,None,None] * self.generators[i]
             ind += n
             U_return = torch.kron(U_return, torch.matrix_exp(tmp.sum(axis=0)))
         return U_return
@@ -408,6 +417,7 @@ def energy(E, beta):
     Z = np.exp(-beta*E)
     return (E*Z).sum()/Z.sum()
 
+
 def optim_matrix_symm(X, N_iter,
         optm_method = torch.optim.Adam, 
         loss_func = loss_eig,
@@ -417,6 +427,7 @@ def optim_matrix_symm(X, N_iter,
         init_params = None,
         add = False,
         N = 2,
+        dtype = torch.float64,
         **kwargs,
         ):
     X = torch.stack(X)
@@ -427,7 +438,9 @@ def optim_matrix_symm(X, N_iter,
         print("add all matrix after positive map")
     
     L, lps, E, _ = get_mat_status(X, N)
-    model = unitary_solver([lps for _ in range(N)],syms=True, seed = seed)
+    model = unitary_solver([lps for _ in range(N)],syms=True, seed = seed, dtype = dtype)
+    best_model = unitary_solver([lps for _ in range(N)],syms=True, seed = seed,dtype = dtype)
+
     N_params = len(model._params)
     if init_params is not None:
         assert N_params == len(init_params), "inconsistent"
@@ -463,18 +476,22 @@ def optim_matrix_symm(X, N_iter,
     mu = 10
 
     beta_list = np.linspace(10, 1000, N_iter)
+    min_loss = loss_func(model(X), add).item()
     for t in range(N_iter):
         y= model(X)
-        loss = loss_func(y, add)
-        loss_ = loss
+        loss_ = loss_func(y, add)
         if t % 1000 == 0:
             print("iteration : {:8d}   loss : {:.3f}".format(t,loss_.item()), end="")
             if type(optimizer) is scheme1:
                 print("\tgamma = {:.6}".format(optimizer.gamma), end="")
             print("")
+        if (loss_.item() < min_loss or min_loss is None):
+            min_loss = loss_.item()
+            best_model.set_params(model._params)
+            # best_model = copy.deep(model)
         optimizer.zero_grad()
         loss_.backward()
-        model.set_loss(loss.data)
+        model.set_loss(loss_.data)
         optimizer.step()
         grad_list.append(model._params.grad)
         # model._params = torch.nn.Parameter(model._params.data - 0.001 * model._params.grad)
@@ -496,8 +513,8 @@ def optim_matrix_symm(X, N_iter,
         print("\n","-"*14, "results", "-"*14)
         print("target loss      : {:.10f}".format(np.sum(E[:,-1])))
         print("loss before optm : {:.10f}".format(np.sum(E2[:,-1])))
-        print("loss after optm  : {:.10f}".format(np.sum(E3[:,-1])))
-    return model, grad_list
+        print("loss after optm  : {:.10f}".format(min_loss))
+    return best_model, grad_list
 
 
 """
@@ -536,8 +553,6 @@ class unitary_optm:
         # print(f"lps = {lps}, N = {N}")
         model = unitary_solver([lps]*N,syms=True, seed = 0, dtype = dtype)
         self.n_params = model.n_params[0]
-        if self.complex:
-            self.n_params -= 1
         
         self.generators = model.make_generator(lps)
 
