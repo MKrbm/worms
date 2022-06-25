@@ -12,7 +12,7 @@ services:
         GROUPNAME: user
 
     volumes:
-      - ../:/home/user/project:delegated
+      - ../:/home/user/project:consistent
       - type: bind
         source: ~/.ssh
         target: /home/user/.ssh
