@@ -24,4 +24,8 @@
 
 - ## python
   - anaconda
-    - 
+    -
+  - use pip
+    - setup with `pip install -r .devcontainer/requirements.txt`
+    - export requirement with `pip freeze > requirements.txt`
+      - note that you need to delete `PyGObject==3.42.0` and add `--extra-index-url https://download.pytorch.org/whl/cpu` before calling torch packages.
