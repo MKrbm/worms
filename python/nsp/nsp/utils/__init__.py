@@ -1,9 +1,7 @@
-from .absolute_map import abs
-from .loss import *
 from .print import beauty_array
 from .base_conv import num2state, state2num
 from .local2global import l2nl
-from .func import exp_energy
+from .func import exp_energy, abs
 
 __all__ = [
     "abs",

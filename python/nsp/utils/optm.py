@@ -583,7 +583,7 @@ class unitary_optm:
         if self.complex:
             self.coord = np.empty(self.n_params + 1)
             self.coord[:-1] = self.params
-            self.coord[-1] = -self.params[-(self.lps-1):].sum()
+            self.coord[-1] = -self.params[:-(self.lps-1)].sum()
         else:
             self.coord = self.params
 
