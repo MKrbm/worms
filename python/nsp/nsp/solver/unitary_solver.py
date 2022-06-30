@@ -8,7 +8,7 @@ from torchvision import datasets
 from torchvision.transforms import ToTensor, Lambda
 import copy
 from ..utils.func import *
-from ..model.unitary_model import base_matrix_generator
+from ..model.unitary_model import BaseMatrixGenerator
 from ..loss.max_eig import base_ulf
 
 import abc
@@ -21,8 +21,8 @@ class base_matrix_solver(abc.ABC):
     def __init__(self, model, loss):
         self.model = model
         self.loss = loss
-        if not issubclass(type(model), base_matrix_generator):
-            raise TypeError("model need to inherit base_matrix_generator")
+        if not issubclass(type(model), BaseMatrixGenerator):
+            raise TypeError("model need to inherit BaseMatrixGenerator")
 
         if not issubclass(type(loss), base_ulf):
             raise TypeError("model need to inherit base_ulf")

@@ -4,7 +4,7 @@ import abc
 import copy
 from tqdm.auto import tqdm
 
-from ..model.unitary_model import base_matrix_generator
+from ..model.unitary_model import BaseMatrixGenerator
 from ..loss.max_eig import base_ulf
 
 
@@ -13,12 +13,12 @@ class base_gs(abc.ABC):
     base class for gradient solver
     """
 
-    # model : base_matrix_generator
+    # model : BaseMatrixGenerator
     # loss : base_ulf
     def __init__(
             self,
             optim_method,
-            model : base_matrix_generator,
+            model : BaseMatrixGenerator,
             loss : base_ulf,
             seed = None,
             **kwargs
