@@ -172,3 +172,49 @@ def cast_dtype(X, dtype):
         return X.astype(dtype)
     else:
         TypeError("X should be either np_array or tensor")
+
+def view_tensor(X, view_ : list):
+    if (isinstance(view_, np.ndarray)):
+        view_ = view_.tolist()
+    if (not isinstance(view_, list)):
+        raise TypeError("view_ must be a list or nparray")
+    if isinstance(X, torch.Tensor):
+        return X.view(view_)
+    elif isinstance(X, np.ndarray):
+        return X.reshape(view_)
+    else:
+        TypeError("X should be either np_array or tensor")
+
+def einsum_(string, *arg):
+    if isinstance(arg[0], torch.Tensor):
+        return torch.einsum(string, *arg).contiguous()  
+    elif isinstance(arg[0], np.ndarray):
+        return np.einsum(string, *arg)
+    else:
+        TypeError("X should be either np_array or tensor")
+
+def is_hermitian(X):
+    if isinstance(X, torch.Tensor):
+        return torch.all(X==X.T.conj())
+    elif isinstance(X, np.ndarray):
+        return np.all(X==X.T.conj())
+    else:
+        TypeError("X should be either np_array or tensor")    
+
+
+def pick_negative(X):
+    if isinstance(X, torch.Tensor):
+        return torch.minimum(torch.tensor(0), X)
+    elif isinstance(X, np.ndarray):
+        return np.minimum(0, X)
+    else:
+        TypeError("X should be either np_array or tensor")  
+
+
+def l2_measure(X):
+    X = pick_negative(X)
+    return (X**2).sum()
+
+def l1_measure(X):
+    X = pick_negative(X)
+    return -X.sum()
