@@ -66,7 +66,7 @@ class base_ulf(abc.ABC):
                 raise ValueError("dimension of local unitary matrix should be same as act[i]")
 
     def _transform(self, U):
-        return U @ cast_dtype(self.X, U.dtype) @ self._inverse(U)
+        return self._inverse(U) @ cast_dtype(self.X, U.dtype) @ U
     
     @staticmethod
     @abc.abstractmethod
