@@ -11,7 +11,7 @@ from ..utils.func import *
 import abc
 from typing import Union
 
-class base_ulf(abc.ABC):
+class BaseUlf(abc.ABC):
     """Abstract class for unitary(matrix) loss function. This class prototypes the methods
     needed by a class satisfying the Operator concept.
     """
@@ -78,7 +78,7 @@ class base_ulf(abc.ABC):
 
 
 
-class mes(base_ulf):
+class MES(BaseUlf):
     """
     maximum eigenvalue of stoquastic map of matrix (U @ X @ U.T) 
 
@@ -101,7 +101,7 @@ class mes(base_ulf):
     def _inverse(U):
         return U.T.conj()
 
-class me(base_ulf):
+class ME(BaseUlf):
     """
     maximum eigenvalue of  matrix (U @ X @ U.T) 
 

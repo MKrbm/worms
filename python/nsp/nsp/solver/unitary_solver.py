@@ -9,14 +9,14 @@ from torchvision.transforms import ToTensor, Lambda
 import copy
 from ..utils.func import *
 from ..model.unitary_model import BaseMatrixGenerator
-from ..loss.max_eig import base_ulf
+from ..loss.max_eig import BaseUlf
 
 import abc
 from typing import Union
 
 
 
-class base_matrix_solver(abc.ABC):
+class BaseMatrixSolver(abc.ABC):
 
     def __init__(self, model, loss):
         self.model = model
@@ -24,7 +24,7 @@ class base_matrix_solver(abc.ABC):
         if not issubclass(type(model), BaseMatrixGenerator):
             raise TypeError("model need to inherit BaseMatrixGenerator")
 
-        if not issubclass(type(loss), base_ulf):
+        if not issubclass(type(loss), BaseUlf):
             raise TypeError("model need to inherit base_ulf")
 
         if not (callable(loss)):
@@ -38,7 +38,7 @@ class base_matrix_solver(abc.ABC):
         """
 
 
-class sym_solver(base_matrix_solver):
+class SymmSolver(BaseMatrixSolver):
 
     def __init__(self, model, loss, zero_origin = True):
         super().__init__(model, loss)

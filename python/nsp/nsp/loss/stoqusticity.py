@@ -14,7 +14,7 @@ from ..utils.func import *
 import abc
 from typing import Union
 
-class base_stoq(abc.ABC):
+class BaseStoq(abc.ABC):
     """Abstract class for unitary(matrix) loss function. This class prototypes the methods
     needed by a class satisfying the Operator concept.
     """
@@ -125,7 +125,7 @@ class base_stoq(abc.ABC):
 
 
 
-class l1(base_stoq):
+class L1(BaseStoq):
     """
     l1_measure of matrix (U @ X @ U.T) 
     """
@@ -143,7 +143,7 @@ class l1(base_stoq):
         return U.T.conj()
 
 
-class l2(base_stoq):
+class L2(BaseStoq):
     """
     l2_measure of matrix (U @ X @ U.T) 
     """

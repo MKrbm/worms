@@ -5,10 +5,10 @@ import copy
 from tqdm.auto import tqdm
 
 from ..model.unitary_model import BaseMatrixGenerator
-from ..loss.max_eig import base_ulf
+from ..loss.max_eig import BaseUlf
 
 
-class base_gs(abc.ABC):
+class BaseGs(abc.ABC):
     """
     base class for gradient solver
     """
@@ -19,7 +19,7 @@ class base_gs(abc.ABC):
             self,
             optim_method,
             model : BaseMatrixGenerator,
-            loss : base_ulf,
+            loss : BaseUlf,
             seed = None,
             **kwargs
             ):
@@ -40,7 +40,7 @@ class base_gs(abc.ABC):
         main function
         """
 from collections import OrderedDict
-class unitary_symm_ts(base_gs):
+class UnitarySymmTs(BaseGs):
     """
     transform X by unitary matrix which is represented as U \otimes U \otimes \cdots U[len(act)-1]
     assume all local unitary matrices are same.

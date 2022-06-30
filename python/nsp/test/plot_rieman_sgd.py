@@ -14,16 +14,16 @@ from matplotlib import pyplot as plt
 x = np.random.randn(16,16)
 x = (x+x.T)/2
 x=torch.tensor(x)
-loss_l1 = nsp.loss.l1(x, [4, 4])
-loss_l2 = nsp.loss.l2(x, [4, 4])
-loss_mes = nsp.loss.mes(x, [4, 4])
+loss_l1 = nsp.loss.L1(x, [4, 4])
+loss_l2 = nsp.loss.L2(x, [4, 4])
+loss_mes = nsp.loss.MES(x, [4, 4])
 
 res = []
 for t in range(10000):
     x = np.random.randn(16,16)
     x = (x+x.T)/2
     x=torch.tensor(x)
-    loss_l1 = nsp.loss.l1(x, [4, 4])
+    loss_l1 = nsp.loss.L1(x, [4, 4])
     model = nsp.model.UnitaryRiemanGenerator(4, dtype=torch.float64)
     sgd = RiemanSGD(model, 0.001)
     loss_old = loss_l1(model.matrix()).item()
@@ -47,7 +47,7 @@ for t in range(10000):
     x = np.random.randn(16,16)
     x = (x+x.T)/2
     x=torch.tensor(x)
-    loss_l2 = nsp.loss.l2(x, [4, 4])
+    loss_l2 = nsp.loss.L2(x, [4, 4])
     model = nsp.model.UnitaryRiemanGenerator(4, dtype=torch.float64)
     sgd = RiemanSGD(model, 0.001)
     loss_old = loss_l2(model.matrix()).item()

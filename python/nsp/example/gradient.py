@@ -18,16 +18,16 @@ np.random.seed(4)
 X = np.random.rand(L*L).reshape(L, L)-0.5
 X = X + X.T + np.eye(L)
 
-from nsp.solver import sym_solver
+from nsp.solver import SymmSolver
 
 
 model = nsp.model.unitary_generator(2, dtype=torch.float64, spherical=False)
-loss = nsp.loss.mes(torch.tensor(X), [2,2])
+loss = nsp.loss.MES(torch.tensor(X), [2,2])
 
 # print(model._params.data)
 model._params.data[:] = 0
 
-solver = nsp.solver.unitary_symm_ts(nsp.optim.sign, model, loss, lr = 0.005, decay_rate = 0.999)
+solver = nsp.solver.UnitarySymmTs(nsp.optim.Sign, model, loss, lr = 0.005, decay_rate = 0.999)
 # solver = nsp.solver.unitary_symm_ts(torch.optim.Adam, model, loss, lr = 0.001)
 
 solver.run(1000)

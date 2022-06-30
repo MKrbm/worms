@@ -3,7 +3,7 @@ import torch
 from torch.optim.optimizer import Optimizer
 from typing import List, Optional
 
-class sign(torch.optim.SGD):
+class Sign(torch.optim.SGD):
 
     def __init__(self,  params, lr, decay_rate = 1, momentum=0, dampening=0,
                  weight_decay=0, nesterov=False, *, maximize=False):
