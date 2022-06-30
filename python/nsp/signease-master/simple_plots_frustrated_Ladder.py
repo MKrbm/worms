@@ -7,20 +7,20 @@ to demonstrate the easing of the Monte Carlo Sign problem.
 It is meant as a simple example to show the functionality of  the `circuitOptimizer`
  module that was used for the numerical study done in 
 
-	Hangleiter, Roth, Nagaj, and Eisert. "Easing the Monte Carlo sign problem" 
-	https://arxiv.org/abs/1906.02309
+    Hangleiter, Roth, Nagaj, and Eisert. "Easing the Monte Carlo sign problem" 
+    https://arxiv.org/abs/1906.02309
 
 Examples: 
-	Just run the script 
-		python simple_plots_frustrated_Ladder.py
-	and wait until a plot appears. 
+    Just run the script 
+        python simple_plots_frustrated_Ladder.py
+    and wait until a plot appears. 
 
 
 Authors: 
-	Dominik Hangleiter and Ingo Roth
+    Dominik Hangleiter and Ingo Roth
 
 Licence:
-	This project is licensed under the MIT License - see the LICENSE.md file for details.
+    This project is licensed under the MIT License - see the LICENSE.md file for details.
 """
 
 from circuitOptimizer import *
@@ -68,94 +68,94 @@ avSignAfter = np.zeros(2*(nSamples,))
 argmin = np.zeros(2*(nSamples,))
 
 for orthK in range(nSamples):
-	for crossL in range(nSamples):
+    for crossL in range(nSamples):
 
-		modelPars = [Jorth[orthK],1,Jcross[crossL]]
-		model = {"name": modelName, "pars":modelPars,"locality":2,"localDim":4}
-		H = ModelHamiltonian(model)
-			
-		myMeasure = Measure(localDim=localDim, measureType={'name':"fro"})
-		optimizer = Optimizer(myMeasure, H)
+        modelPars = [Jorth[orthK],1,Jcross[crossL]]
+        model = {"name": modelName, "pars":modelPars,"locality":2,"localDim":4}
+        H = ModelHamiltonian(model)
+            
+        myMeasure = Measure(localDim=localDim, measureType={'name':"fro"})
+        optimizer = Optimizer(myMeasure, H)
 
-		initCircuit = IdenticalOnsiteCircuit(localDim=localDim)
-		initCircuit.initRandom()
+        initCircuit = IdenticalOnsiteCircuit(localDim=localDim)
+        initCircuit.initRandom()
 
-		optimizer.initCircuit = initCircuit
+        optimizer.initCircuit = initCircuit
 
-		print('Started Frobenius norm minimization')
-		print('------------------------------------')
-		froCircuit, froReport = optimizer.optimize()
+        print('Started Frobenius norm minimization')
+        print('------------------------------------')
+        froCircuit, froReport = optimizer.optimize()
 
-		if froReport[0]['conv'] is False:
-			warnings.warn('Frobenius norm optimization did not converge' )
-
-
-		# Run the subsequent L1-norm minimization
-		print('Started l1 norm minimization at the current point')
-		print('------------------------------------')
-		myMeasure.measureType = {'name':'smooth-ell1','alpha':alpha}
-		optimizer.initCircuit = froCircuit
-
-		l1Circuit, l1Report = optimizer.optimize(max_steps = max_steps)
-
-		# l1Circuit, l1Report = optimizer.optimize(verbose = verbose,stepper='constant',givenStepSize = stepSizeL1,max_steps=max_steps,fct_goal = fct_goal)
-
-		if l1Report[0]['conv'] is False:
-			warnings.warn('l1-norm optimization did not converge' )
-
-		if optimizer.objectiveFunction(froCircuit) < optimizer.objectiveFunction(l1Circuit):
-			currentCircuit = froCircuit
-			currentReport = froReport
-			warnings.warn('Ohhhps: the l1-minimization made it worse')
-
-		print('Started l1-norm minimization from scratch')
-		print('------------------------------------')
-		myMeasure.measureType = {'name':'smooth-ell1','alpha':alpha}
-
-		optimizer.initCircuit = initCircuit
-			
-		onlyL1Circuit, onlyL1Report = optimizer.optimize(max_steps = max_steps)
-
-		if onlyL1Report[0]['conv'] is False:
-			warnings.warn('only l1-norm optimization did not converge' )
+        if froReport[0]['conv'] is False:
+            warnings.warn('Frobenius norm optimization did not converge' )
 
 
-		# Set the measure to the hard L1 norm for evaluation of the optimization 
-		optimizer.measure.measureType = {'name': 'ell1','epsilon':0}
-		argmin[orthK,crossL] = np.argmin([optimizer.objectiveFunction(froCircuit),optimizer.objectiveFunction(l1Circuit),optimizer.objectiveFunction(onlyL1Circuit)])
-		if argmin.any() == 0: 
-			currentCircuit = froCircuit
-			currentReport = froReport
-		elif argmin.any() == 1: 
-			currentCircuit = l1Circuit
-			currentReport = l1Report
-		elif argmin.any() == 2: 
-			currentCircuit = onlyL1Circuit
-			currentReport = onlyL1Report
+        # Run the subsequent L1-norm minimization
+        print('Started l1 norm minimization at the current point')
+        print('------------------------------------')
+        myMeasure.measureType = {'name':'smooth-ell1','alpha':alpha}
+        optimizer.initCircuit = froCircuit
 
-		print('The argmin is', argmin)
-		
-		nonStoqBefore[orthK,crossL] = optimizer.objectiveFunction(identityCircuit)
-		nonStoqAfter[orthK,crossL] = optimizer.objectiveFunction(currentCircuit)
-		nonStoq = nonStoqAfter/nonStoqBefore
+        l1Circuit, l1Report = optimizer.optimize(max_steps = max_steps)
 
-		avSignBefore[orthK,crossL]= -np.log(identityCircuit.conjugationLocalHamiltonian(H).avSign(nSites,nMC,beta))
-		avSignAfter[orthK,crossL] = - np.log(currentCircuit.conjugationLocalHamiltonian(H).avSign(nSites,nMC,beta))
-		avSignRatio = avSignAfter/avSignBefore
-		
-		print('Initial value of the objective Function:')
-		print(nonStoqBefore[orthK,crossL])
-		print('Final value of the objective Function:')
-		print(nonStoqAfter[orthK,crossL] )
-		print('------------------------------------')
-		print('The logarithm of the original inverse average sign ')
-		print(avSignBefore[orthK,crossL])
-		print('The logarithm of the final inverse average sign ')
-		print(avSignAfter[orthK,crossL])
-		print('------------------------------------')
+        # l1Circuit, l1Report = optimizer.optimize(verbose = verbose,stepper='constant',givenStepSize = stepSizeL1,max_steps=max_steps,fct_goal = fct_goal)
+
+        if l1Report[0]['conv'] is False:
+            warnings.warn('l1-norm optimization did not converge' )
+
+        if optimizer.objectiveFunction(froCircuit) < optimizer.objectiveFunction(l1Circuit):
+            currentCircuit = froCircuit
+            currentReport = froReport
+            warnings.warn('Ohhhps: the l1-minimization made it worse')
+
+        print('Started l1-norm minimization from scratch')
+        print('------------------------------------')
+        myMeasure.measureType = {'name':'smooth-ell1','alpha':alpha}
+
+        optimizer.initCircuit = initCircuit
+            
+        onlyL1Circuit, onlyL1Report = optimizer.optimize(max_steps = max_steps)
+
+        if onlyL1Report[0]['conv'] is False:
+            warnings.warn('only l1-norm optimization did not converge' )
 
 
-		
+        # Set the measure to the hard L1 norm for evaluation of the optimization 
+        optimizer.measure.measureType = {'name': 'ell1','epsilon':0}
+        argmin[orthK,crossL] = np.argmin([optimizer.objectiveFunction(froCircuit),optimizer.objectiveFunction(l1Circuit),optimizer.objectiveFunction(onlyL1Circuit)])
+        if argmin.any() == 0: 
+            currentCircuit = froCircuit
+            currentReport = froReport
+        elif argmin.any() == 1: 
+            currentCircuit = l1Circuit
+            currentReport = l1Report
+        elif argmin.any() == 2: 
+            currentCircuit = onlyL1Circuit
+            currentReport = onlyL1Report
+
+        print('The argmin is', argmin)
+        
+        nonStoqBefore[orthK,crossL] = optimizer.objectiveFunction(identityCircuit)
+        nonStoqAfter[orthK,crossL] = optimizer.objectiveFunction(currentCircuit)
+        nonStoq = nonStoqAfter/nonStoqBefore
+
+        avSignBefore[orthK,crossL]= -np.log(identityCircuit.conjugationLocalHamiltonian(H).avSign(nSites,nMC,beta))
+        avSignAfter[orthK,crossL] = - np.log(currentCircuit.conjugationLocalHamiltonian(H).avSign(nSites,nMC,beta))
+        avSignRatio = avSignAfter/avSignBefore
+        
+        print('Initial value of the objective Function:')
+        print(nonStoqBefore[orthK,crossL])
+        print('Final value of the objective Function:')
+        print(nonStoqAfter[orthK,crossL] )
+        print('------------------------------------')
+        print('The logarithm of the original inverse average sign ')
+        print(avSignBefore[orthK,crossL])
+        print('The logarithm of the final inverse average sign ')
+        print(avSignAfter[orthK,crossL])
+        print('------------------------------------')
+
+
+        
 
 print("Plotting ... Please wait ...")
 
