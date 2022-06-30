@@ -1,1 +1,1 @@
-from .unitary_model import unitary_generator
+from .unitary_model import UnitaryGenerator, UnitaryRiemanGenerator

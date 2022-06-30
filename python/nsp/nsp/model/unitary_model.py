@@ -15,7 +15,7 @@ from .. import n_sphere
 
 
 
-class base_matrix_generator(abc.ABC, torch.nn.Module):
+class BaseMatrixGenerator(abc.ABC, torch.nn.Module):
     """Abstract class for matrix generator class. This class prototypes the methods
     needed by a class satisfying the Operator concept.
 
@@ -24,8 +24,8 @@ class base_matrix_generator(abc.ABC, torch.nn.Module):
     D : dimension of matrix
     """
 
-    def __init__(self, D, dtype = np.float64, seed = 2022):
-        super(base_matrix_generator, self).__init__()
+    def __init__(self, D, dtype = np.float64, seed = None):
+        super(BaseMatrixGenerator, self).__init__()
         self.D = D
         self.dtype = dtype
         self._type, self._complex = dtype_check(dtype)
@@ -33,16 +33,16 @@ class base_matrix_generator(abc.ABC, torch.nn.Module):
         self._n_params = self._get_n_params()
 
 
-        
-        torch.manual_seed(seed)
-        np.random.seed(seed)
+        if seed:
+            torch.manual_seed(seed)
+            np.random.seed(seed)
 
         if self._type is torch.Tensor:
             self._params = torch.nn.Parameter(torch.rand(self._n_params))
         else:
             self._params = np.random.rand(self._n_params)
 
-        self.generators = self.make_generators()
+        self.generators = self._make_generators()
 
 
     def _type_check(self, X):
@@ -62,7 +62,7 @@ class base_matrix_generator(abc.ABC, torch.nn.Module):
         """
 
     @abc.abstractmethod
-    def make_generators(self):
+    def _make_generators(self):
         """
         return generators
         """
@@ -80,7 +80,9 @@ class base_matrix_generator(abc.ABC, torch.nn.Module):
         if (len(self._params) != len(params)):
             raise ValueError("given params is not appropriate")
         if self._type == torch.Tensor:
-            self._params.data[:] = torch.Tensor(params)[:]
+            tmp = torch.zeros(params.shape, dtype=torch.float64)
+            torch.set_printoptions(precision=20)
+            self._params.data = torch.from_numpy(params)[:]
         else:
             self._params[:] = np.array(params)[:]
 
@@ -91,9 +93,10 @@ class base_matrix_generator(abc.ABC, torch.nn.Module):
             NotImplementedError("matrix method doesn't reveive paramters as arguments for tensor type")
         return self._get_matrix()
 
-    def reset_params(self, seed = 2022):
-        torch.manual_seed(seed)
-        np.random.seed(seed)
+    def reset_params(self, seed = None):
+        if seed:
+            torch.manual_seed(seed)
+            np.random.seed(seed)
         if self._type is torch.Tensor:
             self._params = torch.nn.Parameter(torch.rand(self._n_params))
         else:
@@ -103,7 +106,7 @@ class base_matrix_generator(abc.ABC, torch.nn.Module):
 
 
 
-class unitary_generator(base_matrix_generator):
+class UnitaryGenerator(BaseMatrixGenerator):
 
     """
     class for generating unitary / orthogonal matrix from given params
@@ -121,7 +124,7 @@ class unitary_generator(base_matrix_generator):
             n_params = D*(D-1)/2
         return int(n_params)
 
-    def make_generators(self):
+    def _make_generators(self):
         tmp_list = []
         D = self.D
         for i, j in [[i,j] for i in range(D) for j in range(i+1,D)]:
@@ -156,3 +159,42 @@ class unitary_generator(base_matrix_generator):
         params = self._convert_params()
         tmp =  (params[:,None,None] * self.generators).sum(axis=0)
         return matrix_exp_(tmp)
+
+
+class UnitaryRiemanGenerator(BaseMatrixGenerator):
+
+    """
+    class for generating square matrix
+    initial matrix is unitary matrix or orthogonal 
+    """
+
+    def __init__(self, D, dtype = np.float64, seed = None):
+        super().__init__(D, dtype, seed)
+        if(self._complex):
+            raise NotImplementedError("Only orthogonal matrix is available now") 
+        self.reset_params(seed=seed)
+        
+
+    def _get_n_params(self) -> int:
+        D = self.D
+        if self._complex:
+            n_params = D*D*2
+        else:
+            n_params = D*D
+        return int(n_params)
+
+    def _make_generators(self):
+        # raise NotImplementedError("generators are not used in this class")
+        pass
+
+    def _get_matrix(self):
+        return view_tensor(self._params, [self.D]*2)
+
+    def reset_params(self, seed = 2022):
+        if seed:
+            torch.manual_seed(seed)
+            np.random.seed(seed)
+        randnMatrix = np.random.randn(self.D, self.D)
+        Q, R = np.linalg.qr(randnMatrix)
+        haar_orth = Q.dot(np.diag(np.diag(R)/np.abs(np.diag(R))))
+        self.set_params(haar_orth.reshape(-1).astype(np.float64))
