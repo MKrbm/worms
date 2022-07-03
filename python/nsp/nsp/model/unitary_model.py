@@ -2,7 +2,7 @@ import numpy as np
 from pyrsistent import v
 from scipy.linalg import expm
 import torch
-from torch import nn, no_grad
+from torch import Tensor, nn, no_grad
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import ToTensor, Lambda
@@ -67,6 +67,12 @@ class BaseMatrixGenerator(abc.ABC, torch.nn.Module):
         return generators
         """
 
+    @staticmethod
+    @abc.abstractclassmethod
+    def _inv(U):
+        """
+        For unitary matrix, complex conjugate
+        """
     @property
     def params(self):
         return self._params
@@ -76,21 +82,19 @@ class BaseMatrixGenerator(abc.ABC, torch.nn.Module):
     def n_params(self):
         return self._n_params
     
-    def set_params(self, params : Union[list, np.ndarray, torch.Tensor]):
+    def set_params(self, params : Union[list, np.ndarray, torch.Tensor], copy_grad = False):
         if (len(self._params) != len(params)):
             raise ValueError("given params is not appropriate")
         if self._type == torch.Tensor:
-            tmp = torch.zeros(params.shape, dtype=torch.float64)
-            torch.set_printoptions(precision=20)
-            self._params.data = torch.from_numpy(params)[:]
+            self._params.data = convert_type(params, torch.Tensor).data
+            if copy_grad and hasattr(params, "grad"):
+                self._params.grad = params.grad
         else:
             self._params[:] = np.array(params)[:]
 
     def matrix(self, params = None):
-        if (params is not None) and self._type == np.ndarray:
+        if (params is not None) :
             self.set_params(params)
-        elif (params is not None):
-            NotImplementedError("matrix method doesn't reveive paramters as arguments for tensor type")
         return self._get_matrix()
 
     def reset_params(self, seed = None):
@@ -112,7 +116,7 @@ class UnitaryGenerator(BaseMatrixGenerator):
     class for generating unitary / orthogonal matrix from given params
     """
 
-    def __init__(self, D, dtype = np.float64, seed = 2022, spherical = False):
+    def __init__(self, D, dtype = np.float64, seed = None, spherical = False):
         super().__init__(D, dtype, seed)
         self.spherical = spherical
 
@@ -160,12 +164,17 @@ class UnitaryGenerator(BaseMatrixGenerator):
         tmp =  (params[:,None,None] * self.generators).sum(axis=0)
         return matrix_exp_(tmp)
 
+    @staticmethod
+    def _inv(U):
+        return U.T.conj()
 
 class UnitaryRiemanGenerator(BaseMatrixGenerator):
 
     """
     class for generating square matrix
     initial matrix is unitary matrix or orthogonal 
+
+    W <- W - \Delta S
     """
 
     def __init__(self, D, dtype = np.float64, seed = None):
@@ -190,7 +199,7 @@ class UnitaryRiemanGenerator(BaseMatrixGenerator):
     def _get_matrix(self):
         return view_tensor(self._params, [self.D]*2)
 
-    def reset_params(self, seed = 2022):
+    def reset_params(self, seed = None):
         if seed:
             torch.manual_seed(seed)
             np.random.seed(seed)
@@ -198,3 +207,7 @@ class UnitaryRiemanGenerator(BaseMatrixGenerator):
         Q, R = np.linalg.qr(randnMatrix)
         haar_orth = Q.dot(np.diag(np.diag(R)/np.abs(np.diag(R))))
         self.set_params(haar_orth.reshape(-1).astype(np.float64))
+
+    @staticmethod
+    def _inv(U):
+        return U.T.conj()

@@ -1,7 +1,7 @@
 from typing import Type
 import numpy as np
 import torch
-
+from scipy.optimize import OptimizeResult
 
 def exp_energy(E, beta):
     Z = np.exp(-beta*E)
@@ -29,13 +29,11 @@ def abs(X, sign = 1):
         ValueError("sign is either 1 or -1")
     
     if isinstance(X, np.ndarray):
-        ValueError("dimension should be 2") if (X.ndim != 2) else None
         return sign * np.abs(X)
     elif isinstance(X, torch.Tensor):
-        ValueError("dimension should be 2") if (X.ndim != 2) else None
         return sign * torch.abs(X)
     else:
-        TypeError("type of X is inappropriate")
+        raise TypeError("type of X is inappropriate")
 
 """
 min function for torch.complex dtype tensor.
@@ -61,28 +59,30 @@ def stoquastic(X, abs : bool = False):
     if abs:
         return abs(X)
     if isinstance(X, np.ndarray):
-        ValueError("dimension should be 2") if (X.ndim != 2) else None
         return _positive_map(X)
     elif isinstance(X, torch.Tensor):
-        ValueError("dimension should be 2") if (X.ndim != 2) else None
         return _positive_map_torch(X)
         pass
     else:
-        TypeError("type of X is inappropriate")
+        raise TypeError("type of X is inappropriate")
 
 
 def type_check(X):
-    if isinstance(X, np.ndarray):
-        ValueError("dimension should be 2") if (X.ndim != 2) else None
-        return type(X)
-    elif isinstance(X, torch.Tensor):
-        ValueError("dimension should be 2") if (X.ndim != 2) else None
-        return type(X)
-    else:
-        TypeError("type of X is inappropriate")
-    
     if not (X.ndim == 2 and X.shape[0]==X.shape[1]):
         raise ValueError("X must be a 2D square matrix")
+        
+    if isinstance(X, np.ndarray):
+        if (X.ndim != 2):
+            raise ValueError("dimension should be 2") 
+        return type(X)
+    elif isinstance(X, torch.Tensor):
+        if (X.ndim != 2):
+            raise ValueError("dimension should be 2")
+        return type(X)
+    else:
+        raise TypeError("type of X is inappropriate")
+    
+
 
 
 def dtype_check(dtype):
@@ -137,6 +137,32 @@ def torch2numpy(dtype):
         return dtype
 
 
+def convert2numpy(X):
+    if isinstance(X, torch.Tensor):
+        return np.array(X.data)
+    elif isinstance(X, np.ndarray):
+        return X
+    else:
+        raise TypeError("X should be either np_array or tensor")
+
+def convert2tensor(X):
+    if isinstance(X, torch.Tensor):
+        return X
+    elif isinstance(X, np.ndarray):
+        return torch.from_numpy(X)
+    else:
+        raise TypeError("X should be either np_array or tensor")
+
+def convert_type(X, _type):
+    if not (isinstance(X, np.ndarray) or isinstance(X, torch.Tensor)):
+        return X
+    if _type == torch.Tensor:
+        return convert2tensor(X)
+    elif _type == np.ndarray:
+        return convert2numpy(X)
+    else:
+        raise TypeError("type should be either np_array or tensor : {}".format(_type))
+
 def eigvalsh_(A):
     _type = type(A)
     if _type == np.ndarray:
@@ -144,7 +170,7 @@ def eigvalsh_(A):
     elif _type == torch.Tensor:
         return torch.linalg.eigvalsh(A)
     else:
-        TypeError("A should be either np_array or tensor")
+        raise TypeError("A should be either np_array or tensor")
 
 def zeros_(D, _type):
     if _type == np.ndarray:
@@ -152,7 +178,7 @@ def zeros_(D, _type):
     elif _type == torch.Tensor:
         return  torch.zeros(D)
     else:
-        TypeError("A should be either np_array or tensor")
+        raise TypeError("A should be either np_array or tensor")
 
 from scipy.linalg import expm
 
@@ -171,7 +197,7 @@ def cast_dtype(X, dtype):
     elif isinstance(X, np.ndarray):
         return X.astype(dtype)
     else:
-        TypeError("X should be either np_array or tensor")
+        raise TypeError("X should be either np_array or tensor")
 
 def view_tensor(X, view_ : list):
     if (isinstance(view_, np.ndarray)):
@@ -183,7 +209,7 @@ def view_tensor(X, view_ : list):
     elif isinstance(X, np.ndarray):
         return X.reshape(view_)
     else:
-        TypeError("X should be either np_array or tensor")
+        raise TypeError("X should be either np_array or tensor")
 
 def einsum_(string, *arg):
     if isinstance(arg[0], torch.Tensor):
@@ -191,7 +217,7 @@ def einsum_(string, *arg):
     elif isinstance(arg[0], np.ndarray):
         return np.einsum(string, *arg)
     else:
-        TypeError("X should be either np_array or tensor")
+        raise TypeError("X should be either np_array or tensor")
 
 def is_hermitian(X):
     if isinstance(X, torch.Tensor):
@@ -199,7 +225,7 @@ def is_hermitian(X):
     elif isinstance(X, np.ndarray):
         return np.all(X==X.T.conj())
     else:
-        TypeError("X should be either np_array or tensor")    
+        raise TypeError("X should be either np_array or tensor")    
 
 
 def pick_negative(X):
@@ -208,7 +234,7 @@ def pick_negative(X):
     elif isinstance(X, np.ndarray):
         return np.minimum(0, X)
     else:
-        TypeError("X should be either np_array or tensor")  
+        raise TypeError("X should be either np_array or tensor")  
 
 
 def l2_measure(X):

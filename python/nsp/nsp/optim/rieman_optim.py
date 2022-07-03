@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from torch.optim.optimizer import Optimizer
-from torch.optim import SGD
+from torch.optim import SGD, Adam
 from typing import List, Optional, Tuple
 import abc
 from ..model import UnitaryRiemanGenerator
@@ -38,6 +38,8 @@ class BaseRiemanOptimizer(Optimizer, abc.ABC):
             raise AttributeError("params should be a tensor with gradient")
 
         U = self.model.matrix()
+        if not self._check_is_unitary(U):
+            raise ValueError("U becomses non-unitary matrix")
         euc_grad = params.grad.view([self.model.D]*2)
         if translated: 
             #Gradient translated to the group identity 
@@ -101,8 +103,12 @@ class BaseRiemanOptimizer(Optimizer, abc.ABC):
         calculate one step for params from rieman gradient and original params.
         """
 
+    def _check_is_unitary(self, U):
+        return (torch.round(U @ self.model._inv(U), decimals=10) == torch.eye(U.shape[0])).all()
+
 
 class RiemanSGD(BaseRiemanOptimizer):
+    
 
     @staticmethod
     def method(
@@ -116,8 +122,19 @@ class RiemanSGD(BaseRiemanOptimizer):
             dampening: float,
             nesterov: bool,
             maximize: bool):
-
+        """
+        corresponds to sgd.
+        """
         for i, param in enumerate(params):
             rd_p, U = rd_p_n_U_list[i] 
+
+            if momentum != 0:
+                buf = momentum_buffer_list[i]
+
+                if buf is None:
+                    buf = torch.clone(rd_p).detach()
+                    momentum_buffer_list[i] = buf
+                else:
+                    buf.mul_(momentum).add_(rd_p, alpha=1 - dampening)
             invStepDir = rd_p
             param.data = (torch.matrix_exp(invStepDir * -lr) @ U).view(-1)
