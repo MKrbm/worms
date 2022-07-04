@@ -30,11 +30,11 @@ X = X.T + X
 loss_l1 = nsp.loss.L1(torch.Tensor(X), [4])
 
 lr = 0.001
-solver_rieman = UnitarySymmTs(RiemanSGD, model_rieman, loss_l1, lr = lr, momentum=0.01)
-ret_rieman = solver_rieman.run(500, disable_message=True)
+# solver_rieman = UnitarySymmTs(RiemanSGD, model_rieman, loss_l1, lr = lr, momentum=0.01)
+# ret_rieman = solver_rieman.run(500, disable_message=True)
 
-# solver_lie_sgd = UnitarySymmTs(torch.optim.SGD, model_lie, loss_l1, lr = lr)
-# ret_lie_sgd = solver_lie_sgd.run(500, disable_message=True)
+solver_lie_sgd = UnitarySymmTs(torch.optim.SGD, model_lie, loss_l1, lr = lr, momentum=0.01)
+ret_lie_sgd = solver_lie_sgd.run(500, disable_message=True)
 
 
 

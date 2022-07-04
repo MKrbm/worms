@@ -85,6 +85,11 @@ class BaseRiemanOptimizer(Optimizer, abc.ABC):
                 dampening=dampening,
                 nesterov=nesterov,
                 maximize=maximize,)
+                
+            # update momentum_buffers in state
+            for p, momentum_buffer in zip(params_with_grad, momentum_buffer_list):
+                state = self.state[p]
+                state['momentum_buffer'] = momentum_buffer
     
     @staticmethod
     @abc.abstractmethod
@@ -136,5 +141,11 @@ class RiemanSGD(BaseRiemanOptimizer):
                     momentum_buffer_list[i] = buf
                 else:
                     buf.mul_(momentum).add_(rd_p, alpha=1 - dampening)
-            invStepDir = rd_p
-            param.data = (torch.matrix_exp(invStepDir * -lr) @ U).view(-1)
+                
+                if nesterov:
+                    rd_p = rd_p.add(buf, alpha=momentum)
+                else:
+                    rd_p = buf
+
+            alpha = lr if maximize else -lr
+            param.data = (torch.matrix_exp(rd_p * alpha) @ U).view(-1)

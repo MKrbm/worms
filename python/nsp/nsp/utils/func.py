@@ -239,8 +239,9 @@ def pick_negative(X):
 
 def l2_measure(X):
     X = pick_negative(X)
-    return (X**2).sum()
+    X = X**2
+    return (X).sum() - X.trace()
 
 def l1_measure(X):
     X = pick_negative(X)
-    return -X.sum()
+    return -(X.sum() - X.trace())
