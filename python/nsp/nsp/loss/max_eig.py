@@ -25,10 +25,15 @@ class MES(BaseMatirxLoss):
         super().__init__(X, act)
         if not np.all(self.act == self.act[0]):
             raise NotImplementedError("the same unitary matrix acts on the given sites")
-        self.target = eigvalsh_(X)[-1]
+        self.target = eigvalsh_(self.X)[-1]
 
     def forward(self, A):
-        A = stoquastic(A)
+
+        # print(torch.sum(torch.abs(torch.diag(A)-torch.diag(stoquastic(A)))))
+        # print(torch.diag(A))
+        # print(torch.diag(stoquastic(A, p_def = self.p_def)))
+        # print("\n\n")
+        A = stoquastic(A, p_def = self.p_def)
         return eigvalsh_(A)[-1]
 
     @staticmethod

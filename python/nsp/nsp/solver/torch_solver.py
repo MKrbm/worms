@@ -6,7 +6,7 @@ from tqdm.auto import tqdm
 
 from ..model.unitary_model import BaseMatrixGenerator, UnitaryRiemanGenerator
 from ..loss.base_class import BaseMatirxLoss
-from ..optim.rieman_optim import BaseRiemanOptimizer
+from ..optim.rieman_optim import BaseRiemanOptimizer, RiemanCG
 from typing import Union
 
 class BaseGs(abc.ABC):
@@ -27,18 +27,23 @@ class BaseGs(abc.ABC):
             ):
         
         self.model = model
+        self.loss = loss
+        self.target = loss.target
         if seed:
             self.model.reset_params(seed)
         if issubclass(optim_method, BaseRiemanOptimizer):
             if not isinstance(self.model, UnitaryRiemanGenerator):
                 raise TypeError("If you want to optimize with rieman generator, then you need to use rieman generator")
-            self.optim = optim_method(self.model, **kwargs)
+            
+            if optim_method == RiemanCG:
+                self.optim = optim_method(self.model,self.loss,**kwargs)
+            else:
+                self.optim = optim_method(self.model, **kwargs)
         else:
             if isinstance(self.model, UnitaryRiemanGenerator):
                 raise TypeError("Model for Riemannian optimization is only be available with UnitaryRiemanGenerator and its variants")
             self.optim = optim_method(self.model.parameters(), **kwargs)
-        self.loss = loss
-        self.target = loss.target
+
         if not (self.model._type == torch.Tensor):
             raise TypeError("only torch.Tensor is available")
         if not (self.loss._type == torch.Tensor):
@@ -63,7 +68,7 @@ class UnitarySymmTs(BaseGs):
         loss = self.loss
         optim = self.optim
 
-        interval = n_iter / 100
+        # interval = n_iter / 100
         min_loss = loss([model.matrix()]*loss._n_unitaries).item()
         ini_loss = min_loss
         if not disable_message:
@@ -72,17 +77,29 @@ class UnitarySymmTs(BaseGs):
             print("="*50, "\n")
         # for t in tqdm(range(n_iter)):
         ret = {}
+        loss_old = 1E9
+        loss_same_cnt = 0
         with tqdm(range(n_iter), disable=disable_message) as pbar:
             for t, ch in enumerate(pbar):
                 U = model.matrix()
                 loss_ = loss(U)
-                pbar.set_postfix(OrderedDict(iter=t, loss=loss_.item()))
+                if (abs(loss_.item() - loss_old)<1E-9):
+                    loss_same_cnt += 1
+                    if loss_same_cnt > 10:
+                        print("stack in local minimum")
+                        break
+                else:
+                    loss_same_cnt = 0
+                pbar.set_postfix_str("iter={}, loss={:.5f}".format(t,loss_.item()))
                 if (loss_.item() < min_loss or min_loss is None):
                     min_loss = loss_.item()
                     self.best_model.set_params(model._params, True)
                 optim.zero_grad()
                 loss_.backward()
-                optim.step()
+                if optim.step():
+                    print("Achieve local minimum in the middle of the iteration")
+                    break
+                loss_old = loss_.item()
         ret["model"] = self.best_model
         ret["target_loss"] = self.target
         ret["best_loss"] = min_loss

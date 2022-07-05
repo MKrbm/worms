@@ -22,7 +22,7 @@ RUN apt-get update -y && apt-get -y install software-properties-common &&\
   
 
 # n* install python 3.9
-RUN apt-get -y install python${PY_VERSION}-distutils python${PY_VERSION} 
+RUN apt-get -y install python${PY_VERSION}-distutils python${PY_VERSION}-dev python${PY_VERSION} 
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${PY_VERSION} 1 && update-alternatives --install /usr/bin/python python /usr/bin/python${PY_VERSION} 1 && \
     apt-get -y install python3-pip
 

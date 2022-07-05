@@ -7,14 +7,15 @@ import abc
 from scipy import optimize
 from nsp.utils.func import type_check
 from ..model import UnitaryRiemanGenerator
+from ..loss.base_class import BaseMatirxLoss
+
 
 class BaseRiemanOptimizer(Optimizer, abc.ABC):
     """
     base class for rieman optimizatino for unitary matrix. input argument takes model instead of params, since riemanian grad use the model.matrix()
     """
     model : UnitaryRiemanGenerator
-
-    def __init__(self,  model : UnitaryRiemanGenerator, lr,momentum=0, dampening=0,
+    def __init__(self,  model : UnitaryRiemanGenerator, lr, momentum=0, dampening=0,
                  weight_decay=0, nesterov=False, *, maximize=False):
 
         defaults = dict(lr=lr, momentum=momentum, dampening=dampening,
@@ -59,6 +60,9 @@ class BaseRiemanOptimizer(Optimizer, abc.ABC):
 
     @torch.no_grad()
     def step(self, closure=None):
+        """
+        return True if fall into local minimum
+        """
         # self._cuda_graph_capture_health_check()
         loss = None
         for group in self.param_groups:
@@ -82,7 +86,7 @@ class BaseRiemanOptimizer(Optimizer, abc.ABC):
                     else:
                         momentum_buffer_list.append(state['momentum_buffer'])
 
-            self.method(
+            if self.method(
                 params_with_grad,
                 rd_p_n_U_list,
                 momentum_buffer_list,
@@ -91,12 +95,16 @@ class BaseRiemanOptimizer(Optimizer, abc.ABC):
                 lr=lr,
                 dampening=dampening,
                 nesterov=nesterov,
-                maximize=maximize,)
+                maximize=maximize,) is True:
+
+                return True
                 
             # update momentum_buffers in state
             for p, momentum_buffer in zip(params_with_grad, momentum_buffer_list):
                 state = self.state[p]
                 state['momentum_buffer'] = momentum_buffer
+        
+        return False
     
     @staticmethod
     @abc.abstractmethod
@@ -116,14 +124,20 @@ class BaseRiemanOptimizer(Optimizer, abc.ABC):
         """
 
     def _check_is_unitary(self, U):
-        return (torch.round(U @ self.model._inv(U), decimals=10) == torch.eye(U.shape[0])).all()
-
+        tmp = torch.round(U @ self.model._inv(U), decimals=8) == torch.eye(U.shape[0])
+        res = tmp.all()
+        if not res:
+            torch.set_printoptions(precision=20)
+            # print(U @ self.model._inv(U))
+            # print(U)
+            # print(tmp)
+        return res
+        # return (torch.round(U @ self.model._inv(U), decimals=10) == torch.eye(U.shape[0])).all()
 
 class RiemanSGD(BaseRiemanOptimizer):
     
-
-    @staticmethod
     def method(
+            self,
             params: List[torch.Tensor],
             rd_p_n_U_list: List[Tuple[torch.Tensor, torch.Tensor]],
             momentum_buffer_list: List[Optional[torch.Tensor]],
@@ -155,17 +169,30 @@ class RiemanSGD(BaseRiemanOptimizer):
                     rd_p = buf
 
             alpha = lr if maximize else -lr
+            # print(rd_p + rd_p.T)
+            # tmp = rd_p + rd_p.T
+            # if not (tmp == 0).all():
+            #     print(tmp)
+            
+            # if not self._check_is_unitary(torch.matrix_exp(rd_p * alpha)):
+            #     print(torch.matrix_exp(rd_p * alpha))
+            #     print("???")
             param.data = (torch.matrix_exp(rd_p * alpha) @ U).view(-1)
 
 
 class RiemanCG(BaseRiemanOptimizer):
     
-    def __init__(self,  model : UnitaryRiemanGenerator, loss, lr,momentum=0, dampening=0,
-                 weight_decay=0, nesterov=False, *, maximize=False):
+    loss : BaseMatirxLoss
+    def __init__(self,  
+        model : UnitaryRiemanGenerator, loss : BaseMatirxLoss, 
+        lr, momentum=0, dampening=0,weight_decay=0, 
+        nesterov=False, grad_tol = 1e-8, 
+        *, maximize=False):
         super().__init__(model,lr,momentum, dampening, weight_decay, nesterov, maximize=maximize)
         self.loss = loss
+        self.grad_tol = grad_tol
 
-    def golden(self, U, H):
+    def _golden(self, U, H):
         
         if not (type_check(U) == type_check(H) == torch.Tensor) \
             or (U.requires_grad) \
@@ -196,19 +223,35 @@ class RiemanCG(BaseRiemanOptimizer):
         for i, param in enumerate(params):
             rd_p, U = rd_p_n_U_list[i] 
             rieman_grad_norm = (torch.trace(rd_p.T.conj() @ rd_p).real).item()
+            if (.5*rieman_grad_norm < self.grad_tol):
+                return True
+
             if momentum_buffer_list[i] is None:
-                lr = self.golden(U.data, rd_p.data)
+                lr = self._golden(U.data, rd_p.data)
                 param.data = (torch.matrix_exp(rd_p * -lr) @ U).view(-1)
                 momentum_buffer_list[i] = [torch.clone(rd_p.data), torch.clone(rd_p.data), rieman_grad_norm]
             else:
-
-                [old_rd_p, old_norm] = momentum_buffer_list[i]
+                [old_inv_step_dir, old_rd_p, old_norm] = momentum_buffer_list[i]
                 curv_ratio = np.trace((rd_p-old_rd_p).T.conj()@rd_p).real / old_norm 
-                inv_step_dir = rd_p+curv_ratio*old_rd_p
-                lr = self.golden(U.data, inv_step_dir.data)
+                # print("derivative = ", rd_p)
+                inv_step_dir = rd_p+curv_ratio*old_inv_step_dir
+
+                lr = self._golden(U.data, inv_step_dir.data)
+                if (abs(lr) < 1e-10):
+                    lr = 0
+                    if abs(curv_ratio) < 1e-10:
+                        return True
                 param.data = (torch.matrix_exp(inv_step_dir * -lr) @ U).view(-1)
+
+                np.set_printoptions(precision=10)
+                if not (inv_step_dir + inv_step_dir.T == 0).all():
+                    print(inv_step_dir + inv_step_dir.T)
+
+                # add old information to buffer
                 momentum_buffer_list[i] = [
                     torch.clone(inv_step_dir.data), 
                     torch.clone(rd_p.data),
                     rieman_grad_norm
                 ]
+
+        return False

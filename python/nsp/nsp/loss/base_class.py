@@ -20,14 +20,24 @@ class BaseMatirxLoss(abc.ABC):
     """Abstract class for unitary(matrix) loss function. This class prototypes the methods
     needed by a class satisfying the Operator concept.
     """
-    Xtarget : float
-    def __init__(self, X, act : Union[list, np.ndarray], einsum=False):
+    target : float
+    model : BaseMatrixGenerator
+    def __init__(self, 
+        X, 
+        act : Union[list, np.ndarray], 
+        model : BaseMatrixGenerator = None,
+        mineig_zero = True,
+        einsum=False):
         
-        if isinstance(X, BaseMatrixGenerator):
-            self.model = X
-            self.X = X.matrix()
-        else:
-            self.X = X
+        self.model = None
+        if model:
+            self.model = model
+        self.p_def = False
+        if mineig_zero:
+            X = set_mineig_zero(X)
+            self.p_def = True
+
+        self.X = X
         self._type = type_check(self.X) # return np.ndarray or torch.Tensor
         if not is_hermitian(self.X):
             raise ValueError("initial matrix X is required to be hermitian matrix")
@@ -127,10 +137,10 @@ class BaseMatirxLoss(abc.ABC):
         self._type = _type
 
 
-    @staticmethod
-    @abc.abstractmethod
-    def _inverse(U):
+    def _inverse(self, U):
         """
         inverse of given matrix U
         """
+        if self.model:
+            return self.model._inv(U)
 

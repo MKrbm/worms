@@ -2,6 +2,7 @@ from typing import Type
 import numpy as np
 import torch
 from scipy.optimize import OptimizeResult
+import random
 
 def exp_energy(E, beta):
     Z = np.exp(-beta*E)
@@ -44,25 +45,36 @@ def _torch_complex_min(A):
     return A[idx]
 
 
-def _positive_map_torch(A):
-    a = _torch_complex_min(torch.diag(A))* torch.eye(A.shape[0])
-    return torch.abs(A-a) + a
+def _positive_map_torch(A, p_def = False):
+    if p_def:
+        # print("iside func",torch.diag(A))
+        # print("insde func abs ", torch.diag(torch.abs(A)))
+        return torch.abs(A)
+    else:
+        a = _torch_complex_min(torch.diag(A))* torch.eye(A.shape[0])
+        return torch.abs(A-a+1) + a - 1
 
-def _positive_map(A):
-    a = np.eye(A.shape[0])*np.min(np.diag(A))
-    return np.abs(A-a) + a
+def _positive_map(A, p_def = False):
+    if p_def:
+        return np.abs(A)
+    else:
+        a = np.eye(A.shape[0])*np.min(np.diag(A))
+        return np.abs(A-a+1) + a -1
 
-"""
-take absolute except diagonal part.
-"""
-def stoquastic(X, abs : bool = False):
-    if abs:
+
+def stoquastic(X, abs_ : bool = False, p_def = False):
+    """
+    take absolute except diagonal part.
+
+    arags:
+        p_def : matrix is positive definite or not. If true, it is garanteed that all diagonal elements are positive.
+    """
+    if abs_:
         return abs(X)
     if isinstance(X, np.ndarray):
-        return _positive_map(X)
+        return _positive_map(X, p_def)
     elif isinstance(X, torch.Tensor):
-        return _positive_map_torch(X)
-        pass
+        return _positive_map_torch(X, p_def)
     else:
         raise TypeError("type of X is inappropriate")
 
@@ -236,6 +248,16 @@ def pick_negative(X):
     else:
         raise TypeError("X should be either np_array or tensor")  
 
+def set_mineig_zero(X):
+    if isinstance(X, torch.Tensor):
+        E = torch.linalg.eigvalsh(X)[0]
+        return X - torch.eye(X.shape[0]) * E
+    elif isinstance(X, np.ndarray):
+        E = np.linalg.eigvalsh(X)[0]
+        return X - np.eye(X.shape[0]) * E
+    else:
+        raise TypeError("X should be either np_array or tensor") 
+
 
 def l2_measure(X):
     X = pick_negative(X)
@@ -245,3 +267,10 @@ def l2_measure(X):
 def l1_measure(X):
     X = pick_negative(X)
     return -(X.sum() - X.trace())
+
+
+def set_seed(seed):
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.manual_seed(seed)
+
