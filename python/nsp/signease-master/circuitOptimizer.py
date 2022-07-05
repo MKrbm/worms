@@ -863,6 +863,7 @@ class Optimizer:
 
             #Approximate curvature ratio
             curvRatio = np.trace(np.dot((riemGrad-oldRiemGrad).T,riemGrad)) / oldRiemGradNormSqrd 
+            
             if kk % dim*dim == 0:
                 invStepDir = riemGrad
             else:

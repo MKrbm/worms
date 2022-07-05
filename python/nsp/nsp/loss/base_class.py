@@ -14,6 +14,7 @@ from torchvision.transforms import ToTensor, Lambda
 from ..utils.func import *
 import abc
 from typing import Union
+from ..model.unitary_model import BaseMatrixGenerator
 
 class BaseMatirxLoss(abc.ABC):
     """Abstract class for unitary(matrix) loss function. This class prototypes the methods
@@ -21,17 +22,21 @@ class BaseMatirxLoss(abc.ABC):
     """
     Xtarget : float
     def __init__(self, X, act : Union[list, np.ndarray], einsum=False):
-
-        self._type = type_check(X) # return np.ndarray or torch.Tensor
-        if not is_hermitian(X):
+        
+        if isinstance(X, BaseMatrixGenerator):
+            self.model = X
+            self.X = X.matrix()
+        else:
+            self.X = X
+        self._type = type_check(self.X) # return np.ndarray or torch.Tensor
+        if not is_hermitian(self.X):
             raise ValueError("initial matrix X is required to be hermitian matrix")
-        self.dtype = X.dtype
+        self.dtype = self.X.dtype
         self.act = np.array(act)
         self.act_cumprod = np.cumprod(self.act)
         # self.act_cumprod.insert(1, 0)
         self.act_cumprod=np.insert(self.act_cumprod, 0, 1)
-        # self.X=view_tensor(X, self.act.tolist() * 2)
-        self.X = X
+        
         self._n_unitaries = len(self.act)
         if (X.shape[0] != np.prod(self.act)):
             raise ValueError("act on list is inconsistent with X")

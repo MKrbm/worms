@@ -4,6 +4,8 @@ from torch.optim.optimizer import Optimizer
 from torch.optim import SGD, Adam
 from typing import List, Optional, Tuple
 import abc
+from scipy import optimize
+from nsp.utils.func import type_check
 from ..model import UnitaryRiemanGenerator
 
 class BaseRiemanOptimizer(Optimizer, abc.ABC):
@@ -12,7 +14,7 @@ class BaseRiemanOptimizer(Optimizer, abc.ABC):
     """
     model : UnitaryRiemanGenerator
 
-    def __init__(self,  model : UnitaryRiemanGenerator, lr, momentum=0, dampening=0,
+    def __init__(self,  model : UnitaryRiemanGenerator, lr,momentum=0, dampening=0,
                  weight_decay=0, nesterov=False, *, maximize=False):
 
         defaults = dict(lr=lr, momentum=momentum, dampening=dampening,
@@ -23,8 +25,10 @@ class BaseRiemanOptimizer(Optimizer, abc.ABC):
 
         if (len(self.param_groups) != 1):
             raise ValueError("Length of self.param_groups must be 1")
+        
 
-    def _riemannian_grad(self,params, translated=True):
+
+    def _riemannian_grad(self, params, translated=True):
         """
         The geodesic emanating from W(U(D) embeded in euclid space) in the direction \tilde{S} = S W is given by
         G(t) = exp(-tS)W, S \in \mathfrak(u)(D), t \in \mathcal{R}
@@ -48,7 +52,10 @@ class BaseRiemanOptimizer(Optimizer, abc.ABC):
             #Gradient in the tangent space of `orth`
             riemannianGradient = euc_grad - U @ euc_grad.T.conj() @ U 
 
+        self.riemannianGradient = riemannianGradient
+        self.U = U
         return riemannianGradient, U
+
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -149,3 +156,59 @@ class RiemanSGD(BaseRiemanOptimizer):
 
             alpha = lr if maximize else -lr
             param.data = (torch.matrix_exp(rd_p * alpha) @ U).view(-1)
+
+
+class RiemanCG(BaseRiemanOptimizer):
+    
+    def __init__(self,  model : UnitaryRiemanGenerator, loss, lr,momentum=0, dampening=0,
+                 weight_decay=0, nesterov=False, *, maximize=False):
+        super().__init__(model,lr,momentum, dampening, weight_decay, nesterov, maximize=maximize)
+        self.loss = loss
+
+    def golden(self, U, H):
+        
+        if not (type_check(U) == type_check(H) == torch.Tensor) \
+            or (U.requires_grad) \
+            or (H.requires_grad):
+            raise TypeError("type of U and H are required to be torch tensor without grad")
+
+        def objective(t):
+            return self.loss(torch.matrix_exp(-t*H)@U).item()
+
+        return optimize.golden(objective, brack=(0, 1))
+
+
+    def method(
+            self,
+            params: List[torch.Tensor],
+            rd_p_n_U_list: List[Tuple[torch.Tensor, torch.Tensor]],
+            momentum_buffer_list: List[Optional[torch.Tensor]],
+            *,
+            weight_decay: float,
+            momentum: float,
+            lr: float,
+            dampening: float,
+            nesterov: bool,
+            maximize: bool):
+        """
+        corresponds to sgd.
+        """
+        for i, param in enumerate(params):
+            rd_p, U = rd_p_n_U_list[i] 
+            rieman_grad_norm = (torch.trace(rd_p.T.conj() @ rd_p).real).item()
+            if momentum_buffer_list[i] is None:
+                lr = self.golden(U.data, rd_p.data)
+                param.data = (torch.matrix_exp(rd_p * -lr) @ U).view(-1)
+                momentum_buffer_list[i] = [torch.clone(rd_p.data), torch.clone(rd_p.data), rieman_grad_norm]
+            else:
+
+                [old_rd_p, old_norm] = momentum_buffer_list[i]
+                curv_ratio = np.trace((rd_p-old_rd_p).T.conj()@rd_p).real / old_norm 
+                inv_step_dir = rd_p+curv_ratio*old_rd_p
+                lr = self.golden(U.data, inv_step_dir.data)
+                param.data = (torch.matrix_exp(inv_step_dir * -lr) @ U).view(-1)
+                momentum_buffer_list[i] = [
+                    torch.clone(inv_step_dir.data), 
+                    torch.clone(rd_p.data),
+                    rieman_grad_norm
+                ]
