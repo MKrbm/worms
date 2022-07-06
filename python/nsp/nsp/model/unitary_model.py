@@ -83,6 +83,18 @@ class BaseMatrixGenerator(abc.ABC, torch.nn.Module):
         return self._n_params
     
     def set_params(self, params : Union[list, np.ndarray, torch.Tensor], copy_grad = False):
+        # if isinstance(params, list):
+        #     params = np.array(params)
+        # p_r = params.real
+        # if self._complex:
+        #     p_i = params.imag
+        #     if type_check(params) == torch.Tensor:
+        #         params = torch.concat([p_r, p_i])
+        #     elif type_check(params) == np.np.ndarray:
+        #         params = np.concatenate([p_r, p_i])
+        # else:
+        #     params = p_r
+
         if (len(self._params) != len(params)):
             raise ValueError("given params is not appropriate")
         if self._type == torch.Tensor:
@@ -179,10 +191,31 @@ class UnitaryRiemanGenerator(BaseMatrixGenerator):
 
     def __init__(self, D, dtype = np.float64, seed = None):
         super().__init__(D, dtype, seed)
-        if(self._complex):
-            raise NotImplementedError("Only orthogonal matrix is available now") 
         self.reset_params(seed=seed)
-        
+
+
+    def set_params(self, params : Union[list, np.ndarray, torch.Tensor], copy_grad = False):
+        if isinstance(params, list):
+            params = np.array(params)
+        p_r = params.real
+        if self._complex:
+            p_i = params.imag
+            if type_check(params) == torch.Tensor:
+                params = torch.concat([p_r, p_i])
+            elif type_check(params) == np.ndarray:
+                params = np.concatenate([p_r, p_i])
+        else:
+            params = p_r
+
+        if (len(self._params) != len(params)):
+            raise ValueError("given params is not appropriate")
+        if self._type == torch.Tensor:
+            self._params.data = convert_type(params, torch.Tensor).data
+            if copy_grad and hasattr(params, "grad"):
+                self._params.grad = params.grad
+        else:
+            self._params[:] = np.array(params)[:]
+
 
     def _get_n_params(self) -> int:
         D = self.D
@@ -197,16 +230,28 @@ class UnitaryRiemanGenerator(BaseMatrixGenerator):
         pass
 
     def _get_matrix(self):
-        return view_tensor(self._params, [self.D]*2)
+        if self._complex:
+            return view_tensor(self._params[:self.D**2], [self.D]*2) + 1j*view_tensor(self._params[self.D**2:], [self.D]*2)
+        else:
+            return view_tensor(self._params[:self.D**2], [self.D]*2)
 
     def reset_params(self, seed = None):
         if seed:
             torch.manual_seed(seed)
             np.random.seed(seed)
-        randnMatrix = np.random.randn(self.D, self.D)
+        if self._complex:
+            randnMatrix = np.random.randn(self.D, self.D) + 1j*np.random.randn(self.D, self.D)
+        else:
+            randnMatrix = np.random.randn(self.D, self.D)
         Q, R = np.linalg.qr(randnMatrix)
-        haar_orth = Q.dot(np.diag(np.diag(R)/np.abs(np.diag(R))))
-        self.set_params(haar_orth.reshape(-1).astype(np.float64))
+        haar_orth = Q.dot(np.diag(np.diag(R)/np.abs(np.diag(R))))   
+        if self._complex:
+            params = haar_orth.reshape(-1)
+            pr = params.real.astype(np.float64)
+            pi = params.imag.astype(np.float64)
+            self.set_params(np.concatenate([pr, pi]))
+        else:
+            self.set_params(haar_orth.reshape(-1).astype(np.float64))
 
     @staticmethod
     def _inv(U):

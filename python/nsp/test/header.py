@@ -5,6 +5,7 @@ from nsp.optim import RiemanSGD, RiemanCG
 import numpy as np
 from scipy.linalg import expm, sinm, cosm
 from scipy import sparse
+from scipy.optimize import OptimizeResult
 import scipy
 from utils import lossfunc as lf
 
@@ -20,3 +21,4 @@ import copy
 from matplotlib import pyplot as plt
 import random
 from nsp.utils.func import *
+from nsp.utils import save_fig

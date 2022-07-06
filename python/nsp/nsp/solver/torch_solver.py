@@ -3,6 +3,7 @@ import numpy as np
 import abc
 import copy
 from tqdm.auto import tqdm
+from scipy.optimize import OptimizeResult
 
 from ..model.unitary_model import BaseMatrixGenerator, UnitaryRiemanGenerator
 from ..loss.base_class import BaseMatirxLoss
@@ -23,9 +24,10 @@ class BaseGs(abc.ABC):
             model : BaseMatrixGenerator,
             loss : BaseMatirxLoss,
             seed = None,
+            pout = True,
             **kwargs
             ):
-        
+        self.pout = pout
         self.model = model
         self.loss = loss
         self.target = loss.target
@@ -86,7 +88,8 @@ class UnitarySymmTs(BaseGs):
                 if (abs(loss_.item() - loss_old)<1E-9):
                     loss_same_cnt += 1
                     if loss_same_cnt > 10:
-                        print("stack in local minimum")
+                        if self.pout:
+                            print("stack in local minimum --> break loop")
                         break
                 else:
                     loss_same_cnt = 0
@@ -96,12 +99,10 @@ class UnitarySymmTs(BaseGs):
                     self.best_model.set_params(model._params, True)
                 optim.zero_grad()
                 loss_.backward()
-                if optim.step():
-                    print("Achieve local minimum in the middle of the iteration")
-                    break
+                optim.step()
                 loss_old = loss_.item()
         ret["model"] = self.best_model
-        ret["target_loss"] = self.target
-        ret["best_loss"] = min_loss
-        return ret
+        ret["target"] = self.target
+        ret["fun"] = min_loss
+        return OptimizeResult(ret)
 

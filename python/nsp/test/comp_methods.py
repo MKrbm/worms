@@ -1,7 +1,7 @@
 from header import *
 
 lr = 0.005
-D = 3
+D = 10
 import copy
 
 model_lie = nsp.model.UnitaryGenerator(D, dtype=torch.float64)
@@ -34,8 +34,8 @@ for _ in range(100):
     solver_lie_adam = UnitarySymmTs(torch.optim.Adam, model_adam, loss, lr = lr)
     ret_lie_adam = solver_lie_adam.run(500, disable_message=True)
     
-    res.append([ret_lie_sgd["best_loss"],  ret_lie_adam["best_loss"], ret_rieman["best_loss"], ret_cg["best_loss"]])
-    if  ret_rieman["best_loss"] > 0.1:
+    res.append([ret_lie_sgd["fun"],  ret_lie_adam["fun"], ret_rieman["fun"], ret_cg["fun"]])
+    if  ret_rieman["fun"] > 0.1:
         X_list.append(X)
 
 from matplotlib import pyplot as plt

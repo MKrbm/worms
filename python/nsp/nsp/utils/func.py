@@ -274,3 +274,10 @@ def set_seed(seed):
     random.seed(seed)
     torch.manual_seed(seed)
 
+
+def is_identity_torch(X, is_complex=False):
+    if is_complex:
+        X_r = torch.round(X.real, decimals=10)
+        X_i = torch.round(X.imag, decimals=10)
+        return (X_r == torch.eye(X_r.shape[0])).all() and (X_i == 0).all()
+

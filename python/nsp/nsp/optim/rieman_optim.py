@@ -8,6 +8,7 @@ from scipy import optimize
 from nsp.utils.func import type_check
 from ..model import UnitaryRiemanGenerator
 from ..loss.base_class import BaseMatirxLoss
+from ..utils.func import *
 
 
 class BaseRiemanOptimizer(Optimizer, abc.ABC):
@@ -43,8 +44,9 @@ class BaseRiemanOptimizer(Optimizer, abc.ABC):
             raise AttributeError("params should be a tensor with gradient")
 
         U = self.model.matrix()
-        if not self._check_is_unitary(U):
-            raise ValueError("U becomses non-unitary matrix")
+        if not self._check_is_unitary(U.detach()):
+            V, _, W = torch.linalg.svd(U.detach())
+            self.model.set_params((V@W).view(-1))
         euc_grad = params.grad.view([self.model.D]*2)
         if translated: 
             #Gradient translated to the group identity 
@@ -103,6 +105,11 @@ class BaseRiemanOptimizer(Optimizer, abc.ABC):
             for p, momentum_buffer in zip(params_with_grad, momentum_buffer_list):
                 state = self.state[p]
                 state['momentum_buffer'] = momentum_buffer
+        U = self.model.matrix().detach()
+        if not self._check_is_unitary(U):
+            V, _, W = torch.linalg.svd(U)
+            self.model.set_params((V@W).view(-1))
+            # raise ValueError("U becomses non-unitary matrix")
         
         return False
     
@@ -124,15 +131,17 @@ class BaseRiemanOptimizer(Optimizer, abc.ABC):
         """
 
     def _check_is_unitary(self, U):
-        tmp = torch.round(U @ self.model._inv(U), decimals=8) == torch.eye(U.shape[0])
-        res = tmp.all()
-        if not res:
-            torch.set_printoptions(precision=20)
-            # print(U @ self.model._inv(U))
-            # print(U)
-            # print(tmp)
-        return res
+        # tmp = torch.round(U @ self.model._inv(U), decimals=8) == torch.eye(U.shape[0])
+        # res = tmp.all()
+        # if not res:
+        #     torch.set_printoptions(precision=20)
+        #     print(U @ self.model._inv(U))
+        #     print(U)
+        #     # print(U)
+        #     # print(tmp)
+        # return res
         # return (torch.round(U @ self.model._inv(U), decimals=10) == torch.eye(U.shape[0])).all()
+        return is_identity_torch(U @ self.model._inv(U), U.dtype == torch.complex128)
 
 class RiemanSGD(BaseRiemanOptimizer):
     
@@ -174,9 +183,9 @@ class RiemanSGD(BaseRiemanOptimizer):
             # if not (tmp == 0).all():
             #     print(tmp)
             
-            # if not self._check_is_unitary(torch.matrix_exp(rd_p * alpha)):
-            #     print(torch.matrix_exp(rd_p * alpha))
-            #     print("???")
+            if not self._check_is_unitary(torch.matrix_exp(rd_p * alpha)):
+                print("???")
+                print(torch.matrix_exp(rd_p * alpha))
             param.data = (torch.matrix_exp(rd_p * alpha) @ U).view(-1)
 
 
@@ -235,7 +244,7 @@ class RiemanCG(BaseRiemanOptimizer):
                 curv_ratio = np.trace((rd_p-old_rd_p).T.conj()@rd_p).real / old_norm 
                 # print("derivative = ", rd_p)
                 inv_step_dir = rd_p+curv_ratio*old_inv_step_dir
-
+                inv_step_dir = (inv_step_dir - inv_step_dir.H)/2
                 lr = self._golden(U.data, inv_step_dir.data)
                 if (abs(lr) < 1e-10):
                     lr = 0
@@ -245,7 +254,7 @@ class RiemanCG(BaseRiemanOptimizer):
 
                 np.set_printoptions(precision=10)
                 if not (inv_step_dir + inv_step_dir.T == 0).all():
-                    print(inv_step_dir + inv_step_dir.T)
+                    print("Warning! inv_step_dir is not a skew matrix")
 
                 # add old information to buffer
                 momentum_buffer_list[i] = [

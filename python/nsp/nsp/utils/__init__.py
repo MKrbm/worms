@@ -2,6 +2,7 @@ from .print import beauty_array
 from .base_conv import num2state, state2num
 from .local2global import l2nl
 from .func import exp_energy, abs
+from .save_fig_plt import save_fig
 
 __all__ = [
     "abs",
@@ -10,4 +11,5 @@ __all__ = [
     "state2num",
     "l2nl",
     "exp_energy",
+    "save_fig"
 ]

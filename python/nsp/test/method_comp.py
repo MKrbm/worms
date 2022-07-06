@@ -47,16 +47,16 @@ for _ in range(N):
     solver = UnitarySymmTs(RiemanSGD, copy.deepcopy(model_rieman), loss_l1, lr = lr, momentum=0)
     ret = solver.run(500, disable_message=True)
     tmp = []
-    if (ret["best_loss"] < 0.01):
+    if (ret["fun"] < 0.01):
         continue
-    tmp.append(ret["best_loss"])
+    tmp.append(ret["fun"])
 
     for t in LR:
         solver_momentum = UnitarySymmTs(RiemanSGD, copy.deepcopy(model_rieman), loss_l1, lr = lr, momentum=t)
         ret_momentum = solver_momentum.run(500, disable_message=True)
-        if ret_momentum["best_loss"] < 0.001:
+        if ret_momentum["fun"] < 0.001:
             break
-        tmp.append(ret_momentum["best_loss"])
+        tmp.append(ret_momentum["fun"])
     tmp += [0] * (len(LR)+1 - len(tmp))
     res_comp_momentum.append(tmp)
 
