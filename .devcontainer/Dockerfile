@@ -26,9 +26,9 @@ RUN apt-get -y install python${PY_VERSION}-distutils python${PY_VERSION}-dev pyt
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${PY_VERSION} 1 && update-alternatives --install /usr/bin/python python /usr/bin/python${PY_VERSION} 1 && \
     apt-get -y install python3-pip
 
-ADD requirements.txt requirements.txt
-RUN pip3 install -r requirements.txt
-RUN rm -rf environment.yml
+# ADD requirements.txt requirements.txt
+# RUN pip3 install -r requirements.txt
+# RUN rm -rf environment.yml
 # n* installed python
 
 RUN apt-get update -y && apt-get -y install htop cmake openssh-server cmake-curses-gui
