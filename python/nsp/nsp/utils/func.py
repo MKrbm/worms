@@ -269,7 +269,7 @@ def l2_measure(X):
 def l1_measure(X):
     X = _abs(X - (_abs(X)))
     # X = pick_negative(X)
-    return -(X.sum() - X.trace())
+    return (X.sum() - X.trace())
 
 
 def set_seed(seed):

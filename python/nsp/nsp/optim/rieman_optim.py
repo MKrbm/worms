@@ -241,7 +241,7 @@ class RiemanCG(BaseRiemanOptimizer):
             rieman_grad_norm = (torch.trace(rd_p.T.conj() @ rd_p).real).item()
             if (.5*rieman_grad_norm < self.grad_tol):
                 return True
-
+            # print(momentum_buffer_list[i] is None)
             if momentum_buffer_list[i] is None:
                 lr = self._golden(U.data, rd_p.data)
                 param.data = (torch.matrix_exp(rd_p * -lr) @ U).view(-1)
@@ -259,9 +259,10 @@ class RiemanCG(BaseRiemanOptimizer):
                         return True
                 param.data = (torch.matrix_exp(inv_step_dir * -lr) @ U).view(-1)
 
-                np.set_printoptions(precision=10)
-                if not (inv_step_dir + inv_step_dir.T == 0).all():
+                # np.set_printoptions(precision=10)
+                if not (inv_step_dir + inv_step_dir.T.conj() == 0).all():
                     print("Warning! inv_step_dir is not a skew matrix")
+                    print(inv_step_dir)
 
                 # add old information to buffer
                 momentum_buffer_list[i] = [

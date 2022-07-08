@@ -99,7 +99,10 @@ class UnitarySymmTs(BaseGs):
                     self.best_model.set_params(model._params, True)
                 optim.zero_grad()
                 loss_.backward()
-                optim.step()
+                if optim.step():
+                    if self.pout:
+                        print("stack in local minimum --> break loop")
+                    break
                 loss_old = loss_.item()
         ret["model"] = self.best_model
         ret["target"] = self.target
