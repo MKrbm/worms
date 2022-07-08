@@ -1,11 +1,11 @@
 from .print import beauty_array
 from .base_conv import num2state, state2num
 from .local2global import l2nl
-from .func import exp_energy, abs
+from .func import exp_energy, _abs
 from .save_fig_plt import save_fig
 
 __all__ = [
-    "abs",
+    "_abs",
     "beauty_array",
     "num2state", 
     "state2num",

@@ -50,7 +50,7 @@ ax.legend()
 ax.set_title('annealing vs SGD (momentum = 0)')
 ax.set_xlabel('loss_aneeling - loss_sgd')
 ax.set_ylabel("frequency")
-save_fig(plt, f'images/hist_annealing_vs_riemansgd_D={D}_L={type(loss).__name__}.jpeg', 400, overwrite = overwrite)
+save_fig(plt, "images", f'hist_annealing_vs_riemansgd_D={D}_L={type(loss).__name__}.jpeg', 400, overwrite = overwrite)
 
 
 res = np.array(res)
@@ -63,7 +63,7 @@ ax.legend()
 ax.set_title('annealing vs SGD (momentum = 0.1)')
 ax.set_xlabel('loss_aneeling - loss_sgd')
 ax.set_ylabel("frequency")
-save_fig(plt, f'images/hist_annealing_vs_riemansgd1_D={D}_L={type(loss).__name__}.jpeg', 400, overwrite = overwrite)
+save_fig(plt,"images", f'hist_annealing_vs_riemansgd1_D={D}_L={type(loss).__name__}.jpeg', 400, overwrite = overwrite)
 
 
 res = np.array(res)
@@ -76,7 +76,7 @@ ax.legend()
 ax.set_title('annealing vs SGD (momentum = 0.5)')
 ax.set_xlabel('loss_aneeling - loss_sgd')
 ax.set_ylabel("frequency")
-save_fig(plt, f'images/hist_annealing_vs_riemansgd2_D={D}_L={type(loss).__name__}.jpeg', 400, overwrite = overwrite)
+save_fig(plt,"images" ,f'hist_annealing_vs_riemansgd2_D={D}_L={type(loss).__name__}.jpeg', 400, overwrite = overwrite)
 
 
 res = np.array(res)
@@ -89,4 +89,4 @@ ax.legend()
 ax.set_title('annealing vs CG')
 ax.set_xlabel('loss_aneeling - loss_cg')
 ax.set_ylabel("frequency")
-save_fig(plt, f'images/hist_annealing_vs_cg_D={D}_L={type(loss).__name__}.jpeg', 400, overwrite = overwrite)
+save_fig(plt,"images", f'hist_annealing_vs_cg_D={D}_L={type(loss).__name__}.jpeg', 400, overwrite = overwrite)

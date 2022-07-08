@@ -16,12 +16,15 @@ class BaseRiemanOptimizer(Optimizer, abc.ABC):
     base class for rieman optimizatino for unitary matrix. input argument takes model instead of params, since riemanian grad use the model.matrix()
     """
     model : UnitaryRiemanGenerator
-    def __init__(self,  model : UnitaryRiemanGenerator, lr, momentum=0, dampening=0,
-                 weight_decay=0, nesterov=False, *, maximize=False):
+    def __init__(self,
+                model : UnitaryRiemanGenerator, lr, 
+                momentum=0, dampening=0,weight_decay=0, 
+                nesterov=False, *, maximize=False, pout = False):
 
         defaults = dict(lr=lr, momentum=momentum, dampening=dampening,
                         weight_decay=weight_decay, nesterov=nesterov, maximize=maximize)
         self.model = model
+        self.pout = pout
 
         super(BaseRiemanOptimizer, self).__init__(model.parameters(), defaults)
 
@@ -47,7 +50,8 @@ class BaseRiemanOptimizer(Optimizer, abc.ABC):
         if not self._check_is_unitary(U.detach()):
             V, _, W = torch.linalg.svd(U.detach())
             self.model.set_params((V@W).view(-1))
-        euc_grad = params.grad.view([self.model.D]*2)
+        # euc_grad = params.grad.view([self.model.D]*2)
+        euc_grad = self.model._get_matrix(params.grad.detach())
         if translated: 
             #Gradient translated to the group identity 
             riemannianGradient = euc_grad @ U.T.conj() -U @ euc_grad.T.conj()
@@ -105,8 +109,12 @@ class BaseRiemanOptimizer(Optimizer, abc.ABC):
             for p, momentum_buffer in zip(params_with_grad, momentum_buffer_list):
                 state = self.state[p]
                 state['momentum_buffer'] = momentum_buffer
+
         U = self.model.matrix().detach()
         if not self._check_is_unitary(U):
+            # print(U @ U.T.conj())
+            if self.pout:
+                print("U becomes non-unitary matrix")
             V, _, W = torch.linalg.svd(U)
             self.model.set_params((V@W).view(-1))
             # raise ValueError("U becomses non-unitary matrix")
@@ -183,11 +191,10 @@ class RiemanSGD(BaseRiemanOptimizer):
             # if not (tmp == 0).all():
             #     print(tmp)
             
-            if not self._check_is_unitary(torch.matrix_exp(rd_p * alpha)):
-                print("???")
-                print(torch.matrix_exp(rd_p * alpha))
+            # if not self._check_is_unitary(torch.matrix_exp(rd_p * alpha)):
+            #     print("???")
+            #     print(torch.matrix_exp(rd_p * alpha))
             param.data = (torch.matrix_exp(rd_p * alpha) @ U).view(-1)
-
 
 class RiemanCG(BaseRiemanOptimizer):
     

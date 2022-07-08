@@ -87,7 +87,7 @@ class UnitarySymmTs(BaseGs):
                 loss_ = loss(U)
                 if (abs(loss_.item() - loss_old)<1E-9):
                     loss_same_cnt += 1
-                    if loss_same_cnt > 10:
+                    if loss_same_cnt > 100:
                         if self.pout:
                             print("stack in local minimum --> break loop")
                         break

@@ -1,35 +1,24 @@
-import sys
-sys.path.insert(0, "../")
-import nsp
-import numpy as np
-import torch
-import utils
-import utils.optm as optm
-import utils.lossfunc as lf
-from importlib import reload
+from header import *
 
-from nsp.optim import RiemanSGD
-from matplotlib import pyplot as plt
-
-x = np.random.randn(16,16)
-x = (x+x.T)/2
+x = np.random.randn(4,4)
+x = (x+x.T.conj())/2
 x=torch.tensor(x)
-loss_l1 = nsp.loss.L1(x, [4, 4])
-loss_l2 = nsp.loss.L2(x, [4, 4])
-loss_mes = nsp.loss.MES(x, [4, 4])
+loss = nsp.loss.L1(x, [4])
+# loss_l2 = nsp.loss.L2(x, [4, 4])
+# loss_mes = nsp.loss.MES(x, [4, 4])
 
 res = []
 for t in range(10000):
-    x = np.random.randn(16,16)
-    x = (x+x.T)/2
+    x = np.random.randn(4,4) + 1j*np.random.randn(4,4)
+    x = (x+x.T.conj())/2
     x=torch.tensor(x)
-    loss_l1 = nsp.loss.L1(x, [4, 4])
-    model = nsp.model.UnitaryRiemanGenerator(4, dtype=torch.float64)
+    loss = nsp.loss.L1(x, [4])
+    model = nsp.model.UnitaryRiemanGenerator(4, dtype=torch.complex128)
     sgd = RiemanSGD(model, 0.001)
-    loss_old = loss_l1(model.matrix()).item()
-    loss_l1(model.matrix()).backward()
+    loss_old = loss(model.matrix()).item()
+    loss(model.matrix()).backward()
     sgd.step()
-    loss_new = loss_l1(model.matrix()).item()
+    loss_new = loss(model.matrix()).item()
     res.append((loss_new - loss_old))
 
 fig, ax = plt.subplots()
@@ -39,29 +28,4 @@ ax.set_xlabel('diff')
 ax.set_ylabel('freq')
 ax.legend()
 fig.show()
-plt.savefig('l1_rieman_grad_lr=0.001.jpg', dpi=400, bbox_inches="tight")
-
-
-res = []
-for t in range(10000):
-    x = np.random.randn(16,16)
-    x = (x+x.T)/2
-    x=torch.tensor(x)
-    loss_l2 = nsp.loss.L2(x, [4, 4])
-    model = nsp.model.UnitaryRiemanGenerator(4, dtype=torch.float64)
-    sgd = RiemanSGD(model, 0.001)
-    loss_old = loss_l2(model.matrix()).item()
-    loss_l2(model.matrix()).backward()
-    sgd.step()
-    loss_new = loss_l2(model.matrix()).item()
-    res.append((loss_new - loss_old))
-
-fig, ax = plt.subplots()
-ax.hist(res, bins=100)
-ax.set_title('diff in the direction of rieman gradient, 1000 samples/lr = 0.001')
-ax.set_xlabel('diff')
-ax.set_ylabel('freq')
-ax.legend()
-fig.show()
-plt.savefig('l2_rieman_grad_lr=0.001.jpg', dpi=400, bbox_inches="tight")
-# print(loss_new - loss_old)
+save_fig(plt, "images", 'l1_rieman_grad_complex_lr=0.001.jpg', dpi=400, overwrite=False)

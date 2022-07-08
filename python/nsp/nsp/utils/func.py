@@ -25,7 +25,7 @@ def _absolute_map_torch(X, sign):
     return X
 
 
-def abs(X, sign = 1):
+def _abs(X, sign = 1):
     if not(sign in [1, -1]):
         ValueError("sign is either 1 or -1")
     
@@ -260,12 +260,15 @@ def set_mineig_zero(X):
 
 
 def l2_measure(X):
-    X = pick_negative(X)
-    X = X**2
+    X = X - (_abs(X))
+    X = (X*X.conj()).real
+    # X = pick_negative(X)
+    # X = X**2
     return (X).sum() - X.trace()
 
 def l1_measure(X):
-    X = pick_negative(X)
+    X = _abs(X - (_abs(X)))
+    # X = pick_negative(X)
     return -(X.sum() - X.trace())
 
 
@@ -276,8 +279,10 @@ def set_seed(seed):
 
 
 def is_identity_torch(X, is_complex=False):
+    X_r = torch.round(X.real, decimals=10)
     if is_complex:
-        X_r = torch.round(X.real, decimals=10)
         X_i = torch.round(X.imag, decimals=10)
         return (X_r == torch.eye(X_r.shape[0])).all() and (X_i == 0).all()
+    else:
+        return (X_r == torch.eye(X_r.shape[0])).all()
 

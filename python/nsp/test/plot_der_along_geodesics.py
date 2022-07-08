@@ -18,7 +18,7 @@ loss_l2 = nsp.loss.L2(X, [4])
 loss_mes = nsp.loss.MES(X, [4])
 t = 0.001
 ret_min_grad = 1e10
-model = nsp.model.UnitaryRiemanGenerator(4, dtype=torch.float64)
+model = nsp.model.UnitaryRiemanGenerator(4, dtype=torch.complex128)
 W = model.matrix().data
 L1=loss_l1(model.matrix())
 L1.backward()
@@ -40,4 +40,4 @@ plt.plot(np.arange(-300, 300, 1)*0.001, res)
 plt.title("plot derivative along geodesics in the direction of riemannian gradient from random unitary")
 plt.xlabel("t")
 plt.ylabel("derivative w.r.t t")
-plt.savefig("images/der_along_geodesics.jpeg", dpi=800)
+plt.savefig("images/der_along_geodesics_complex.jpeg", dpi=800)
