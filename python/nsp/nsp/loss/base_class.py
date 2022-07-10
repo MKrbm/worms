@@ -23,21 +23,18 @@ class BaseMatirxLoss(abc.ABC):
     target : float
     model : BaseMatrixGenerator
     def __init__(self, 
-        X, 
+        model : BaseMatrixGenerator,
         act : Union[list, np.ndarray], 
-        model : BaseMatrixGenerator = None,
         mineig_zero = True,
         einsum=False):
         
-        self.model = None
-        if model:
-            self.model = model
+        self.model = model
+        self.X = model.matrix()
         self.p_def = False
         if mineig_zero:
-            X = set_mineig_zero(X)
+            self.X = set_mineig_zero(self.X)
             self.p_def = True
 
-        self.X = X
         self._type = type_check(self.X) # return np.ndarray or torch.Tensor
         if not is_hermitian(self.X):
             raise ValueError("initial matrix X is required to be hermitian matrix")
@@ -48,7 +45,7 @@ class BaseMatirxLoss(abc.ABC):
         self.act_cumprod=np.insert(self.act_cumprod, 0, 1)
         
         self._n_unitaries = len(self.act)
-        if (X.shape[0] != np.prod(self.act)):
+        if (self.X.shape[0] != np.prod(self.act)):
             raise ValueError("act on list is inconsistent with X")
         if (einsum):
             self._transform = self._transform_einsum
@@ -141,6 +138,5 @@ class BaseMatirxLoss(abc.ABC):
         """
         inverse of given matrix U
         """
-        if self.model:
-            return self.model._inv(U)
+        return self.model._inv(U)
 

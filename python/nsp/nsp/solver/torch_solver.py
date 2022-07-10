@@ -7,7 +7,7 @@ from scipy.optimize import OptimizeResult
 
 from ..model.unitary_model import BaseMatrixGenerator, UnitaryRiemanGenerator
 from ..loss.base_class import BaseMatirxLoss
-from ..optim.rieman_optim import BaseRiemanOptimizer, RiemanCG
+from ..optim.rieman_unitary_optim import BaseRiemanUnitaryOptimizer, RiemanUnitaryCG
 from typing import Union
 
 class BaseGs(abc.ABC):
@@ -17,10 +17,10 @@ class BaseGs(abc.ABC):
 
     model : BaseMatrixGenerator
     loss : BaseMatirxLoss
-    optim_method : Union[torch.optim.Optimizer, BaseRiemanOptimizer]
+    optim_method : Union[torch.optim.Optimizer, BaseRiemanUnitaryOptimizer]
     def __init__(
             self,
-            optim_method : Union[torch.optim.Optimizer, BaseRiemanOptimizer],
+            optim_method : Union[torch.optim.Optimizer, BaseRiemanUnitaryOptimizer],
             model : BaseMatrixGenerator,
             loss : BaseMatirxLoss,
             seed = None,
@@ -33,11 +33,11 @@ class BaseGs(abc.ABC):
         self.target = loss.target
         if seed:
             self.model.reset_params(seed)
-        if issubclass(optim_method, BaseRiemanOptimizer):
+        if issubclass(optim_method, BaseRiemanUnitaryOptimizer):
             if not isinstance(self.model, UnitaryRiemanGenerator):
                 raise TypeError("If you want to optimize with rieman generator, then you need to use rieman generator")
             
-            if optim_method == RiemanCG:
+            if optim_method == RiemanUnitaryCG:
                 self.optim = optim_method(self.model,self.loss,**kwargs)
             else:
                 self.optim = optim_method(self.model, **kwargs)

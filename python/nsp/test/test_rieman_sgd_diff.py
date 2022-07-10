@@ -14,7 +14,7 @@ for t in range(10000):
     x=torch.tensor(x)
     loss = nsp.loss.L1(x, [4])
     model = nsp.model.UnitaryRiemanGenerator(4, dtype=torch.complex128)
-    sgd = RiemanSGD(model, 0.001)
+    sgd = RiemanUnitarySGD(model, 0.001)
     loss_old = loss(model.matrix()).item()
     loss(model.matrix()).backward()
     sgd.step()

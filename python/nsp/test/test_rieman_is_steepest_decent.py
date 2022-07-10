@@ -9,7 +9,7 @@ loss_mes = nsp.loss.MES(x, [4, 4])
 
 t = 0.001
 model2 = nsp.model.UnitaryRiemanGenerator(4, dtype=torch.complex128)
-sgd = RiemanSGD(model2, t)
+sgd = RiemanUnitarySGD(model2, t)
 loss_old = loss_l1(model2.matrix()).item()
 loss_l1(model2.matrix()).backward()
 S, U = sgd._riemannian_grad(model2._params)

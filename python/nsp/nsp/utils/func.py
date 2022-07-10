@@ -262,13 +262,12 @@ def set_mineig_zero(X):
 def l2_measure(X):
     X = X - (_abs(X))
     X = (X*X.conj()).real
-    # X = pick_negative(X)
-    # X = X**2
+
     return (X).sum() - X.trace()
 
 def l1_measure(X):
     X = _abs(X - (_abs(X)))
-    # X = pick_negative(X)
+
     return (X.sum() - X.trace())
 
 
@@ -278,11 +277,14 @@ def set_seed(seed):
     torch.manual_seed(seed)
 
 
-def is_identity_torch(X, is_complex=False):
-    X_r = torch.round(X.real, decimals=10)
+def is_identity_torch(X, is_complex=False, decimals = 10):
+    X_r = torch.round(X.real, decimals=decimals)
     if is_complex:
-        X_i = torch.round(X.imag, decimals=10)
+        X_i = torch.round(X.imag, decimals=decimals)
         return (X_r == torch.eye(X_r.shape[0])).all() and (X_i == 0).all()
     else:
         return (X_r == torch.eye(X_r.shape[0])).all()
+
+
+
 

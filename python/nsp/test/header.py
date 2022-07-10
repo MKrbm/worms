@@ -1,7 +1,7 @@
 import sys
 sys.path.append('..')
 from nsp.solver import SymmSolver, UnitarySymmTs
-from nsp.optim import RiemanSGD, RiemanCG
+from nsp.optim import RiemanUnitarySGD, RiemanUnitaryCG
 import numpy as np
 from scipy.linalg import expm, sinm, cosm
 from scipy import sparse

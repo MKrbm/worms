@@ -1,2 +1,2 @@
 from .sign import Sign
-from .rieman_optim import RiemanSGD, RiemanCG
+from .rieman_unitary_optim import RiemanUnitarySGD, RiemanUnitaryCG

@@ -1,7 +1,7 @@
 import sys
 sys.path.append('..')
 from nsp.solver import SymmSolver, UnitarySymmTs
-from nsp.optim import RiemanSGD, RiemanCG
+from nsp.optim import RiemanUnitarySGD, RiemanUnitaryCG
 import numpy as np
 from scipy.linalg import expm, sinm, cosm
 from scipy import sparse
@@ -30,7 +30,7 @@ loss_l1 = nsp.loss.MES(X, [N])
 t = 0.001
 ret_min_grad = 1e10
 model = nsp.model.UnitaryRiemanGenerator(N, dtype=torch.float64)
-solver = UnitarySymmTs(RiemanCG, model, loss_l1, lr = 0.005, momentum=0.1)
+solver = UnitarySymmTs(RiemanUnitaryCG, model, loss_l1, lr = 0.005, momentum=0.1)
 
 # model = nsp.model.UnitaryGenerator(N, dtype=torch.float64)
 # solver = UnitarySymmTs(torch.optim.SGD, model, loss_l1, lr = 0.001, momentum=0)
@@ -42,7 +42,7 @@ solver = UnitarySymmTs(RiemanCG, model, loss_l1, lr = 0.005, momentum=0.1)
 solver.run(1000)
 
 print("start plot figures")
-cg = RiemanCG(model, loss_l1, 0.001)
+cg = RiemanUnitaryCG(model, loss_l1, 0.001)
 S, W = cg._riemannian_grad(model._params)
 H = S.data
 res_grad = []

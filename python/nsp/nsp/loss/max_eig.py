@@ -36,9 +36,7 @@ class MES(BaseMatirxLoss):
         A = stoquastic(A, p_def = self.p_def)
         return eigvalsh_(A)[-1]
 
-    @staticmethod
-    def _inverse(U):
-        return U.T.conj()
+
 
 class ME(BaseMatirxLoss):
     """
@@ -57,8 +55,6 @@ class ME(BaseMatirxLoss):
     def forward(self, A):
         return eigvalsh_(A)[-1]
     
-    @staticmethod
-    def _inverse(U):
-        return U.T.conj()
+
 
 

@@ -22,10 +22,10 @@ for _ in range(100):
 
 
 
-    solver_cg = UnitarySymmTs(RiemanCG, model_cg, loss, lr = lr)
+    solver_cg = UnitarySymmTs(RiemanUnitaryCG, model_cg, loss, lr = lr)
     ret_cg = solver_cg.run(500, disable_message=True)
 
-    solver_rieman = UnitarySymmTs(RiemanSGD, model_rieman, loss, lr = lr, momentum=0.0)
+    solver_rieman = UnitarySymmTs(RiemanUnitarySGD, model_rieman, loss, lr = lr, momentum=0.0)
     ret_rieman = solver_rieman.run(500, disable_message=True)
 
     solver_lie_sgd = UnitarySymmTs(torch.optim.SGD, model_lie, loss, lr = lr)

@@ -11,14 +11,14 @@ t = 0.001
 ret_min_grad = 1e10
 model = nsp.model.UnitaryRiemanGenerator(D, dtype=torch.complex128)
 model.reset_params()
-solver = UnitarySymmTs(RiemanSGD, model, loss, lr = t, momentum=0.1, pout = True)
+solver = UnitarySymmTs(RiemanUnitarySGD, model, loss, lr = t, momentum=0.1, pout = True)
 ret = solver.run(10, disable_message=False)
 
 model = ret.model
 W = model.matrix().data
 L1=loss(model.matrix())
 L1.backward()
-sgd = RiemanCG(model, loss, t)
+sgd = RiemanUnitaryCG(model, loss, t)
 S, U = sgd._riemannian_grad(model._params)
 
 H = S.data

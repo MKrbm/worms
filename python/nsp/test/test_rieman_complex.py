@@ -16,8 +16,8 @@ X = np.random.randn(D,D)
 
 X = X.T + X
 loss = nsp.loss.L1(torch.Tensor(X), [D])
-sgd = RiemanSGD(model_rg, 0.01)
-solver = UnitarySymmTs(RiemanSGD, model_rg, loss, lr = lr, momentum=0.1, pout = True)
+sgd = RiemanUnitarySGD(model_rg, 0.01)
+solver = UnitarySymmTs(RiemanUnitarySGD, model_rg, loss, lr = lr, momentum=0.1, pout = True)
 loss(model_rg.matrix()).backward()
 H, _ = sgd._riemannian_grad(model_rg._params)
 # print
