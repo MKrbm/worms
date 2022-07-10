@@ -12,7 +12,7 @@ X_list = []
 for _ in range(100):
     X = np.random.randn(D**2,D**2)
     X = X.T + X
-    loss = nsp.loss.L1(torch.Tensor(X), [D,D])
+    loss = nsp.loss. MES(torch.Tensor(X), [D,D])
 
 
     model_lie.reset_params()
@@ -50,7 +50,7 @@ ax.legend()
 ax.set_title('compare methods to rieman with momentum (share same initial U)')
 ax.set_xlabel('sgd - rieman')
 ax.set_ylabel('adam - rieman')
-plt.savefig(f'images/comp_meths_resdiff_sgd_D={D}_L={type(loss).__name__}.jpeg', dpi=400)
+plt.savefig(f'images/comp_meth　s_resdiff_sgd_D={D}_L={type(loss).__name__}.jpeg', dpi=400)
 
 fig, ax = plt.subplots()
 res_rie = np.array(res)[:,3]
