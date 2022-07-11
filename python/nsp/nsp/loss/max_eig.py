@@ -21,8 +21,8 @@ class MES(BaseMatirxLoss):
     ------
     act : if U is list of unitary matrix, the map will be like U[0] \otimes U[1] \otimes \cdots U[len(act)-1] @ X @ (c.c.)  . Each U[0].shape[0] == act[0]
     """
-    def __init__(self, X, act):
-        super().__init__(X, act)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if not np.all(self.act == self.act[0]):
             raise NotImplementedError("the same unitary matrix acts on the given sites")
         self.target = eigvalsh_(self.X)[-1]
@@ -34,7 +34,28 @@ class MES(BaseMatirxLoss):
         # print(torch.diag(stoquastic(A, p_def = self.p_def)))
         # print("\n\n")
         A = stoquastic(A, p_def = self.p_def)
+
         return eigvalsh_(A)[-1]
+
+class MES_SL(BaseMatirxLoss):
+    """
+    maximum eigenvalue of stoquastic map of matrix (U @ X @ U.T) 
+
+    params
+    ------
+    act : if U is list of unitary matrix, the map will be like U[0] \otimes U[1] \otimes \cdots U[len(act)-1] @ X @ (c.c.)  . Each U[0].shape[0] == act[0]
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not np.all(self.act == self.act[0]):
+            raise NotImplementedError("the same unitary matrix acts on the given sites")
+        self.target = eigvalsh_(self.X)[-1]
+
+    def forward(self, A):
+
+        A = stoquastic(A, p_def = self.p_def)
+        
+        return torch.max(torch.linalg.eigvals(A).real)
 
 
 
@@ -46,11 +67,11 @@ class ME(BaseMatirxLoss):
     ------
     act : if U is list of unitary matrix, the map will be like U[0] \otimes U[1] \otimes \cdots U[len(act)-1] @ X @ (c.c.)  . Each U[0].shape[0] == act[0]
     """
-    def __init__(self, X, act):
-        super().__init__(X, act)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if not np.all(self.act == self.act[0]):
             raise NotImplementedError("the same unitary matrix acts on the given sites")
-        self.target = eigvalsh_(X)[-1]
+        self.target = eigvalsh_(self.X)[-1]
 
     def forward(self, A):
         return eigvalsh_(A)[-1]

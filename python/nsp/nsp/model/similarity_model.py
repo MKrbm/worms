@@ -63,10 +63,12 @@ class SlRiemanGenerator(BaseMatrixGenerator):
                 pass
             else:
                 randnMatrix = np.random.randn(self.D, self.D)
-                randnMatrix /= np.linalg.det(randnMatrix)  
+                randnMatrix /= abs(np.linalg.det(randnMatrix)) ** (1/self.D)
                 self.set_params(randnMatrix.reshape(-1))
 
 
-    @staticmethod
-    def _inv(U):
-        return torch.linalg.inv(U)
+    def _inv(self, U, buffer=False):
+        if buffer:
+            return self.U_inv
+        self.U_inv = matinv(U)
+        return self.U_inv

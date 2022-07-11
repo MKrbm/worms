@@ -23,13 +23,14 @@ class BaseMatirxLoss(abc.ABC):
     target : float
     model : BaseMatrixGenerator
     def __init__(self, 
-        model : BaseMatrixGenerator,
+        X : torch.Tensor,
         act : Union[list, np.ndarray], 
+        inv = cc,
         mineig_zero = True,
         einsum=False):
         
-        self.model = model
-        self.X = model.matrix()
+        self._inverse = inv
+        self.X = X
         self.p_def = False
         if mineig_zero:
             self.X = set_mineig_zero(self.X)
@@ -61,7 +62,7 @@ class BaseMatirxLoss(abc.ABC):
         """
         if not isinstance(U_list, list):
             U_list = [U_list] * self._n_unitaries
-        self._unitary_check(U_list)
+        self._matrix_check(U_list)
         return self.forward(self._transform(U_list))
 
     @abc.abstractmethod
@@ -118,7 +119,7 @@ class BaseMatirxLoss(abc.ABC):
 
 
 
-    def _unitary_check(self, U):
+    def _matrix_check(self, U):
         # if len(U) != len(self.act):
         #     raise ValueError("U and act are inconsistent")
         for u, act in zip(U, self.act):
@@ -133,10 +134,4 @@ class BaseMatirxLoss(abc.ABC):
         self.X = convert_type(self.X, _type)
         self._type = _type
 
-
-    def _inverse(self, U):
-        """
-        inverse of given matrix U
-        """
-        return self.model._inv(U)
 

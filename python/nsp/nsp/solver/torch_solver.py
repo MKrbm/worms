@@ -6,8 +6,10 @@ from tqdm.auto import tqdm
 from scipy.optimize import OptimizeResult
 
 from ..model.unitary_model import BaseMatrixGenerator, UnitaryRiemanGenerator
+from ..model.similarity_model import SlRiemanGenerator
 from ..loss.base_class import BaseMatirxLoss
 from ..optim.rieman_unitary_optim import BaseRiemanUnitaryOptimizer, RiemanUnitaryCG
+from ..optim.rieman_sl_optim import BaseRiemanSlGOptimizer, RiemanSlCG
 from typing import Union
 
 class BaseGs(abc.ABC):
@@ -17,10 +19,10 @@ class BaseGs(abc.ABC):
 
     model : BaseMatrixGenerator
     loss : BaseMatirxLoss
-    optim_method : Union[torch.optim.Optimizer, BaseRiemanUnitaryOptimizer]
+    optim_method : Union[torch.optim.Optimizer, BaseRiemanUnitaryOptimizer, BaseRiemanSlGOptimizer]
     def __init__(
             self,
-            optim_method : Union[torch.optim.Optimizer, BaseRiemanUnitaryOptimizer],
+            optim_method : Union[torch.optim.Optimizer, BaseRiemanUnitaryOptimizer, BaseRiemanSlGOptimizer],
             model : BaseMatrixGenerator,
             loss : BaseMatirxLoss,
             seed = None,
@@ -37,10 +39,20 @@ class BaseGs(abc.ABC):
             if not isinstance(self.model, UnitaryRiemanGenerator):
                 raise TypeError("If you want to optimize with rieman generator, then you need to use rieman generator")
             
-            if optim_method == RiemanUnitaryCG:
-                self.optim = optim_method(self.model,self.loss,**kwargs)
+            if optim_method in [RiemanUnitaryCG, RiemanSlCG]:
+                self.optim = optim_method(self.model, self.loss, pout = pout, **kwargs)
             else:
-                self.optim = optim_method(self.model, **kwargs)
+                self.optim = optim_method(self.model, pout = pout, **kwargs)
+
+        elif issubclass(optim_method, BaseRiemanSlGOptimizer):
+            if not isinstance(self.model, SlRiemanGenerator):
+                raise TypeError("If you want to optimize with rieman generator, then you need to use rieman generator")
+            
+            if optim_method in [RiemanUnitaryCG, RiemanSlCG]:
+                self.optim = optim_method(self.model, self.loss, pout = pout, **kwargs)
+            else:
+                self.optim = optim_method(self.model, pout = pout, **kwargs)
+
         else:
             if isinstance(self.model, UnitaryRiemanGenerator):
                 raise TypeError("Model for Riemannian optimization is only be available with UnitaryRiemanGenerator and its variants")

@@ -42,7 +42,6 @@ class BaseMatrixGenerator(abc.ABC, torch.nn.Module):
         else:
             self._params = np.random.rand(self._n_params)
 
-        self.generators = self._make_generators()
 
 
     def _type_check(self, X):
@@ -61,11 +60,6 @@ class BaseMatrixGenerator(abc.ABC, torch.nn.Module):
         function return matrix from parameters.
         """
 
-    @abc.abstractmethod
-    def _make_generators(self):
-        """
-        return generators
-        """
 
     @staticmethod
     @abc.abstractclassmethod
@@ -120,6 +114,7 @@ class UnitaryGenerator(BaseMatrixGenerator):
     def __init__(self, D, dtype = np.float64, seed = None, spherical = False):
         super().__init__(D, dtype, seed)
         self.spherical = spherical
+        self.generators = self._make_generators()
 
 
     def _get_n_params(self) -> int:
@@ -168,7 +163,7 @@ class UnitaryGenerator(BaseMatrixGenerator):
 
     @staticmethod
     def _inv(U):
-        return U.T.conj()
+        return cc(U)
 
 class UnitaryRiemanGenerator(BaseMatrixGenerator):
 
@@ -214,4 +209,4 @@ class UnitaryRiemanGenerator(BaseMatrixGenerator):
 
     @staticmethod
     def _inv(U):
-        return U.T.conj()
+        return cc(U)

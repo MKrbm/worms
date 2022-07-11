@@ -1,7 +1,7 @@
 from header import *
 
 lr = 0.001
-D = 3
+D = 2
 
 import copy
 
@@ -13,7 +13,7 @@ model_rg = nsp.model.UnitaryRiemanGenerator(D, dtype=torch.complex128)
 
 res = []
 # X_list = np.load("X_list.npy")
-m = 5
+m = 10
 # for X in X_list[:3]:
 sparse = 1/D
 for _ in range(100):
@@ -63,3 +63,15 @@ ax.set_title('compare riemannian float with torch sgd complex and riemannain com
 ax.set_xlabel('float - torch complex')
 ax.set_ylabel('float - riemannian complex')
 save_fig(plt,"images",f'complex_vs_float_sparse_D={D}_m={m}_L={type(loss).__name__}.jpeg', dpi=400)
+
+
+fig, ax = plt.subplots()
+res = np.array(res)
+ax.hist(res[:,1] - res[:,2], label="samples", bins=100)
+ax.legend()
+
+
+ax.set_title('unitary vs orthgonal')
+ax.set_xlabel('loss difference')
+ax.set_ylabel("frequency")
+save_fig(plt,"images",f'complex_vs_float_sparse_hist_D={D}_m={m}_L={type(loss).__name__}.jpeg', dpi=400)

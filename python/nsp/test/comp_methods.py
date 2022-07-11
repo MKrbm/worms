@@ -1,18 +1,18 @@
 from header import *
 
 lr = 0.005
-D = 10
+D = 3
 import copy
 
-model_lie = nsp.model.UnitaryGenerator(D, dtype=torch.float64)
-model_rieman = nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64)
+model_lie = nsp.model.UnitaryGenerator(D, dtype=torch.complex128)
+model_rieman = nsp.model.UnitaryRiemanGenerator(D, dtype=torch.complex128)
 set_seed(20220705)
 res = []
 X_list = []
 for _ in range(100):
     X = np.random.randn(D**2,D**2)
     X = X.T + X
-    loss = nsp.loss. MES(torch.Tensor(X), [D,D])
+    loss = nsp.loss.MES(torch.Tensor(X), [D,D], inv = model_rieman._inv)
 
 
     model_lie.reset_params()
@@ -50,7 +50,7 @@ ax.legend()
 ax.set_title('compare methods to rieman with momentum (share same initial U)')
 ax.set_xlabel('sgd - rieman')
 ax.set_ylabel('adam - rieman')
-plt.savefig(f'images/comp_meth　s_resdiff_sgd_D={D}_L={type(loss).__name__}.jpeg', dpi=400)
+plt.savefig(f'images/comp_meths_resdiff_sgd_D={D}_L={type(loss).__name__}.jpeg', dpi=400)
 
 fig, ax = plt.subplots()
 res_rie = np.array(res)[:,3]
@@ -75,4 +75,4 @@ ax.legend()
 ax.set_title('compare CG vs SGD (2D)')
 ax.set_xlabel('loss_sgd - loss_cg')
 ax.set_ylabel("frequency")
-plt.savefig(f'images/hist_sgd_vs_cg_D={D}_L={type(loss).__name__}.jpeg', dpi=400)
+plt.savefig(f'images/comp_hist_sgd_vs_cg_D={D}_L={type(loss).__name__}.jpeg', dpi=400)

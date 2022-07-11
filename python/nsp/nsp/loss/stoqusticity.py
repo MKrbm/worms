@@ -20,8 +20,8 @@ class L1(BaseMatirxLoss):
     """
     l1_measure of matrix (U @ X @ U.T) 
     """
-    def __init__(self, X, act):
-        super().__init__(X, act)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if not np.all(self.act == self.act[0]):
             raise NotImplementedError("the same unitary matrix acts on the given sites")
         self.target = 0
@@ -29,17 +29,14 @@ class L1(BaseMatirxLoss):
     def forward(self, A):
         return l1_measure(A)
 
-    @staticmethod
-    def _inverse(U):
-        return U.T.conj()
 
 
 class L2(BaseMatirxLoss):
     """
     l2_measure of matrix (U @ X @ U.T) 
     """
-    def __init__(self, X, act):
-        super().__init__(X, act)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if not np.all(self.act == self.act[0]):
             raise NotImplementedError("the same unitary matrix acts on the given sites")
         self.target = 0
@@ -47,8 +44,5 @@ class L2(BaseMatirxLoss):
     def forward(self, A):
         return l2_measure(A)
 
-    @staticmethod
-    def _inverse(U):
-        return U.T.conj()
 
 

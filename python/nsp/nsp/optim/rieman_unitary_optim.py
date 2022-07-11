@@ -17,9 +17,15 @@ class BaseRiemanUnitaryOptimizer(Optimizer, abc.ABC):
     """
     model : UnitaryRiemanGenerator
     def __init__(self,
-                model : UnitaryRiemanGenerator, lr, 
-                momentum=0, dampening=0,weight_decay=0, 
-                nesterov=False, *, maximize=False, pout = False):
+                model : UnitaryRiemanGenerator, 
+                lr, 
+                momentum=0, 
+                dampening=0,
+                weight_decay=0, 
+                nesterov=False, 
+                *, 
+                maximize=False, 
+                pout = False):
 
         defaults = dict(lr=lr, momentum=momentum, dampening=dampening,
                         weight_decay=weight_decay, nesterov=nesterov, maximize=maximize)
@@ -64,7 +70,7 @@ class BaseRiemanUnitaryOptimizer(Optimizer, abc.ABC):
         return riemannianGradient, U
 
 
-    @torch.no_grad()
+    # @torch.no_grad()
     def step(self, closure=None):
         """
         return True if fall into local minimum
@@ -72,25 +78,26 @@ class BaseRiemanUnitaryOptimizer(Optimizer, abc.ABC):
         # self._cuda_graph_capture_health_check()
         loss = None
         for group in self.param_groups:
-            params_with_grad = []
-            rd_p_n_U_list = [] #riemannian gradient and its euclidean coordinate in D by D matrix
-            momentum_buffer_list = []
-            weight_decay = group['weight_decay']
-            momentum = group['momentum']
-            dampening = group['dampening']
-            nesterov = group['nesterov']
-            maximize = group['maximize']
-            lr = group['lr']
+            with torch.no_grad():
+                params_with_grad = []
+                rd_p_n_U_list = [] #riemannian gradient and its euclidean coordinate in D by D matrix
+                momentum_buffer_list = []
+                weight_decay = group['weight_decay']
+                momentum = group['momentum']
+                dampening = group['dampening']
+                nesterov = group['nesterov']
+                maximize = group['maximize']
+                lr = group['lr']
 
-            for p in group['params']:
-                if p.grad is not None:
-                    params_with_grad.append(p)
-                    rd_p_n_U_list.append(self._riemannian_grad(p, True)) 
-                    state = self.state[p]
-                    if 'momentum_buffer' not in state:
-                        momentum_buffer_list.append(None)
-                    else:
-                        momentum_buffer_list.append(state['momentum_buffer'])
+                for p in group['params']:
+                    if p.grad is not None:
+                        params_with_grad.append(p)
+                        rd_p_n_U_list.append(self._riemannian_grad(p, True)) 
+                        state = self.state[p]
+                        if 'momentum_buffer' not in state:
+                            momentum_buffer_list.append(None)
+                        else:
+                            momentum_buffer_list.append(state['momentum_buffer'])
 
             if self.method(
                 params_with_grad,
@@ -203,12 +210,13 @@ class RiemanUnitaryCG(BaseRiemanUnitaryOptimizer):
         model : UnitaryRiemanGenerator, loss : BaseMatirxLoss, 
         lr, momentum=0, dampening=0,weight_decay=0, 
         nesterov=False, grad_tol = 1e-8, 
-        *, maximize=False):
-        super().__init__(model,lr,momentum, dampening, weight_decay, nesterov, maximize=maximize)
+        *, maximize=False, pout = False):
+        super().__init__(model,lr,momentum, dampening, weight_decay, nesterov, maximize=maximize, pout=pout)
         self.loss = loss
+        self.target = loss.target
         self.grad_tol = grad_tol
 
-    def _golden(self, U, H):
+    def _golden(self, U, H, delta=0.001):
         
         if not (type_check(U) == type_check(H) == torch.Tensor) \
             or (U.requires_grad) \
@@ -218,7 +226,27 @@ class RiemanUnitaryCG(BaseRiemanUnitaryOptimizer):
         def objective(t):
             return self.loss(torch.matrix_exp(-t*H)@U).item()
 
-        return optimize.golden(objective, brack=(0, 1))
+        tt = torch.tensor([0.], requires_grad=True)
+        self.loss(torch.matrix_exp(-tt*H)@U).backward()
+        step = (objective(0) - self.target) / tt.grad.item() * delta
+        step = abs(step)
+        print(step)
+        for _ in range(10):
+            if (objective(0) > objective(step)):
+                while True:
+                    if objective(step) < objective(step*10):
+                        print(objective(0) ,objective(step), objective(step*10))
+                        a = optimize.golden(objective, brack = (0, step, step*10))
+                        print(a)
+                        return a
+                    else:
+                        step *= 10
+            else:
+                step /= 10
+        print("No local minimum found")
+        a = optimize.golden(objective)
+        print(a, step, objective(0), objective(a))
+        return a
 
 
     def method(

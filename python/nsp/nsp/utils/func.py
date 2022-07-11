@@ -184,6 +184,8 @@ def eigvalsh_(A):
     else:
         raise TypeError("A should be either np_array or tensor")
 
+
+
 def zeros_(D, _type):
     if _type == np.ndarray:
         return np.zeros(D)
@@ -286,5 +288,15 @@ def is_identity_torch(X, is_complex=False, decimals = 10):
         return (X_r == torch.eye(X_r.shape[0])).all()
 
 
+def cc(X):
+    return X.T.conj()
+
+def matinv(X):
+    if isinstance(X, torch.Tensor):
+        return torch.linalg.inv(X)
+    elif isinstance(X, np.ndarray):
+        return np.linalg.inv(X)
+    else:
+        raise TypeError("X should be either np_array or tensor") 
 
 

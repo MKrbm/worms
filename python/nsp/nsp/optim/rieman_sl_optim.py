@@ -48,21 +48,17 @@ class BaseRiemanSlGOptimizer(Optimizer, abc.ABC):
             raise AttributeError("params should be a tensor with gradient")
 
         SL = self.model.matrix().detach()
-        # if not self._check_is_sl(SL.detach()):
-        #     SL /= torch.det(SL.detach())
-        #     self.model.set_params(SL.view(-1))
-        # euc_grad = params.grad.view([self.model.D]*2)
         euc_grad = self.model._get_matrix(params.grad.detach())
         if translated: 
             #Gradient translated to the group identity 
-            riemannianGradient = euc_grad @ SL.T.conj() -SL @ euc_grad.T.conj()
+            riemannianGradient = SL @ SL.T.conj() @ euc_grad @ self.model._inv(SL)
         else: 
             #Gradient in the tangent space of `orth`
-            riemannianGradient = euc_grad - SL @ euc_grad.T.conj() @ SL 
+            riemannianGradient = SL @ SL.T.conj() @ euc_grad
 
-        self.riemannianGradient = riemannianGradient
+        self.riemannianGradient = riemannianGradient/torch.linalg.norm(riemannianGradient)
         self.SL = SL
-        return riemannianGradient, SL
+        return self.riemannianGradient, SL
 
 
     @torch.no_grad()
@@ -115,8 +111,8 @@ class BaseRiemanSlGOptimizer(Optimizer, abc.ABC):
         if not self._check_is_sl(SL):
             # print(SL @ SL.T.conj())
             if self.pout:
-                print("SL becomes non-unitary matrix")
-            SL /= torch.det(SL.detach())
+                print("The determinant of SL becomse not equal to 1 : {}".format(torch.det(SL).item()))
+            SL /= abs(torch.det(SL.detach())) ** (1/SL.shape[0])
             self.model.set_params(SL.view(-1))
         
         return False
@@ -140,9 +136,9 @@ class BaseRiemanSlGOptimizer(Optimizer, abc.ABC):
 
     def _check_is_sl(self, SL):
         SL = SL.detach()
-        return torch.abs(torch.det(SL) - 1) < 1E-8
+        return abs(abs(torch.det(SL).item()) - 1) < 1E-7
 
-class RiemanUnitarySGD(BaseRiemanSlGOptimizer):
+class RiemanSlSGD(BaseRiemanSlGOptimizer):
     
     def method(
             self,
@@ -179,15 +175,14 @@ class RiemanUnitarySGD(BaseRiemanSlGOptimizer):
             alpha = lr if maximize else -lr
             param.data = (torch.matrix_exp(rd_p * alpha) @ SL).view(-1)
 
-class RiemanUnitaryCG(BaseRiemanSlGOptimizer):
+class RiemanSlCG(BaseRiemanSlGOptimizer):
     
     loss : BaseMatirxLoss
     def __init__(self,  
-        model : UnitaryRiemanGenerator, loss : BaseMatirxLoss, 
-        lr, momentum=0, dampening=0,weight_decay=0, 
-        nesterov=False, grad_tol = 1e-8, 
-        *, maximize=False):
-        super().__init__(model,lr,momentum, dampening, weight_decay, nesterov, maximize=maximize)
+        model : SlRiemanGenerator, loss : BaseMatirxLoss, 
+        grad_tol = 1e-8, 
+        *, maximize=False, pout = False):
+        super().__init__(model, lr = 0, pout = pout)
         self.loss = loss
         self.grad_tol = grad_tol
 
@@ -241,11 +236,6 @@ class RiemanUnitaryCG(BaseRiemanSlGOptimizer):
                     if abs(curv_ratio) < 1e-10:
                         return True
                 param.data = (torch.matrix_exp(inv_step_dir * -lr) @ SL).view(-1)
-
-                # np.set_printoptions(precision=10)
-                if not (inv_step_dir + inv_step_dir.T.conj() == 0).all():
-                    print("Warning! inv_step_dir is not a skew matrix")
-                    print(inv_step_dir)
 
                 # add old information to buffer
                 momentum_buffer_list[i] = [
