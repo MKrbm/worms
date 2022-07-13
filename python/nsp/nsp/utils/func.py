@@ -51,15 +51,15 @@ def _positive_map_torch(A, p_def = False):
         # print("insde func abs ", torch.diag(torch.abs(A)))
         return torch.abs(A)
     else:
-        a = _torch_complex_min(torch.diag(A))* torch.eye(A.shape[0])
-        return torch.abs(A-a+1) + a - 1
+        a = _torch_complex_min(torch.diag(A))* torch.eye(A.shape[0]) - 1
+        return torch.abs(A-a) + a
 
 def _positive_map(A, p_def = False):
     if p_def:
         return np.abs(A)
     else:
         a = np.eye(A.shape[0])*np.min(np.diag(A))
-        return np.abs(A-a+1) + a -1
+        return np.abs(A-a) + a 
 
 
 def stoquastic(X, abs_ : bool = False, p_def = False):

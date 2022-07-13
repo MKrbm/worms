@@ -181,7 +181,7 @@ class RiemanSlCG(BaseRiemanSlGOptimizer):
     def __init__(self,  
         model : SlRiemanGenerator, loss : BaseMatirxLoss, 
         grad_tol = 1e-8, 
-        *, maximize=False, pout = False):
+        *, pout = False):
         super().__init__(model, lr = 0, pout = pout)
         self.loss = loss
         self.grad_tol = grad_tol
