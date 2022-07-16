@@ -1,3 +1,4 @@
+from enum import unique
 import numpy as np
 import torch
 from torch.optim.optimizer import Optimizer
@@ -14,10 +15,13 @@ from ..utils.func import *
 class BaseRiemanUnitaryOptimizer_2(abc.ABC):
     """
     base class for rieman optimizatino for unitary matrix. input argument takes model instead of params, since riemanian grad use the model.matrix()
+
+    args :
+        models_act
     """
-    models : List[UnitaryRiemanGenerator]
+    models_act : List[Tuple[UnitaryRiemanGenerator]]
     def __init__(self,
-                models : List[UnitaryRiemanGenerator], 
+                models_act : List[Tuple[UnitaryRiemanGenerator]], 
                 lr, 
                 momentum=0, 
                 weight_decay=0, 
@@ -29,12 +33,22 @@ class BaseRiemanUnitaryOptimizer_2(abc.ABC):
         self.lr = lr,
         self.momentum = momentum
         self.weight_decay = weight_decay
-        if (isinstance(models, UnitaryRiemanGenerator)):
-            self.models = [models]
-        elif not (isinstance(models[0], UnitaryRiemanGenerator)):
-            raise TypeError("model should be a list of model")
-        else:
-            self.models = models
+        if (isinstance(models_act, UnitaryRiemanGenerator)):
+            models_act = [models_act]
+        models_act = list(models_act)
+        print(models_act)
+        self.models = []
+        unique_ids = []
+        for i, models in enumerate(models_act):
+            if (isinstance(models, UnitaryRiemanGenerator)):
+                print("Warning! model should be a list tuple of model")
+                models_act[i] = (models,)
+            models_act[i] = tuple(models_act[i])
+            for model in models_act[i]:
+                if id(model) not in unique_ids:
+                    self.models.append(model)
+                    unique_ids.append(id(model))
+        self.ids = unique_ids
         self.pout = pout
         self.momentum_buffer = [{}]*len(self.models)
         # super(BaseRiemanUnitaryOptimizer, self).__init__(model.parameters(), defaults)
@@ -189,11 +203,12 @@ class RiemanUnitarySGD2(BaseRiemanUnitaryOptimizer_2):
 class RiemanUnitaryCG2(BaseRiemanUnitaryOptimizer_2):
     
     loss : BaseMatirxLoss
+    models_act : List[List[UnitaryRiemanGenerator]]
     def __init__(self,  
-        models : List[UnitaryRiemanGenerator], loss_list : List[BaseMatirxLoss], 
+        models_act : List[List[UnitaryRiemanGenerator]], loss_list : List[BaseMatirxLoss], 
         grad_tol = 1e-8, 
         *, pout = False):
-        super().__init__(models,lr = 0, pout=pout)
+        super().__init__(models_act,lr = 0, pout=pout)
         if (isinstance(loss_list, BaseMatirxLoss)):
             self.loss_list = [loss_list]
         elif not (isinstance(loss_list[0], BaseMatirxLoss)):
@@ -201,8 +216,8 @@ class RiemanUnitaryCG2(BaseRiemanUnitaryOptimizer_2):
         else:
             self.loss_list = loss_list
 
-        if (len(self.loss_list) != len(self.models)):
-            raise ValueError("length of loss_list and models should be same")
+        # if (len(self.loss_list) != len(self.models)):
+        #     raise ValueError("length of loss_list and models should be same")
         self.grad_tol = grad_tol
 
     def _golden(self, U, H, delta=0.001, i = 0):
