@@ -5,11 +5,14 @@ import copy
 from tqdm.auto import tqdm
 from scipy.optimize import OptimizeResult
 
+from nsp.optim.rieman_unitary_optim_new import RiemanUnitaryCG2
+
 from ..model.unitary_model import BaseMatrixGenerator, UnitaryRiemanGenerator
 from ..model.similarity_model import SlRiemanGenerator
 from ..loss.base_class import BaseMatirxLoss
 from ..optim.rieman_unitary_optim import BaseRiemanUnitaryOptimizer, RiemanUnitaryCG
 from ..optim.rieman_sl_optim import BaseRiemanSlGOptimizer, RiemanSlCG
+from ..utils.func import *
 from typing import Union
 
 class BaseGs(abc.ABC):
@@ -109,6 +112,79 @@ class UnitarySymmTs(BaseGs):
                 if (loss_.item() < min_loss or min_loss is None):
                     min_loss = loss_.item()
                     self.best_model.set_params(model._params, True)
+                optim.zero_grad()
+                loss_.backward()
+                if optim.step():
+                    if self.pout:
+                        print("stack in local minimum --> break loop")
+                    break
+                loss_old = loss_.item()
+        ret["model"] = self.best_model
+        ret["target"] = self.target
+        ret["fun"] = min_loss
+        return OptimizeResult(ret)
+
+
+
+
+class UnitaryLocalTs(BaseGs):
+    """
+    solver class for a list of local unitary matrix
+    """
+
+    optim : RiemanUnitaryCG2
+    def __init__(
+            self,
+            optim : RiemanUnitaryCG2,
+            seed = None,
+            pout = True,
+            **kwargs
+            ):
+        self.pout = pout
+        if seed:
+            set_seed(seed)
+            for model in optim.models:
+                model.reset_params()
+        if not isinstance(optim, RiemanUnitaryCG2):
+            raise TypeError("It only receive {} as a type of optim".format(RiemanUnitaryCG2))
+        self.best_models = copy.deepcopy(optim.models)
+        self.optim = optim
+
+        self.target=0
+        for loss in self.optim.loss_list:
+            self.target += loss.target
+
+    def run(self, n_iter, disable_message=False):
+        
+        optim = self.optim
+
+        # interval = n_iter / 100
+        min_loss = self.optim.loss_val().item()
+        ini_loss = min_loss
+        eye = [torch.eye(model.D) for model in self.optim.models]
+        if not disable_message:
+            print("target loss      : {:.10f}".format(self.target))
+            print("initial loss     : {:.10f}\n".format(ini_loss))
+            print("loss upper bound: {:.10f}\n".format(self.optim.loss_val(eye).item()))
+            print("="*50, "\n")
+        ret = {}
+        loss_old = 1E9
+        loss_same_cnt = 0
+        with tqdm(range(n_iter), disable=disable_message) as pbar:
+            for t, ch in enumerate(pbar):
+                loss_ = self.optim.loss_val()
+                if (abs(loss_.item() - loss_old)<1E-9):
+                    loss_same_cnt += 1
+                    if loss_same_cnt > 100:
+                        if self.pout:
+                            print("stack in local minimum --> break loop")
+                        break
+                else:
+                    loss_same_cnt = 0
+                pbar.set_postfix_str("iter={}, loss={:.5f}".format(t,loss_.item()))
+                if (loss_.item() < min_loss or min_loss is None):
+                    min_loss = loss_.item()
+                    self.best_model = copy.deepcopy(self.optim.models)
                 optim.zero_grad()
                 loss_.backward()
                 if optim.step():
