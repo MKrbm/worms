@@ -5,7 +5,7 @@ import copy
 from tqdm.auto import tqdm
 from scipy.optimize import OptimizeResult
 
-from nsp.optim.rieman_unitary_optim_new import RiemanUnitaryCG2
+from nsp.optim.rieman_unitary_optim_new import RiemanUnitaryCG2, RiemanUnitarySGD2
 
 from ..model.unitary_model import BaseMatrixGenerator, UnitaryRiemanGenerator
 from ..model.similarity_model import SlRiemanGenerator
@@ -145,7 +145,7 @@ class UnitaryLocalTs(BaseGs):
             set_seed(seed)
             for model in optim.models:
                 model.reset_params()
-        if not isinstance(optim, RiemanUnitaryCG2):
+        if not isinstance(optim, RiemanUnitaryCG2) and  not isinstance(optim, RiemanUnitarySGD2):
             raise TypeError("It only receive {} as a type of optim".format(RiemanUnitaryCG2))
         self.best_models = copy.deepcopy(optim.models)
         self.optim = optim
@@ -162,10 +162,11 @@ class UnitaryLocalTs(BaseGs):
         min_loss = self.optim.loss_val().item()
         ini_loss = min_loss
         eye = [torch.eye(model.D) for model in self.optim.models]
+        lub = self.optim.loss_val(eye).item()
         if not disable_message:
             print("target loss      : {:.10f}".format(self.target))
-            print("initial loss     : {:.10f}\n".format(ini_loss))
-            print("loss upper bound: {:.10f}\n".format(self.optim.loss_val(eye).item()))
+            print("initial loss     : {:.10f}".format(ini_loss))
+            print("loss upper bound : {:.10f}\n".format(lub))
             print("="*50, "\n")
         ret = {}
         loss_old = 1E9
