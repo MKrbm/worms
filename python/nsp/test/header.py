@@ -1,6 +1,6 @@
 import sys
 sys.path.append('..')
-from nsp.solver import SymmSolver, UnitarySymmTs, UnitaryLocalTs
+from nsp.solver import SymmSolver, UnitaryTransTs, UnitaryNonTransTs
 from nsp.optim import *
 import numpy as np
 from scipy.linalg import expm, sinm, cosm

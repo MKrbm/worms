@@ -13,12 +13,12 @@ from ..loss.base_class import BaseMatirxLoss
 from ..utils.func import *
 
 
-class BaseRiemanUnitaryOptimizer_2(abc.ABC):
+class BaseRiemanNonTransUnitaryOptimizer(abc.ABC):
     """
     base class for rieman optimizatino for unitary matrix. input argument takes model instead of params, since riemanian grad use the model.matrix()
 
     args :
-        models_act
+        models_act : 
     """
     models_act : List[Tuple[UnitaryRiemanGenerator]]
     models : List[UnitaryRiemanGenerator]
@@ -203,7 +203,7 @@ class BaseRiemanUnitaryOptimizer_2(abc.ABC):
                     p.grad.zero_()
 
 
-class RiemanUnitarySGD2(BaseRiemanUnitaryOptimizer_2):
+class RiemanNonTransUnitarySGD(BaseRiemanNonTransUnitaryOptimizer):
 
     def __init__(self,
                 models_act : List[Tuple[UnitaryRiemanGenerator]], loss_list : List[BaseMatirxLoss], 
@@ -237,7 +237,7 @@ class RiemanUnitarySGD2(BaseRiemanUnitaryOptimizer_2):
                 param.data = (torch.matrix_exp(inv_step_dir * -lr) @ U).view(-1)
         return False
 
-class RiemanUnitaryCG2(BaseRiemanUnitaryOptimizer_2):
+class RiemanNonTransUnitaryCG(BaseRiemanNonTransUnitaryOptimizer):
 
     def __init__(self,
                 models_act : List[Tuple[UnitaryRiemanGenerator]], loss_list : List[BaseMatirxLoss], 
@@ -284,8 +284,6 @@ class RiemanUnitaryCG2(BaseRiemanUnitaryOptimizer_2):
             else:
                 step /= t
         print("No local minimum found")
-        # a = optimize.golden(objective)
-        # print(a, step, objective(0), objective(a))
         return 0
 
 

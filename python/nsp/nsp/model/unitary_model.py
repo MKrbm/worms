@@ -19,9 +19,9 @@ class BaseMatrixGenerator(abc.ABC, torch.nn.Module):
     """Abstract class for matrix generator class. This class prototypes the methods
     needed by a class satisfying the Operator concept.
 
-    params
-    ------
-    D : dimension of matrix
+    Args:
+        D : dimension of matrix
+        dtype : float means orthogonal, complex means unitary matrix
     """
 
     def __init__(self, D, dtype = np.float64, seed = None):
@@ -45,6 +45,10 @@ class BaseMatrixGenerator(abc.ABC, torch.nn.Module):
 
 
     def _type_check(self, X):
+        """
+        get type of given matrix (usually the target hamiltonian) wether torch or numpy 
+        and check if it is the same as type of unitary matrix
+        """
         if self._type != type_check(X):
             raise ValueError("Type of U and X are required to be same")
 
@@ -77,6 +81,11 @@ class BaseMatrixGenerator(abc.ABC, torch.nn.Module):
         return self._n_params
     
     def set_params(self, params : Union[list, np.ndarray, torch.Tensor], copy_grad = False):
+        """
+        Args:
+            params : list, nparray or torchtensor.
+            copy_grad : if true, also copy grad 
+        """
 
         if (len(self._params) != len(params)):
             raise ValueError("given params is not appropriate")
@@ -109,6 +118,7 @@ class UnitaryGenerator(BaseMatrixGenerator):
 
     """
     class for generating unitary / orthogonal matrix from given params
+    generate with lie algebra. # of params is dimensions of tanget space of lie group.
     """
 
     def __init__(self, D, dtype = np.float64, seed = None, spherical = False):
@@ -163,15 +173,15 @@ class UnitaryGenerator(BaseMatrixGenerator):
 
     @staticmethod
     def _inv(U):
+        """
+        u need to define inverse of this matrix. In the case of unitary / orthogonal group, just a complex conjugate
+        """
         return cc(U)
 
 class UnitaryRiemanGenerator(BaseMatrixGenerator):
 
     """
-    class for generating square matrix
-    initial matrix is unitary matrix or orthogonal 
-
-    W <- W - \Delta S
+    parameter space is the same as D by D square matrix. No constrants but inital matrix is unitary.
     """
 
     def __init__(self, D, dtype = np.float64, seed = None):
@@ -196,6 +206,10 @@ class UnitaryRiemanGenerator(BaseMatrixGenerator):
             return view_tensor(params[:self.D**2], [self.D]*2)
 
     def reset_params(self, seed = None):
+        """
+        reset to random unitary matrix.
+        uniformly random in haar measure.
+        """
         if seed:
             torch.manual_seed(seed)
             np.random.seed(seed)

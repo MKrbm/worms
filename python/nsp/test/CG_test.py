@@ -11,7 +11,7 @@ t = 0.001
 ret_min_grad = 1e10
 model = nsp.model.UnitaryRiemanGenerator(N, dtype=torch.float64)
 model._params.data[:] = torch.eye(model.D).view(-1)
-solver = UnitarySymmTs(RiemanUnitaryCG, model, loss_l1, lr = 0.005, momentum=0.1)
+solver = UnitaryTransTs(RiemanUnitaryCG, model, loss_l1, lr = 0.005, momentum=0.1)
 
 # model = nsp.model.UnitaryGenerator(N, dtype=torch.float64)
 # solver = UnitarySymmTs(torch.optim.SGD, model, loss_l1, lr = 0.001, momentum=0)

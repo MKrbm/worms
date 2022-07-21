@@ -27,7 +27,7 @@ for _ in range(100):
     best_ans = 1E10
     for _ in range(m):
         model_g.reset_params()
-        solver = UnitarySymmTs(torch.optim.SGD, model_g, loss, lr = lr, momentum=0.1, pout = False)
+        solver = UnitaryTransTs(torch.optim.SGD, model_g, loss, lr = lr, momentum=0.1, prt = False)
         ret = solver.run(500, disable_message=True)
         best_ans = min(ret.fun, best_ans)
     tmp.append(best_ans)
@@ -35,7 +35,7 @@ for _ in range(100):
     best_ans = 1E10
     for _ in range(m):
         model_rf.reset_params()
-        solver = UnitarySymmTs(RiemanUnitaryCG, model_rf, loss, lr = lr, momentum=0.1, pout = False)
+        solver = UnitaryTransTs(RiemanUnitaryCG, model_rf, loss, lr = lr, momentum=0.1, prt = False)
         ret = solver.run(500, disable_message=True)
         best_ans = min(ret.fun, best_ans)
     tmp.append(best_ans)
@@ -43,7 +43,7 @@ for _ in range(100):
     best_ans = 1E10
     for _ in range(m):
         model_rg.reset_params()
-        solver = UnitarySymmTs(RiemanUnitaryCG, model_rg, loss, lr = lr, momentum=0.1, pout = False)
+        solver = UnitaryTransTs(RiemanUnitaryCG, model_rg, loss, lr = lr, momentum=0.1, prt = False)
         ret = solver.run(500, disable_message=True)
         best_ans = min(ret.fun, best_ans)
     tmp.append(best_ans)

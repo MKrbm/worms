@@ -33,10 +33,10 @@ model = copy.deepcopy(models[0])
 loss = nsp.loss.MES(torch.Tensor(X), [D,D], inv = model._inv)
 loss1 = nsp.loss.MES(torch.Tensor(X/4), [D,D], inv = model._inv)
 cg1 = RiemanUnitaryCG(model, loss, lr = 0.1)
-cg2 = RiemanUnitaryCG2([(models[i], models[i+1]) for i in range(4)], [loss1]*4)
+cg2 = RiemanNonTransUnitaryCG([(models[i], models[i+1]) for i in range(4)], [loss1]*4)
 
-solver1 = UnitarySymmTs(RiemanUnitaryCG, model, loss, lr = 0.1)
-solver2 = UnitaryLocalTs(cg2)
+solver1 = UnitaryTransTs(RiemanUnitaryCG, model, loss, lr = 0.1)
+solver2 = UnitaryNonTransTs(cg2)
 
 # ret_cg = solver2.run(1000, disable_message=False)
 ret_cg = solver1.run(300, disable_message=False)
