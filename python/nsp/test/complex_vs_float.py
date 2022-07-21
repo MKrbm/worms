@@ -19,7 +19,7 @@ sparse = 1/D
 for _ in range(100):
     X = np.random.randn(D**2, D**2)
     X = (X + X.T)/2
-    mask = X>=(1/D)
+    mask = np.abs(X)>=(1/D)
     X[mask] = 0
     loss = nsp.loss.MES(torch.Tensor(X), [D,D])    
     tmp = []
