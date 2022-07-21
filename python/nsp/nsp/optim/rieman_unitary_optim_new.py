@@ -1,3 +1,5 @@
+from copy import deepcopy
+from enum import unique
 import numpy as np
 import torch
 from torch.optim.optimizer import Optimizer
@@ -14,35 +16,81 @@ from ..utils.func import *
 class BaseRiemanUnitaryOptimizer_2(abc.ABC):
     """
     base class for rieman optimizatino for unitary matrix. input argument takes model instead of params, since riemanian grad use the model.matrix()
+
+    args :
+        models_act
     """
+    models_act : List[Tuple[UnitaryRiemanGenerator]]
     models : List[UnitaryRiemanGenerator]
     def __init__(self,
-                models : List[UnitaryRiemanGenerator], 
-                lr, 
+                models_act : List[Tuple[UnitaryRiemanGenerator]], loss_list : List[BaseMatirxLoss], 
+                lr = 0.01, 
                 momentum=0, 
                 weight_decay=0, 
+                grad_tol = 1e-8, 
                 *, 
                 pout = False):
 
         # defaults = dict(lr=lr, momentum=momentum, dampening=dampening,
         #                 weight_decay=weight_decay, nesterov=nesterov, maximize=maximize)
-        self.lr = lr,
+        self.lr = lr
         self.momentum = momentum
         self.weight_decay = weight_decay
-        if (isinstance(models, UnitaryRiemanGenerator)):
-            self.models = [models]
-        elif not (isinstance(models[0], UnitaryRiemanGenerator)):
+        if (isinstance(models_act, UnitaryRiemanGenerator)):
+            models_act = [models_act]
+        models_act = list(models_act)
+        self.models = []
+        unique_ids = []
+        for i, models in enumerate(models_act):
+            if (isinstance(models, UnitaryRiemanGenerator)):
+                print("Warning! model should be a list tuple of model")
+                models_act[i] = (models,)
+            models_act[i] = list(models_act[i])
+            for model in models_act[i]:
+                if id(model) not in unique_ids:
+                    self.models.append(model)
+                    unique_ids.append(id(model))
+         
+        self.models_act = models_act
+        for models in self.models_act:
+            for i in range(len(models)):
+                models[i] = unique_ids.index(id(models[i]))
+                
+        self.ids = unique_ids
+        self.pout = pout
+        self.momentum_buffer = [{} for _ in range(len(self.models))]
+
+        if (isinstance(loss_list, BaseMatirxLoss)):
+            self.loss_list = [loss_list]
+        elif not (isinstance(loss_list[0], BaseMatirxLoss)):
             raise TypeError("model should be a list of model")
         else:
-            self.models = models
-        self.pout = pout
-        self.momentum_buffer = [{}]*len(self.models)
+            self.loss_list = loss_list
+
+        if (len(self.loss_list) != len(self.models_act)):
+            raise ValueError("length of loss_list and models should be same")
+        self.grad_tol = grad_tol
         # super(BaseRiemanUnitaryOptimizer, self).__init__(model.parameters(), defaults)
 
         print("number of models is : ",len(self.models))
         
+    def loss_val(self, models = None):
+        """
+        calculate loss 
+        """
 
+        if models is None:
+            models = self.models
+            loss_ = torch.zeros(1, dtype=torch.float64)
+            for acts, loss in zip(self.models_act, self.loss_list):
+                loss_ += loss([models[a].matrix() for a in acts])
+            return loss_
 
+        else:
+            loss_ = torch.zeros(1, dtype=torch.float64)
+            for acts, loss in zip(self.models_act, self.loss_list):
+                loss_ += loss([models[a] for a in acts])
+            return loss_
     def _riemannian_grad(self, params, model:UnitaryRiemanGenerator, translated=True):
         """
         The geodesic emanating from W(U(D) embeded in euclid space) in the direction \tilde{S} = S W is given by
@@ -56,7 +104,7 @@ class BaseRiemanUnitaryOptimizer_2(abc.ABC):
         if not hasattr(params, "grad"):
             raise AttributeError("params should be a tensor with gradient")
 
-        U = model.matrix()
+        U = model.matrix().data
         if not self._check_is_unitary(U.detach(), model._inv):
             V, _, W = torch.linalg.svd(U.detach())
             model.set_params((V@W).view(-1))
@@ -94,7 +142,6 @@ class BaseRiemanUnitaryOptimizer_2(abc.ABC):
                         momentum_buffer_list.append(None)
                     else:
                         momentum_buffer_list.append(state['momentum_buffer'])
-
         if self.method(
             params_with_grad,
             rd_p_n_U_list,
@@ -107,8 +154,7 @@ class BaseRiemanUnitaryOptimizer_2(abc.ABC):
                 
         # update momentum_buffers in state
         for i, momentum_buffer in enumerate(momentum_buffer_list):
-            state = self.momentum_buffer[i]
-            state['momentum_buffer'] = momentum_buffer
+            self.momentum_buffer[i]['momentum_buffer'] = momentum_buffer
 
         for model in self.models:
             U = model.matrix().detach()
@@ -125,6 +171,7 @@ class BaseRiemanUnitaryOptimizer_2(abc.ABC):
     @staticmethod
     @abc.abstractmethod
     def method(
+            self,
             params: List[torch.Tensor],
             rd_p_n_U_list: List[torch.Tensor],
             momentum_buffer_list: List[Optional[torch.Tensor]],
@@ -155,8 +202,19 @@ class BaseRiemanUnitaryOptimizer_2(abc.ABC):
                         p.grad.requires_grad_(False)
                     p.grad.zero_()
 
+
 class RiemanUnitarySGD2(BaseRiemanUnitaryOptimizer_2):
-    
+
+    def __init__(self,
+                models_act : List[Tuple[UnitaryRiemanGenerator]], loss_list : List[BaseMatirxLoss], 
+                lr = 0.01,
+                momentum=0, 
+                weight_decay=0, 
+                grad_tol = 1e-8, 
+                *, 
+                pout = False):
+        super().__init__(models_act, loss_list, lr = lr, momentum = momentum)
+
     def method(
             self,
             params: List[torch.Tensor],
@@ -169,55 +227,44 @@ class RiemanUnitarySGD2(BaseRiemanUnitaryOptimizer_2):
         """
         corresponds to sgd.
         """
+
         for i, param in enumerate(params):
             rd_p, U = rd_p_n_U_list[i] 
-
-            if momentum != 0:
-                buf = momentum_buffer_list[i]
-
-                if buf is None:
-                    buf = torch.clone(rd_p).detach()
-                    momentum_buffer_list[i] = buf
-                else:
-                    buf.mul_(momentum).add_(rd_p, alpha=1)
-                
-                rd_p = buf
-
-            alpha =  -lr
-            param.data = (torch.matrix_exp(rd_p * alpha) @ U).view(-1)
+            momentum_buffer_list[i] = torch.clone(rd_p.data)
+            if momentum_buffer_list[i] is not None:
+                old_rd_p = momentum_buffer_list[i]
+                inv_step_dir = rd_p+momentum*old_rd_p
+                param.data = (torch.matrix_exp(inv_step_dir * -lr) @ U).view(-1)
+        return False
 
 class RiemanUnitaryCG2(BaseRiemanUnitaryOptimizer_2):
-    
-    loss : BaseMatirxLoss
-    def __init__(self,  
-        models : List[UnitaryRiemanGenerator], loss_list : List[BaseMatirxLoss], 
-        grad_tol = 1e-8, 
-        *, pout = False):
-        super().__init__(models,lr = 0, pout=pout)
-        if (isinstance(loss_list, BaseMatirxLoss)):
-            self.loss_list = [loss_list]
-        elif not (isinstance(loss_list[0], BaseMatirxLoss)):
-            raise TypeError("model should be a list of model")
-        else:
-            self.loss_list = loss_list
 
-        if (len(self.loss_list) != len(self.models)):
-            raise ValueError("length of loss_list and models should be same")
-        self.grad_tol = grad_tol
+    def __init__(self,
+                models_act : List[Tuple[UnitaryRiemanGenerator]], loss_list : List[BaseMatirxLoss], 
+                momentum=0, 
+                weight_decay=0, 
+                grad_tol = 1e-8, 
+                *, 
+                pout = False):
+        super().__init__(models_act, loss_list, lr = 0.01)
 
-    def _golden(self, U, H, delta=0.001, i = 0):
-        loss = self.loss_list[i]
+    def _golden(self, grad_U_list, delta=0.001):
         
-        if not (type_check(U) == type_check(H) == torch.Tensor) \
-            or (U.requires_grad) \
-            or (H.requires_grad):
-            raise TypeError("type of U and H are required to be torch tensor without grad")
+        for H, U in grad_U_list:
+            if not (type_check(U) == type_check(H) == torch.Tensor) \
+                or (U.requires_grad) \
+                or (H.requires_grad):
+                raise TypeError("type of U and H are required to be torch tensor without grad")
 
         def objective(t):
-            return loss(torch.matrix_exp(-t*H)@U).item()
+            U_list = []
+            for H, U in grad_U_list:
+                U_list.append(torch.matrix_exp(-t*H)@U)
+            return self.loss_val(U_list)
+
 
         t = torch.tensor([0.], requires_grad=True)
-        f = loss(torch.matrix_exp(-t*H)@U)
+        f = objective(t)
         g = torch.autograd.grad(f, t, create_graph=True)
         g2 = torch.autograd.grad(g, t, create_graph=True)
         with torch.no_grad():
@@ -237,9 +284,9 @@ class RiemanUnitaryCG2(BaseRiemanUnitaryOptimizer_2):
             else:
                 step /= t
         print("No local minimum found")
-        a = optimize.golden(objective)
-        print(a, step, objective(0), objective(a))
-        return a
+        # a = optimize.golden(objective)
+        # print(a, step, objective(0), objective(a))
+        return 0
 
 
     def method(
@@ -254,33 +301,39 @@ class RiemanUnitaryCG2(BaseRiemanUnitaryOptimizer_2):
         """
         corresponds to sgd.
         """
+
+        norm = 0
+        curv = 0
+        gamma = 0
+
         for i, param in enumerate(params):
             rd_p, U = rd_p_n_U_list[i] 
-            rieman_grad_norm = (torch.trace(rd_p.T.conj() @ rd_p).real).item()
-            if (.5*rieman_grad_norm < self.grad_tol):
-                return True
-            # print(momentum_buffer_list[i] is None)
             if momentum_buffer_list[i] is None:
-                lr = self._golden(U.data, rd_p.data, i = i)
-                param.data = (torch.matrix_exp(rd_p * -lr) @ U).view(-1)
-                momentum_buffer_list[i] = [torch.clone(rd_p.data), torch.clone(rd_p.data), rieman_grad_norm]
+                pass
             else:
                 [old_inv_step_dir, old_rd_p, old_norm] = momentum_buffer_list[i]
-                curv_ratio = np.trace((rd_p-old_rd_p).T.conj()@rd_p).real / old_norm 
-                # print("derivative = ", rd_p)
-                inv_step_dir = rd_p+curv_ratio*old_inv_step_dir
-                inv_step_dir = (inv_step_dir - inv_step_dir.H)/2
-                lr = self._golden(U.data, inv_step_dir.data, i = i)
-                if (abs(lr) < 1e-10):
-                    lr = 0
-                    if abs(curv_ratio) < 1e-10:
-                        return True
-                param.data = (torch.matrix_exp(inv_step_dir * -lr) @ U).view(-1)
+                curv += np.trace((rd_p-old_rd_p).T.conj()@rd_p).real
+                # if i == 0:
+                #     print((old_rd_p[0,:10]))
+                norm += old_norm
+        if (.5*norm < self.grad_tol):
+            pass
+        else:
+            gamma = curv/norm
+        self.inv_list = []
+        for i, param in enumerate(params):
+            rd_p, U = rd_p_n_U_list[i] 
 
-                # np.set_printoptions(precision=10)
-                if not (inv_step_dir + inv_step_dir.T.conj() == 0).all():
-                    print("Warning! inv_step_dir is not a skew matrix")
-                    print(inv_step_dir)
+            rieman_grad_norm = (torch.trace(rd_p.T.conj() @ rd_p).real).item()
+            if momentum_buffer_list[i] is None:
+                self.inv_list.append((rd_p, U.detach()))
+                momentum_buffer_list[i] = [torch.clone(rd_p.data), torch.clone(rd_p.data), rieman_grad_norm]
+            else:
+                [old_inv_step_dir, _, _] = momentum_buffer_list[i]
+                # print("derivative = ", rd_p)
+                inv_step_dir = rd_p+gamma*old_inv_step_dir
+                inv_step_dir = (inv_step_dir - inv_step_dir.H)/2
+                self.inv_list.append((inv_step_dir, U.detach()))
 
                 # add old information to buffer
                 momentum_buffer_list[i] = [
@@ -289,4 +342,9 @@ class RiemanUnitaryCG2(BaseRiemanUnitaryOptimizer_2):
                     rieman_grad_norm
                 ]
 
+        lr = self._golden(self.inv_list)
+
+        for i, param in enumerate(params):
+            inv_step_dir, U = self.inv_list[i]
+            param.data = (torch.matrix_exp(inv_step_dir * -lr) @ U).view(-1)
         return False

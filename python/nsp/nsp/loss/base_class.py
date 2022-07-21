@@ -73,7 +73,10 @@ class BaseMatirxLoss(abc.ABC):
         
     def _transform_kron(self, U_list : list):
         U = self._kron(U_list)
-        return self._inverse(U) @ cast_dtype(self.X, U.dtype) @ U
+        if self.X.dtype != U.dtype:
+            print("dtype changes from {} to {}".format(self.X.dtype, U.dtype))
+            self.X = cast_dtype(self.X, U.dtype)
+        return self._inverse(U) @ self.X @ U
         
 
     def _transform_einsum(self, U_list : list):

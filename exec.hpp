@@ -98,10 +98,6 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
       }
       for (const auto& op : solver.ops_main){
         sign *= spin_model.loperators[op.op_type()].signs[op.state()];
-        // cout << "state : " << op.state() << endl;
-        // if (sign == -1) {
-        //   int x = 1;
-        // }
       }
       double ene_tmp = - (double)solver.ops_main.size() / beta;
       for (int e=0; e<spin_model.Nop; e++){

@@ -61,9 +61,9 @@ RUN apt-get update -y && apt-get -y install htop cmake openssh-server cmake-curs
 # # RUN rm -rf environment.yml
 # n* installed conda
 
-RUN git config --global --add safe.directory /home/user/project
 
 
 
 USER $USERNAME
+RUN git config --global --add safe.directory /home/user/project
 WORKDIR /home/${USERNAME}/project
