@@ -85,9 +85,11 @@ class UnitarySymmTs(BaseGs):
         # interval = n_iter / 100
         min_loss = loss([model.matrix()]*loss._n_unitaries).item()
         ini_loss = min_loss
-        if not disable_message:
+        
+        if not disable_message: 
             print("target loss      : {:.10f}".format(self.target))
-            print("initial loss     : {:.10f}\n".format(ini_loss))
+            print("initial loss     : {:.10f}".format(ini_loss))
+            print("loss upper bound : {:.10f}\n".format(loss(torch.eye(model.D))))
             print("="*50, "\n")
         # for t in tqdm(range(n_iter)):
         ret = {}
