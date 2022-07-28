@@ -78,7 +78,6 @@ Pygments==2.11.2
 PyJWT==2.3.0
 pyparsing==2.4.7
 pyrsistent==0.18.1
-python-apt==2.3.0+ubuntu2
 python-dateutil==2.8.2
 PyYAML==5.4.1
 pyzmq==23.2.0
