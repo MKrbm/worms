@@ -1,26 +1,4 @@
-import sys
-sys.path.append('..')
-from nsp.solver import SymmSolver, UnitarySymmTs
-from nsp.optim import RiemanUnitarySGD, RiemanUnitaryCG
-import numpy as np
-from scipy.linalg import expm, sinm, cosm
-from scipy import sparse
-import scipy
-from utils import lossfunc as lf
-
-import sys
-import utils
-import utils.optm as optm
-import utils.lossfunc as lf
-import numpy as np
-import torch
-from importlib import reload
-import nsp
-import copy
-from matplotlib import pyplot as plt
-import random
-from nsp.utils.func import *
-
+from header import *
 
 set_seed(33244233)
 N = 14
@@ -33,7 +11,7 @@ t = 0.001
 ret_min_grad = 1e10
 model = nsp.model.UnitaryRiemanGenerator(N, dtype=torch.float64)
 model._params.data[:] = torch.eye(model.D).view(-1)
-solver = UnitarySymmTs(RiemanUnitaryCG, model, loss_l1, lr = 0.005, momentum=0.1)
+solver = UnitaryTransTs(RiemanUnitaryCG, model, loss_l1, lr = 0.005, momentum=0.1)
 
 # model = nsp.model.UnitaryGenerator(N, dtype=torch.float64)
 # solver = UnitarySymmTs(torch.optim.SGD, model, loss_l1, lr = 0.001, momentum=0)

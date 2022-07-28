@@ -22,16 +22,16 @@ for _ in range(100):
 
 
 
-    solver_cg = UnitarySymmTs(RiemanUnitaryCG, model_cg, loss, lr = lr)
+    solver_cg = UnitaryTransTs(RiemanUnitaryCG, model_cg, loss, lr = lr)
     ret_cg = solver_cg.run(500, disable_message=True)
 
-    solver_rieman = UnitarySymmTs(RiemanUnitarySGD, model_rieman, loss, lr = lr, momentum=0.0)
+    solver_rieman = UnitaryTransTs(RiemanUnitarySGD, model_rieman, loss, lr = lr, momentum=0.0)
     ret_rieman = solver_rieman.run(500, disable_message=True)
 
-    solver_lie_sgd = UnitarySymmTs(torch.optim.SGD, model_lie, loss, lr = lr)
+    solver_lie_sgd = UnitaryTransTs(torch.optim.SGD, model_lie, loss, lr = lr)
     ret_lie_sgd = solver_lie_sgd.run(500, disable_message=True)
 
-    solver_lie_adam = UnitarySymmTs(torch.optim.Adam, model_adam, loss, lr = lr)
+    solver_lie_adam = UnitaryTransTs(torch.optim.Adam, model_adam, loss, lr = lr)
     ret_lie_adam = solver_lie_adam.run(500, disable_message=True)
     
     res.append([ret_lie_sgd["fun"],  ret_lie_adam["fun"], ret_rieman["fun"], ret_cg["fun"]])

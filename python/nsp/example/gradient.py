@@ -27,7 +27,7 @@ loss = nsp.loss.MES(torch.tensor(X), [2,2])
 # print(model._params.data)
 model._params.data[:] = 0
 
-solver = nsp.solver.UnitarySymmTs(nsp.optim.Sign, model, loss, lr = 0.005, decay_rate = 0.999)
+solver = nsp.solver.UnitaryTransTs(nsp.optim.Sign, model, loss, lr = 0.005, decay_rate = 0.999)
 # solver = nsp.solver.unitary_symm_ts(torch.optim.Adam, model, loss, lr = 0.001)
 
 solver.run(1000)

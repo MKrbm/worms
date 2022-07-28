@@ -1,6 +1,6 @@
 import sys
 sys.path.append('..')
-from nsp.solver import SymmSolver, UnitarySymmTs
+from nsp.solver import SymmSolver, UnitaryTransTs
 from nsp.optim import RiemanUnitarySGD
 import numpy as np
 from scipy.linalg import expm, sinm, cosm
@@ -44,7 +44,7 @@ for _ in range(N):
     X = X.T + X
     loss_l1 = nsp.loss.L1(torch.Tensor(X), [4])
     model_rieman.reset_params()    
-    solver = UnitarySymmTs(RiemanUnitarySGD, copy.deepcopy(model_rieman), loss_l1, lr = lr, momentum=0)
+    solver = UnitaryTransTs(RiemanUnitarySGD, copy.deepcopy(model_rieman), loss_l1, lr = lr, momentum=0)
     ret = solver.run(500, disable_message=True)
     tmp = []
     if (ret["fun"] < 0.01):
@@ -52,7 +52,7 @@ for _ in range(N):
     tmp.append(ret["fun"])
 
     for t in LR:
-        solver_momentum = UnitarySymmTs(RiemanUnitarySGD, copy.deepcopy(model_rieman), loss_l1, lr = lr, momentum=t)
+        solver_momentum = UnitaryTransTs(RiemanUnitarySGD, copy.deepcopy(model_rieman), loss_l1, lr = lr, momentum=t)
         ret_momentum = solver_momentum.run(500, disable_message=True)
         if ret_momentum["fun"] < 0.001:
             break

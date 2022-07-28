@@ -19,19 +19,19 @@ for _ in range(100):
     X = np.random.randn(D**2,D**2)
     X = X.T + X
     loss = nsp.loss.L1(torch.Tensor(X), [D,D])
-    solver = UnitarySymmTs(RiemanUnitarySGD, model_sgd_0, loss, lr = lr, momentum=0, pout = False)
+    solver = UnitaryTransTs(RiemanUnitarySGD, model_sgd_0, loss, lr = lr, momentum=0, prt = False)
     ret = solver.run(500, disable_message=True)
     tmp.append(ret["fun"])
     
-    solver = UnitarySymmTs(RiemanUnitarySGD, model_sgd_1, loss, lr = lr, momentum=0.1, pout = False)
+    solver = UnitaryTransTs(RiemanUnitarySGD, model_sgd_1, loss, lr = lr, momentum=0.1, prt = False)
     ret = solver.run(500, disable_message=True)
     tmp.append(ret["fun"])
 
-    solver = UnitarySymmTs(RiemanUnitarySGD, model_sgd_2, loss, lr = lr, momentum=0.5, pout = False)
+    solver = UnitaryTransTs(RiemanUnitarySGD, model_sgd_2, loss, lr = lr, momentum=0.5, prt = False)
     ret = solver.run(500, disable_message=True)
     tmp.append(ret["fun"])
     
-    solver = UnitarySymmTs(RiemanUnitaryCG, model_cg, loss, lr = lr, momentum=0, pout = False)
+    solver = UnitaryTransTs(RiemanUnitaryCG, model_cg, loss, lr = lr, momentum=0, prt = False)
     ret = solver.run(500, disable_message=True)
     tmp.append(ret["fun"])
     
