@@ -12,9 +12,9 @@ model2 = copy.deepcopy(model)
 loss = nsp.loss.MES(torch.Tensor(X), [D,D], inv = model._inv)
 loss2 = nsp.loss.MES(torch.Tensor(P@X@P), [D,D], inv = model._inv)
 # print(model.matrix(), model2.matrix())
-solver1 = UnitarySymmTs(RiemanUnitaryCG, model, loss, lr = 0.1)
+solver1 = UnitaryTransTs(RiemanUnitaryCG, model2, loss, lr = 0.1)
 ret_cg = solver1.run(100, disable_message=False)
 
-solver2 = UnitarySymmTs(RiemanUnitaryCG, model2, loss2, lr = 0.1)
+solver2 = UnitaryTransTs(RiemanUnitaryCG, model, loss, lr = 0.1)
 ret_cg2 = solver2.run(100, disable_message=False)
 
