@@ -10,7 +10,6 @@ import scipy
 from utils import lossfunc as lf
 
 import sys
-import utils
 import utils.optm as optm
 import utils.lossfunc as lf
 import numpy as np
