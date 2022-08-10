@@ -120,7 +120,18 @@
       "*.tcc": "cpp",
       "memory_resource": "cpp",
       "cinttypes": "cpp",
-      "alignedvector3": "cpp"
+      "alignedvector3": "cpp",
+      "dense": "cpp",
+      "*.ipp": "cpp",
+      "stop_token": "cpp",
+      "cfenv": "cpp",
+      "typeindex": "cpp"
     },
-    "python.defaultInterpreterPath": "/home/keisuke/miniconda3/envs/quspin/bin/python",
+    // "python.defaultInterpreterPath": "/home/keisuke/miniconda3/envs/quspin/bin/python",
+    "python.analysis.extraPaths": [
+      "${workspaceFolder}/customModule",
+      "./python/nsp"
+    ],
+    "C_Cpp.errorSquiggles": "Disabled",
+    "C_Cpp.intelliSenseEngineFallback": "Enabled",
 }

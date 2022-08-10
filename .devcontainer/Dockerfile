@@ -33,6 +33,13 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${PY_V
 
 RUN apt-get update -y && apt-get -y install htop cmake openssh-server cmake-curses-gui
 
+
+# n* install boost for c++
+RUN sudo apt-get update &&\
+    sudo apt-get -y install libboost-dev
+
+
+
 # n* install conda
 # ENV PATH="/home/$USERNAME/miniconda3/bin:$PATH"
 # RUN apt-get update && \

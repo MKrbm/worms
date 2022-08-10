@@ -11,6 +11,7 @@ project(worm_lib
 add_library(worm STATIC
     ./src/state.cpp
     ./src/operator.cpp
+    ./src/pch.cpp
     # ./src/testmodel.cpp
 
     )
@@ -19,9 +20,12 @@ add_subdirectory(./lib/bcl) #call /lib/bcl/CMakeLists.txst
 target_link_libraries(worm bcl) # link library
 
 
-
 # target_compile_features(worm PRIVATE cxx_std_14)
-target_include_directories(worm INTERFACE ./include)
+message(STATUS "include from path : ${FetchContent_includes}")
+target_include_directories(worm PUBLIC ./include ${FetchContent_includes})
+target_precompile_headers(worm PUBLIC
+    ./include/pch.hpp
+  )
 # target_include_directories(worm INTERFACE ./include)
 # target_compile_options(worm PRIVATE -O3 -Wall)
 
