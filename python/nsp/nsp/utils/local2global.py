@@ -23,7 +23,7 @@ def _l2nl(ham, L, bond = np.array([]), sps = 2, thres=1e-10):
     size_rem = sps ** L_rem
     state = np.zeros(L, dtype = np.int64)
     for i in range(size_rem):
-        tmp = num2state(i,L_rem,sps,rev=True)
+        tmp = num2state(i,L_rem,sps,rev=False)
         cnt = 0
         state = np.zeros(L, dtype=np.int64)
         for j in range(L):
@@ -32,17 +32,17 @@ def _l2nl(ham, L, bond = np.array([]), sps = 2, thres=1e-10):
                 cnt+=1
         for a, b in zip(index[0], index[1]):
             ele = ham[a,b]
-            a_ = num2state(a, sps=sps, L = len(bond),rev=True)
-            b_ = num2state(b, sps=sps, L = len(bond),rev=True)
+            a_ = num2state(a, sps=sps, L = len(bond),rev=False)
+            b_ = num2state(b, sps=sps, L = len(bond),rev=False)
 
             for i1 in range(len(bond)):
                 state[bond[i1]] = a_[i1]
             # print(state)        
-            a_p = state2num(state,sps=sps,rev=True)
+            a_p = state2num(state,sps=sps,rev=False)
             for i1 in range(len(bond)):
                 state[bond[i1]] = b_[i1]
             # print(state) 
-            b_p = state2num(state,sps=sps,rev=True)
+            b_p = state2num(state,sps=sps,rev=False)
             H[a_p,b_p] = ele
     return H
 

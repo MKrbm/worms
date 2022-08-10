@@ -3,8 +3,7 @@ from scipy import sparse
 import os
 import sys
 sys.path.insert(0, "../") 
-from functions import *
-
+from nsp.utils.functions import *
 
 
 I = np.identity(2)

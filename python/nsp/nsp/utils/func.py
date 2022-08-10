@@ -300,3 +300,68 @@ def matinv(X):
         raise TypeError("X should be either np_array or tensor") 
 
 
+
+def is_square_matrix(X):
+    if X.ndim != 2 or X.shape[0] != X.shape[1]:
+        raise ValueError("X must be a square matrix")
+
+
+def mul(H, h, al, from_left=True):
+    
+    is_square_matrix(H)
+    is_square_matrix(h)
+    L = H.shape[0]    
+    if np.prod(al) != L:
+        print("act list is inconsistent with given Hamiltonian")
+    l = h.shape[0]
+    if l != al[1] or len(al) !=3:
+        print("al is not a proper list")
+    ori_shape = (L,)
+    conv_shape = tuple(al)
+    H = H.reshape(2*conv_shape)
+    if from_left:
+        H = np.einsum("ijklmn, jg->igklmn", H, h).reshape(2*ori_shape)
+    else:
+        H = np.einsum("ijklmn, mg->ijklgn", H, h).reshape(2*ori_shape)
+        
+    return H
+
+# def swap_axis(h, L, sps, axis):
+#     N = sps ** L
+#     assert N == h.shape[0]
+
+#     ori_shape = (N, N)
+#     trans = np.arange(2*L)
+#     # if (axis[0][0] == axis[0][1] and axis[1][1] == axis[1][0]):
+#     #     return h
+#     for ax in axis:
+#         (a1, a2) = ax
+#         (b1, b2) = (a1, np.argwhere(trans==a2)[0,0])
+#         (a1, a2) = (np.argwhere(trans==a1)[0,0], a2)
+#         print(a2, b1, a1, b2)
+#         trans[a2] = b1
+#         trans[a1] = b2
+#         trans[a2+L] = b1+L
+#         trans[a1+L] = b2+L
+#         print(trans)
+#     return h.reshape(L*2*(sps,)).transpose(trans).reshape(ori_shape)
+
+
+def sum_ham(h, bonds, L, sps):
+    h = np.kron(h, np.eye(int((sps**L)/h.shape[0])))
+    ori_shape = h.shape
+    H = np.zeros_like(h)
+    h = h.reshape(L*2*(sps,))
+    for bond in bonds:
+        trans = np.arange(L)
+        _trans = [i for i in range(L)]
+        for i, b in enumerate(bond):
+            trans[b] = i
+        l = len(bond)
+        for i in range(L):
+            if i not in bond:
+                trans[i] = l
+                l+=1
+        trans = np.concatenate([trans, trans+L])
+        H += h.transpose(trans).reshape(ori_shape)
+    return H

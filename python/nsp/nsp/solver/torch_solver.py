@@ -5,7 +5,7 @@ import copy
 from tqdm.auto import tqdm
 from scipy.optimize import OptimizeResult
 
-from nsp.optim.rieman_unitary_optim_new import RiemanNonTransUnitaryCG, RiemanNonTransUnitarySGD
+from nsp.optim.rieman_nontrans_unitary_optim import RiemanNonTransUnitaryCG, RiemanNonTransUnitarySGD
 
 from ..model.unitary_model import BaseMatrixGenerator, UnitaryRiemanGenerator
 from ..model.similarity_model import SlRiemanGenerator
