@@ -93,9 +93,20 @@ target_link_libraries(npy worm) # link library
 add_executable(header ./test_/header_test.cpp ./test_/explict.cpp ./test_/header.h)
 target_include_directories(header PUBLIC "${PROJECT_BINARY_DIR}" ${FetchContent_includes})
 
+
 add_executable(lattice_test ./test_/lattice_test.cpp )
+
+# find_package(Boost)
+
+# if(Boost_FOUND)
+#   target_link_libraries(lattice_test Boost::boost)
+# endif()
 target_link_libraries(lattice_test worm)
-target_include_directories(lattice_test PUBLIC "${PROJECT_BINARY_DIR}")
+
+# target_precompile_headers(lattice_test PRIVATE
+#   ./test_/pch.hpp
+#   )
+# target_include_directories(lattice_test PUBLIC "${PROJECT_BINARY_DIR}" ${FetchContent_includes})
 
 
 configure_file(MainConfig.h.in MainConfig.h)
