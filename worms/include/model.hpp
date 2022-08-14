@@ -1,5 +1,4 @@
-#ifndef __model__
-#define __model__
+#pragma once
 #include <iostream>
 #include <stdio.h>
 #include <vector>
@@ -405,7 +404,3 @@ int model::local_operator<MC>::index2num(std::array<int, 2> index){
   return num;
 }
 
-
-
-
-#endif

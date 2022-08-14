@@ -56,9 +56,3 @@ ENDFOREACH(name)
 add_subdirectory(test_)
 
 configure_file(MainConfig.h.in MainConfig.h)
-
-
-# test
-
-
-

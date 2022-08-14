@@ -10,7 +10,7 @@ target_include_directories(header PUBLIC "${PROJECT_BINARY_DIR}" ${FetchContent_
 
 
 add_executable(lattice_test ./lattice_test.cpp )
-target_link_libraries(lattice_test)
+target_link_libraries(lattice_test worm)
 # target_include_directories(lattice_test PUBLIC "${PROJECT_BINARY_DIR}" ${FetchContent_includes})
 
 add_executable(example1 ./example1.cpp )
