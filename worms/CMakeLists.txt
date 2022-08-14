@@ -8,16 +8,19 @@ project(worm_lib
     LANGUAGES CXX)
 # list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
+option(BUILD_SHARED_LIBS  "Enable shared library" OFF)
+include(libconfig)
+FetchContent_MakeAvailable(libconfig)
+# set(BUILD_SHARED_LIBS OFF)
+
 add_library(worm STATIC
     ./src/state.cpp
     ./src/operator.cpp
-    ./src/pch.cpp
-    # ./src/testmodel.cpp
-
+    ./src/model.cpp
     )
 
 add_subdirectory(./lib/bcl) #call /lib/bcl/CMakeLists.txst
-target_link_libraries(worm bcl) # link library
+target_link_libraries(worm bcl config++) # link library
 
 
 # target_compile_features(worm PRIVATE cxx_std_14)

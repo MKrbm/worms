@@ -11,5 +11,5 @@ else(Eigen3_FOUND)
 
   list(APPEND FetchContent_includes "${PROJECT_BINARY_DIR}/_deps/eigen3-src")
   list(APPEND FetchContents eigen3)
-  message(STATUS "find eigen3  / fetch content")
+  message(STATUS "not find eigen3  / fetch content")
 endif(Eigen3_FOUND)

@@ -42,7 +42,7 @@
 
 namespace model {
 
-  template <int N_op, size_t _max_sps = 2, size_t _max_L = 4, class MC = bcl::heatbath>
+  template <int N_op, size_t _max_sps = 2, size_t MAX_L = 4, class MC = bcl::heatbath>
   class base_spin_model;
 
   template <class MC = bcl::heatbath>
@@ -51,29 +51,11 @@ namespace model {
   using SPIN = unsigned short;
   using STATE = std::vector<SPIN>;
   using BOND = std::vector<std::size_t>;
-  inline std::vector<BOND> generate_bonds(lattice::graph lattice){
-    std::vector<BOND> bonds;
-    for (int b=0; b<lattice.num_bonds(); b++){
-      std::vector<size_t> tmp(2);
-      tmp[0] = lattice.source(b);
-      tmp[1] = lattice.target(b);
-      bonds.push_back(tmp);
-    }
-    return bonds;
-  }
 
-  inline std::vector<size_t> generate_bond_type(lattice::graph lattice){
-    std::vector<size_t> bond_type;
-    for (int b=0; b<lattice.num_bonds(); b++) bond_type.push_back(lattice.bond_type(b));
-    return bond_type;
-  }
-
-  inline size_t num_type(std::vector<size_t> bond_type){
-    std::sort(bond_type.begin(), bond_type.end());
-    auto it = std::unique(bond_type.begin(), bond_type.end());
-    return std::distance(bond_type.begin(), it);
-  }
-
+  // in source file.
+  std::vector<BOND> generate_bonds(lattice::graph lattice);
+  std::vector<size_t> generate_bond_type(lattice::graph lattice);
+  size_t num_type(std::vector<size_t> bond_type);
   /*
   params
   ------
@@ -223,12 +205,12 @@ MC : type of algorithm for generating transition matrix
 
 
 */
-template <int N_op, size_t _max_sps, size_t _max_L, class MC>
+template <int N_op, size_t _max_sps, size_t MAX_L, class MC>
 class model::base_spin_model{
 protected:
 
 public:
-  static const size_t max_L = _max_L;
+  static const size_t max_L = MAX_L;
   static const int Nop = N_op;
   static const size_t max_sps = _max_sps;
   static const size_t max_sps2 = _max_sps;
