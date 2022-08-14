@@ -23,9 +23,9 @@ target_link_libraries(worm bcl) # link library
 # target_compile_features(worm PRIVATE cxx_std_14)
 message(STATUS "include from path : ${FetchContent_includes}")
 target_include_directories(worm PUBLIC ./include ${FetchContent_includes})
-target_precompile_headers(worm PUBLIC
-    ./include/pch.hpp
-  )
+# target_precompile_headers(worm PUBLIC
+#     ./include/pch.hpp
+#   )
 # target_include_directories(worm INTERFACE ./include)
 # target_compile_options(worm PRIVATE -O3 -Wall)
 
