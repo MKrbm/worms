@@ -1,4 +1,5 @@
 message(STATUS "inside")
+option(BUILD_SHARED_LIBS  "Enable shared library" OFF)
 find_package(libconfig)
 if(libconfig_FOUND)
   message(STATUS "libconfig was found path = ${libconfig_CONFIG}")

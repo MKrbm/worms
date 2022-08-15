@@ -135,4 +135,6 @@
     ],
     "C_Cpp.errorSquiggles": "Disabled",
     "C_Cpp.intelliSenseEngineFallback": "Enabled",
+    "task.saveBeforeRun": "never",
+    "cmake.saveBeforeBuild": false,
 }
