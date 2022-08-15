@@ -42,16 +42,16 @@ int main() {
     return(EXIT_FAILURE);
   }
   const Setting& root = cfg.getRoot();
-  const Setting &model_config = root["model"]["majumdar_ghosh"];
+  const Setting &model_config = root["models"]["majumdar_ghosh"];
   const Setting &shape_cfg = model_config.lookup("length");
   const Setting &params_cfg = model_config.lookup("params");
   const Setting &types_cfg = model_config.lookup("types");
 
   int dof;
   string file, basis, cell, ham_path;
+  bool repeat_params; // true if repeat params.
   vector<size_t> shapes;
-  vector<int> types;
-  vector<int> params;
+  vector<int> types, params;
   for (int i=0; i<shape_cfg.getLength(); i++) {int tmp = shape_cfg[i]; shapes.push_back(tmp);}
   for (int i=0; i<params_cfg.getLength(); i++) {params.push_back(params_cfg[i]);}
   for (int i=0; i<types_cfg.getLength(); i++) {types.push_back(types_cfg[i]);}
@@ -62,6 +62,7 @@ int main() {
   model_config.lookupValue("cell", cell); 
   model_config.lookupValue("ham_path", ham_path); 
   model_config.lookupValue("dof", dof); 
+  model_config.lookupValue("repeat_params", repeat_params);
 
 
 
