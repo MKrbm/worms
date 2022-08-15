@@ -4,7 +4,6 @@ project(worm_lib
     DESCRIPTION "worm_algorithm library"
     LANGUAGES CXX)
 
-option(BUILD_SHARED_LIBS  "Enable shared library" OFF)
 include(libconfig)
 FetchContent_MakeAvailable(libconfig)
 
@@ -13,6 +12,7 @@ add_library(worm STATIC
     ./src/operator.cpp
     ./src/model.cpp
     ./src/load_npy.cpp
+    ./src/automodel.cpp
     )
 
 add_subdirectory(./lib/bcl) #call /lib/bcl/CMakeLists.txst

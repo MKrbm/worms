@@ -10,41 +10,126 @@
 #include <bcl.hpp>
 #include <algorithm>
 #include <assert.h> 
-#include <iostream>
-#include <string>
+#include <fstream>
+#include <tuple>
 #include <fstream>
 
 #include "model.hpp"
 
+
+
+
+
 namespace model{
-  template <size_t MAX_L = 4, class MC = bcl::heatbath>
+  using namespace std;
+  template<class T> ostream& operator<<(ostream& os, const vector<T>& vec) {
+      os << "[ ";
+      for ( const T& item : vec )
+          os << item << ", ";
+      os << "]"; return os;
+  }
+  using VS = vector<size_t>;
+  using VVS = vector<VS>;
+  using VI = vector<int>;
+
+  size_t num_type(std::vector<size_t> bond_type);
+
+  class base_lattice;
+  template <class MC=bcl::heatbath>
   class base_model;
 }
 
 
-template <size_t MAX_L, class MC>
-class model::base_model{
+
+class model::base_lattice{
 public:
-  static const size_t max_L = MAX_L;
-  typedef MC MCT;
 
-  const int L;
-  const int Nb; // number of bonds.
-  const int N_op;
-  const std::vector<BOND> bonds;
-  const std::vector<size_t> bond_type;
-  std::vector<size_t> sps_sites; 
+  const size_t L;
+  const size_t Nb; // number of bonds.
+  const size_t N_op;
+  const VVS bonds;
+  const VS bond_type;
+  // size_t max_l;
   double rho = 0;
-  std::vector<local_operator<MCT>> loperators;
-  std::vector<int> leg_size; //size of local operators;
-  std::vector<size_t> bond_t_size;
-  std::vector<double> shifts;
+  // VS sps_sites; 
+  // VI leg_size; //size of local operators;
+  // VS bond_t_size;
+  // std::vector<double> shifts;
 
-  base_model(int L, std::vector<BOND> bonds)
-  :L(L), Nb(bonds.size()), N_op(1), bonds(bonds), bond_type(std::vector<size_t>(bonds.size(), 0)){}
+  base_lattice(int L, VVS bonds)
+  :L(L), Nb(bonds.size()), N_op(1), bonds(bonds), bond_type(VS(bonds.size(), 0)){}
 
-  base_model(int L, std::vector<BOND> bonds, std::vector<size_t> bond_type, std::vector<size_t> sps_sites)
-  :L(L), bonds(bonds), bond_type(bond_type), sps_sites(sps_sites){}
+  base_lattice(int L, VVS bonds, VS bond_type)
+  :L(L), Nb(bonds.size()), N_op(num_type(bond_type)),bonds(bonds), bond_type(bond_type){}
 
-  base_model(std::string file = "../config/lattice_xml.txt", std::string basis_name = "chain lattice", std::string cell_name = "simple1d");
+  base_lattice(std::tuple<size_t, VVS, VS> tp)
+  :base_lattice(get<0>(tp), get<1>(tp), get<2>(tp)){}
+
+  base_lattice(std::string basis_name = "chain lattice", std::string cell_name = "simple1d", VS shapes = {6}, std::string file = "../config/lattice_xml.txt", bool print = false);
+
+
+  //* initilizer function reading xml file.
+  static std::tuple<size_t, VVS, VS> initilizer_xml(std::string basis_name, std::string cell_name, VS shapes, std::string file, bool print);
 };
+
+template <class MC>
+class model::base_model : public model::base_lattice
+{
+public:
+  using MCT = MC;
+  const size_t dof; //degree of freedom
+  const size_t leg_size = 2; //accepts only bond operators 
+  VS sps_sites; 
+  VS bond_t_size;
+  std::vector<local_operator<MCT>> loperators;
+  std::vector<double> shifts;
+  base_model(std::string basis_name, std::string cell_name, VS shapes, std::string file, int dof, std::string ham_path, std::vector<int> params, std::vector<int> types, bool print)
+  :base_lattice(basis_name, cell_name, shapes, file, print), dof(dof)
+  {
+
+    std::vector<std::string> path_list;
+    // raed all numpy files in given path.
+    get_npy_path(ham_path, path_list);
+
+    //* check path_list
+    if (path_list.size() != N_op){
+      std::cerr << "# of operator does not match to # of bond types\n";
+      exit(1);
+    }
+
+    //* check types
+    std::sort(types.begin(), types.end());
+    int uniqueCount = std::unique(types.begin(), types.end()) - types.begin();
+    if ((size_t)N_op != 1+*std::max_element(types.begin(), types.end()) || N_op != uniqueCount)
+    {  
+      std::cerr << "types does not match requirements\n";
+      exit(1);
+    }
+
+    size_t op_label=0;
+
+    for (int i=0; i<N_op; i++) loperators.push_back(local_operator<MC>(leg_size, dof)); 
+
+    for (int l=0; l<path_list.size(); l++) {
+      std::string path = path_list[l];
+      auto pair = load_npy(path);
+      VS shape = pair.first;
+      std::vector<double> data = pair.second;
+      if (shape[0]!= shape[1]){ std::cerr << "require square matrix" << std::endl; exit(1); }
+      size_t L = shape[0];
+      if (L != pow(dof, leg_size)) {std::cerr << "dimenstion of given matrix does not match to dof ** legsize" << std::endl; exit(1); }
+
+      std::cout << "hamiltonian is read from " << path << std::endl;
+      auto& loperator = loperators[types[op_label]];
+      for (int i=0; i<shape[0]; i++) for (int j=0; j<shape[1]; j++)
+      {
+        auto x = data[i * shape[1] + j] * params[l];
+        loperator.ham_rate[j][i] += x;
+      }
+      op_label++;
+    }
+  }
+};
+
+
+extern template class model::base_model<bcl::heatbath>;
