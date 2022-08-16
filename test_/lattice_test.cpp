@@ -69,10 +69,6 @@ int main() {
 
 
 
-
-
-
-  cout << "Hi" << endl;
   // string file = "../test_/lattices.xml";
   // string basis_name = "chain lattice";
   // string cell_name = "nnn1d";
