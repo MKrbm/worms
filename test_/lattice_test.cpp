@@ -29,7 +29,7 @@ int main() {
   Config cfg;
   try
   {
-    cfg.readFile("/home/user/project/test_/model.cfg");
+    cfg.readFile("/home/user/project/config/model.cfg");
   }
   catch(const FileIOException &fioex)
   {

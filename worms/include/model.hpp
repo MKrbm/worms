@@ -245,6 +245,7 @@ public:
   :L(lt.num_sites()), Nb(lt.num_bonds()), lattice(lt), 
     bonds(generate_bonds(lt)), bond_type(generate_bond_type(lt))
   {
+    using namespace std;
     int sum = 0;
     for (int i=0; i<Nop; i++){
       bond_t_size[i] = 0;
