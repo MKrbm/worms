@@ -2,11 +2,11 @@
 -T  1
 -m  10000
 -n  1000000
--M  MG_2
--PATH1 ../python/array/MG_reweight2_ori.npy 
--PATH2 ../python/array/MG_reweight2.npy
+-M  MG
+-PATH1 ../python/array/majumdar_ghosh/original/0.npy 
+# -PATH2 ../python/array/MG_reweight2.npy
 -N_PATH 1
--shift 0.2
+-shift 0.5
 -pom 1
 -co 100
 # -fw 1
