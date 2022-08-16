@@ -13,9 +13,9 @@
 #include <fstream>
 #include <tuple>
 #include <fstream>
-
-#include "model.hpp"
-
+#include "localoperator.hpp"
+#include "load_npy.hpp"
+// #include "model.hpp"
 
 
 
@@ -31,6 +31,8 @@ namespace model{
   using VS = vector<size_t>;
   using VVS = vector<VS>;
   using VI = vector<int>;
+  using VVI = vector<VI>;
+  using VD = vector<double>;
 
   size_t num_type(std::vector<size_t> bond_type);
 
@@ -51,10 +53,10 @@ public:
   const VS bond_type;
   // size_t max_l;
   double rho = 0;
+  VD shifts;
   // VS sps_sites; 
   // VI leg_size; //size of local operators;
   // VS bond_t_size;
-  // std::vector<double> shifts;
 
   base_lattice(int L, VVS bonds)
   :L(L), Nb(bonds.size()), N_op(1), bonds(bonds), bond_type(VS(bonds.size(), 0)){}
@@ -79,15 +81,26 @@ public:
   using MCT = MC;
   const size_t dof; //degree of freedom
   const size_t leg_size = 2; //accepts only bond operators 
-  VS sps_sites; 
-  VS bond_t_size;
+  // VS sps_sites; 
+  // VS bond_t_size;
+  VD shifts;
   std::vector<local_operator<MCT>> loperators;
-  std::vector<double> shifts;
-  base_model(model::base_lattice lat, int dof, std::string ham_path, VI params, VI types, bool repeat)
+
+  //* default constructor
+  base_model( model::base_lattice lat, 
+              int dof, 
+              std::string ham_path, 
+              VI params, 
+              VI types, 
+              double shift, 
+              bool zero_worm, 
+              bool repeat)
   :base_lattice(lat), dof(dof)
   {
+    
+    // cout << "hi" << endl;
+    //* raed all numpy files in given path.
     std::vector<std::string> path_list;
-    // raed all numpy files in given path.
     get_npy_path(ham_path, path_list);
 
     //* if repeat = true
@@ -98,6 +111,7 @@ public:
       for (int i=0; i<r_cnt; i++) {
         types_tmp.insert(types_tmp.end(), types.begin(), types.end());
         params_tmp.insert(params_tmp.end(), params.begin(), params.end());
+        for (auto &x : types) x += types.size();
       }
       cout << "repeat params " << r_cnt << " times." << endl;
       types = types_tmp;
@@ -121,27 +135,53 @@ public:
       exit(1);
     }
 
+    //* load hamiltonians
     size_t op_label=0;
-
     for (int i=0; i<N_op; i++) loperators.push_back(local_operator<MC>(leg_size, dof)); 
 
     for (int l=0; l<path_list.size(); l++) {
       std::string path = path_list[l];
       auto pair = load_npy(path);
       VS shape = pair.first;
-      std::vector<double> data = pair.second;
+      VD data = pair.second;
       if (shape[0]!= shape[1]){ std::cerr << "require square matrix" << std::endl; exit(1); }
       size_t L = shape[0];
       if (L != pow(dof, leg_size)) {std::cerr << "dimenstion of given matrix does not match to dof ** legsize" << std::endl; exit(1); }
 
       std::cout << "hamiltonian is read from " << path << std::endl;
-      auto& loperator = loperators[types[op_label]];
+      local_operator<MCT>& loperator = loperators[types[op_label]];
       for (int i=0; i<shape[0]; i++) for (int j=0; j<shape[1]; j++)
       {
         auto x = data[i * shape[1] + j] * params[l];
         loperator.ham_rate[j][i] += x;
+        loperator.ham[j][i] += x;
       }
       op_label++;
+    }
+
+    //* initial settings for local bond operators
+    VD off_sets(N_op, shift);
+    initial_setting(off_sets, 1E-8, zero_worm);
+  }
+
+
+
+
+  /*
+  * initial setting function
+  params
+  ------
+  off_sets : list of base shift for hamiltonians.
+  boolean zw : 1 = zero worm. 
+  thres : value lower than thres reduce to 0. usually 1E-8;
+  */
+  void initial_setting(VD off_sets, double thres, bool zw){
+    int i = 0;
+    double tmp=0;
+    for (local_operator<MCT> & h : loperators){
+      h.set_ham(off_sets[i], thres, zw);
+      shifts.push_back(h.ene_shift);
+      i++;
     }
   }
 };

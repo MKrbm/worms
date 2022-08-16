@@ -8,6 +8,12 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+# c and c++ compiler
+set(CMAKE_C_COMPILER/usr/bin/aarch64-linux-gnu-gcc CACHE PATH "")
+set(CMAKE_CXX_COMPILER /usr/bin/aarch64-linux-gnu-g++ CACHE PATH "")
+
+
 unset(CMAKE_Fortran_COMPILER CACHE)
 
 message(STATUS "${CMAKE_Fortran_COMPILER} is available")

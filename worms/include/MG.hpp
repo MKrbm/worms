@@ -96,7 +96,7 @@ model::MG<MC>::MG(
     path_list_,
     type_list,
     J);
-  std::vector<double> off_sets(MDT::Nop,sft);
+  std::vector<double> off_sets(MDT::Nop, sft);
   MDT::initial_setting(off_sets, thres, true);  
   if (pom){
     for (int i=0; i<MDT::shifts.size(); i++){

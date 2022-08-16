@@ -10,7 +10,6 @@ FetchContent_MakeAvailable(libconfig)
 add_library(worm STATIC
     ./src/state.cpp
     ./src/operator.cpp
-    ./src/model.cpp
     ./src/load_npy.cpp
     ./src/automodel.cpp
     )

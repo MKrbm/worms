@@ -25,6 +25,8 @@ SySy = np.kron(Sy,Sy).real.astype(np.float64)
 
 lh = SzSz + SxSx + SySy
 
+lh = -lh # use minus of local hamiltonian for monte-carlo (exp(-beta H ))
+
 path = "../array/majumdar_ghosh/original/0"
 if not os.path.isfile(path):
   np.save(path,lh)

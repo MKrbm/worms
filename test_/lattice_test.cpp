@@ -16,12 +16,7 @@
 using namespace std;
 using namespace libconfig;
 
-template<class T> ostream& operator<<(ostream& os, const vector<T>& vec) {
-    os << "[ ";
-    for ( const T& item : vec )
-        os << item << ", ";
-    os << "]"; return os;
-}
+
 
 int main() {
 
@@ -48,8 +43,10 @@ int main() {
   const Setting &types_cfg = model_config.lookup("types");
 
   int dof;
+  double shift;
   string file, basis, cell, ham_path;
   bool repeat; // true if repeat params and types.
+  bool zero_worm;
   vector<size_t> shapes;
   vector<int> types, params;
   for (int i=0; i<shape_cfg.getLength(); i++) {int tmp = shape_cfg[i]; shapes.push_back(tmp);}
@@ -63,15 +60,19 @@ int main() {
   model_config.lookupValue("ham_path", ham_path); 
   model_config.lookupValue("dof", dof); 
   model_config.lookupValue("repeat", repeat);
+  model_config.lookupValue("shift", shift);
+  model_config.lookupValue("zero_worm", zero_worm);
+
 
   model::base_lattice lat(basis, cell, shapes, file, true);
-  model::base_model<> spin(lat, dof, ham_path, params, types, repeat);
+  model::base_model<> spin(lat, dof, ham_path, params, types, shift, zero_worm, repeat);
 
 
 
 
 
-  // cout << "Hi" << endl;
+
+  cout << "Hi" << endl;
   // string file = "../test_/lattices.xml";
   // string basis_name = "chain lattice";
   // string cell_name = "nnn1d";
