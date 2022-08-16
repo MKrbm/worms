@@ -83,13 +83,26 @@ public:
   VS bond_t_size;
   std::vector<local_operator<MCT>> loperators;
   std::vector<double> shifts;
-  base_model(std::string basis_name, std::string cell_name, VS shapes, std::string file, int dof, std::string ham_path, std::vector<int> params, std::vector<int> types, bool print)
-  :base_lattice(basis_name, cell_name, shapes, file, print), dof(dof)
+  base_model(model::base_lattice lat, int dof, std::string ham_path, VI params, VI types, bool repeat)
+  :base_lattice(lat), dof(dof)
   {
-
     std::vector<std::string> path_list;
     // raed all numpy files in given path.
     get_npy_path(ham_path, path_list);
+
+    //* if repeat = true
+    VI types_tmp, params_tmp;
+    if (repeat){
+      int r_cnt = N_op/types.size();
+      if (r_cnt * types.size() != N_op) {std::cerr << "can not finish repeating types and params\n"; exit(1);}
+      for (int i=0; i<r_cnt; i++) {
+        types_tmp.insert(types_tmp.end(), types.begin(), types.end());
+        params_tmp.insert(params_tmp.end(), params.begin(), params.end());
+      }
+      cout << "repeat params " << r_cnt << " times." << endl;
+      types = types_tmp;
+      params = params_tmp;
+    }
 
     //* check path_list
     if (path_list.size() != N_op){
@@ -98,9 +111,11 @@ public:
     }
 
     //* check types
-    std::sort(types.begin(), types.end());
-    int uniqueCount = std::unique(types.begin(), types.end()) - types.begin();
-    if ((size_t)N_op != 1+*std::max_element(types.begin(), types.end()) || N_op != uniqueCount)
+    if (params.size() != types.size()) {std::cerr << "size of params and types must match\n";exit(1);}
+    VI _types(types);
+    std::sort(_types.begin(), _types.end());
+    int uniqueCount = std::unique(_types.begin(), _types.end()) - _types.begin();
+    if ((size_t)N_op != 1+*std::max_element(_types.begin(), _types.end()) || N_op != uniqueCount)
     {  
       std::cerr << "types does not match requirements\n";
       exit(1);

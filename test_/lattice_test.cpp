@@ -49,7 +49,7 @@ int main() {
 
   int dof;
   string file, basis, cell, ham_path;
-  bool repeat_params; // true if repeat params.
+  bool repeat; // true if repeat params and types.
   vector<size_t> shapes;
   vector<int> types, params;
   for (int i=0; i<shape_cfg.getLength(); i++) {int tmp = shape_cfg[i]; shapes.push_back(tmp);}
@@ -62,12 +62,10 @@ int main() {
   model_config.lookupValue("cell", cell); 
   model_config.lookupValue("ham_path", ham_path); 
   model_config.lookupValue("dof", dof); 
-  model_config.lookupValue("repeat_params", repeat_params);
+  model_config.lookupValue("repeat", repeat);
 
-
-
-
-  model::base_model<> spin(basis, cell, shapes, file, dof, ham_path, params, types ,false);
+  model::base_lattice lat(basis, cell, shapes, file, true);
+  model::base_model<> spin(lat, dof, ham_path, params, types, repeat);
 
 
 
