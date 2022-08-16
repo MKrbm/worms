@@ -129,7 +129,7 @@ public:
 
     //* check types
     if (params.size() != types.size()) {std::cerr << "size of params and types must match\n";exit(1);}
-    // VI _types(types);
+    VI _types(types);
     std::sort(_types.begin(), _types.end());
     int uniqueCount = std::unique(_types.begin(), _types.end()) - _types.begin();
     if ((size_t)N_op != 1+*std::max_element(_types.begin(), _types.end()) || N_op != uniqueCount)
