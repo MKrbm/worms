@@ -51,6 +51,7 @@ public:
   const size_t N_op;
   const VVS bonds;
   const VS bond_type;
+  VS bond_t_size;
   // size_t max_l;
   double rho = 0;
   VD shifts;
@@ -62,7 +63,11 @@ public:
   :L(L), Nb(bonds.size()), N_op(1), bonds(bonds), bond_type(VS(bonds.size(), 0)){}
 
   base_lattice(int L, VVS bonds, VS bond_type)
-  :L(L), Nb(bonds.size()), N_op(num_type(bond_type)),bonds(bonds), bond_type(bond_type){}
+  :L(L), Nb(bonds.size()), N_op(num_type(bond_type)),bonds(bonds), bond_type(bond_type){
+    bond_t_size = VS(N_op, 0);
+    for (int i=0; i<N_op; i++) for (auto bt : bond_type) if (bt==i) bond_t_size[i]++;
+    cout << bond_t_size << endl;
+  }
 
   base_lattice(std::tuple<size_t, VVS, VS> tp)
   :base_lattice(get<0>(tp), get<1>(tp), get<2>(tp)){}
@@ -82,7 +87,6 @@ public:
   const size_t dof; //degree of freedom
   const size_t leg_size = 2; //accepts only bond operators 
   // VS sps_sites; 
-  // VS bond_t_size;
   VD shifts;
   std::vector<local_operator<MCT>> loperators;
 
@@ -97,7 +101,6 @@ public:
               bool repeat)
   :base_lattice(lat), dof(dof)
   {
-    
     // cout << "hi" << endl;
     //* raed all numpy files in given path.
     std::vector<std::string> path_list;
@@ -126,7 +129,7 @@ public:
 
     //* check types
     if (params.size() != types.size()) {std::cerr << "size of params and types must match\n";exit(1);}
-    VI _types(types);
+    // VI _types(types);
     std::sort(_types.begin(), _types.end());
     int uniqueCount = std::unique(_types.begin(), _types.end()) - _types.begin();
     if ((size_t)N_op != 1+*std::max_element(_types.begin(), _types.end()) || N_op != uniqueCount)
