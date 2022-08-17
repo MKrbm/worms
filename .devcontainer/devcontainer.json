@@ -6,6 +6,7 @@
 		"docker-compose.yml"
 	],
 	"service": "main",
+  "remoteUser": "user",
 	"workspaceFolder": "/home/user/project",
 	"extensions": [
 		"ms-vscode.cpptools",
