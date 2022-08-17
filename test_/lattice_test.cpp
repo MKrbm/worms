@@ -37,10 +37,10 @@ int main() {
     return(EXIT_FAILURE);
   }
   const Setting& root = cfg.getRoot();
-  const Setting &model_config = root["models"]["majumdar_ghosh"];
-  const Setting &shape_cfg = model_config.lookup("length");
-  const Setting &params_cfg = model_config.lookup("params");
-  const Setting &types_cfg = model_config.lookup("types");
+  const Setting& model_config = root["models"]["majumdar_ghosh"];
+  const Setting& shape_cfg = model_config.lookup("length");
+  const Setting& params_cfg = model_config.lookup("params");
+  const Setting& types_cfg = model_config.lookup("types");
 
   int dof;
   double shift;
@@ -66,6 +66,30 @@ int main() {
 
   model::base_lattice lat(basis, cell, shapes, file, true);
   model::base_model<> spin(lat, dof, ham_path, params, types, shift, zero_worm, repeat);
+
+  const Setting& settings = root["mc_settings"];
+  try
+  {
+    const Setting& config = settings["config"];
+    size_t sweeps = (long) config.lookup("sweeps");
+    size_t therms = (long) config.lookup("therms");
+    size_t cutoff_l = (long) config.lookup("cutoff_length");
+    double T = (float) config.lookup("temperature");
+    bool fix_wdensity = config.lookup("fix_wdensity");
+
+  }
+  catch(...)
+  {
+    cout << "I/O error while reading mc_settings.default settings" << endl;
+    cout << "read config file from default instead" << endl;
+    const Setting& config = settings["default"];
+    size_t sweeps = (long) config.lookup("sweeps");
+    size_t therms = (long) config.lookup("therms");
+    size_t cutoff_l = (long) config.lookup("cutoff_length");
+    double T = (float) config.lookup("temperature");
+    bool fix_wdensity = config.lookup("fix_wdensity");
+  }
+
 
 
 

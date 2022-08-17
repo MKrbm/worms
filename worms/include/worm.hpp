@@ -120,9 +120,9 @@ class worm{
 
   typedef bcl::markov<engine_type> markov_t;
 
-  worm(double beta, MODEL model_, size_t co = SIZE_MAX)
+  worm(double beta, MODEL model_, size_t cl = SIZE_MAX)
   :model(model_), L(model.L), beta(beta), rho(-1),
-  bonds(model.bonds),bond_type(model.bond_type) ,state(model.L),cstate(model.L), cutoff_length(co),
+  bonds(model.bonds),bond_type(model.bond_type) ,state(model.L),cstate(model.L), cutoff_length(cl),
   loperators(model.loperators), leg_sizes(model.leg_size)
   {
     cout << "beta          : " << beta << endl;
