@@ -6,8 +6,8 @@
 -PATH1 ../python/array/majumdar_ghosh/original/0.npy 
 # -PATH2 ../python/array/MG_reweight2.npy
 -N_PATH 1
--shift 0.5
+-shift 0.25
 -pom 1
--co 100
+-co 18446744073709551615
 # -fw 1
 -zw 1

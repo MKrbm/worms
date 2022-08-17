@@ -52,7 +52,9 @@ int main(int argc, char* argv[])
     "../python/array/SS_ori_bond.npy",
   });
 
-  typedef bcl::st2013 bcl_t;
+  // typedef bcl::st2013 bcl_t;
+  typedef bcl::heatbath bcl_t;
+
 
   if (model_name == "MG"){
     model::MG<bcl_t> spin_model(path_list, L, opt_ptr->n_path, sft, opt_ptr->pom);

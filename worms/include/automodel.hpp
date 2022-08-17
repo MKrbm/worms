@@ -86,7 +86,7 @@ public:
   using MCT = MC;
   const size_t dof; //degree of freedom
   const size_t leg_size = 2; //accepts only bond operators 
-  // VS sps_sites; 
+  const VS sps_sites; 
   VD shifts;
   std::vector<local_operator<MCT>> loperators;
 
@@ -99,7 +99,7 @@ public:
               double shift, 
               bool zero_worm, 
               bool repeat)
-  :base_lattice(lat), dof(dof)
+  :base_lattice(lat), dof(dof), sps_sites(VS(L, dof))
   {
     // cout << "hi" << endl;
     //* raed all numpy files in given path.

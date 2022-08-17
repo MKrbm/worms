@@ -1,6 +1,5 @@
 // #include <lattice/graph_xml.hpp>
 // #include <lattice/basis.hpp>
-#include <automodel.hpp>
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -8,6 +7,8 @@
 #include <dirent.h>
 #include <filesystem>
 #include <unistd.h>
+#include <automodel.hpp>
+#include <exec2.hpp>
 
 // namespace boost { namespace property_tree {
 //     class ptree;
@@ -66,74 +67,9 @@ int main() {
 
   model::base_lattice lat(basis, cell, shapes, file, true);
   model::base_model<> spin(lat, dof, ham_path, params, types, shift, zero_worm, repeat);
-
+  cout << "Hi" << endl;
   const Setting& settings = root["mc_settings"];
-  try
-  {
-    const Setting& config = settings["config"];
-    size_t sweeps = (long) config.lookup("sweeps");
-    size_t therms = (long) config.lookup("therms");
-    size_t cutoff_l = (long) config.lookup("cutoff_length");
-    double T = (float) config.lookup("temperature");
-    bool fix_wdensity = config.lookup("fix_wdensity");
-
-  }
-  catch(...)
-  {
-    cout << "I/O error while reading mc_settings.default settings" << endl;
-    cout << "read config file from default instead" << endl;
-    const Setting& config = settings["default"];
-    size_t sweeps = (long) config.lookup("sweeps");
-    size_t therms = (long) config.lookup("therms");
-    size_t cutoff_l = (long) config.lookup("cutoff_length");
-    double T = (float) config.lookup("temperature");
-    bool fix_wdensity = config.lookup("fix_wdensity");
-  }
-
-
-
-
-  // string file = "../test_/lattices.xml";
-  // string basis_name = "chain lattice";
-  // string cell_name = "nnn1d";
-  // size_t length = 4;
-  // if (argc > 1) {
-  //   if (argc == 4 || argc == 5) {
-  //     file = argv[1];
-  //     basis_name = argv[2];
-  //     cell_name = argv[3];
-  //     if (argc == 5) length = atoi(argv[4]);
-  //   } else {
-  //     cerr << "Error: " << argv[0] << " xmlfile basis cell [length]\n";
-  //     exit(127);
-  //   }
-  // }
-
-
-  // // cout << "Hi" << endl;
-  // ifstream is(file);
-  // boost::property_tree::ptree pt;
-  // // FOO a;
-  // read_xml(is, pt);
-  // lattice::basis bs;
-  // read_xml(pt, basis_name, bs);
-  // lattice::unitcell cell;
-  // read_xml(pt, cell_name, cell);
-  // switch (cell.dimension()) {
-  // case 1:
-  //   { lattice::graph lat(bs, cell, lattice::extent(length)); lat.print(cout); }
-  //   break;
-  // case 2:
-  //   { lattice::graph lat(bs, cell, lattice::extent(length, 2)); lat.print(cout); }
-  //   break;
-  // case 3:
-  //   { lattice::graph lat(bs, cell, lattice::extent(length, length, length)); lat.print(cout); }
-  //   break;
-  // default:
-  //   cerr << "Unsupported lattice dimension\n";
-  //   exit(127);
-  //   break;
-  // }
+  exe_worm(spin, settings);
 
   
 }

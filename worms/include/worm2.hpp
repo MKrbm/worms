@@ -32,7 +32,7 @@
 #include <math.h> 
 
 #include "state.hpp"
-#include "model.hpp"
+#include "automodel.hpp"
 #define SEED 1645589969
 /* inherit UnionFindTree and add find_and_flip function*/
 
@@ -58,18 +58,16 @@ using size_t = std::size_t;
 template <class MODEL>
 class worm{
   public:
-  typedef typename MODEL::MDT base_spin_model;
-  static const size_t max_L = base_spin_model::max_L;
-  static const size_t sps = base_spin_model::max_sps;
+  static const size_t max_L = 4;
+  static const size_t sps = 2;
   static const size_t sps_prime = sps-1; // = 1 for spin half model
 
   typedef Operatorv2<sps, max_L> OP_type;
   typedef std::vector<OP_type> OPS;
   typedef spin_state::state_func<sps, max_L> state_func;
 
-
-  MODEL model;
-  typedef typename base_spin_model::MCT MCT;
+  MODEL spin_model;
+  // typedef typename base_spin_model::MCT MCT;
   OPS ops_main; //contains operators.
   OPS ops_sub; // for sub.
   STATE state;
@@ -110,21 +108,21 @@ class worm{
   uniform_t uniform;
   // reference of member variables from model class
 
-  static const int N_op = MODEL::Nop;
+  // static const int N_op = MODEL::N_op;
   // static const int N_op = 1;
-
-  std::array<model::local_operator<MCT>, N_op>& loperators; //holds multiple local operators
-  std::array<int, N_op>& leg_sizes; //leg size of local operators;
-  double rho;
+  const int N_op;
+  // std::array<model::local_operator<MODEL::MCT>, N_op>& loperators; //holds multiple local operators
+  std::vector<model::local_operator<typename MODEL::MCT>>& loperators;
   std::vector<std::vector<double>> accepts; //normalized diagonal elements;
+  double rho;
   int cnt=0;
 
   typedef bcl::markov<engine_type> markov_t;
 
   worm(double beta, MODEL model_, size_t cl = SIZE_MAX)
-  :model(model_), L(model.L), beta(beta), rho(-1),
-  bonds(model.bonds),bond_type(model.bond_type) ,state(model.L),cstate(model.L), cutoff_length(cl),
-  loperators(model.loperators), leg_sizes(model.leg_size)
+  :spin_model(model_), L(spin_model.L), beta(beta), rho(-1), N_op(spin_model.N_op), 
+  bonds(spin_model.bonds),bond_type(spin_model.bond_type) ,state(spin_model.L),cstate(spin_model.L), cutoff_length(cl),
+  loperators(spin_model.loperators)
   {
     cout << "beta          : " << beta << endl;
     cout << "cutoff length : " << cutoff_length << endl;
@@ -144,7 +142,7 @@ class worm{
         accept[j] = ham[j][j]/max_diagonal_weight;
       }
       accepts.push_back(accept);
-      rho = max_diagonal_weight * model.lattice.num_bonds();
+      rho = max_diagonal_weight * spin_model.Nb;
   }
   }
 
@@ -305,7 +303,6 @@ class worm{
 
     size_t clabel = next_dot;
     auto& dot = spacetime_dots[clabel];
-
     // ASSERT(site == dot.site(), "site is not consistent");
     if (dot.at_origin()){ //n* if dot is state.
       state[dot.label()] = (state[dot.label()] + fl) % sps; 
@@ -411,7 +408,7 @@ class worm{
       size_t dir = (size_t)2 * r;//n initial direction is 1.
       size_t ini_dir = dir;
       // size_t fl = 1;
-      size_t fl = static_cast<size_t>((model.sps_sites[site]-1)*uniform(rand_src)) + 1;
+      size_t fl = static_cast<size_t>((spin_model.sps_sites[site]-1)*uniform(rand_src)) + 1;
       size_t ini_fl = fl;
       int wl = wlength;
       int br = 0;

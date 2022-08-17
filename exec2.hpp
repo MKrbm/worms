@@ -1,6 +1,5 @@
 #pragma once
 #include "MainConfig.h"
-#include "options.hpp"
 
 #include <iostream>
 #include <string>
@@ -13,9 +12,8 @@
 #include <bcl.hpp>
 #include <libconfig.h++>
 
-#include <worm.hpp>
+#include <worm2.hpp>
 #include <observable.hpp>
-#include <operator.hpp>
 #include <automodel.hpp>
 
 
@@ -36,14 +34,16 @@
 using namespace libconfig;
 using namespace std;
 template <typename MC>
-std::vector<double> exe_worm(model::base_model<MC> spin_model, Setting& cfg){
+std::vector<double> exe_worm(model::base_model<MC> spin_model, const Setting& cfg){
 
+  // cout << "Hi" << endl;
+  using SPINMODEL = model::base_model<MC>;
   size_t sweeps, therms, cutoff_l;
   double T;
   bool fix_wdensity = false;
   try
   {
-    const Setting& config = settings["config"];
+    const Setting& config = cfg["config"];
     sweeps = (long) config.lookup("sweeps");
     therms = (long) config.lookup("therms");
     cutoff_l = (long) config.lookup("cutoff_length");
@@ -55,14 +55,14 @@ std::vector<double> exe_worm(model::base_model<MC> spin_model, Setting& cfg){
   {
     cout << "I/O error while reading mc_settings.default settings" << endl;
     cout << "read config file from default instead" << endl;
-    const Setting& config = settings["default"];
+    const Setting& config = cfg["default"];
     sweeps = (long) config.lookup("sweeps");
     therms = (long) config.lookup("therms");
     cutoff_l = (long) config.lookup("cutoff_length");
     T = (float) config.lookup("temperature");
     fix_wdensity = config.lookup("fix_wdensity");
   }
-
+  if (cutoff_l < 0) cutoff_l = numeric_limits<decltype(cutoff_l)>::max();
   std::cout << "MC step : " << sweeps << "\n" 
           << "thermal size : " << therms << std::endl;
 
@@ -78,7 +78,7 @@ std::vector<double> exe_worm(model::base_model<MC> spin_model, Setting& cfg){
 
 
   worm<SPINMODEL> solver(beta, spin_model, cutoff_l); //template needs for std=14
-  spin_model.lattice.print(std::cout);
+  // spin_model.lattice.print(std::cout);
 
 
   #if MESTIME
@@ -96,8 +96,7 @@ std::vector<double> exe_worm(model::base_model<MC> spin_model, Setting& cfg){
   solver.init_states();
   double wcount = 0;
   double wlength = 0;
-  double wdensity = spin_model.lattice.num_bonds();
-  double wdty = opt_ptr->wdty;
+  double wdensity = spin_model.Nb;
   for (int i=0; i < therms + sweeps; i++){
     // solver.diagonal_update(); 
     solver.diagonal_update(wdensity); //n* need to be comment out 
@@ -122,20 +121,20 @@ std::vector<double> exe_worm(model::base_model<MC> spin_model, Setting& cfg){
         // cout << spin_model.loperators[op.op_type()].ham_rate_vector[op.state()]<< endl;
       }
       double ene_tmp = - (double)solver.ops_main.size() / beta;
-      for (int e=0; e<spin_model.Nop; e++){
+      for (int e=0; e<spin_model.N_op; e++){
         ene_tmp += spin_model.shifts[e] * spin_model.bond_t_size[e];
       }
       // ene << ene_tmp * sign;
       ene << ene_tmp * w_rate;
       ave_sign << sign;
       ave_weight << w_rate;
-      sglt << sglt_ / spin_model.lattice.num_sites();
+      sglt << sglt_ / spin_model.L;
       n_neg_ele << n_neg;
       n_ops << n_op;
     }
     if (i <= therms / 2) {
       if (!fix_wdensity){
-        if (wcount > 0) wdensity = spin_model.lattice.num_bonds()/ (wlength / wcount);
+        if (wcount > 0) wdensity = spin_model.Nb/ (wlength / wcount);
         if (i % (therms / 8 + 1) == 0) {
           wcount /= 2;
           wlength /= 2;
@@ -179,8 +178,8 @@ std::vector<double> exe_worm(model::base_model<MC> spin_model, Setting& cfg){
   std::cout << "Elapsed time         = " << elapsed << " sec\n"
             << "Speed                = " << (therms+sweeps) / elapsed << " MCS/sec\n";
   std::cout << "Energy per site      = "
-            << ene.mean()/ave_sign.mean() / spin_model.lattice.num_sites() << " +- " 
-            << std::sqrt(std::pow(ene.error(r)/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2)) / spin_model.lattice.num_sites()
+            << ene.mean()/ave_sign.mean() / spin_model.L << " +- " 
+            << std::sqrt(std::pow(ene.error(r)/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2)) / spin_model.L
             << std::endl
             << "average sign         = "
             << ave_sign.mean() << " +- " << ave_sign.error(r) << std::endl
