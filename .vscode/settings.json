@@ -1,5 +1,5 @@
 {
-  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "cmake.buildDirectory": "${workspaceFolder}/${buildType}",
   "cmake.sourceDirectory": "${workspaceFolder}",
   "python.terminal.activateEnvironment": true,
   "python.pythonPath": "/home/keisuke/miniconda3/envs/research/bin/python3",

@@ -167,12 +167,12 @@
       ]
     
     },
-    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.buildDirectory": "${workspaceFolder}/${buildType}",
     "cmake.sourceDirectory": "${workspaceFolder}",
     "extensions.ignoreRecommendations": true,
     "cmake.loggingLevel": "debug",
     "cmake.debugConfig": {
-      "cwd": "${workspaceFolder}/build",
+      "cwd": "${workspaceFolder}/${buildType}",
       "externalConsole": false,
       "console" : "integratedTerminal"
       },
