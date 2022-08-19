@@ -138,8 +138,6 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
     auto index = num2index(i);
     ham_vector[i] = ham_[index[0]][index[1]];
     ham_rate_vector[i] = ham_rate[index[0]][index[1]];
-    if (std::abs(ham_vector[i]) < thres) ham_vector[i] = 0;
-    if (std::abs(ham_rate_vector[i]) < thres) ham_rate_vector[i] = 0;
   }
 
 
@@ -167,7 +165,6 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
   // set transition probability
   ogwt.init_table(ham_vector, zw);
   for (int c = 0; c < ogwt.size(); ++c) markov.push_back(markov_t(MC(),ogwt[c]));
-
 }
 
 

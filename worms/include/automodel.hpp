@@ -66,7 +66,6 @@ public:
   :L(L), Nb(bonds.size()), N_op(num_type(bond_type)),bonds(bonds), bond_type(bond_type){
     bond_t_size = VS(N_op, 0);
     for (int i=0; i<N_op; i++) for (auto bt : bond_type) if (bt==i) bond_t_size[i]++;
-    cout << bond_t_size << endl;
   }
 
   base_lattice(std::tuple<size_t, VVS, VS> tp)
@@ -94,7 +93,7 @@ public:
   base_model( model::base_lattice lat, 
               int dof, 
               std::string ham_path, 
-              VI params, 
+              VD params, 
               VI types, 
               double shift, 
               bool zero_worm, 
@@ -107,7 +106,8 @@ public:
     get_npy_path(ham_path, path_list);
 
     //* if repeat = true
-    VI types_tmp, params_tmp;
+    VI types_tmp;
+    VD params_tmp;
     if (repeat){
       int r_cnt = N_op/types.size();
       if (r_cnt * types.size() != N_op) {std::cerr << "can not finish repeating types and params\n"; exit(1);}
@@ -149,7 +149,10 @@ public:
       VD data = pair.second;
       if (shape[0]!= shape[1]){ std::cerr << "require square matrix" << std::endl; exit(1); }
       size_t L = shape[0];
-      if (L != pow(dof, leg_size)) {std::cerr << "dimenstion of given matrix does not match to dof ** legsize" << std::endl; exit(1); }
+      if (L != pow(dof, leg_size)) {
+        std::cerr << "dimenstion of given matrix does not match to dof ** legsize" << std::endl;
+        std::cerr << "matrix size : " << L << std::endl; 
+        exit(1); }
 
       std::cout << "hamiltonian is read from " << path << std::endl;
       local_operator<MCT>& loperator = loperators[types[op_label]];

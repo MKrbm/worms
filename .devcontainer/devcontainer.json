@@ -7,7 +7,7 @@
 	],
 	"service": "main",
   "remoteUser": "user",
-	"workspaceFolder": "/home/user/project",
+	// "workspaceFolder": "/home/user/project",
 	"extensions": [
 		"ms-vscode.cpptools",
 		"ms-vscode.cmake-tools",
@@ -173,7 +173,7 @@
     "extensions.ignoreRecommendations": true,
     "cmake.loggingLevel": "debug",
     "cmake.debugConfig": {
-      "cwd": "${workspaceFolder}/${buildType}",
+      "cwd": "${workspaceFolder}",
       "externalConsole": false,
       "console" : "integratedTerminal"
       },

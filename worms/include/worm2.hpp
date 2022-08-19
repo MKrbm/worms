@@ -59,7 +59,7 @@ template <class MODEL>
 class worm{
   public:
   static const size_t max_L = 4;
-  static const size_t sps = 2;
+  static const size_t sps = 64;
   static const size_t sps_prime = sps-1; // = 1 for spin half model
 
   typedef Operatorv2<sps, max_L> OP_type;
@@ -93,10 +93,11 @@ class worm{
   #ifndef NDEBUG
   engine_type test_src = engine_type(SEED);
   #endif
-  #ifdef RANDOM_SEED
+  // #ifdef RANDOM_SEED
+  #ifdef NDEBUG
   unsigned rseed = static_cast <unsigned> (time(0));
-  // engine_type rand_src = engine_type(rseed);
-  engine_type rand_src = engine_type(SEED);
+  engine_type rand_src = engine_type(rseed);
+  // engine_type rand_src = engine_type(SEED);
   #else
   engine_type rand_src = engine_type(SEED);
   #endif
@@ -126,7 +127,8 @@ class worm{
   {
     cout << "beta          : " << beta << endl;
     cout << "cutoff length : " << cutoff_length << endl;
-    #ifdef RANDOM_SEED
+    // #ifdef RANDOM_SEED
+    #ifdef NDEBUG
     cout << "seed number : " << rseed << endl;
     #endif
     double max_diagonal_weight = loperators[0].max_diagonal_weight_;
@@ -234,7 +236,6 @@ class worm{
     } //end of while loop
 
     #ifndef NDEBUG
-    std::cout << "bond \n\n" ;
     for (typename OPS::iterator opi = ops_main.begin(); opi != ops_main.end();++opi){
       printf("[%d, %d]\n", opi->bond(0), opi->bond(1));
     }
