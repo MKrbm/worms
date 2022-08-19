@@ -22,3 +22,6 @@ def state2num(state, sps = 2, rev=False):
         s *= sps
         s += state[i]
     return s
+
+def change_order(X, dof_site, order="F"):
+    return X.reshape(dof_site*2, order="F").reshape(X.shape)

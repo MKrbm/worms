@@ -39,6 +39,9 @@ class BaseMatirxLoss(abc.ABC):
         self._type = type_check(self.X) # return np.ndarray or torch.Tensor
         if not is_hermitian(self.X):
             raise ValueError("initial matrix X is required to be hermitian matrix")
+
+        if len(self.act) != 2:
+            raise NotImplementedError("local hamiltonian must be a bond operator")
         self.dtype = self.X.dtype
         self.act = np.array(act)
         self.act_cumprod = np.cumprod(self.act)
@@ -89,6 +92,9 @@ class BaseMatirxLoss(abc.ABC):
             resultMatrix=self._multiplymatrix(resultMatrix, U_list, i, False, False)
     
         return resultMatrix
+
+    def apply(self, U_list :list, order = "F"):
+        R = self._transform(U_list).detach().numpy()
 
     def _multiplymatrix(self, Matrix, U_list, i, fromTheLeft=True, inv = False):
         """
