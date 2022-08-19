@@ -1,5 +1,5 @@
 {
-  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "cmake.buildDirectory": "${workspaceFolder}/${buildType}",
   "cmake.sourceDirectory": "${workspaceFolder}",
   "python.terminal.activateEnvironment": true,
   "python.pythonPath": "/home/keisuke/miniconda3/envs/research/bin/python3",
@@ -125,7 +125,8 @@
       "*.ipp": "cpp",
       "stop_token": "cpp",
       "cfenv": "cpp",
-      "typeindex": "cpp"
+      "typeindex": "cpp",
+      "*.h++": "cpp"
     },
     // "python.defaultInterpreterPath": "/home/keisuke/miniconda3/envs/quspin/bin/python",
     "python.analysis.extraPaths": [
@@ -134,4 +135,6 @@
     ],
     "C_Cpp.errorSquiggles": "Disabled",
     "C_Cpp.intelliSenseEngineFallback": "Enabled",
+    "task.saveBeforeRun": "never",
+    "cmake.saveBeforeBuild": false,
 }

@@ -1,5 +1,4 @@
-#ifndef __model__
-#define __model__
+#pragma once
 #include <iostream>
 #include <stdio.h>
 #include <vector>
@@ -15,6 +14,7 @@
 #include <assert.h> 
 #include "outgoing_weight.hpp"
 #include "load_npy.hpp"
+#include "localoperator.hpp"
 
 
 #ifndef NDEBUG
@@ -42,38 +42,20 @@
 
 namespace model {
 
-  template <int N_op, size_t _max_sps = 2, size_t _max_L = 4, class MC = bcl::heatbath>
+  template <int N_op, size_t _max_sps = 2, size_t MAX_L = 4, class MC = bcl::heatbath>
   class base_spin_model;
 
-  template <class MC = bcl::heatbath>
-  class local_operator;
+  // template <class MC = bcl::heatbath>
+  // class local_operator;
   
   using SPIN = unsigned short;
   using STATE = std::vector<SPIN>;
   using BOND = std::vector<std::size_t>;
-  inline std::vector<BOND> generate_bonds(lattice::graph lattice){
-    std::vector<BOND> bonds;
-    for (int b=0; b<lattice.num_bonds(); b++){
-      std::vector<size_t> tmp(2);
-      tmp[0] = lattice.source(b);
-      tmp[1] = lattice.target(b);
-      bonds.push_back(tmp);
-    }
-    return bonds;
-  }
 
-  inline std::vector<size_t> generate_bond_type(lattice::graph lattice){
-    std::vector<size_t> bond_type;
-    for (int b=0; b<lattice.num_bonds(); b++) bond_type.push_back(lattice.bond_type(b));
-    return bond_type;
-  }
-
-  inline size_t num_type(std::vector<size_t> bond_type){
-    std::sort(bond_type.begin(), bond_type.end());
-    auto it = std::unique(bond_type.begin(), bond_type.end());
-    return std::distance(bond_type.begin(), it);
-  }
-
+  // in source file.
+  std::vector<BOND> generate_bonds(lattice::graph lattice);
+  std::vector<size_t> generate_bond_type(lattice::graph lattice);
+  size_t num_type(std::vector<size_t> bond_type);
   /*
   params
   ------
@@ -150,58 +132,58 @@ namespace model {
 }
 
 
-/*
-*params
--------
-leg : number of sites bond operato acts on. typically 2.
-size : number of hilbert space of bond operator.
-sps : spin freedom per site.
+// /*
+// *params
+// -------
+// leg : number of sites bond operato acts on. typically 2.
+// size : number of hilbert space of bond operator.
+// sps : spin freedom per site.
 
-*template argument
--------
-MC : type of algorithm for generating transition matrix
+// *template argument
+// -------
+// MC : type of algorithm for generating transition matrix
 
-*variables
--------
-TPROB : type of transition matrix
-*/
-template <class MC>
-class model::local_operator{
-public:
-  using VECD = std::vector<double>;
-  using TPROB = std::vector<VECD>; //type for transition probability. typically, this is 2D matrix with 4 x 4 elements( check notebook for detail definition of this type).
-  typedef std::mt19937 engine_type;
-  typedef bcl::markov<engine_type> markov_t;
-  typedef MC MCT;
-  outgoing_weight ogwt;
+// *variables
+// -------
+// TPROB : type of transition matrix
+// */
+// template <class MC>
+// class model::local_operator{
+// public:
+//   using VECD = std::vector<double>;
+//   using TPROB = std::vector<VECD>; //type for transition probability. typically, this is 2D matrix with 4 x 4 elements( check notebook for detail definition of this type).
+//   typedef std::mt19937 engine_type;
+//   typedef bcl::markov<engine_type> markov_t;
+//   typedef MC MCT;
+//   outgoing_weight ogwt;
 
-  size_t sps;
-  int leg; // leg size.
-  int size; // size of operator (2**leg)
-  double ene_shift = 0; //energy shift to ensure that diagonal elements of hamiltonian are non-negative
-  double max_diagonal_weight_;
-  double total_weights; //sum of diagonal elemtns of ham
+//   size_t sps;
+//   int leg; // leg size.
+//   int size; // size of operator (2**leg)
+//   double ene_shift = 0; //energy shift to ensure that diagonal elements of hamiltonian are non-negative
+//   double max_diagonal_weight_;
+//   double total_weights; //sum of diagonal elemtns of ham
 
-  std::vector<std::vector<double>> ham;
-  std::vector<std::vector<double>> ham_;
-  std::vector<double> ham_vector;
-  std::vector<double> ham_rate_vector;
-  std::vector<std::vector<double>> ham_rate;
-  std::vector<int> signs; //list of sign defined via the sign of ham_;
-  std::vector<TPROB> trans_prob; //num_configuration x 4 x 4 matrix.
-  std::array<int, 2> num2index(int num);
-  std::vector<markov_t> markov;
-  std::vector<size_t> sps_base;
+//   std::vector<std::vector<double>> ham; // virtual hamiltonian (or maybe absolute of original hamiltonian)
+//   std::vector<std::vector<double>> ham_;
+//   std::vector<double> ham_vector;
+//   std::vector<double> ham_rate_vector;
+//   std::vector<std::vector<double>> ham_rate; // original hamiltonian
+//   std::vector<int> signs; //list of sign defined via the sign of ham_;
+//   std::vector<TPROB> trans_prob; //num_configuration x 4 x 4 matrix.
+//   std::array<int, 2> num2index(int num);
+//   std::vector<markov_t> markov;
+//   std::vector<size_t> sps_base;
 
 
-  local_operator(int leg, size_t sps = 2);
-  local_operator();
+//   local_operator(int leg, size_t sps = 2);
+//   local_operator();
 
-  void set_ham(double off_set = 0, double thres = 1E-8, bool dw = false);
-  void set_trans_weights();
-  void check_trans_prob();
-  int index2num(std::array<int, 2> index);
-};
+//   void set_ham(double off_set = 0, double thres = 1E-8, bool dw = false);
+//   void set_trans_weights();
+//   void check_trans_prob();
+//   int index2num(std::array<int, 2> index);
+// };
 
 /*
 //$\hat{H} = \sum_{<i,j>} [J \vec{S}_i \dot \vec{S}_j - h/Nb (S_i^z + S_j^z)]$ 
@@ -223,12 +205,12 @@ MC : type of algorithm for generating transition matrix
 
 
 */
-template <int N_op, size_t _max_sps, size_t _max_L, class MC>
+template <int N_op, size_t _max_sps, size_t MAX_L, class MC>
 class model::base_spin_model{
 protected:
 
 public:
-  static const size_t max_L = _max_L;
+  static const size_t max_L = MAX_L;
   static const int Nop = N_op;
   static const size_t max_sps = _max_sps;
   static const size_t max_sps2 = _max_sps;
@@ -263,6 +245,7 @@ public:
   :L(lt.num_sites()), Nb(lt.num_bonds()), lattice(lt), 
     bonds(generate_bonds(lt)), bond_type(generate_bond_type(lt))
   {
+    using namespace std;
     int sum = 0;
     for (int i=0; i<Nop; i++){
       bond_t_size[i] = 0;
@@ -288,14 +271,14 @@ public:
   /*
   *params
   ------
-  boolean dw : 1 = have a chance to delete a worm while updating.
+  boolean zw : 1 = zero worm.
   */
 
-  void initial_setting(std::vector<double>off_sets = std::vector<double>(N_op,0), double thres = 1E-8, bool dw = false){
+  void initial_setting(std::vector<double>off_sets = std::vector<double>(N_op,0), double thres = 1E-8, bool zw = false){
     int i = 0;
     double tmp=0;
     for (auto& x : loperators){
-      x.set_ham(off_sets[i], thres, dw);
+      x.set_ham(off_sets[i], thres, zw);
       shifts.push_back(x.ene_shift);
       i++;
     }
@@ -307,123 +290,110 @@ public:
 
 
 
-// define functions for lolcal_operator class
-template <class MC>
-model::local_operator<MC>::local_operator()
-  :local_operator(2){}
+// // define functions for lolcal_operator class
+// template <class MC>
+// model::local_operator<MC>::local_operator()
+//   :local_operator(2){}
 
-template <class MC>
-model::local_operator<MC>::local_operator(int leg, size_t sps)
-  :leg(leg), size(pow(sps, leg)), ogwt(leg, sps), sps(sps){
+// template <class MC>
+// model::local_operator<MC>::local_operator(int leg, size_t sps)
+//   :leg(leg), size(pow(sps, leg)), ogwt(leg, sps), sps(sps){
 
-  if (sps<=0) size = (1<<leg); // default size is 2**leg.
-  ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
-  ham_rate = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
-  ham_vector = std::vector<double>(size*size, 0);
-  ham_rate_vector = std::vector<double>(size*size, 0);
+//   if (sps<=0) size = (1<<leg); // default size is 2**leg.
+//   ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
+//   ham_rate = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
+//   ham_vector = std::vector<double>(size*size, 0);
+//   ham_rate_vector = std::vector<double>(size*size, 0);
 
-}
-
-
-/*
-setting various variable for local_operators 
-this function should be called after manually define 2D local hamiltonian.
-
-- set 1D hamiltonian 
-
-*params
-------
-boolean dw : 1 = have a chance to delete a worm while updating.
-*/
-template <class MC>
-void model::local_operator<MC>::set_ham(double off_set, double thres, bool dw){
-  int N = ham_vector.size();
-  ene_shift=0;
-  ham_ = ham;
-
-  for (int i=0; i<ham_.size();i++){
-    ene_shift = std::min(ene_shift, ham[i][i]);
-    ene_shift = std::min(ene_shift, ham_rate[i][i]);
-  }
-  ene_shift *= -1;
-  ene_shift += off_set;
-  for (int i=0; i<ham_.size();i++){
-    ham_[i][i] += ene_shift;
-    ham_rate[i][i] += ene_shift;
-  }
-
-  for (int i=0; i<N; i++){
-    auto index = num2index(i);
-    ham_vector[i] = ham_[index[0]][index[1]];
-    ham_rate_vector[i] = ham_rate[index[0]][index[1]];
-    if (std::abs(ham_vector[i]) < thres) ham_vector[i] = 0;
-    if (std::abs(ham_rate_vector[i]) < thres) ham_rate_vector[i] = 0;
-  }
+// }
 
 
-  total_weights = 0;
-  // for (int i=0; i<size; i++) total_weights+= ham[i][i];
+// /*
+// setting various variable for local_operators 
+// this function should be called after manually define 2D local hamiltonian.
 
-  double tmp=0;
-  max_diagonal_weight_ = 0;
-  for (int i=0; i<size; i++) {
-    tmp += ham_[i][i];
-    max_diagonal_weight_ = std::max(max_diagonal_weight_, ham_[i][i]);
-  }
+// - set 1D hamiltonian 
+
+// *params
+// ------
+// boolean dw : 1 = have a chance to delete a worm while updating.
+// */
+// template <class MC>
+// void model::local_operator<MC>::set_ham(double off_set, double thres, bool dw){
+//   int N = ham_vector.size();
+//   ene_shift=0;
+//   ham_ = ham;
+
+//   for (int i=0; i<ham_.size();i++){
+//     ene_shift = std::min(ene_shift, ham[i][i]);
+//     ene_shift = std::min(ene_shift, ham_rate[i][i]);
+//   }
+//   ene_shift *= -1;
+//   ene_shift += off_set;
+//   for (int i=0; i<ham_.size();i++){
+//     ham_[i][i] += ene_shift;
+//     ham_rate[i][i] += ene_shift;
+//   }
+
+//   for (int i=0; i<N; i++){
+//     auto index = num2index(i);
+//     ham_vector[i] = ham_[index[0]][index[1]];
+//     ham_rate_vector[i] = ham_rate[index[0]][index[1]];
+//     if (std::abs(ham_vector[i]) < thres) ham_vector[i] = 0;
+//     if (std::abs(ham_rate_vector[i]) < thres) ham_rate_vector[i] = 0;
+//   }
+
+
+//   total_weights = 0;
+//   double tmp=0;
+//   max_diagonal_weight_ = 0;
+//   for (int i=0; i<size; i++) {
+//     tmp += ham_[i][i];
+//     max_diagonal_weight_ = std::max(max_diagonal_weight_, ham_[i][i]);
+//   }
 
 
 
-  // max_diagonal_weight_ = std::max(max_diagonal_weight_, weights_[p]);
+//   // max_diagonal_weight_ = std::max(max_diagonal_weight_, weights_[p]);
 
-  for (int i=0; i<ham_vector.size(); i++){
-    auto& x = ham_vector[i];
-    auto& y = ham_rate_vector[i];
-    signs.push_back(x >= 0 ? 1 : -1);
-    x = std::abs(x);
+//   for (int i=0; i<ham_vector.size(); i++){
+//     auto& x = ham_vector[i];
+//     auto& y = ham_rate_vector[i];
+//     signs.push_back(x >= 0 ? 1 : -1);
+//     x = std::abs(x);
 
-    if (y!=0 && x == 0){
-      std::cerr << "cannot reweighting since support doesn't cover the original matrix" << std::endl;
-      std::cerr << "y : " << y << "  x : " << x << std::endl;
-      std::terminate();
-    }
-    if (x!= 0) y = y/x;
-  }
+//     if (y!=0 && x == 0){
+//       std::cerr << "cannot reweighting since support doesn't cover the original matrix" << std::endl;
+//       std::cerr << "y : " << y << "  x : " << x << std::endl;
+//       std::terminate();
+//     }
+//     if (x!= 0) y = y/x;
+//   }
 
-  // set transition probability
-  ogwt.init_table(ham_vector, dw);
-  for (int c = 0; c < ogwt.size(); ++c) markov.push_back(markov_t(MC(),ogwt[c]));
+//   // set transition probability
+//   ogwt.init_table(ham_vector, dw);
+//   for (int c = 0; c < ogwt.size(); ++c) markov.push_back(markov_t(MC(),ogwt[c]));
 
-  // auto rand_src = engine_type(2021);
-  // auto xxx = markov[0](0, rand_src);
-
-
-
-  // check_trans_prob(); // check if transition probability is consistent with the definition of transition matrix
-
-}
+// }
 
 
 
 
-template <class MC>
-std::array<int, 2> model::local_operator<MC>::num2index(int num){
-  ASSERT(num < size*size, "num is invalid");
-  std::array<int, 2> index;
-  index[0] = num%size;
-  index[1] = num/size;
-  return index;
-}
+// template <class MC>
+// std::array<int, 2> model::local_operator<MC>::num2index(int num){
+//   ASSERT(num < size*size, "num is invalid");
+//   std::array<int, 2> index;
+//   index[0] = num%size;
+//   index[1] = num/size;
+//   return index;
+// }
 
-template <class MC>
-int model::local_operator<MC>::index2num(std::array<int, 2> index){
-  ASSERT(index[0] < size && index[1] < size, "index is invalid");
-  int num = 0;
-  num += index[0];
-  num += index[1] * size;
-  return num;
-}
+// template <class MC>
+// int model::local_operator<MC>::index2num(std::array<int, 2> index){
+//   ASSERT(index[0] < size && index[1] < size, "index is invalid");
+//   int num = 0;
+//   num += index[0];
+//   num += index[1] * size;
+//   return num;
+// }
 
-
-
-
-#endif

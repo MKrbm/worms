@@ -16,7 +16,7 @@ solver = UnitaryTransTs(RiemanUnitaryCG, model, loss_l1, lr = 0.005, momentum=0.
 # model = nsp.model.UnitaryGenerator(N, dtype=torch.float64)
 # solver = UnitarySymmTs(torch.optim.SGD, model, loss_l1, lr = 0.001, momentum=0)
 
-solver.run(100)
+solver.run(10)
 # loss_l1(model.matrix()).backward()
 
 # print("start rieman sgd")

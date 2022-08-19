@@ -1,17 +1,8 @@
 #pragma once
 #include <utility>
-#include "npy.hpp"
+#include <vector>
+#include <string>
+std::pair<std::vector<unsigned long>, std::vector<double>> load_npy(std::string path);
 
-
-
-std::pair<std::vector<unsigned long>, std::vector<double>> load_npy(std::string path) {
-  using namespace std;
-  vector<unsigned long> shape;
-  bool fortran_order;
-  vector<double> data;
-
-  shape.clear();
-  data.clear();
-  npy::LoadArrayFromNumpy(path, shape, fortran_order, data);
-  return std::make_pair(shape, data);
-}
+//* get path to all .npy files
+void get_npy_path(std::string dir_path, std::vector<std::string>& npy_path);
