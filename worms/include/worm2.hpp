@@ -59,7 +59,7 @@ template <class MODEL>
 class worm{
   public:
   static const size_t max_L = 4;
-  static const size_t sps = 64;
+  static const size_t sps = 2;
   static const size_t sps_prime = sps-1; // = 1 for spin half model
 
   typedef Operatorv2<sps, max_L> OP_type;

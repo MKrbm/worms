@@ -28,6 +28,8 @@ int main() {
   cout << tmp << endl;
 
   Config cfg;
+  cfg.setAutoConvert(true);
+
   try
   {
     cfg.readFile("/home/user/project/config/model.cfg");
@@ -54,6 +56,7 @@ int main() {
   vector<size_t> shapes;
   vector<int> types;
   vector<double> params;
+
   for (int i=0; i<shape_cfg.getLength(); i++) {int tmp = shape_cfg[i]; shapes.push_back(tmp);}
   for (int i=0; i<params_cfg.getLength(); i++) {params.push_back((float)params_cfg[i]);}
   for (int i=0; i<types_cfg.getLength(); i++) {types.push_back(types_cfg[i]);}
@@ -71,11 +74,8 @@ int main() {
 
   model::base_lattice lat(basis, cell, shapes, file, true);
   model::base_model<> spin(lat, dof, ham_path, params, types, shift, zero_worm, repeat);
-  // cout << "Hi" << endl;
   cout << spin.bonds << endl;
   cout << spin.bond_type << endl;
   const Setting& settings = root["mc_settings"];
   exe_worm(spin, settings);
-
-  
 }
