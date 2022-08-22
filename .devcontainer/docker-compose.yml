@@ -1,8 +1,7 @@
 version: '3.4'
 
 services:
-  worm:
-    image: worm_cpp
+  main:
     container_name: worms
     build:
       context: .

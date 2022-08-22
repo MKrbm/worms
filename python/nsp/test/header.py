@@ -7,11 +7,8 @@ from scipy.linalg import expm, sinm, cosm
 from scipy import sparse
 from scipy.optimize import OptimizeResult
 import scipy
-from utils import lossfunc as lf
 
 import sys
-import utils.optm as optm
-import utils.lossfunc as lf
 import numpy as np
 import torch
 from importlib import reload

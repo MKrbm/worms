@@ -54,9 +54,9 @@ public:
       for (int g = 0; g < 2*L; ++g){
         size_t t = pows[g+1];
         size_t a = pows[g];
-        for (int l = 0; l < sps-1; l++) {
-          size_t tmp = (s/t)*t + (s%t+(l+1)*a) % t;
-          weights_[s][g*(sps-1) + l + 1] = w[tmp];
+        for (int l = 1; l < sps; l++) {
+          size_t tmp = (s/t)*t + (s%t+l*a) % t;
+          weights_[s][g*(sps-1) + l] = w[tmp];
         }
         if (dw) weights_[s][0] = w[s];
         else weights_[s][0] = 0;

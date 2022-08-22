@@ -59,18 +59,18 @@ class UnitaryTransTs:
                 raise TypeError("If you want to optimize with rieman generator, then you need to use rieman generator")
             
             if optim_method in [RiemanUnitaryCG, RiemanSlCG]:
-                self.optim = optim_method(self.model, self.loss, prt = prt, **kwargs)
+                self.optim = optim_method(self.model, self.loss, pout = prt, **kwargs)
             else:
-                self.optim = optim_method(self.model, prt = prt, **kwargs)
+                self.optim = optim_method(self.model, pout = prt, **kwargs)
 
         elif issubclass(optim_method, BaseRiemanSlGOptimizer):
             if not isinstance(self.model, SlRiemanGenerator):
                 raise TypeError("If you want to optimize with rieman generator, then you need to use rieman generator")
             
             if optim_method in [RiemanUnitaryCG, RiemanSlCG]:
-                self.optim = optim_method(self.model, self.loss, prt = prt, **kwargs)
+                self.optim = optim_method(self.model, self.loss, pout = prt, **kwargs)
             else:
-                self.optim = optim_method(self.model, prt = prt, **kwargs)
+                self.optim = optim_method(self.model, pout = prt, **kwargs)
 
         else:
             if isinstance(self.model, UnitaryRiemanGenerator):
@@ -199,7 +199,7 @@ class UnitaryNonTransTs:
                 pbar.set_postfix_str("iter={}, loss={:.5f}".format(t,loss_.item()))
                 if (loss_.item() < min_loss or min_loss is None):
                     min_loss = loss_.item()
-                    self.best_model = copy.deepcopy(self.optim.models)
+                    self.best_models = copy.deepcopy(self.optim.models)
                 optim.zero_grad()
                 loss_.backward()
                 if optim.step():
@@ -207,7 +207,7 @@ class UnitaryNonTransTs:
                         print("stack in local minimum --> break loop")
                     break
                 loss_old = loss_.item()
-        ret["model"] = self.best_model
+        ret["model"] = self.best_models
         ret["target"] = self.target
         ret["fun"] = min_loss
         return OptimizeResult(ret)

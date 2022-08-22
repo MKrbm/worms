@@ -21,41 +21,55 @@ RUN apt-get update -y && apt-get -y install software-properties-common &&\
   add-apt-repository ppa:deadsnakes/ppa
   
 
-ENV PATH="/home/keisuke/miniconda3/bin:$PATH"
-ARG PATH="/home/keisuke/miniconda3/bin:$PATH"
-RUN apt-get update
+# n* install python 3.9
+RUN apt-get -y install python${PY_VERSION}-distutils python${PY_VERSION}-dev python${PY_VERSION} 
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${PY_VERSION} 1 && update-alternatives --install /usr/bin/python python /usr/bin/python${PY_VERSION} 1 && \
+    apt-get -y install python3-pip
 
-RUN apt-get install -y wget && rm -rf /var/lib/apt/lists/*
+# ADD requirements.txt requirements.txt
+# RUN pip3 install -r requirements.txt
+# RUN rm -rf environment.yml
+# n* installed python
+
+RUN apt-get update -y && apt-get -y install htop cmake openssh-server cmake-curses-gui
 
 
-WORKDIR /home/keisuke
-USER keisuke
-
-RUN wget -P /home/keisuke \
-    https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-    && mkdir /home/keisuke/.conda \
-    && bash Miniconda3-latest-Linux-x86_64.sh -b\
-    && rm -f Miniconda3-latest-Linux-x86_64.sh 
-ENV PATH=$CONDA_DIR/bin:$PATH
-ENV PATH=$CONDA_DIR/envs:$PATH
-RUN conda init
-
-ADD environment.yml environment.yml
-RUN conda env create -f environment.yml
-RUN rm -rf environment.yml
+# n* install boost for c++
+RUN sudo apt-get -y install libboost-dev
 
 
 
+# n* install conda
+# ENV PATH="/home/$USERNAME/miniconda3/bin:$PATH"
+# RUN apt-get update && \
+#     apt-get install -y wget && rm -rf /var/lib/apt/lists/*
 
-# Put conda in path so we can use conda activate
+# WORKDIR /home/$USERNAME
+# USER $USERNAME
+
+# RUN dpkgArch="$(dpkg --print-architecture)";\
+# 	case "$dpkgArch" in \
+# 		arm64) export CONDA='Miniconda3-latest-Linux-aarch64.sh' ;; \
+# 		*) export CONDA='Miniconda3-latest-Linux-x86_64.sh' ;; \
+# 	esac; \
+#     wget -P /home/${USERNAME} \
+#     https://repo.anaconda.com/miniconda/$CONDA \
+#     && mkdir /home/$USERNAME/.conda \
+#     && bash $CONDA -b\
+#     && rm -f $CONDA
+# ENV PATH=$CONDA_DIR/bin:$PATH
+# ENV PATH=$CONDA_DIR/envs:$PATH
+# RUN conda init
+
+# install via environment.yml
+# # ADD environment.yml environment.yml
+# # RUN conda env create -f environment.yml
+# # RUN rm -rf environment.yml
+# n* installed conda
 
 
 
 
-
-COPY ssh-agent-manage.sh /usr/local/bin/ssh-agent-manage.sh
-RUN mkdir -p ~/.config && touch ~/.config/ssh-agent.pid
-RUN echo "$(cat /usr/local/bin/ssh-agent-manage.sh)" >> ~/.bashrc
-WORKDIR /home/keisuke/worms
-
-RUN chown -R keisuke:keisuke .
+USER $USERNAME
+RUN git config --global --add safe.directory /home/user/project
+WORKDIR /home/${USERNAME}/project

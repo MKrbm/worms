@@ -31,6 +31,8 @@ class BaseMatirxLoss(abc.ABC):
         
         self._inverse = inv
         self.X = X
+        # self.X_original = torch.from_numpy(np.copy(X))
+        self.X_original = convert_type(np.copy(X), torch.Tensor)
         self.p_def = False
         if mineig_zero:
             self.X = set_mineig_zero(self.X)
@@ -60,6 +62,7 @@ class BaseMatirxLoss(abc.ABC):
         """
         if _U is not given by list, repete _U by len(act) times.
         """
+        
         if not isinstance(U_list, list):
             U_list = [U_list] * self._n_unitaries
         self._matrix_check(U_list)
@@ -71,19 +74,25 @@ class BaseMatirxLoss(abc.ABC):
         return loss value
         """
         
-    def _transform_kron(self, U_list : list):
+    def _transform_kron(self, U_list : list, original = False):
         U = self._kron(U_list)
         if self.X.dtype != U.dtype:
             print("dtype changes from {} to {}".format(self.X.dtype, U.dtype))
             self.X = cast_dtype(self.X, U.dtype)
-        return self._inverse(U) @ self.X @ U
+        if original:
+            return self._inverse(U) @ self.X_original @ U
+        else:
+            return self._inverse(U) @ self.X @ U
         
 
-    def _transform_einsum(self, U_list : list):
+    def _transform_einsum(self, U_list : list, original = False):
         """
         perform return U @ cast_dtype(self.X, U.dtype) @ self._inverse(U)
         """
-        resultMatrix = deepcopy(self.X)
+        if original:
+            resultMatrix = deepcopy(self.X_original)
+        else:
+            resultMatrix = deepcopy(self.X)
         for i in range(len(self.act)):
             resultMatrix=self._multiplymatrix(resultMatrix, U_list, i, True, True)
             resultMatrix=self._multiplymatrix(resultMatrix, U_list, i, False, False)
@@ -113,11 +122,11 @@ class BaseMatirxLoss(abc.ABC):
         if self._type == np.ndarray:
             self.U = np.eye(1)
             for u in U_list:
-                self.U = np.kron(self.U, u)
+                self.U = np.kron(u, self.U)
         else:
             self.U = torch.eye(1)
             for u in U_list:
-                self.U = torch.kron(self.U, u)
+                self.U = torch.kron(u, self.U)
         return self.U
 
 
