@@ -12,6 +12,8 @@ __pycache__/
 .Python
 build/
 build_/
+Debug/
+Release/
 # lib/
 *.wiki*
 #hidden folder
