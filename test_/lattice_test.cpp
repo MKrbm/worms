@@ -9,7 +9,8 @@
 #include <unistd.h>
 #include <automodel.hpp>
 #include <exec2.hpp>
-
+#include <options.hpp>
+#include <argparse.hpp>
 // namespace boost { namespace property_tree {
 //     class ptree;
 //   }
@@ -19,7 +20,7 @@ using namespace libconfig;
 
 
 
-int main() {
+int main(int argc, char** argv) {
 
   // cout << spin.bonds << endl;
 
@@ -69,13 +70,58 @@ int main() {
   model_config.lookupValue("zero_worm", zero_worm);
 
 
+  //* settings for monte-carlo
+  const Setting& settings = root["mc_settings"];
+
+  size_t sweeps, therms, cutoff_l;
+  double T = 0;
+  bool fix_wdensity = false;
+  try
+  {
+    const Setting& config = settings["config"];
+    sweeps = (long) config.lookup("sweeps");
+    therms = (long) config.lookup("therms");
+    cutoff_l = (long) config.lookup("cutoff_length");
+    T = (double) config.lookup("temperature");
+    fix_wdensity = config.lookup("fix_wdensity");
+
+  }
+  catch(...)
+  {
+    cout << "I/O error while reading mc_settings.default settings" << endl;
+    cout << "read config file from default instead" << endl;
+    const Setting& config = settings["default"];
+    sweeps = (long) config.lookup("sweeps");
+    therms = (long) config.lookup("therms");
+    cutoff_l = (long) config.lookup("cutoff_length");
+    T = (double) config.lookup("temperature");
+    fix_wdensity = config.lookup("fix_wdensity");
+  }
+
+  //* argparse  
+  argparse::ArgumentParser parser("test", "argparse test program", "Apache License 2.0");
+
+  parser.addArgument({"-L1"}, "set shape[0]");
+  parser.addArgument({"-L2"}, "set shape[1]");
+  parser.addArgument({"-L3"}, "set shape[2]");
+  parser.addArgument({"-T"}, "set temperature");
+
+  auto args = parser.parseArgs(argc, argv);
+
+  shapes[0] = args.safeGet<size_t>("L1", shapes[0]);
+  shapes[1] = args.safeGet<size_t>("L2", shapes[1]);
+  shapes[2] = args.safeGet<size_t>("L3", shapes[2]);
+  T = args.safeGet<double>("T", T);
+
+
+  
+  // std::cout << "value(default='abc'): " << args.safeGet<std::string>("value-default", "abc") << std::endl;
+
+  //* finish argparse
+
   model::base_lattice lat(basis, cell, shapes, file, true);
   model::base_model<> spin(lat, dof, ham_path, params, types, shift, zero_worm, repeat);
-  // cout << "Hi" << endl;
-  cout << spin.bonds << endl;
-  cout << spin.bond_type << endl;
-  const Setting& settings = root["mc_settings"];
-  exe_worm(spin, settings);
+  exe_worm(spin, T, sweeps, therms, cutoff_l, fix_wdensity);
 
   
 }
