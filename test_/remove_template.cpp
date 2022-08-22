@@ -8,8 +8,7 @@
 #include <filesystem>
 #include <unistd.h>
 #include <automodel.hpp>
-#include <exec2.hpp>
-
+#include <state2.hpp>
 // namespace boost { namespace property_tree {
 //     class ptree;
 //   }
@@ -17,20 +16,21 @@
 using namespace std;
 using namespace libconfig;
 
-
-
 int main() {
 
   // cout << spin.bonds << endl;
 
   char tmp[256];
-  auto _ = getcwd(tmp, 256);
+  getcwd(tmp, 256);
   cout << tmp << endl;
 
   Config cfg;
   cfg.setAutoConvert(true);
 
-  try { cfg.readFile("/home/user/project/config/model.cfg");}
+  try
+  {
+    cfg.readFile("/home/user/project/config/model.cfg");
+  }
   catch(const FileIOException &fioex)
   {
     cerr << "I/O error while reading file." << endl;
@@ -71,8 +71,10 @@ int main() {
 
   model::base_lattice lat(basis, cell, shapes, file, true);
   model::base_model<> spin(lat, dof, ham_path, params, types, shift, zero_worm, repeat);
-  cout << spin.bonds << endl;
-  cout << spin.bond_type << endl;
-  const Setting& settings = root["mc_settings"];
-  exe_worm(spin, settings);
+
+  cout << spin_state::StateFunc::pows_array(4, 4) << endl;
+  // cout << spin.bonds << endl;
+  // cout << spin.bond_type << endl;
+  // const Setting& settings = root["mc_settings"];
+  // exe_worm(spin, settings);
 }

@@ -17,17 +17,8 @@
 #include "load_npy.hpp"
 // #include "model.hpp"
 
-
-
-
 namespace model{
   using namespace std;
-  template<class T> ostream& operator<<(ostream& os, const vector<T>& vec) {
-      os << "[ ";
-      for ( const T& item : vec )
-          os << item << ", ";
-      os << "]"; return os;
-  }
   using VS = vector<size_t>;
   using VVS = vector<VS>;
   using VI = vector<int>;

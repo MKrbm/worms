@@ -32,9 +32,6 @@ template<class T> std::ostream& operator<<(std::ostream& os, const std::vector<T
     os << "]"; return os;
 }
 
-
-
-
 namespace model{
 // template <class MC = bcl::heatbath>
 // class local_operator;
@@ -64,9 +61,9 @@ public:
   typedef MC MCT;
   outgoing_weight ogwt;
 
-  size_t sps;
-  int leg; // leg size.
-  int size; // size of operator (2**leg)
+  const size_t sps;
+  const int leg; // leg size.
+  const int size; // size of operator (2**leg)
   double ene_shift = 0; //energy shift to ensure that diagonal elements of hamiltonian are non-negative
   double max_diagonal_weight_;
   double total_weights; //sum of diagonal elemtns of ham
@@ -83,7 +80,6 @@ public:
   std::vector<size_t> sps_base;
 
   local_operator(int leg, size_t sps = 2);
-  local_operator();
 
   void set_ham(double off_set = 0, double thres = 1E-8, bool dw = false);
   void set_trans_weights();
@@ -92,21 +88,16 @@ public:
 };
 
 
-// define functions for lolcal_operator class
-template <class MC>
-local_operator<MC>::local_operator()
-  :local_operator(2){}
 
 template <class MC>
 local_operator<MC>::local_operator(int leg, size_t sps)
-  :leg(leg), size(pow(sps, leg)), ogwt(leg, sps), sps(sps){
-
-  if (sps<=0) size = (1<<leg); // default size is 2**leg.
+  :leg(leg), size(pow(sps, leg)), ogwt(leg, sps), sps(sps)
+  {
   ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
   ham_rate = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
   ham_vector = std::vector<double>(size*size, 0);
   ham_rate_vector = std::vector<double>(size*size, 0);
-}
+  }
 
 /*
 setting various variable for local_operators 
