@@ -245,8 +245,8 @@ class worm{
   // //*append to ops
   static void append_ops(OPS& ops, DOTS& sp, const BOND * const bp, int state, int op_type, double tau){
 
-    int s = bp->size();
-    ops.push_back(OP_type(bp, state, s, op_type, tau));
+    // int s = bp->size();
+    ops.push_back(OP_type(bp, state, op_type, tau));
     size_t n = ops.size();
     size_t label = sp.size();
     int site;
