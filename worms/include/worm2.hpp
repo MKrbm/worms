@@ -494,16 +494,16 @@ class worm{
   /*
   *update given state by given operator ptr;
   */
-  static void update_state(typename OPS::iterator opi, STATE& state){
+  void update_state(typename OPS::iterator opi, STATE& state){
     #ifndef NDEBUG
-    auto local_state = opi->get_state_vec();
+    STATE local_state = opi->get_state_vec();
     STATE state_(opi->size());
     int i=0;
     for (auto x : *(opi->bond_ptr())){
       state_[i] = state[x];
       i++;
     }
-    ASSERT(is_same_state(local_state, state_), "the operator can not be applied to the state");
+    ASSERT(is_same_state(local_state, state_, 0), "the operator can not be applied to the state");
     #endif
     if (opi->is_off_diagonal()) update_state_OD(opi, state);
   }
@@ -511,7 +511,7 @@ class worm{
   /*
   *update given state by given offdiagonal operator ptr;
   */
-  static void update_state_OD(typename OPS::iterator opi, STATE& state){
+  void update_state_OD(typename OPS::iterator opi, STATE& state){
     int index = 0;
     auto const& bond = *(opi->bond_ptr());
     for (auto x : bond){
@@ -564,7 +564,7 @@ class worm{
 
       label++;
     }
-    ASSERT(is_same_state(state_, state), "operators are not consistent while update worms");
+    ASSERT(is_same_state(state_, state, 0), "operators are not consistent while update worms");
     // std::cout << "hihi" << std::endl;
     #endif 
     return;
