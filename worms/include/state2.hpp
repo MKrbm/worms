@@ -52,14 +52,6 @@ namespace spin_state{
   };
 
 
-  // template <size_t max_L = 4>
-  // std::array<size_t, max_L+1> pows_array(size_t sps = 2){
-  //   std::array<size_t, max_L+1> arr; size_t x = 1;
-  //   for (int i=0; i<max_L+1; i++){ 
-  //     arr[i]=x; x*=sps;
-  //   }
-  //   return arr;
-  // }
 }
 
 
