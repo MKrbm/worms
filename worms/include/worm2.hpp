@@ -214,12 +214,15 @@ class worm{
           auto const& accept = accepts[lop_label];
           auto const& bond = bonds[b];
 
-          // size_t u = spin_state_t::c2u(cstate[bond[0]], cstate[bond[1]]);
           size_t u = state_funcs[lop_label].state2num(cstate, bond);
+          printf("u = %lu\t", u);
+          printf("input = %lu\n", u);
+          printf("opi_type = %lu\n", opi->op_type());
           // size_t u = spin_state::state2num(cstate, bond);
 
 
           r = uniform(rand_src);
+
           if (r < accept[u]){
             append_ops(ops_main, spacetime_dots, &bond, &pows_vec[lop_label] ,u * pows_vec[lop_label][bond.size()] + u, lop_label, tau);
           }
