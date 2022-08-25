@@ -11,26 +11,8 @@
 #include <assert.h> 
 #include <fstream>
 #include "outgoing_weight.hpp"
+#include "funcs.hpp"
 
-#ifndef NDEBUG
-#   define ASSERT(condition, message) \
-    do { \
-        if (! (condition)) { \
-            std::cerr << "Assertion `" #condition "` failed in " << __FILE__ \
-                      << " line " << __LINE__ << ": " << message << std::endl; \
-            std::terminate(); \
-        } \
-    } while (false)
-#else
-#   define ASSERT(condition, message) do { } while (false)
-#endif
-
-template<class T> std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec) {
-    os << "[ ";
-    for ( const T& item : vec )
-        os << item << ", ";
-    os << "]"; return os;
-}
 
 namespace model{
 // template <class MC = bcl::heatbath>
