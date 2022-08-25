@@ -31,7 +31,8 @@
 #include <ctime>
 #include <math.h> 
 
-#include "state.hpp"
+#include "state2.hpp"
+#include "operator.hpp"
 #include "automodel.hpp"
 #define SEED 1645589969
 /* inherit UnionFindTree and add find_and_flip function*/
@@ -43,13 +44,12 @@ inline int positive_modulo(int i, int n) {
 }
 
 
-using spin_state::Operatorv2;
 using spin_state::Dotv2;
 
 // using MODEL = model::heisenberg1D;
-using STATE = model::STATE;
-using SPIN = model::SPIN;
-using BOND = model::BOND;
+using STATE = spin_state::VUS;
+using SPIN = spin_state::US;
+using BOND = model::VS;
 using WORMS = spin_state::WORM_ARR;
 using DOTS = std::vector<Dotv2>;
 using size_t = std::size_t;
@@ -62,9 +62,10 @@ class worm{
   static const size_t sps = 2;
   static const size_t sps_prime = sps-1; // = 1 for spin half model
 
-  typedef Operatorv2<sps, max_L> OP_type;
+  typedef spin_state::Operator OP_type;
   typedef std::vector<OP_type> OPS;
-  typedef spin_state::state_func<sps, max_L> state_func;
+  typedef spin_state::StateFunc state_func;
+  using LOPt = model::local_operator<typename MODEL::MCT>;
 
   MODEL spin_model;
   // typedef typename base_spin_model::MCT MCT;
@@ -75,8 +76,10 @@ class worm{
   DOTS spacetime_dots; //contain dots in space-time.
   WORMS worms_list;
 
-  std::vector< BOND > bonds;
+  std::vector<BOND> bonds;
   std::vector<size_t> bond_type;
+  VVS pows_vec;
+  vector<state_func> state_funcs;
   
   std::vector<size_t> pres = std::vector<size_t>(0);
   std::vector<size_t> psop = std::vector<size_t>(0);
@@ -109,8 +112,6 @@ class worm{
   uniform_t uniform;
   // reference of member variables from model class
 
-  // static const int N_op = MODEL::N_op;
-  // static const int N_op = 1;
   const int N_op;
   // std::array<model::local_operator<MODEL::MCT>, N_op>& loperators; //holds multiple local operators
   std::vector<model::local_operator<typename MODEL::MCT>>& loperators;
@@ -136,7 +137,9 @@ class worm{
       max_diagonal_weight = std::max(max_diagonal_weight, lop.max_diagonal_weight_);
     }
     for (int i=0; i<loperators.size(); i++){
-      auto const& lop = loperators[i];
+      LOPt const& lop = loperators[i];
+      pows_vec.push_back(lop.ogwt.pows);
+      state_funcs.push_back({lop.ogwt.pows, lop.ogwt.L});
       auto accept = std::vector<double>(lop.size, 0);
 
       auto const& ham = lop.ham_;
@@ -212,12 +215,13 @@ class worm{
           auto const& bond = bonds[b];
 
           // size_t u = spin_state_t::c2u(cstate[bond[0]], cstate[bond[1]]);
-          size_t u = state_func::state2num(cstate, bond);
+          size_t u = state_funcs[lop_label].state2num(cstate, bond);
           // size_t u = spin_state::state2num(cstate, bond);
+
 
           r = uniform(rand_src);
           if (r < accept[u]){
-            append_ops(ops_main, spacetime_dots, &bond, u * state_func::pows[bond.size()] + u, lop_label, tau);
+            append_ops(ops_main, spacetime_dots, &bond, &pows_vec[lop_label] ,u * pows_vec[lop_label][bond.size()] + u, lop_label, tau);
           }
         }
         tau += expdist(rand_src);
@@ -228,7 +232,7 @@ class worm{
           //   cout << "stop" << endl;
           // }
           update_state(opi, cstate);
-          append_ops(ops_main, spacetime_dots, opi->bond_ptr(), opi->state(), opi->op_type(),opi->tau());
+          append_ops(ops_main, spacetime_dots, opi->bond_ptr(), opi->pows_ptr(), opi->state(), opi->op_type(),opi->tau());
           printStateAtTime(cstate, tau);
         }
         ++opi;
@@ -243,10 +247,17 @@ class worm{
   }
 
   // //*append to ops
-  static void append_ops(OPS& ops, DOTS& sp, const BOND * const bp, int state, int op_type, double tau){
+  static void append_ops(
+    OPS& ops, 
+    DOTS& sp, 
+    const BOND * const bp, 
+    const BOND * const pp, 
+    int state, 
+    int op_type, 
+    double tau){
 
     int s = bp->size();
-    ops.push_back(OP_type(bp, state, s, op_type, tau));
+    ops.push_back(OP_type(bp, pp, state, op_type, tau));
     size_t n = ops.size();
     size_t label = sp.size();
     int site;
@@ -567,18 +578,18 @@ class worm{
   }
 
 
-  static bool is_same_state(int n, int m){
+  bool is_same_state(int n, int m){
     return n==m;
   }
 
-  static bool is_same_state(int n, STATE state){
-    int m = state_func::state2num(state, state.size());
+  bool is_same_state(int n, STATE state, size_t lopt){
+    int m = state_funcs[lopt].state2num(state, state.size());
     return n==m;
   }
 
-  static bool is_same_state( STATE state_, STATE state){
-    int m = state_func::state2num(state, state.size());
-    int n= state_func::state2num(state_, state.size());
+  bool is_same_state( STATE state_, STATE state, size_t lopt){
+    int m = state_funcs[lopt].state2num(state, state.size());
+    int n= state_funcs[lopt].state2num(state_, state.size());
     return n==m;
   }
   static void printStateAtTime(const STATE& state, double time){

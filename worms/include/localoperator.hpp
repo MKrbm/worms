@@ -42,7 +42,6 @@ namespace model{
 leg : number of sites bond operato acts on. typically 2.
 size : number of hilbert space of bond operator.
 sps : spin freedom per site.
-
 *template argument
 -------
 MC : type of algorithm for generating transition matrix
@@ -155,7 +154,7 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
   }
   // set transition probability
   ogwt.init_table(ham_vector, zw);
-  for (int c = 0; c < ogwt.size(); ++c) markov.push_back(markov_t(MC(),ogwt[c]));
+  for (int c = 0; c < ogwt.size(); ++c) markov.push_back(markov_t(MC(), ogwt[c]));
 }
 
 
