@@ -58,7 +58,7 @@ namespace spin_state{
       state_ = (state_/t)*t + (state_%t+fl*a) % t;
       }
     US get_local_state(size_t leg) const { return (state_%(*pows_ptr_)[leg+1])/(*pows_ptr_)[leg];}
-    bool is_off_diagonal() const{ return (state(0) != state(1));}
+    bool is_off_diagonal() const{ return (state_ ? (state(0) != state(1)) : false);}
     bool is_diagonal()const{ return !is_off_diagonal();}
     static Operator sentinel(double tau = 1){ return Operator(0, 0, tau);}
     void print(std::ostream& os) const {

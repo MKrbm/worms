@@ -34,6 +34,7 @@
 #include "state2.hpp"
 #include "operator.hpp"
 #include "automodel.hpp"
+#include "funcs.hpp"
 #define SEED 1645589969
 /* inherit UnionFindTree and add find_and_flip function*/
 
@@ -93,16 +94,14 @@ class worm{
   //declaration for random number generator
   // typedef model::local_operator::engine_type engine_type;
   typedef std::mt19937 engine_type;
-  #ifndef NDEBUG
-  engine_type test_src = engine_type(SEED);
-  #endif
-  // #ifdef RANDOM_SEED
   #ifdef NDEBUG
   unsigned rseed = static_cast <unsigned> (time(0));
   engine_type rand_src = engine_type(rseed);
   // engine_type rand_src = engine_type(SEED);
   #else
+  unsigned rseed = SEED;
   engine_type rand_src = engine_type(SEED);
+  engine_type test_src = engine_type(SEED);
   #endif
 
 
@@ -128,10 +127,8 @@ class worm{
   {
     cout << "beta          : " << beta << endl;
     cout << "cutoff length : " << cutoff_length << endl;
-    // #ifdef RANDOM_SEED
-    #ifdef NDEBUG
-    cout << "seed number : " << rseed << endl;
-    #endif
+    // dout << "seed number : " << rseed << endl;
+    printd("seed number : %u", rseed);
     double max_diagonal_weight = loperators[0].max_diagonal_weight_;
     for (auto const& lop : loperators){
       max_diagonal_weight = std::max(max_diagonal_weight, lop.max_diagonal_weight_);
@@ -155,6 +152,7 @@ class worm{
   void init_states(){ //* initialized to all up
   for (auto& x : state){
     #ifdef RANDOM_SEED
+    dout << "spin r = " << uniform(rand_src) << endl;
     x = static_cast<SPIN>(sps * uniform(rand_src));
     #else
     x = 0;
@@ -179,7 +177,8 @@ class worm{
   //main functions
 
   void diagonal_update(double wdensity){
-    
+    dout << "random : " <<  uniform(rand_src) << endl;
+
     swap_oplist();
     // wdensity = 3;
     
@@ -203,7 +202,6 @@ class worm{
       // auto op_sub = *opi;
       if (tau < opi->tau()){ //* if new point is behind the next operator is opsub.
         double r = uniform(rand_src);
-
         if (r < pstart){
           size_t s = static_cast<int>(L * uniform(rand_src));
           append_worms(worms_list, s, spacetime_dots.size(), tau);
@@ -215,15 +213,17 @@ class worm{
           auto const& bond = bonds[b];
 
           size_t u = state_funcs[lop_label].state2num(cstate, bond);
-          printf("u = %lu\t", u);
-          printf("input = %lu\n", u);
-          printf("opi_type = %lu\n", opi->op_type());
+          printd("u = %lu\t", u);
+          printd("input = %lu\t", u);
+          printd("opi_type = %lu\n", opi->op_type());
+          dout << endl;
           // size_t u = spin_state::state2num(cstate, bond);
 
 
           r = uniform(rand_src);
 
           if (r < accept[u]){
+            dout << "append r " << r << endl;
             append_ops(ops_main, spacetime_dots, &bond, &pows_vec[lop_label] ,u * pows_vec[lop_label][bond.size()] + u, lop_label, tau);
           }
         }
