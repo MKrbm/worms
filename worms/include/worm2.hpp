@@ -59,7 +59,6 @@ using size_t = std::size_t;
 template <class MODEL>
 class worm{
   public:
-  static const size_t max_L = 4;
   static const size_t sps = 2;
   static const size_t sps_prime = sps-1; // = 1 for spin half model
 
@@ -96,7 +95,7 @@ class worm{
   typedef std::mt19937 engine_type;
   #ifdef NDEBUG
   unsigned rseed = static_cast <unsigned> (time(0));
-  engine_type rand_src = engine_type(rseed);
+  engine_type rand_src = engine_type(SEED);
   // engine_type rand_src = engine_type(SEED);
   #else
   unsigned rseed = SEED;
