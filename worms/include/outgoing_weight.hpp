@@ -71,9 +71,9 @@ public:
     };
     return arr;
   }
+
   std::vector<double> const& operator[](int s) { return weights_[s]; }
   int size(){return weights_.size();}
-private:
   std::vector<std::vector<double> > weights_;
   int L;
   std::size_t sps; //onsite Hilbert space dimension.

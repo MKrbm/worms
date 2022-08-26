@@ -10,44 +10,40 @@
 
 namespace spin_state{
 
-
   class Operator{
     const VS* const bond_ptr_;
-    const VS* const pows_ptr;
+    const VS* const pows_ptr_;
     size_t op_type_;
     size_t state_;
     size_t cnt_;
     double tau_;
   public:
-    Operator() :bond_ptr_(nullptr){}
+    Operator() :bond_ptr_(nullptr), pows_ptr_(nullptr){}
     
-    Operator(const VS* const bp, size_t st,
+    Operator(const VS* const bp, const VS* pp, size_t st,
             size_t o, double t)
-            :bond_ptr_(bp), state_(st), op_type_(o), tau_(t), cnt_(0)
+            :bond_ptr_(bp), pows_ptr_(pp), state_(st), op_type_(o), tau_(t), cnt_(0)
     {}
-    // {ASSERT(size_ == bp->size(), "bond size and size is inconsistent");}
 
-    //size_, op_type, state_,tau_;
     Operator(size_t st, size_t o, double t)
-    :state_(st), op_type_(o), tau_(t), bond_ptr_(nullptr), cnt_(0)
+    :state_(st), op_type_(o), tau_(t), bond_ptr_(nullptr), pows_ptr_(nullptr), cnt_(0)
     {}
 
-    
-    // void set_state(size_t sp) { state_ = sp; }
     size_t cnt() const {return cnt_;}
     void set_state(size_t s) { state_ = s; cnt_ = 0;}
     void add_cnt() {cnt_++;}
-    size_t size() const {return bp->size();}
+    size_t size() const {return bond_ptr_->size();}
     size_t op_type()const {return op_type_;}
     size_t state()const {return state_;}
     size_t state(size_t dir)const { // dir = 0 lower part, dir = 1 upper pirt
-      if (dir==0) return state_ % pows[size()];
-      else if (dir == 1) return state_ / pows[size()];
+      if (dir==0) return state_ % (*pows_ptr_)[size()];
+      else if (dir == 1) return state_ / (*pows_ptr_)[size()];
       return -1;
     }
     double tau()const {return tau_;}
     int bond(int i) {return bond_ptr_->operator[](i);}
     const VS* bond_ptr()const {return bond_ptr_;}
+    const VS* pows_ptr()const {return pows_ptr_;}
 
     /*
     leg = 0,1,2,3 for bond operator     
@@ -57,14 +53,14 @@ namespace spin_state{
     */
     void update_state(size_t leg, size_t fl)
       {
-      size_t a = pows[leg];
-      size_t t = pows[leg+1];
+      size_t a = (*pows_ptr_)[leg];
+      size_t t = (*pows_ptr_)[leg+1];
       state_ = (state_/t)*t + (state_%t+fl*a) % t;
       }
-    US get_local_state(size_t leg) const { return (state_%pows[leg+1])/pows[leg];}
-    bool is_off_diagonal() const{ return (state(0) != state(1)); }
+    US get_local_state(size_t leg) const { return (state_%(*pows_ptr_)[leg+1])/(*pows_ptr_)[leg];}
+    bool is_off_diagonal() const{ return (state(0) != state(1));}
     bool is_diagonal()const{ return !is_off_diagonal();}
-    static Operator sentinel(double tau = 1){ return Operator(0, 0, 0, tau);}
+    static Operator sentinel(double tau = 1){ return Operator(0, 0, tau);}
     void print(std::ostream& os) const {
       for (size_t i=0; i<size()*2; i++) os << get_local_state(i) << " ";
       os << tau_;

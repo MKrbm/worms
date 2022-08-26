@@ -26,10 +26,8 @@ namespace spin_state{
   struct StateFunc{
   public:
     const VS pows;
-    const size_t sps;
     const size_t leg_size;
-    StateFunc(size_t, size_t);
-    static VS pows_array(size_t, size_t);
+    StateFunc(VS, size_t);
     size_t state2num(VUS const&, int = -1);
     size_t state2num(VUS const&, VS const&);
     VUS num2state(int, int);

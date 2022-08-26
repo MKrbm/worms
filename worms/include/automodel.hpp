@@ -56,8 +56,7 @@ public:
   base_lattice(int L, VVS bonds, VS bond_type)
   :L(L), Nb(bonds.size()), N_op(num_type(bond_type)),bonds(bonds), bond_type(bond_type){
     bond_t_size = VS(N_op, 0);
-    for (int i=0; i<N_op; i++) for (auto bt : bond_type) if (bt==i) bond_t_size[i]++;
-  }
+    for (int i=0; i<N_op; i++) for (auto bt : bond_type) if (bt==i) bond_t_size[i]++;}
 
   base_lattice(std::tuple<size_t, VVS, VS> tp)
   :base_lattice(get<0>(tp), get<1>(tp), get<2>(tp)){}
