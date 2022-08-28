@@ -78,11 +78,11 @@ public:
   static std::tuple<size_t, VVS, VS> initilizer_xml(std::string basis_name, std::string cell_name, VS shapes, std::string file, bool print);
 };
 
-"""
+/*
 params
 ------
   types : there may possibility that adding different operators on the same bond. 
-"""
+*/
 template <class MC>
 class model::base_model : public model::base_lattice
 {
