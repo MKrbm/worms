@@ -321,7 +321,7 @@ class worm{
     auto& dot = spacetime_dots[clabel];
     // ASSERT(site == dot.site(), "site is not consistent");
     if (dot.at_origin()){ //n* if dot is state.
-      state[dot.label()] = (state[dot.label()] + sps_sites[site]) % sps_sites[site]; 
+      state[dot.label()] = (state[dot.label()] + fl) % sps_sites[site]; 
       if (dir||tau_prime==0) wlength += 1 - tau_prime;
       else wlength += tau_prime;
       tau_prime = 0;
@@ -394,7 +394,7 @@ class worm{
       // }
       // std::cout << "\n\n" << std::endl;
       for (int i=0; i<niter; i++){
-        int tmp_ = loperators[opstate.op_type()].markov[num](cindex*(sps_sites[site] - 1) + sps-fl-1, test_src);
+        int tmp_ = loperators[opstate.op_type()].markov[num](cindex*(sps_sites[site] - 1) + sps_sites[site]-fl-1, test_src);
         int nindex_ = tmp_/sps_sites[site] - 1;
         int fl_ = tmp_ % sps_sites[site] - 1 + 1;
         // printf("test tmp : %d, state : %d\n", tmp_, num ^ (fl_ << (nls*nindex_)));
