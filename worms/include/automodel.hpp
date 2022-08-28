@@ -42,6 +42,8 @@ public:
   const size_t N_op;
   const VVS bonds;
   const VS bond_type;
+  const VS site_type;
+  VVS type2bonds;
   VS bond_t_size;
   // size_t max_l;
   double rho = 0;
@@ -51,21 +53,23 @@ public:
   // VS bond_t_size;
 
   base_lattice(int L, VVS bonds)
-  :L(L), Nb(bonds.size()), N_op(1), bonds(bonds), bond_type(VS(bonds.size(), 0)){}
+  :L(L), Nb(bonds.size()), N_op(1), bonds(bonds), bond_type(VS(bonds.size(), 0)), site_type(VS(L, 0)){}
 
-  base_lattice(int L, VVS bonds, VS bond_type)
-  :L(L), Nb(bonds.size()), N_op(num_type(bond_type)),bonds(bonds), bond_type(bond_type){
+  base_lattice(int L, VVS bonds, VS bond_type, VS site_type)
+  :L(L), Nb(bonds.size()), N_op(num_type(bond_type)),bonds(bonds), bond_type(bond_type), site_type(site_type){
     bond_t_size = VS(N_op, 0);
-    for (int i=0; i<N_op; i++) for (auto bt : bond_type) if (bt==i) bond_t_size[i]++;}
+    type2bonds = VVS(N_op, VS);
+    for (int i=0; i<N_op; i++) for (auto bt : bond_type) if (bt==i) {bond_t_size[i]++; type2bonds[i].push_back()}
+    }
 
-  base_lattice(std::tuple<size_t, VVS, VS> tp)
-  :base_lattice(get<0>(tp), get<1>(tp), get<2>(tp)){}
+  base_lattice(std::tuple<size_t, VVS, VS, VS> tp)
+  :base_lattice(get<0>(tp), get<1>(tp), get<2>(tp), get<3>(tp)){}
 
   base_lattice(std::string basis_name = "chain lattice", std::string cell_name = "simple1d", VS shapes = {6}, std::string file = "../config/lattice_xml.txt", bool print = false);
 
 
   //* initilizer function reading xml file.
-  static std::tuple<size_t, VVS, VS> initilizer_xml(std::string basis_name, std::string cell_name, VS shapes, std::string file, bool print);
+  static std::tuple<size_t, VVS, VS, VS> initilizer_xml(std::string basis_name, std::string cell_name, VS shapes, std::string file, bool print);
 };
 
 template <class MC>
@@ -73,7 +77,7 @@ class model::base_model : public model::base_lattice
 {
 public:
   using MCT = MC;
-  const size_t dof; //degree of freedom
+  const VS dofs; //degree of freedom
   const size_t leg_size = 2; //accepts only bond operators 
   const VS sps_sites; 
   VD shifts;
@@ -81,14 +85,14 @@ public:
 
   //* default constructor
   base_model( model::base_lattice lat, 
-              int dof, 
+              VS dofs, 
               std::string ham_path, 
               VD params, 
               VI types, 
               double shift, 
               bool zero_worm, 
               bool repeat)
-  :base_lattice(lat), dof(dof), sps_sites(VS(L, dof))
+  :base_lattice(lat), dofs(dofs), sps_sites(dofs)
   {
     // cout << "hi" << endl;
     //* raed all numpy files in given path.
@@ -99,7 +103,7 @@ public:
     VI types_tmp;
     VD params_tmp;
     if (repeat){
-      int r_cnt = N_op/types.size();
+      int r_cnt = N_op/types.size(); //repeat count
       if (r_cnt * types.size() != N_op) {std::cerr << "can not finish repeating types and params\n"; exit(1);}
       for (int i=0; i<r_cnt; i++) {
         types_tmp.insert(types_tmp.end(), types.begin(), types.end());
@@ -129,9 +133,11 @@ public:
     }
 
     //* load hamiltonians
-    size_t op_label=0;
-    for (int i=0; i<N_op; i++) loperators.push_back(local_operator<MC>(leg_size, dof)); 
+    for (int i=0; i<N_op; i++) {
+      loperators.push_back(local_operator<MC>(leg_size, dofs)); 
+    }
 
+    size_t op_label=0;
     for (int l=0; l<path_list.size(); l++) {
       std::string path = path_list[l];
       auto pair = load_npy(path);
@@ -139,8 +145,8 @@ public:
       VD data = pair.second;
       if (shape[0]!= shape[1]){ std::cerr << "require square matrix" << std::endl; exit(1); }
       size_t L = shape[0];
-      if (L != pow(dof, leg_size)) {
-        std::cerr << "dimenstion of given matrix does not match to dof ** legsize" << std::endl;
+      if (L != pow(dofs, leg_size)) {
+        std::cerr << "dimenstion of given matrix does not match to dofs ** legsize" << std::endl;
         std::cerr << "matrix size : " << L << std::endl; 
         exit(1); }
 
