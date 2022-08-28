@@ -56,16 +56,17 @@ using DOTS = std::vector<Dotv2>;
 using size_t = std::size_t;
 
 
-template <class MODEL>
+template <class MCT>
 class worm{
   public:
-  static const size_t sps = 2;
-  static const size_t sps_prime = sps-1; // = 1 for spin half model
+  // static const size_t sps = 2;
+  // static const size_t sps_sites[site] - 1 = sps-1; // = 1 for spin half model
 
   typedef spin_state::Operator OP_type;
   typedef std::vector<OP_type> OPS;
   typedef spin_state::StateFunc state_func;
-  using LOPt = model::local_operator<typename MODEL::MCT>;
+  using MODEL = model::base_model<MCT>;
+  using LOPt = model::local_operator<MCT>;
 
   MODEL spin_model;
   // typedef typename base_spin_model::MCT MCT;
@@ -79,6 +80,7 @@ class worm{
   std::vector<BOND> bonds;
   std::vector<size_t> bond_type;
   VVS pows_vec;
+  VS sps_sites;
   vector<state_func> state_funcs;
   
   std::vector<size_t> pres = std::vector<size_t>(0);
@@ -122,7 +124,7 @@ class worm{
   worm(double beta, MODEL model_, size_t cl = SIZE_MAX)
   :spin_model(model_), L(spin_model.L), beta(beta), rho(-1), N_op(spin_model.N_op), 
   bonds(spin_model.bonds),bond_type(spin_model.bond_type) ,state(spin_model.L),cstate(spin_model.L), cutoff_length(cl),
-  loperators(spin_model.loperators)
+  loperators(spin_model.loperators), sps_sites(spin_model._sps_sites)
   {
     cout << "beta          : " << beta << endl;
     cout << "cutoff length : " << cutoff_length << endl;
@@ -149,10 +151,10 @@ class worm{
 
 
   void init_states(){ //* initialized to all up
-  for (auto& x : state){
+  for (int i=0; i<state.size(); i++){
     #ifdef RANDOM_SEED
     dout << "spin r = " << uniform(rand_src) << endl;
-    x = static_cast<SPIN>(sps * uniform(rand_src));
+    state[i] = static_cast<SPIN>(sps_sites[i] * uniform(rand_src));
     #else
     x = 0;
     #endif
@@ -319,7 +321,7 @@ class worm{
     auto& dot = spacetime_dots[clabel];
     // ASSERT(site == dot.site(), "site is not consistent");
     if (dot.at_origin()){ //n* if dot is state.
-      state[dot.label()] = (state[dot.label()] + fl) % sps; 
+      state[dot.label()] = (state[dot.label()] + sps_sites[site]) % sps_sites[site]; 
       if (dir||tau_prime==0) wlength += 1 - tau_prime;
       else wlength += tau_prime;
       tau_prime = 0;
@@ -355,7 +357,7 @@ class worm{
       if (fl!=0){
         opstate.update_state(cindex, fl);
         num = opstate.state();
-        tmp = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + sps-fl, rand_src);
+        tmp = loperators[opstate.op_type()].markov[num](cindex*(sps_sites[site] - 1) + sps_sites[site]-fl, rand_src);
       }else{
         num = opstate.state();
         tmp = loperators[opstate.op_type()].markov[num](0, rand_src);
@@ -375,8 +377,8 @@ class worm{
         fl = 0;
       }else{
         tmp--;
-        nindex = tmp/sps_prime;
-        fl = tmp % sps_prime + 1;
+        nindex = tmp/(sps_sites[site] - 1);
+        fl = tmp % (sps_sites[site] - 1) + 1;
         opstate.update_state(nindex, fl);
         //n* assigin for next step
         dir = nindex/(size);
@@ -392,9 +394,9 @@ class worm{
       // }
       // std::cout << "\n\n" << std::endl;
       for (int i=0; i<niter; i++){
-        int tmp_ = loperators[opstate.op_type()].markov[num](cindex*(sps_prime) + sps-fl-1, test_src);
-        int nindex_ = tmp_/sps_prime;
-        int fl_ = tmp_ % sps_prime + 1;
+        int tmp_ = loperators[opstate.op_type()].markov[num](cindex*(sps_sites[site] - 1) + sps-fl-1, test_src);
+        int nindex_ = tmp_/sps_sites[site] - 1;
+        int fl_ = tmp_ % sps_sites[site] - 1 + 1;
         // printf("test tmp : %d, state : %d\n", tmp_, num ^ (fl_ << (nls*nindex_)));
         
       }
@@ -422,7 +424,7 @@ class worm{
       size_t dir = (size_t)2 * r;//n initial direction is 1.
       size_t ini_dir = dir;
       // size_t fl = 1;
-      size_t fl = static_cast<size_t>((spin_model.sps_sites[site]-1)*uniform(rand_src)) + 1;
+      size_t fl = static_cast<size_t>((sps_sites[site]-1)*uniform(rand_src)) + 1;
       size_t ini_fl = fl;
       int wl = wlength;
       int br = 0;
@@ -443,7 +445,7 @@ class worm{
            }
           }
         dot = &spacetime_dots[d_label];
-      }while((d_label != w_label || ((ini_dir == dir ? -1 : 1)*ini_fl + fl)%sps !=0)); 
+      }while((d_label != w_label || ((ini_dir == dir ? -1 : 1)*ini_fl + fl)%sps_sites[site] !=0)); 
       if(br==1){
         bocnt++;
         break;

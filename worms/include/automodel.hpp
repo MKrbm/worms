@@ -43,12 +43,12 @@ public:
   const VVS bonds;
   const VS bond_type;
   const VS site_type;
-  VVS type2bonds;
+  vector<VVS> type2bonds;
   VS bond_t_size;
   // size_t max_l;
   double rho = 0;
   VD shifts;
-  // VS sps_sites; 
+  // VS _sps_sites; 
   // VI leg_size; //size of local operators;
   // VS bond_t_size;
 
@@ -58,8 +58,11 @@ public:
   base_lattice(int L, VVS bonds, VS bond_type, VS site_type)
   :L(L), Nb(bonds.size()), N_op(num_type(bond_type)),bonds(bonds), bond_type(bond_type), site_type(site_type){
     bond_t_size = VS(N_op, 0);
-    type2bonds = VVS(N_op, VS);
-    for (int i=0; i<N_op; i++) for (auto bt : bond_type) if (bt==i) {bond_t_size[i]++; type2bonds[i].push_back()}
+    type2bonds = vector<VVS>(N_op);
+    for (int i=0; i<N_op; i++) for (int j=0; j<Nb; j++) if (bond_type[j]==i) {
+      bond_t_size[i]++; 
+      type2bonds[i].push_back(bonds[j]);
+      }
     }
 
   base_lattice(std::tuple<size_t, VVS, VS, VS> tp)
@@ -75,14 +78,14 @@ public:
 template <class MC>
 class model::base_model : public model::base_lattice
 {
+private:
 public:
+  VS _sps_sites; //degree of freedom
   using MCT = MC;
-  const VS dofs; //degree of freedom
   const size_t leg_size = 2; //accepts only bond operators 
-  const VS sps_sites; 
   VD shifts;
   std::vector<local_operator<MCT>> loperators;
-
+  size_t sps_sites(size_t i){return _sps_sites[i];}
   //* default constructor
   base_model( model::base_lattice lat, 
               VS dofs, 
@@ -92,8 +95,14 @@ public:
               double shift, 
               bool zero_worm, 
               bool repeat)
-  :base_lattice(lat), dofs(dofs), sps_sites(dofs)
+  :base_lattice(lat)
   {
+    //* prepare _sps_sites
+    if (num_type(site_type) != dofs.size()) {std::cerr << "# of dofs doesn't match to # of site types\n"; exit(1);}
+    for (int t : site_type) {_sps_sites.push_back(dofs[t]);}
+    if (_sps_sites.size() != L) {std::cerr << "something wrong with _sps_sites\n"; exit(1);}
+
+
     // cout << "hi" << endl;
     //* raed all numpy files in given path.
     std::vector<std::string> path_list;
@@ -116,10 +125,11 @@ public:
     }
 
     //* check path_list
-    if (path_list.size() != N_op){
-      std::cerr << "# of operator does not match to # of bond types\n";
-      exit(1);
-    }
+    //* path_list.size() not neccesarily be the same as N_op
+    // if (path_list.size() != N_op){
+    //   std::cerr << "# of operator does not match to # of bond types\n";
+    //   exit(1);
+    // }
 
     //* check types
     if (params.size() != types.size()) {std::cerr << "size of params and types must match\n";exit(1);}
@@ -133,8 +143,10 @@ public:
     }
 
     //* load hamiltonians
+    VVS dofs_list(N_op);
     for (int i=0; i<N_op; i++) {
-      loperators.push_back(local_operator<MC>(leg_size, dofs)); 
+      for (auto b : type2bonds[i][0]) {dofs_list[i].push_back(_sps_sites[site_type[b]]);} //size should be leg_size
+      loperators.push_back(local_operator<MC>(leg_size, dofs_list[i][0]));  // local_operator only accepts one sps yet.
     }
 
     size_t op_label=0;
@@ -145,7 +157,8 @@ public:
       VD data = pair.second;
       if (shape[0]!= shape[1]){ std::cerr << "require square matrix" << std::endl; exit(1); }
       size_t L = shape[0];
-      if (L != pow(dofs, leg_size)) {
+      auto& dof = dofs_list[types[op_label]];
+      if (L != accumulate(dof.begin(), dof.end(), 1, multiplies<size_t>())) {
         std::cerr << "dimenstion of given matrix does not match to dofs ** legsize" << std::endl;
         std::cerr << "matrix size : " << L << std::endl; 
         exit(1); }

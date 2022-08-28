@@ -68,7 +68,6 @@ int main() {
   model_config.lookupValue("shift", shift);
   model_config.lookupValue("zero_worm", zero_worm);
 
-  cout << dofs << endl;
   model::base_lattice lat(basis, cell, shapes, file, true);
   model::base_model<> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat);
 
