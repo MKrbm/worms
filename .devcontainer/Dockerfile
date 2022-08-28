@@ -17,8 +17,9 @@ WORKDIR /home/${USERNAME}/project
 RUN git config --global --add safe.directory /home/${USERNAME}/project
 
 # # # install some utilities
-RUN apt-get update -y && apt-get -y install software-properties-common &&\
-  add-apt-repository ppa:deadsnakes/ppa
+RUN apt-get update -y && apt-get -y install software-properties-common htop cmake\
+    openssh-server cmake-curses-gui &&\
+    add-apt-repository ppa:deadsnakes/ppa
   
 
 # n* install python 3.9
@@ -31,7 +32,7 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${PY_V
 # RUN rm -rf environment.yml
 # n* installed python
 
-RUN apt-get update -y && apt-get -y install htop cmake openssh-server cmake-curses-gui
+RUN apt-get update -y && apt-get -y install 
 
 
 # n* install boost for c++

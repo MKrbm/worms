@@ -7,7 +7,7 @@
 	],
 	"service": "main",
   "remoteUser": "user",
-	// "workspaceFolder": "/home/user/project",
+	"workspaceFolder": "/home/user/project",
 	"extensions": [
 		"ms-vscode.cpptools",
 		"ms-vscode.cmake-tools",

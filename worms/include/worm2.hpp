@@ -59,7 +59,7 @@ template <class MODEL>
 class worm{
   public:
   static const size_t max_L = 4;
-  static const size_t sps = 2;
+  static const size_t sps = 8;
   static const size_t sps_prime = sps-1; // = 1 for spin half model
 
   typedef Operatorv2<sps, max_L> OP_type;
@@ -95,7 +95,7 @@ class worm{
   #endif
   #ifdef NDEBUG
   unsigned rseed = static_cast <unsigned> (time(0));
-  engine_type rand_src = engine_type(SEED);
+  engine_type rand_src = engine_type(rseed);
   #else
   engine_type rand_src = engine_type(SEED);
   #endif
@@ -120,7 +120,7 @@ class worm{
 
   worm(double beta, MODEL model_, size_t cl = SIZE_MAX)
   :spin_model(model_), L(spin_model.L), beta(beta), rho(-1), N_op(spin_model.N_op), 
-  bonds(spin_model.bonds),bond_type(spin_model.bond_type) ,state(spin_model.L),cstate(spin_model.L), cutoff_length(cl),
+  bonds(spin_model.bonds),bond_type(spin_model.bond_type),state(spin_model.L),cstate(spin_model.L),cutoff_length(cl),
   loperators(spin_model.loperators)
   {
     cout << "beta          : " << beta << endl;
@@ -145,7 +145,6 @@ class worm{
       rho = max_diagonal_weight * spin_model.Nb;
   }
   }
-
 
   void init_states(){ //* initialized to all up
   for (auto& x : state){
@@ -184,7 +183,7 @@ class worm{
     size_t lop_label;
     lop_label = 0; //typically, lop_label is fixed to 0
     // int leg_size = leg_sizes[lop_label]; //size of choosen operator
-    // auto const& lop = loperators[lop_label];
+
 
     ops_main.resize(0); //* init_ops_main()
     
@@ -221,10 +220,8 @@ class worm{
         tau += expdist(rand_src);
       }else{ //*if tau went over the operator time.
         if (opi->is_off_diagonal()) {
-          // auto const& bond = *opi->bond_ptr();
-          // if (opi->state() == 1){
-          //   cout << "stop" << endl;
-          // }
+
+          
           update_state(opi, cstate);
           append_ops(ops_main, spacetime_dots, opi->bond_ptr(), opi->state(), opi->op_type(),opi->tau());
           printStateAtTime(cstate, tau);
