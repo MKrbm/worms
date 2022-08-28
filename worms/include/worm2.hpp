@@ -153,8 +153,9 @@ class worm{
   void init_states(){ //* initialized to all up
   for (int i=0; i<state.size(); i++){
     #ifdef RANDOM_SEED
-    dout << "spin r = " << uniform(rand_src) << endl;
-    state[i] = static_cast<SPIN>(sps_sites[i] * uniform(rand_src));
+    double r = uniform(rand_src);
+    cout << "spin r = " << r << endl;
+    state[i] = static_cast<SPIN>(sps_sites[i] * r);
     #else
     x = 0;
     #endif
