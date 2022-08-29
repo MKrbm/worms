@@ -22,17 +22,14 @@ using namespace libconfig;
 
 int main(int argc, char** argv) {
 
-  // cout << spin.bonds << endl;
-
   char tmp[256];
-  getcwd(tmp, 256);
+  auto _ = getcwd(tmp, 256);
   cout << tmp << endl;
 
   Config cfg;
-  try
-  {
-    cfg.readFile("/home/user/project/config/model.cfg");
-  }
+  cfg.setAutoConvert(true);
+
+  try { cfg.readFile("/home/user/project/config/model.cfg");}
   catch(const FileIOException &fioex)
   {
     cerr << "I/O error while reading file." << endl;
@@ -42,10 +39,11 @@ int main(int argc, char** argv) {
   const Setting& root = cfg.getRoot();
   string model_name = root["model"];
   cout << "model name is \t : \t" << model_name << endl;
-  const Setting& mcfg = root["models"][model_name];
-  const Setting& shape_cfg = mcfg.lookup("length");
-  const Setting& params_cfg = mcfg.lookup("params");
-  const Setting& types_cfg = mcfg.lookup("types");
+  const Setting& model_config = root["models"][model_name];
+  const Setting& shape_cfg = model_config.lookup("length");
+  const Setting& dofs_cfg = model_config.lookup("dofs");
+  const Setting& params_cfg = model_config.lookup("params");
+  const Setting& types_cfg = model_config.lookup("types");
 
   int dof;
   double shift;
@@ -55,7 +53,10 @@ int main(int argc, char** argv) {
   vector<size_t> shapes;
   vector<int> types;
   vector<double> params;
+  vector<size_t> dofs;
+
   for (int i=0; i<shape_cfg.getLength(); i++) {int tmp = shape_cfg[i]; shapes.push_back(tmp);}
+  for (int i=0; i<dofs_cfg.getLength(); i++) {dofs.push_back((size_t)dofs_cfg[i]);}
   for (int i=0; i<params_cfg.getLength(); i++) {params.push_back((float)params_cfg[i]);}
   for (int i=0; i<types_cfg.getLength(); i++) {types.push_back(types_cfg[i]);}
 
@@ -123,8 +124,6 @@ int main(int argc, char** argv) {
   //* finish argparse
 
   model::base_lattice lat(basis, cell, shapes, file, true);
-  model::base_model<> spin(lat, dof, ham_path, params, types, shift, zero_worm, repeat);
-  exe_worm(spin, T, sweeps, therms, cutoff_l, fix_wdensity);
-
-  
+  model::base_model<> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat);
+  exe_worm(spin, T, sweeps, therms, cutoff_l, fix_wdensity);  
 }

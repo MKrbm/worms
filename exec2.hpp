@@ -77,7 +77,7 @@ std::vector<double> exe_worm(model::base_model<MC> spin_model, double T, size_t 
   double beta = 1 / T;
 
 
-  worm<SPINMODEL> solver(beta, spin_model, cutoff_l); //template needs for std=14
+  worm<MC> solver(beta, spin_model, cutoff_l); //template needs for std=14
   // spin_model.lattice.print(std::cout);
 
 
