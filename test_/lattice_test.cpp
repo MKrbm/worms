@@ -39,13 +39,13 @@ int main(int argc, char** argv) {
   const Setting& root = cfg.getRoot();
   string model_name = root["model"];
   cout << "model name is \t : \t" << model_name << endl;
-  const Setting& model_config = root["models"][model_name];
-  const Setting& shape_cfg = model_config.lookup("length");
-  const Setting& dofs_cfg = model_config.lookup("dofs");
-  const Setting& params_cfg = model_config.lookup("params");
-  const Setting& types_cfg = model_config.lookup("types");
+  const Setting& mcfg = root["models"][model_name];
+  const Setting& shape_cfg = mcfg.lookup("length");
+  const Setting& params_cfg = mcfg.lookup("params");
+  const Setting& types_cfg = mcfg.lookup("types");
+  const Setting& dofs_cfg = mcfg.lookup("dofs");
 
-  int dof;
+
   double shift;
   string file, basis, cell, ham_path;
   bool repeat; // true if repeat params and types.
@@ -65,7 +65,6 @@ int main(int argc, char** argv) {
   basis = (string) mcfg.lookup("basis").c_str();
   cell = (string) mcfg.lookup("cell").c_str();
   ham_path = (string) mcfg.lookup("ham_path").c_str();
-  dof = (int) mcfg.lookup("dof");
   repeat = (bool) mcfg.lookup("repeat");
   shift = (double) mcfg.lookup("shift");
   zero_worm = (bool) mcfg.lookup("zero_worm");
