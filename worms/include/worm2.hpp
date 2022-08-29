@@ -1,7 +1,3 @@
-#ifndef __loop__
-#define __loop__
-
-
 #pragma once
 #include <string.h>
 #include <iostream>
@@ -59,14 +55,9 @@ using size_t = std::size_t;
 template <class MCT>
 class worm{
   public:
-<<<<<<< HEAD
-  static const size_t max_L = 4;
-  static const size_t sps = 8;
-  static const size_t sps_prime = sps-1; // = 1 for spin half model
-=======
+
   // static const size_t sps = 2;
   // static const size_t sps_sites[site] - 1 = sps-1; // = 1 for spin half model
->>>>>>> MKrbm/issue9
 
   typedef spin_state::Operator OP_type;
   typedef std::vector<OP_type> OPS;
@@ -101,19 +92,11 @@ class worm{
   //declaration for random number generator
   // typedef model::local_operator::engine_type engine_type;
   typedef std::mt19937 engine_type;
-<<<<<<< HEAD
-  #ifndef NDEBUG
-  engine_type test_src = engine_type(SEED);
-  #endif
+
   #ifdef NDEBUG
   unsigned rseed = static_cast <unsigned> (time(0));
-  engine_type rand_src = engine_type(SEED);
-=======
-  #ifdef NDEBUG
-  unsigned rseed = static_cast <unsigned> (time(0));
-  engine_type rand_src = engine_type(SEED);
+  engine_type rand_src = engine_type(rseed);
   // engine_type rand_src = engine_type(SEED);
->>>>>>> MKrbm/issue9
   #else
   unsigned rseed = SEED;
   engine_type rand_src = engine_type(SEED);
@@ -138,13 +121,8 @@ class worm{
 
   worm(double beta, MODEL model_, size_t cl = SIZE_MAX)
   :spin_model(model_), L(spin_model.L), beta(beta), rho(-1), N_op(spin_model.N_op), 
-<<<<<<< HEAD
-  bonds(spin_model.bonds),bond_type(spin_model.bond_type),state(spin_model.L),cstate(spin_model.L),cutoff_length(cl),
-  loperators(spin_model.loperators)
-=======
   bonds(spin_model.bonds),bond_type(spin_model.bond_type) ,state(spin_model.L),cstate(spin_model.L), cutoff_length(cl),
   loperators(spin_model.loperators), sps_sites(spin_model._sps_sites)
->>>>>>> MKrbm/issue9
   {
     cout << "beta          : " << beta << endl;
     cout << "cutoff length : " << cutoff_length << endl;
@@ -173,10 +151,9 @@ class worm{
   for (int i=0; i<state.size(); i++){
     #ifdef RANDOM_SEED
     double r = uniform(rand_src);
-    cout << "spin r = " << r << endl;
     state[i] = static_cast<SPIN>(sps_sites[i] * r);
     #else
-    x = 0;
+    state[i] = 0;
     #endif
     }
   }
@@ -628,9 +605,7 @@ class worm{
 
 };
 
+extern template class worm<bcl::heatbath>;
+extern template class worm<bcl::st2010>;
+extern template class worm<bcl::st2013>;
 
-
-
-
-
-#endif 

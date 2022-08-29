@@ -71,6 +71,8 @@ std::tuple<size_t, VVS, VS, VS> base_lattice::initilizer_xml(string basis_name, 
 base_lattice::base_lattice(string basis_name, string cell_name, VS shapes, string file, bool print)
 :base_lattice(initilizer_xml(basis_name, cell_name, shapes, file, print))
 {}
-template class base_model<bcl::heatbath>;
+template class model::base_model<bcl::heatbath>;
+template class model::base_model<bcl::st2010>;
+template class model::base_model<bcl::st2013>;
 }
 

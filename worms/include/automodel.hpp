@@ -208,3 +208,6 @@ public:
 
 
 extern template class model::base_model<bcl::heatbath>;
+extern template class model::base_model<bcl::st2010>;
+extern template class model::base_model<bcl::st2013>;
+
