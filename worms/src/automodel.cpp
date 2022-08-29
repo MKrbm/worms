@@ -11,18 +11,24 @@ VVS generate_bonds(lattice::graph lattice){
     return bonds;
   }
 
-std::vector<size_t> generate_bond_type(lattice::graph lattice){
-  std::vector<size_t> bond_type;
+VS generate_bond_type(lattice::graph lattice){
+  VS bond_type;
   for (int b=0; b<lattice.num_bonds(); b++) bond_type.push_back(lattice.bond_type(b));
   return bond_type;
 }
 
-size_t num_type(std::vector<size_t> bond_type){
+VS generate_site_type(lattice::graph lattice){
+  VS site_type;
+  for (int b=0; b<lattice.num_sites(); b++){site_type.push_back(lattice.site_type(b));}
+  return site_type;
+}
+
+size_t num_type(VS bond_type){
   std::sort(bond_type.begin(), bond_type.end());
   return std::distance(bond_type.begin(), std::unique(bond_type.begin(), bond_type.end()));
 }
 
-std::tuple<size_t, VVS, VS> base_lattice::initilizer_xml(string basis_name, string cell_name, VS shapes, string file, bool print)
+std::tuple<size_t, VVS, VS, VS> base_lattice::initilizer_xml(string basis_name, string cell_name, VS shapes, string file, bool print)
 {
   ifstream is(file);
   boost::property_tree::ptree pt;
@@ -36,14 +42,14 @@ std::tuple<size_t, VVS, VS> base_lattice::initilizer_xml(string basis_name, stri
     {
       lattice::graph lat(bs, cell, lattice::extent(shapes[0]));
       if (print) lat.print(std::cout);
-      return make_tuple(lat.num_sites(), generate_bonds(lat), generate_bond_type(lat));
+      return make_tuple(lat.num_sites(), generate_bonds(lat), generate_bond_type(lat), generate_site_type(lat));
       break;
     }
   case 2:
     {
       lattice::graph lat(bs, cell, lattice::extent(shapes[0], shapes[1]));
       if (print) lat.print(std::cout);
-      return make_tuple(lat.num_sites(), generate_bonds(lat), generate_bond_type(lat));
+      return make_tuple(lat.num_sites(), generate_bonds(lat), generate_bond_type(lat), generate_site_type(lat));
       break;
     }
     break;
@@ -51,7 +57,7 @@ std::tuple<size_t, VVS, VS> base_lattice::initilizer_xml(string basis_name, stri
     {
       lattice::graph lat(bs, cell, lattice::extent(shapes[0], shapes[1], shapes[2]));
       if (print) lat.print(std::cout);
-      return make_tuple(lat.num_sites(), generate_bonds(lat), generate_bond_type(lat));
+      return make_tuple(lat.num_sites(), generate_bonds(lat), generate_bond_type(lat), generate_site_type(lat));
       break;
     }
   default:
@@ -59,12 +65,14 @@ std::tuple<size_t, VVS, VS> base_lattice::initilizer_xml(string basis_name, stri
     exit(127);
     break;
   }
-  return make_tuple(0, VVS(), VS());
+  return make_tuple(0, VVS(), VS(), VS());
 }
 
 base_lattice::base_lattice(string basis_name, string cell_name, VS shapes, string file, bool print)
 :base_lattice(initilizer_xml(basis_name, cell_name, shapes, file, print))
 {}
-template class base_model<bcl::heatbath>;
+template class model::base_model<bcl::heatbath>;
+template class model::base_model<bcl::st2010>;
+template class model::base_model<bcl::st2013>;
 }
 

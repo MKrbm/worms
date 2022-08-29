@@ -12,6 +12,8 @@ add_library(worm STATIC
     ./src/operator.cpp
     ./src/load_npy.cpp
     ./src/automodel.cpp
+    ./src/state_func.cpp
+    ./src/worm.cpp
     )
 
 add_subdirectory(./lib/bcl) #call /lib/bcl/CMakeLists.txst

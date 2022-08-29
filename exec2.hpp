@@ -34,34 +34,34 @@
 using namespace libconfig;
 using namespace std;
 template <typename MC>
-std::vector<double> exe_worm(model::base_model<MC> spin_model, const Setting& cfg){
+std::vector<double> exe_worm(model::base_model<MC> spin_model, double T, size_t sweeps, size_t therms, size_t cutoff_l, bool fix_wdensity){
 
   // cout << "Hi" << endl;
   using SPINMODEL = model::base_model<MC>;
-  size_t sweeps, therms, cutoff_l;
-  double T;
-  bool fix_wdensity = false;
-  try
-  {
-    const Setting& config = cfg["config"];
-    sweeps = (long) config.lookup("sweeps");
-    therms = (long) config.lookup("therms");
-    cutoff_l = (long) config.lookup("cutoff_length");
-    T = (float) config.lookup("temperature");
-    fix_wdensity = config.lookup("fix_wdensity");
+  // size_t sweeps, therms, cutoff_l;
+  // double T;
+  // bool fix_wdensity = false;
+  // try
+  // {
+  //   const Setting& config = cfg["config"];
+  //   sweeps = (long) config.lookup("sweeps");
+  //   therms = (long) config.lookup("therms");
+  //   cutoff_l = (long) config.lookup("cutoff_length");
+  //   T = (float) config.lookup("temperature");
+  //   fix_wdensity = config.lookup("fix_wdensity");
 
-  }
-  catch(...)
-  {
-    cout << "I/O error while reading mc_settings.default settings" << endl;
-    cout << "read config file from default instead" << endl;
-    const Setting& config = cfg["default"];
-    sweeps = (long) config.lookup("sweeps");
-    therms = (long) config.lookup("therms");
-    cutoff_l = (long) config.lookup("cutoff_length");
-    T = (float) config.lookup("temperature");
-    fix_wdensity = config.lookup("fix_wdensity");
-  }
+  // }
+  // catch(...)
+  // {
+  //   cout << "I/O error while reading mc_settings.default settings" << endl;
+  //   cout << "read config file from default instead" << endl;
+  //   const Setting& config = cfg["default"];
+  //   sweeps = (long) config.lookup("sweeps");
+  //   therms = (long) config.lookup("therms");
+  //   cutoff_l = (long) config.lookup("cutoff_length");
+  //   T = (float) config.lookup("temperature");
+  //   fix_wdensity = config.lookup("fix_wdensity");
+  // }
   if (cutoff_l < 0) cutoff_l = numeric_limits<decltype(cutoff_l)>::max();
   std::cout << "MC step : " << sweeps << "\n" 
           << "thermal size : " << therms << std::endl;
@@ -77,7 +77,7 @@ std::vector<double> exe_worm(model::base_model<MC> spin_model, const Setting& cf
   double beta = 1 / T;
 
 
-  worm<SPINMODEL> solver(beta, spin_model, cutoff_l); //template needs for std=14
+  worm<MC> solver(beta, spin_model, cutoff_l); //template needs for std=14
   // spin_model.lattice.print(std::cout);
 
 

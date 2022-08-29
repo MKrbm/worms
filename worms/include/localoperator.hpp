@@ -11,28 +11,7 @@
 #include <assert.h> 
 #include <fstream>
 #include "outgoing_weight.hpp"
-
-#ifndef NDEBUG
-#   define ASSERT(condition, message) \
-    do { \
-        if (! (condition)) { \
-            std::cerr << "Assertion `" #condition "` failed in " << __FILE__ \
-                      << " line " << __LINE__ << ": " << message << std::endl; \
-            std::terminate(); \
-        } \
-    } while (false)
-#else
-#   define ASSERT(condition, message) do { } while (false)
-#endif
-
-template<class T> std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec) {
-    os << "[ ";
-    for ( const T& item : vec )
-        os << item << ", ";
-    os << "]"; return os;
-}
-
-
+#include "funcs.hpp"
 
 
 namespace model{
@@ -45,7 +24,6 @@ namespace model{
 leg : number of sites bond operato acts on. typically 2.
 size : number of hilbert space of bond operator.
 sps : spin freedom per site.
-
 *template argument
 -------
 MC : type of algorithm for generating transition matrix
@@ -64,9 +42,9 @@ public:
   typedef MC MCT;
   outgoing_weight ogwt;
 
-  size_t sps;
-  int leg; // leg size.
-  int size; // size of operator (2**leg)
+  const size_t sps;
+  const int leg; // leg size.
+  const int size; // size of operator (2**leg)
   double ene_shift = 0; //energy shift to ensure that diagonal elements of hamiltonian are non-negative
   double max_diagonal_weight_;
   double total_weights; //sum of diagonal elemtns of ham
@@ -83,7 +61,6 @@ public:
   std::vector<size_t> sps_base;
 
   local_operator(int leg, size_t sps = 2);
-  local_operator();
 
   void set_ham(double off_set = 0, double thres = 1E-8, bool dw = false);
   void set_trans_weights();
@@ -92,21 +69,16 @@ public:
 };
 
 
-// define functions for lolcal_operator class
-template <class MC>
-local_operator<MC>::local_operator()
-  :local_operator(2){}
 
 template <class MC>
 local_operator<MC>::local_operator(int leg, size_t sps)
-  :leg(leg), size(pow(sps, leg)), ogwt(leg, sps), sps(sps){
-
-  if (sps<=0) size = (1<<leg); // default size is 2**leg.
+  :leg(leg), size(pow(sps, leg)), ogwt(leg, sps), sps(sps)
+  {
   ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
   ham_rate = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
   ham_vector = std::vector<double>(size*size, 0);
   ham_rate_vector = std::vector<double>(size*size, 0);
-}
+  }
 
 /*
 setting various variable for local_operators 
@@ -138,8 +110,6 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
     auto index = num2index(i);
     ham_vector[i] = ham_[index[0]][index[1]];
     ham_rate_vector[i] = ham_rate[index[0]][index[1]];
-    if (std::abs(ham_vector[i]) < thres) ham_vector[i] = 0;
-    if (std::abs(ham_rate_vector[i]) < thres) ham_rate_vector[i] = 0;
   }
 
 
@@ -166,8 +136,7 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
   }
   // set transition probability
   ogwt.init_table(ham_vector, zw);
-  for (int c = 0; c < ogwt.size(); ++c) markov.push_back(markov_t(MC(),ogwt[c]));
-
+  for (int c = 0; c < ogwt.size(); ++c) markov.push_back(markov_t(MC(), ogwt[c]));
 }
 
 

@@ -17,17 +17,8 @@
 #include "load_npy.hpp"
 // #include "model.hpp"
 
-
-
-
 namespace model{
   using namespace std;
-  template<class T> ostream& operator<<(ostream& os, const vector<T>& vec) {
-      os << "[ ";
-      for ( const T& item : vec )
-          os << item << ", ";
-      os << "]"; return os;
-  }
   using VS = vector<size_t>;
   using VVS = vector<VS>;
   using VI = vector<int>;
@@ -51,65 +42,82 @@ public:
   const size_t N_op;
   const VVS bonds;
   const VS bond_type;
+  const VS site_type;
+  vector<VVS> type2bonds;
   VS bond_t_size;
   // size_t max_l;
   double rho = 0;
   VD shifts;
-  // VS sps_sites; 
+  // VS _sps_sites; 
   // VI leg_size; //size of local operators;
   // VS bond_t_size;
 
   base_lattice(int L, VVS bonds)
-  :L(L), Nb(bonds.size()), N_op(1), bonds(bonds), bond_type(VS(bonds.size(), 0)){}
+  :L(L), Nb(bonds.size()), N_op(1), bonds(bonds), bond_type(VS(bonds.size(), 0)), site_type(VS(L, 0)){}
 
-  base_lattice(int L, VVS bonds, VS bond_type)
-  :L(L), Nb(bonds.size()), N_op(num_type(bond_type)),bonds(bonds), bond_type(bond_type){
+  base_lattice(int L, VVS bonds, VS bond_type, VS site_type)
+  :L(L), Nb(bonds.size()), N_op(num_type(bond_type)),bonds(bonds), bond_type(bond_type), site_type(site_type){
     bond_t_size = VS(N_op, 0);
-    for (int i=0; i<N_op; i++) for (auto bt : bond_type) if (bt==i) bond_t_size[i]++;
-    cout << bond_t_size << endl;
-  }
+    type2bonds = vector<VVS>(N_op);
+    for (int i=0; i<N_op; i++) for (int j=0; j<Nb; j++) if (bond_type[j]==i) {
+      bond_t_size[i]++; 
+      type2bonds[i].push_back(bonds[j]);
+      }
+    }
 
-  base_lattice(std::tuple<size_t, VVS, VS> tp)
-  :base_lattice(get<0>(tp), get<1>(tp), get<2>(tp)){}
+  base_lattice(std::tuple<size_t, VVS, VS, VS> tp)
+  :base_lattice(get<0>(tp), get<1>(tp), get<2>(tp), get<3>(tp)){}
 
   base_lattice(std::string basis_name = "chain lattice", std::string cell_name = "simple1d", VS shapes = {6}, std::string file = "../config/lattice_xml.txt", bool print = false);
 
 
   //* initilizer function reading xml file.
-  static std::tuple<size_t, VVS, VS> initilizer_xml(std::string basis_name, std::string cell_name, VS shapes, std::string file, bool print);
+  static std::tuple<size_t, VVS, VS, VS> initilizer_xml(std::string basis_name, std::string cell_name, VS shapes, std::string file, bool print);
 };
 
+/*
+params
+------
+  types : there may possibility that adding different operators on the same bond. 
+*/
 template <class MC>
 class model::base_model : public model::base_lattice
 {
+private:
 public:
+  VS _sps_sites; //degree of freedom
   using MCT = MC;
-  const size_t dof; //degree of freedom
   const size_t leg_size = 2; //accepts only bond operators 
-  const VS sps_sites; 
   VD shifts;
   std::vector<local_operator<MCT>> loperators;
-
+  size_t sps_sites(size_t i){return _sps_sites[i];}
   //* default constructor
   base_model( model::base_lattice lat, 
-              int dof, 
+              VS dofs, 
               std::string ham_path, 
-              VI params, 
+              VD params, 
               VI types, 
               double shift, 
               bool zero_worm, 
               bool repeat)
-  :base_lattice(lat), dof(dof), sps_sites(VS(L, dof))
+  :base_lattice(lat)
   {
+    //* prepare _sps_sites
+    if (num_type(site_type) != dofs.size()) {std::cerr << "# of dofs doesn't match to # of site types\n"; exit(1);}
+    for (int t : site_type) {_sps_sites.push_back(dofs[t]);}
+    if (_sps_sites.size() != L) {std::cerr << "something wrong with _sps_sites\n"; exit(1);}
+
+
     // cout << "hi" << endl;
     //* raed all numpy files in given path.
     std::vector<std::string> path_list;
     get_npy_path(ham_path, path_list);
 
     //* if repeat = true
-    VI types_tmp, params_tmp;
+    VI types_tmp;
+    VD params_tmp;
     if (repeat){
-      int r_cnt = N_op/types.size();
+      int r_cnt = N_op/types.size(); //repeat count
       if (r_cnt * types.size() != N_op) {std::cerr << "can not finish repeating types and params\n"; exit(1);}
       for (int i=0; i<r_cnt; i++) {
         types_tmp.insert(types_tmp.end(), types.begin(), types.end());
@@ -122,10 +130,11 @@ public:
     }
 
     //* check path_list
-    if (path_list.size() != N_op){
-      std::cerr << "# of operator does not match to # of bond types\n";
-      exit(1);
-    }
+    //* path_list.size() not neccesarily be the same as N_op
+    // if (path_list.size() != N_op){
+    //   std::cerr << "# of operator does not match to # of bond types\n";
+    //   exit(1);
+    // }
 
     //* check types
     if (params.size() != types.size()) {std::cerr << "size of params and types must match\n";exit(1);}
@@ -139,9 +148,13 @@ public:
     }
 
     //* load hamiltonians
-    size_t op_label=0;
-    for (int i=0; i<N_op; i++) loperators.push_back(local_operator<MC>(leg_size, dof)); 
+    VVS dofs_list(N_op);
+    for (int i=0; i<N_op; i++) {
+      for (auto b : type2bonds[i][0]) {dofs_list[i].push_back(_sps_sites[site_type[b]]);} //size should be leg_size
+      loperators.push_back(local_operator<MC>(leg_size, dofs_list[i][0]));  // local_operator only accepts one sps yet.
+    }
 
+    size_t op_label=0;
     for (int l=0; l<path_list.size(); l++) {
       std::string path = path_list[l];
       auto pair = load_npy(path);
@@ -149,7 +162,11 @@ public:
       VD data = pair.second;
       if (shape[0]!= shape[1]){ std::cerr << "require square matrix" << std::endl; exit(1); }
       size_t L = shape[0];
-      if (L != pow(dof, leg_size)) {std::cerr << "dimenstion of given matrix does not match to dof ** legsize" << std::endl; exit(1); }
+      auto& dof = dofs_list[types[op_label]];
+      if (L != accumulate(dof.begin(), dof.end(), 1, multiplies<size_t>())) {
+        std::cerr << "dimenstion of given matrix does not match to dofs ** legsize" << std::endl;
+        std::cerr << "matrix size : " << L << std::endl; 
+        exit(1); }
 
       std::cout << "hamiltonian is read from " << path << std::endl;
       local_operator<MCT>& loperator = loperators[types[op_label]];
@@ -191,3 +208,6 @@ public:
 
 
 extern template class model::base_model<bcl::heatbath>;
+extern template class model::base_model<bcl::st2010>;
+extern template class model::base_model<bcl::st2013>;
+
