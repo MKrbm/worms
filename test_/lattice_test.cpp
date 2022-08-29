@@ -42,10 +42,10 @@ int main(int argc, char** argv) {
   const Setting& root = cfg.getRoot();
   string model_name = root["model"];
   cout << "model name is \t : \t" << model_name << endl;
-  const Setting& model_config = root["models"][model_name];
-  const Setting& shape_cfg = model_config.lookup("length");
-  const Setting& params_cfg = model_config.lookup("params");
-  const Setting& types_cfg = model_config.lookup("types");
+  const Setting& mcfg = root["models"][model_name];
+  const Setting& shape_cfg = mcfg.lookup("length");
+  const Setting& params_cfg = mcfg.lookup("params");
+  const Setting& types_cfg = mcfg.lookup("types");
 
   int dof;
   double shift;
@@ -60,14 +60,14 @@ int main(int argc, char** argv) {
   for (int i=0; i<types_cfg.getLength(); i++) {types.push_back(types_cfg[i]);}
 
 
-  model_config.lookupValue("file", file); 
-  model_config.lookupValue("basis", basis); 
-  model_config.lookupValue("cell", cell); 
-  model_config.lookupValue("ham_path", ham_path); 
-  model_config.lookupValue("dof", dof); 
-  model_config.lookupValue("repeat", repeat);
-  model_config.lookupValue("shift", shift);
-  model_config.lookupValue("zero_worm", zero_worm);
+  file = (string) mcfg.lookup("file").c_str();
+  basis = (string) mcfg.lookup("basis").c_str();
+  cell = (string) mcfg.lookup("cell").c_str();
+  ham_path = (string) mcfg.lookup("ham_path").c_str();
+  dof = (int) mcfg.lookup("dof");
+  repeat = (bool) mcfg.lookup("repeat");
+  shift = (double) mcfg.lookup("shift");
+  zero_worm = (bool) mcfg.lookup("zero_worm");
 
 
   //* settings for monte-carlo
@@ -112,6 +112,9 @@ int main(int argc, char** argv) {
   shapes[1] = args.safeGet<size_t>("L2", shapes[1]);
   shapes[2] = args.safeGet<size_t>("L3", shapes[2]);
   T = args.safeGet<double>("T", T);
+
+  cout << "zero_wom : " << (zero_worm ? "YES" : "NO") << endl;
+  cout << "repeat : " << (repeat ? "YES" : "NO") << endl;
 
 
   
