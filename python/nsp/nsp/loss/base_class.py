@@ -30,9 +30,9 @@ class BaseMatirxLoss(abc.ABC):
         einsum=False):
         
         self._inverse = inv
-        self.X = X
+        self.X = convert_type(X, torch.Tensor)
         # self.X_original = torch.from_numpy(np.copy(X))
-        self.X_original = convert_type(np.copy(X), torch.Tensor)
+        self.X_original = self.X.detach().clone()
         self.p_def = False
         if mineig_zero:
             self.X = set_mineig_zero(self.X)
@@ -42,10 +42,10 @@ class BaseMatirxLoss(abc.ABC):
         if not is_hermitian(self.X):
             raise ValueError("initial matrix X is required to be hermitian matrix")
 
+        self.act = np.array(act)
         if len(self.act) != 2:
             raise NotImplementedError("local hamiltonian must be a bond operator")
         self.dtype = self.X.dtype
-        self.act = np.array(act)
         self.act_cumprod = np.cumprod(self.act)
         # self.act_cumprod.insert(1, 0)
         self.act_cumprod=np.insert(self.act_cumprod, 0, 1)

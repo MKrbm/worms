@@ -51,7 +51,7 @@ def _positive_map_torch(A, p_def = False):
         # print("insde func abs ", torch.diag(torch.abs(A)))
         return torch.abs(A)
     else:
-        a = _torch_complex_min(torch.diag(A))* torch.eye(A.shape[0]) - 1
+        a = (_torch_complex_min(torch.diag(A))-1)* torch.eye(A.shape[0])
         return torch.abs(A-a) + a
 
 def _positive_map(A, p_def = False):
