@@ -21,6 +21,10 @@ add_executable(3site ./3site.cpp )
 target_link_libraries(3site worm)
 target_include_directories(3site PUBLIC "${PROJECT_BINARY_DIR}")
 
+add_executable(3site_construct ./3site_construct.cpp )
+target_link_libraries(3site_construct worm)
+target_include_directories(3site_construct PUBLIC "${PROJECT_BINARY_DIR}")
+
 add_executable(example1 ./example1.cpp )
 target_link_libraries(example1 lattice)
 # target_include_directories(example1 PUBLIC "${PROJECT_BINARY_DIR}" ${FetchContent_includes})

@@ -5,11 +5,35 @@ project(worm_lib
     LANGUAGES CXX)
 
 include(libconfig)
-# include(eigen3)
+include(eigen3)
 include(npy)
 
 FetchContent_MakeAvailable(npy)
 FetchContent_MakeAvailable(libconfig)
+
+
+#* list all targets
+# function(getAllSubdirs dir dirs)
+#     message("called with dir (${dir}) and dirs (${dirs})")
+#     set(_dirs "")
+#     # get subdirectories for dir
+#     get_property(subdirs DIRECTORY ${dir} PROPERTY SUBDIRECTORIES)
+#     # iterate any found subdirectories
+#     foreach(subdir ${subdirs})
+#         # append each sub directory
+#         list(APPEND _dirs ${subdir})
+#         set(${dirs} _dirs PARENT_SCOPE)
+#         getAllSubdirs(${subdir} ${_dirs})
+#     endforeach()
+# endfunction()
+# set(dirs ".")
+# getAllSubDirs(. ${dirs})
+# message("all dirs " ${dirs})
+
+
+# if(NOT (TARGET Eigen3::Eigen))
+#   message(SEND_ERROR "Attempt to link to non-existent library Eigen3::Eigen")
+# endif()
 
 add_library(worm STATIC
     ./src/state.cpp
@@ -22,6 +46,9 @@ add_library(worm STATIC
 
 add_subdirectory(./lib/bcl) #call /lib/bcl/CMakeLists.txst
 add_subdirectory(./lib/lattice) #call /lib/bcl/CMakeLists.txst
+
+
+
 target_link_libraries(worm bcl config++ lattice) # link library
 
 

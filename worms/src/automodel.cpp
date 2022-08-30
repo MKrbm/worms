@@ -8,12 +8,14 @@ namespace model{
 VVS generate_bonds(lattice::graph lattice){
     VVS bonds;
     for (int b=0; b<lattice.num_bonds(); b++) bonds.push_back({lattice.source(b), lattice.target(b)});
+    for (int b=0; b<lattice.num_multis(); b++) bonds.push_back(lattice.multi(b));
     return bonds;
   }
 
 VS generate_bond_type(lattice::graph lattice){
   VS bond_type;
   for (int b=0; b<lattice.num_bonds(); b++) bond_type.push_back(lattice.bond_type(b));
+  for (int b=0; b<lattice.num_multis(); b++) bond_type.push_back(lattice.multi_type(b));
   return bond_type;
 }
 

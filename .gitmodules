@@ -1,0 +1,3 @@
+[submodule "worms/lib/lattice"]
+	path = worms/lib/lattice
+	url = git@github.com:MKrbm/lattice.git

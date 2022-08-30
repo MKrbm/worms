@@ -73,4 +73,5 @@ RUN sudo apt-get -y install libboost-dev
 
 USER $USERNAME
 RUN git config --global --add safe.directory /home/user/project
+RUN git config --global core.autocrlf input
 WORKDIR /home/${USERNAME}/project

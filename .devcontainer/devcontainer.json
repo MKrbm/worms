@@ -9,6 +9,7 @@
   "remoteUser": "user",
 	"workspaceFolder": "/home/user/project",
 	"extensions": [
+    "eamodio.gitlens",
 		"ms-vscode.cpptools",
 		"ms-vscode.cmake-tools",
 		"twxs.cmake",
