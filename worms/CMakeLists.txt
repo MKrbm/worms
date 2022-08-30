@@ -5,6 +5,10 @@ project(worm_lib
     LANGUAGES CXX)
 
 include(libconfig)
+# include(eigen3)
+include(npy)
+
+FetchContent_MakeAvailable(npy)
 FetchContent_MakeAvailable(libconfig)
 
 add_library(worm STATIC
@@ -17,7 +21,8 @@ add_library(worm STATIC
     )
 
 add_subdirectory(./lib/bcl) #call /lib/bcl/CMakeLists.txst
-target_link_libraries(worm bcl config++) # link library
+add_subdirectory(./lib/lattice) #call /lib/bcl/CMakeLists.txst
+target_link_libraries(worm bcl config++ lattice) # link library
 
 
 message(STATUS "include from path : ${FetchContent_includes}")
