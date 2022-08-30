@@ -7,12 +7,18 @@ from nsp.utils.func import *
 from nsp.utils.print import beauty_array
 import argparse
 
+lattice = [
+    "original",
+    "chain",
+    "3site"
+]
+
 parser = argparse.ArgumentParser(description='Reproduce original paper results')
-parser.add_argument('-c','--C', help='1D chain lattice or not', action='store_true', default = False)
+parser = argparse.ArgumentParser(description='Reproduce original paper results')
+parser.add_argument('-l','--lattice', help='lattice (model) Name', required=True, choices=lattice)
 args = vars(parser.parse_args())
-chain = args["C"]
 
-
+lat = args["lattice"]
 Sz = np.zeros([2,2])
 Sz[0,0] = 1/2
 Sz[1,1] = -1/2
@@ -32,7 +38,7 @@ lh = SzSz + SxSx + SySy
 
 lh = -lh # use minus of local hamiltonian for monte-carlo (exp(-beta H ))
 
-if not chain:
+if lat == "original":
     H = lh
     path = "../array/majumdar_ghosh/original/0"
     if not os.path.isfile(path):
@@ -45,7 +51,7 @@ if not chain:
         np.save(path,lh/2)
         print("save : ", path+".npy")
         beauty_array(lh/2,path + ".txt")
-else:
+elif lat == "chain":
     print("1D chain lattice")
     bonds = [[0,1], [0, 2], [1, 2]]
     lh2 = sum_ham(lh, bonds, 3, 2)
@@ -56,6 +62,20 @@ else:
     name = "0"
     if not os.path.exists(path):
         os.makedirs(path)
+    if not os.path.isfile(path):
+        np.save(path + name,lh)
+        print("save : ", path+name + ".npy")
+        # beauty_array(lh,path + name + ".txt")
+
+elif lat == "3site":
+    print("3site operator lattice")
+    bonds = [[0,1], [0, 2], [1, 2]]
+    lh2 = sum_ham(lh/2, bonds, 3, 2)
+    path = "../array/majumdar_ghosh/3site/"
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    name = "0"
     if not os.path.isfile(path):
         np.save(path + name,lh)
         print("save : ", path+name + ".npy")
