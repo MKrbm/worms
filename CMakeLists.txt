@@ -27,13 +27,8 @@ include_directories(${worms_SOURCE_DIR})
 
 #include libraries
 # include(bcl)
-include(eigen3)
-message(STATUS "after include: ${CMAKE_Fortran_COMPILER} is available")
-
-include(lattice)
-include(npy)
-FetchContent_MakeAvailable(lattice)
-FetchContent_MakeAvailable(npy)
+# include(eigen3)
+# include(npy)
 
 message(STATUS "after include directory: ${CMAKE_Fortran_COMPILER} is available")
 message("None = ${CMAKE_C_FLAGS}")

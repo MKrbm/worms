@@ -1,6 +1,5 @@
 find_package(Eigen3)
 if(Eigen3_FOUND)
-message(STATUS "eigen3 was found path = ${eigen3_SOURCE_DIR}")
 else(Eigen3_FOUND)
   include(FetchContent)
   FetchContent_Declare(
@@ -9,7 +8,7 @@ else(Eigen3_FOUND)
     SOURCE_SUBDIR none
   )
 
-  list(APPEND FetchContent_includes "${PROJECT_BINARY_DIR}/_deps/eigen3-src")
+  list(APPEND FetchContent_includes "${CMAKE_BINARY_DIR}/_deps/eigen3-src")
   list(APPEND FetchContents eigen3)
   message(STATUS "not find eigen3  / fetch content")
 endif(Eigen3_FOUND)
