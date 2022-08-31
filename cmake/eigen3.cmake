@@ -1,6 +1,7 @@
 find_package(Eigen3)
 message("worms // searching eigen3")
 if(Eigen3_FOUND)
+  message(STATUS "eigen3 was found path = ${eigen3_SOURCE_DIR}")
 else(Eigen3_FOUND)
   include(FetchContent)
   message(STATUS "not find eigen3  / fetch content")
