@@ -117,6 +117,7 @@ int main(int argc, char **argv) {
 
   model::base_lattice lat(basis, cell, shapes, file, true);
   model::base_model<bcl::st2013> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat);
+  cout << lat.bonds << endl;
   exe_worm(spin, T, sweeps, therms, cutoff_l, fix_wdensity);  
   
 }
