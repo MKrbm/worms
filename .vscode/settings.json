@@ -5,24 +5,11 @@
   "python.pythonPath": "/home/keisuke/miniconda3/envs/research/bin/python3",
   "editor.tabSize": 2,
   "cmake.debugConfig": {
-    "cwd": "${workspaceFolder}/${buildType}",
+    "cwd": "${workspaceFolder}/${command:cmake.buildType}",
     "externalConsole": false,
     "console" : "integratedTerminal"
     },
   "cmake.setBuildTypeOnMultiConfig": true,
-  "cmake.defaultVariants": {
-    "buildType": {
-      "default": "default",
-      "description": "The build type.",
-      "choices": {
-        "GPROF": {
-          "short": "gprof",
-          "long": "profile c++ ocde.",
-          "buildType": "GPROF"
-        }
-      }
-    }
-    },
     "files.associations": {
       "__bit_reference": "cpp",
       "__bits": "cpp",
