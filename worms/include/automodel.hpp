@@ -45,6 +45,7 @@ public:
   const VS site_type;
   vector<VVS> type2bonds;
   VS bond_t_size;
+  VS bond_t_legsize;
   // size_t max_l;
   double rho = 0;
   VD shifts;
@@ -57,10 +58,16 @@ public:
 
   base_lattice(int L, VVS bonds, VS bond_type, VS site_type)
   :L(L), Nb(bonds.size()), N_op(num_type(bond_type)),bonds(bonds), bond_type(bond_type), site_type(site_type){
+    VS tmp(bond_type);
+    std::sort(tmp.begin(), tmp.end());
+    if (tmp[0] != 0) {throw std::invalid_argument("bond type need to starts from 0");}
+    if (tmp.back() != N_op - 1 + tmp[0]) {throw std::invalid_argument("bond types need to takes consective integer");}
+
     bond_t_size = VS(N_op, 0);
     type2bonds = vector<VVS>(N_op);
     for (int i=0; i<N_op; i++) for (int j=0; j<Nb; j++) if (bond_type[j]==i) {
       bond_t_size[i]++; 
+      if (type2bonds[i].size() > 0 && type2bonds[i].back().size() != bonds[j].size()) throw std::invalid_argument("legsize should be consistent among the operator with the same type");
       type2bonds[i].push_back(bonds[j]);
       }
     }
@@ -151,32 +158,30 @@ public:
     VVS dofs_list(N_op);
     for (int i=0; i<N_op; i++) {
       for (auto b : type2bonds[i][0]) {dofs_list[i].push_back(_sps_sites[site_type[b]]);} //size should be leg_size
-      loperators.push_back(local_operator<MC>(leg_size, dofs_list[i][0]));  // local_operator only accepts one sps yet.
+      loperators.push_back(local_operator<MC>(type2bonds[i][0].size(), dofs_list[i][0]));  // local_operator only accepts one sps yet.
     }
 
-    size_t op_label=0;
-    for (int l=0; l<path_list.size(); l++) {
-      std::string path = path_list[l];
+    for (int p_i=0; p_i<path_list.size(); p_i++) {
+      std::string path = path_list[p_i];
       auto pair = load_npy(path);
       VS shape = pair.first;
       VD data = pair.second;
       if (shape[0]!= shape[1]){ std::cerr << "require square matrix" << std::endl; exit(1); }
-      size_t L = shape[0];
-      auto& dof = dofs_list[types[op_label]];
-      if (L != accumulate(dof.begin(), dof.end(), 1, multiplies<size_t>())) {
+      size_t S = shape[0];
+      auto& dof = dofs_list[types[p_i]];
+      if (S != accumulate(dof.begin(), dof.end(), 1, multiplies<size_t>())) {
         std::cerr << "dimenstion of given matrix does not match to dofs ** legsize" << std::endl;
-        std::cerr << "matrix size : " << L << std::endl; 
+        std::cerr << "matrix size : " << S << std::endl; 
         exit(1); }
 
       std::cout << "hamiltonian is read from " << path << std::endl;
-      local_operator<MCT>& loperator = loperators[types[op_label]];
+      local_operator<MCT>& loperator = loperators[types[p_i]];
       for (int i=0; i<shape[0]; i++) for (int j=0; j<shape[1]; j++)
       {
-        auto x = data[i * shape[1] + j] * params[l];
+        auto x = data[i * shape[1] + j] * params[p_i];
         loperator.ham_rate[j][i] += x;
         loperator.ham[j][i] += x;
       }
-      op_label++;
     }
 
     //* initial settings for local bond operators

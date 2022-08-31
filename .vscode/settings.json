@@ -5,11 +5,10 @@
   "python.pythonPath": "/home/keisuke/miniconda3/envs/research/bin/python3",
   "editor.tabSize": 2,
   "cmake.debugConfig": {
-    "args": [],
-      "externalConsole": false,
-      "console" : "integratedTerminal",
-      // "miDebuggerArgs": "-q -ex quit; wait() { fg >/dev/null; }; /bin/gdb -q --interpreter=mi"
-      },
+    "cwd": "${workspaceFolder}/${buildType}",
+    "externalConsole": false,
+    "console" : "integratedTerminal"
+    },
   "cmake.setBuildTypeOnMultiConfig": true,
   "cmake.defaultVariants": {
     "buildType": {

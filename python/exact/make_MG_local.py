@@ -77,7 +77,7 @@ elif lat == "3site":
 
     name = "0"
     if not os.path.isfile(path):
-        np.save(path + name,lh)
+        np.save(path + name,lh2)
         print("save : ", path+name + ".npy")
         # beauty_array(lh,path + name + ".txt")
 

@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
   Config cfg;
   cfg.setAutoConvert(true);
 
-  try { cfg.readFile("/home/user/project/test_/model.cfg");}
+  try { cfg.readFile("/home/user/project/config/model.cfg");}
   catch(const FileIOException &fioex)
   {
     cerr << "I/O error while reading file." << endl;
@@ -64,6 +64,7 @@ int main(int argc, char **argv) {
   shift = (double) mcfg.lookup("shift");
   zero_worm = (bool) mcfg.lookup("zero_worm");
 
+  cout << file << endl;
 
   //* settings for monte-carlo
   const Setting& settings = root["mc_settings"];
@@ -115,5 +116,7 @@ int main(int argc, char **argv) {
   //* finish argparse
 
   model::base_lattice lat(basis, cell, shapes, file, true);
+  model::base_model<bcl::st2013> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat);
+  exe_worm(spin, T, sweeps, therms, cutoff_l, fix_wdensity);  
   
 }

@@ -134,7 +134,7 @@ std::vector<double> exe_worm(model::base_model<MC> spin_model, double T, size_t 
     }
     if (i <= therms / 2) {
       if (!fix_wdensity){
-        if (wcount > 0) wdensity = spin_model.Nb/ (wlength / wcount);
+        if (wcount > 0) wdensity = std::max(spin_model.Nb/ (wlength / wcount), (double)1);
         if (i % (therms / 8 + 1) == 0) {
           wcount /= 2;
           wlength /= 2;

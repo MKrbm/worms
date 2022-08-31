@@ -164,4 +164,16 @@
   <EDGE type="3"><SOURCE vertex="4"/><TARGET vertex="1" offset="1"/></EDGE>
 </UNITCELL>
 
+<UNITCELL name="1d+1b+1t" dimension="1">
+  <VERTEX/>
+  <EDGE type="0"><SOURCE vertex="1"/><TARGET vertex="1" offset="1"/></EDGE>
+  <LOOP type="1"><SOURCE vertex="1"/><TARGET vertex="1" offset="1"/><TARGET vertex="1" offset="2"/></LOOP>
+</UNITCELL>
+
+<UNITCELL name="1d+1t" dimension="1">
+  <VERTEX/>
+  <LOOP type="0"><SOURCE vertex="1"/><TARGET vertex="1" offset="1"/><TARGET vertex="1" offset="2"/></LOOP>
+</UNITCELL>
+
+
 </LATTICES>
