@@ -1,5 +1,6 @@
 from numba import njit
 import numpy as np
+from .func import *
 
 @njit
 def num2state(s, L = 4, sps = 2, rev=False):
@@ -24,4 +25,5 @@ def state2num(state, sps = 2, rev=False):
     return s
 
 def change_order(X, dof_site, order="F"):
+    X = convert_type(X, np.ndarray)
     return X.reshape(dof_site*2, order="F").reshape(X.shape)
