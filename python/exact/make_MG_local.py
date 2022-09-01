@@ -9,8 +9,9 @@ import argparse
 
 lattice = [
     "original",
-    "chain",
-    "3site"
+    "chain8",
+    "3site",
+    "chain8_af"
 ]
 
 parser = argparse.ArgumentParser(description='Reproduce original paper results')
@@ -51,14 +52,14 @@ if lat == "original":
         np.save(path,lh/2)
         print("save : ", path+".npy")
         beauty_array(lh/2,path + ".txt")
-elif lat == "chain":
+elif lat == "chain8":
     print("1D chain lattice")
     bonds = [[0,1], [0, 2], [1, 2]]
-    lh2 = sum_ham(lh, bonds, 3, 2)
+    lh2 = sum_ham(lh/2, bonds, 3, 2)
     LH = sum_ham(lh2/2, [[0,1,2], [3, 4, 5]], 6, 2) + sum_ham(lh2, [[1, 2, 3], [2, 3, 4]], 6, 2)
-    LH = sum_ham(LH/2, [[0, 1], [2, 3]], 4, 8) + sum_ham(LH, [[1, 2]], 4, 8)
+    # LH = sum_ham(LH/2, [[0, 1], [2, 3]], 4, 8) + sum_ham(LH, [[1, 2]], 4, 8)
     lh = LH
-    path = "../array/majumdar_ghosh/1D_chain64/"
+    path = "../array/majumdar_ghosh/1D_chain8/"
     name = "0"
     if not os.path.exists(path):
         os.makedirs(path)
@@ -79,6 +80,31 @@ elif lat == "3site":
     if not os.path.isfile(path):
         np.save(path + name,lh2)
         print("save : ", path+name + ".npy")
+        # beauty_array(lh,path + name + ".txt")
+
+elif lat == "chain8_af":
+    print("1D chain lattice")
+    bonds = [[0,1], [0, 2], [1, 2]]
+    lh2 = sum_ham(lh/2, bonds, 3, 2)
+    LH = sum_ham(lh2/2, [[0,1,2], [3, 4, 5]], 6, 2) + sum_ham(lh2, [[1, 2, 3], [2, 3, 4]], 6, 2)
+    act = [8, 8]
+    I_not1 = np.logical_not(np.eye(act[0]))
+    I_not2 = np.logical_not(np.eye(act[1]))
+    ML = np.kron(I_not1, np.eye(act[1]))
+    MR = np.kron(np.eye(act[0]), I_not2)
+    MI = np.kron(I_not1, I_not2) + np.eye(np.prod(act))
+    LH_3 = (np.kron(np.eye(act[0]), ML * LH) + np.kron(MR * LH,np.eye(act[1])))
+    LH_2 = MI * LH
+    path = "../array/majumdar_ghosh/1D_chain8_af/"
+    names = ["bond", "3site"]
+    hams = [LH_2, LH_3]
+    if not os.path.exists(path):
+        os.makedirs(path)
+    
+    for name, ham in zip(names, hams):
+        if not os.path.isfile(path):
+            np.save(path + name, ham)
+            print("save : ", path+name + ".npy")
         # beauty_array(lh,path + name + ".txt")
 
 
