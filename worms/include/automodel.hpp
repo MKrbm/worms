@@ -112,7 +112,7 @@ public:
     //* prepare _sps_sites
     if (num_type(site_type) != dofs.size()) {std::cerr << "# of dofs doesn't match to # of site types\n"; exit(1);}
     for (int t : site_type) {_sps_sites.push_back(dofs[t]);}
-    if (_sps_sites.size() != L) {std::cerr << "something wrong with _sps_sites\n"; exit(1);}
+    if (_sps_sites.size() != L) {std::cerr << "something wrong with sps_sites\n"; exit(1);}
 
 
     // cout << "hi" << endl;

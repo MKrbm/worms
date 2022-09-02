@@ -96,7 +96,7 @@ elif lat == "chain8_af":
     LH_3 = (np.kron(np.eye(act[0]), ML * LH) + np.kron(MR * LH,np.eye(act[1])))
     LH_2 = MI * LH
     path = "../array/majumdar_ghosh/1D_chain8_af/"
-    names = ["bond", "3site"]
+    names = ["0", "1"]
     hams = [LH_2, LH_3]
     if not os.path.exists(path):
         os.makedirs(path)
@@ -104,8 +104,8 @@ elif lat == "chain8_af":
     for name, ham in zip(names, hams):
         if not os.path.isfile(path):
             np.save(path + name, ham)
+            print(ham.shape)
             print("save : ", path+name + ".npy")
-        # beauty_array(lh,path + name + ".txt")
 
 
 

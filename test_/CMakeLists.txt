@@ -17,9 +17,9 @@ add_executable(remove_template ./remove_template.cpp )
 target_link_libraries(remove_template worm)
 target_include_directories(remove_template PUBLIC "${PROJECT_BINARY_DIR}")
 
-add_executable(3site ./3site.cpp )
-target_link_libraries(3site worm)
-target_include_directories(3site PUBLIC "${PROJECT_BINARY_DIR}")
+add_executable(eigen_test ./eigen.cpp )
+target_link_libraries(eigen_test worm)
+target_include_directories(eigen_test PUBLIC "${PROJECT_BINARY_DIR}")
 
 add_executable(3site_construct ./3site_construct.cpp )
 target_link_libraries(3site_construct worm)

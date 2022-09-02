@@ -1,5 +1,6 @@
-find_package(Eigen3)
+find_package(Eigen3 MODULE)
 message("worms // searching eigen3")
+message("Eigen3 config path  : ${Eigen3_CONFIG}")
 if(Eigen3_FOUND)
   message(STATUS "eigen3 was found path = ${eigen3_SOURCE_DIR}")
 else(Eigen3_FOUND)
@@ -10,12 +11,6 @@ else(Eigen3_FOUND)
     eigen3
     URL https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.bz2
   )
-  set(EIGEN_BUILD_DOC OFF)
-  set(BUILD_TESTING OFF)
-  set(EIGEN_BUILD_PKGCONFIG OFF)
-  set( OFF)
-  # list(APPEND FetchContent_includes "${CMAKE_BINARY_DIR}/_deps/eigen3-src")
-  list(APPEND FetchContents Eigen3::Eigen)
   FetchContent_MakeAvailable(eigen3)
 endif(Eigen3_FOUND)
 

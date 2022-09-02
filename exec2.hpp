@@ -38,30 +38,6 @@ std::vector<double> exe_worm(model::base_model<MC> spin_model, double T, size_t 
 
   // cout << "Hi" << endl;
   using SPINMODEL = model::base_model<MC>;
-  // size_t sweeps, therms, cutoff_l;
-  // double T;
-  // bool fix_wdensity = false;
-  // try
-  // {
-  //   const Setting& config = cfg["config"];
-  //   sweeps = (long) config.lookup("sweeps");
-  //   therms = (long) config.lookup("therms");
-  //   cutoff_l = (long) config.lookup("cutoff_length");
-  //   T = (float) config.lookup("temperature");
-  //   fix_wdensity = config.lookup("fix_wdensity");
-
-  // }
-  // catch(...)
-  // {
-  //   cout << "I/O error while reading mc_settings.default settings" << endl;
-  //   cout << "read config file from default instead" << endl;
-  //   const Setting& config = cfg["default"];
-  //   sweeps = (long) config.lookup("sweeps");
-  //   therms = (long) config.lookup("therms");
-  //   cutoff_l = (long) config.lookup("cutoff_length");
-  //   T = (float) config.lookup("temperature");
-  //   fix_wdensity = config.lookup("fix_wdensity");
-  // }
   if (cutoff_l < 0) cutoff_l = numeric_limits<decltype(cutoff_l)>::max();
   std::cout << "MC step : " << sweeps << "\n" 
           << "thermal size : " << therms << std::endl;
@@ -71,7 +47,6 @@ std::vector<double> exe_worm(model::base_model<MC> spin_model, double T, size_t 
   BC::observable sglt; 
   BC::observable n_neg_ele; 
   BC::observable n_ops; 
-  BC::observable ave_weight; 
 
 
   double beta = 1 / T;
@@ -105,7 +80,7 @@ std::vector<double> exe_worm(model::base_model<MC> spin_model, double T, size_t 
     // printf("complete worm update\n");
     if (cnt >= therms){
       int sign = 1;
-      double w_rate = 1;
+      // double w_rate = 1;
       double n_neg = 0;
       double n_op = 0;
       double sglt_ = 0;
@@ -117,7 +92,7 @@ std::vector<double> exe_worm(model::base_model<MC> spin_model, double T, size_t 
         sign *= sign_;
         if (sign_ == -1) n_neg++;
         n_op++;
-        w_rate *= spin_model.loperators[op.op_type()].ham_rate_vector[op.state()];
+        // w_rate *= spin_model.loperators[op.op_type()].ham_rate_vector[op.state()];
         // cout << spin_model.loperators[op.op_type()].ham_rate_vector[op.state()]<< endl;
       }
       double ene_tmp = - (double)solver.ops_main.size() / beta;
@@ -125,9 +100,8 @@ std::vector<double> exe_worm(model::base_model<MC> spin_model, double T, size_t 
         ene_tmp += spin_model.shifts[e] * spin_model.bond_t_size[e];
       }
       // ene << ene_tmp * sign;
-      ene << ene_tmp * w_rate;
+      ene << ene_tmp * sign;
       ave_sign << sign;
-      ave_weight << w_rate;
       sglt << sglt_ / spin_model.L;
       n_neg_ele << n_neg;
       n_ops << n_op;
@@ -171,8 +145,8 @@ std::vector<double> exe_worm(model::base_model<MC> spin_model, double T, size_t 
 
 
   std::cout << "Total Energy         = "
-          << ene.mean()/ave_weight.mean()<< " +- " 
-          << std::sqrt(std::pow(ene.error(r)/ave_weight.mean(), 2) + std::pow(ene.mean()/std::pow(ave_weight.mean(),2) * ave_weight.error(r),2))
+          << ene.mean()/ave_sign.mean()<< " +- " 
+          << std::sqrt(std::pow(ene.error(r)/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2))
           << std::endl;
 
   std::cout << "Elapsed time         = " << elapsed << " sec\n"
@@ -183,8 +157,6 @@ std::vector<double> exe_worm(model::base_model<MC> spin_model, double T, size_t 
             << std::endl
             << "average sign         = "
             << ave_sign.mean() << " +- " << ave_sign.error(r) << std::endl
-            << "average weight rate  = "
-            << ave_weight.mean() << " +- " << ave_weight.error(r) << std::endl
             << "dimer operator       = "
             << sglt.mean() << std::endl 
             << "# of operators       = "

@@ -46,22 +46,22 @@ public:
   w : list of weights.
   boolean dw : 1 = have a chance to delete a worm while updating.
   */
-  void init_table(WEIGHT const& w, bool dw = false){
+  std::vector<double> init_table(WEIGHT const& w, size_t s, bool dw = false){
+    // weights_.resize(w.size());
     weights_.clear();
-    weights_.resize(w.size());
-    for (int s = 0; s < w.size(); ++s) {
-      weights_[s].resize(2*L*(sps-1) + 1);
-      for (int g = 0; g < 2*L; ++g){
-        size_t t = pows[g+1];
-        size_t a = pows[g];
-        for (int l = 1; l < sps; l++) {
-          size_t tmp = (s/t)*t + (s%t+l*a) % t;
-          weights_[s][g*(sps-1) + l] = w[tmp];
-        }
-        if (dw) weights_[s][0] = w[s];
-        else weights_[s][0] = 0;
+    weights_.resize(2*L*(sps-1) + 1);
+    for (int g = 0; g < 2*L; ++g){
+      size_t t = pows[g+1];
+      size_t a = pows[g];
+      for (int l = 1; l < sps; l++) {
+        size_t tmp = (s/t)*t + (s%t+l*a) % t;
+        weights_[g*(sps-1) + l] = w[tmp];
       }
+      if (dw) weights_[0] = w[s];
+      else weights_[0] = 0;
     }
+    return weights_;
+    // }
   }
 
   std::vector<size_t> pows_array(size_t sps = 2){
@@ -72,9 +72,9 @@ public:
     return arr;
   }
 
-  std::vector<double> const& operator[](int s) { return weights_[s]; }
-  int size(){return weights_.size();}
-  std::vector<std::vector<double> > weights_;
+  // std::vector<double> const& operator[](int s) { return weights_[s]; }
+  // int size(){return weights_.size();}
+  std::vector<double> weights_;
   size_t L;
   std::size_t sps; //onsite Hilbert space dimension.
   std::vector<size_t> pows;

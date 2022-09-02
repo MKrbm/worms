@@ -24,21 +24,26 @@ template<class T> std::ostream& operator<<(std::ostream& os, const std::vector<T
 }
 
 int main() {
-    lattice::basis_t bs(1, 1);
-    bs << 1;
-    lattice::basis basis(bs);
-    lattice::unitcell unitcell(1);
-    unitcell.add_site(lattice::coordinate(0), 0);
+  // Eigen::VectorXi vec(4);
+  // vec << 1, 2, 3, 4;
+  // cout << vec << endl;
 
-    std::vector<std::size_t> ts = {0, 0};
-    std::vector<lattice::offset_t> oss = {lattice::offset(1), lattice::offset(2)};
+  std::vector<double> vec(200000);
+    // lattice::basis_t bs(1, 1);
+    // bs << 1;
+    // lattice::basis basis(bs);
+    // lattice::unitcell unitcell(1);
+    // unitcell.add_site(lattice::coordinate(0), 0);
 
-    unitcell.add_multi(0, ts, oss, 2);
-    unitcell.add_bond(0, 0, lattice::offset(1), 0);
-    unitcell.add_bond(0, 0, lattice::offset(2), 1);
-    lattice::span_t span(1,1); span << 4;
-    std::vector<lattice::boundary_t> boundary(1, lattice::boundary_t::periodic);
-    lattice::graph lat(basis, unitcell, span, boundary);
+    // std::vector<std::size_t> ts = {0, 0};
+    // std::vector<lattice::offset_t> oss = {lattice::offset(1), lattice::offset(2)};
 
-    for (auto a : lat.multi(0)) {cout << a << endl;}
+    // unitcell.add_multi(0, ts, oss, 2);
+    // unitcell.add_bond(0, 0, lattice::offset(1), 0);
+    // unitcell.add_bond(0, 0, lattice::offset(2), 1);
+    // lattice::span_t span(1,1); span << 4;
+    // std::vector<lattice::boundary_t> boundary(1, lattice::boundary_t::periodic);
+    // lattice::graph lat(basis, unitcell, span, boundary);
+
+    // for (auto a : lat.multi(0)) {cout << a << endl;}
 }
