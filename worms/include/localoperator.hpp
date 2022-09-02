@@ -167,7 +167,7 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
 
   state2index.resize(ham_vector.size(), -1);
   for (size_t s=0; s < ham_vector.size(); s++){
-    if (ham_vector[s] == 0 ) continue;
+    // if (ham_vector[s] == 0 ) continue;
     state2index[s] = markov_tmp.size();
     std::vector<double> ogw = ogwt.init_table(ham_vector, s, zw);
     markov_tmp.push_back(markov_t(MC(), ogw));
