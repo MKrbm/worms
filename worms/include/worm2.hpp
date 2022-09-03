@@ -95,7 +95,7 @@ class worm{
 
   #ifdef NDEBUG
   unsigned rseed = static_cast <unsigned> (time(0));
-  engine_type rand_src = engine_type(rseed);
+  engine_type rand_src = engine_type(SEED);
   // engine_type rand_src = engine_type(SEED);
   #else
   unsigned rseed = SEED;

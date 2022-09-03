@@ -10,6 +10,7 @@
 #include <bcl.hpp>
 #include <assert.h> 
 #include <fstream>
+#include <tuple>
 #include "outgoing_weight.hpp"
 #include "funcs.hpp"
 
@@ -34,6 +35,8 @@ TPROB : type of transition matrix
 */
 typedef std::mt19937 engine_type;
 typedef bcl::markov<engine_type> markov_t;
+typedef bcl::sparse_markov<engine_type> sparse_markov_t;
+
 
 struct markov_v{
 private:
@@ -74,7 +77,8 @@ public:
   std::vector<int> signs; //list of sign defined via the sign of ham_;
   std::vector<TPROB> trans_prob; //num_configuration x 4 x 4 matrix.
   std::array<int, 2> num2index(int num);
-  markov_v markov;
+  // markov_v markov;
+  std::vector<sparse_markov_t> markov;
   std::vector<size_t> sps_base;
 
   local_operator(int leg, size_t sps = 2);
@@ -162,18 +166,21 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
   // std::cout << "a" << std::endl;
 
 
-  std::vector<markov_t> markov_tmp;
-  std::vector<long long> state2index;
+  // std::vector<markov_t> markov_tmp;
+  // std::vector<long long> state2index;
 
-  state2index.resize(ham_vector.size(), -1);
+  // state2index.resize(ham_vector.size(), -1);
   for (size_t s=0; s < ham_vector.size(); s++){
     // if (ham_vector[s] == 0 ) continue;
-    state2index[s] = markov_tmp.size();
-    std::vector<double> ogw = ogwt.init_table(ham_vector, s, zw);
-    markov_tmp.push_back(markov_t(MC(), ogw));
+    // state2index[s] = markov_tmp.size();
+    std::tuple<std::vector<double>, std::vector<long long>, std::vector<size_t>> sparse_data = ogwt.init_table_sparse(ham_vector, s, zw);
+    if (std::get<0>(sparse_data).size() != 0) markov.push_back(
+      sparse_markov_t(MC(), std::get<0>(sparse_data), std::get<1>(sparse_data), std::get<2>(sparse_data))
+      ); //* sparse markov
+    else markov.push_back(sparse_markov_t());
   }
 
-  markov = markov_v(markov_tmp, state2index);
+  // markov = markov_v(markov_tmp, state2index);
   
 
   //* free memories
