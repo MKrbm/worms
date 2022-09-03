@@ -1,5 +1,3 @@
-// #include <lattice/graph_xml.hpp>
-// #include <lattice/basis.hpp>
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -11,17 +9,14 @@
 #include <exec2.hpp>
 #include <options.hpp>
 #include <argparse.hpp>
-// namespace boost { namespace property_tree {
-//     class ptree;
-//   }
-// }
+#include <funcs.hpp>
 using namespace std;
 using namespace libconfig;
 
+using namespace std;
 
 
-int main(int argc, char** argv) {
-
+int main(int argc, char **argv) {
   char tmp[256];
   auto _ = getcwd(tmp, 256);
   cout << tmp << endl;
@@ -69,6 +64,7 @@ int main(int argc, char** argv) {
   shift = (double) mcfg.lookup("shift");
   zero_worm = (bool) mcfg.lookup("zero_worm");
 
+  cout << file << endl;
 
   //* settings for monte-carlo
   const Setting& settings = root["mc_settings"];
@@ -117,12 +113,10 @@ int main(int argc, char** argv) {
   cout << "repeat : " << (repeat ? "YES" : "NO") << endl;
 
 
-  
-  // std::cout << "value(default='abc'): " << args.safeGet<std::string>("value-default", "abc") << std::endl;
-
   //* finish argparse
 
   model::base_lattice lat(basis, cell, shapes, file, true);
   model::base_model<bcl::st2013> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat);
+  cout << lat.bonds << endl;
   exe_worm(spin, T, sweeps, therms, cutoff_l, fix_wdensity);  
 }
