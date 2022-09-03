@@ -5,7 +5,7 @@
   "python.pythonPath": "/home/keisuke/miniconda3/envs/research/bin/python3",
   "editor.tabSize": 2,
   "cmake.debugConfig": {
-    "cwd": "${workspaceFolder}/${command:cmake.buildType}",
+    "cwd": "${workspaceFolder}/execute",
     "externalConsole": false,
     "console" : "integratedTerminal"
     },
