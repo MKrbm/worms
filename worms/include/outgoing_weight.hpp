@@ -63,40 +63,6 @@ public:
     return weights_;
     // }
   }
-  template<typename WEIGHT>
-  auto init_table_sparse(WEIGHT const& w, size_t s, bool zw = false){
-    // weights_.resize(w.size());
-    sparse_idx.clear();
-    sparse_idx.resize(w.size(), -1);
-    original_idx.resize(0);
-    weights_.resize(0);
-    size_t s_idx=0;
-
-    double zero_weight;
-    zero_weight = zw ? w[s] : 0;
-
-    if (zero_weight != 0){
-      weights_.push_back(zero_weight);
-      sparse_idx[0] = s_idx++;
-      original_idx.push_back(0);
-    }
-
-
-    for (int g = 0; g < 2*L; ++g){
-      size_t t = pows[g+1];
-      size_t a = pows[g];
-      for (int l = 1; l < sps; l++) {
-        size_t tmp = (s/t)*t + (s%t+l*a) % t;
-        if (w[tmp] != 0){
-          weights_.push_back(w[tmp]);
-          sparse_idx[g*(sps-1) + l] = s_idx++;
-          original_idx.push_back(g*(sps-1) + l);
-        }
-      }
-    }
-    return make_tuple(weights_, sparse_idx, original_idx);
-    // }
-  }
 
   std::vector<size_t> pows_array(size_t sps = 2){
     std::vector<size_t> arr(2*L+1); size_t x = 1;
@@ -109,8 +75,6 @@ public:
   // std::vector<double> const& operator[](int s) { return weights_[s]; }
   // int size(){return weights_.size();}
   std::vector<double> weights_;
-  std::vector<long long> sparse_idx;
-  std::vector<size_t> original_idx;
   size_t L;
   std::size_t sps; //onsite Hilbert space dimension.
   std::vector<size_t> pows;
