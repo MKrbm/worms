@@ -88,6 +88,7 @@ class worm{
   int L;
   size_t bocnt = 0;
   size_t cutoff_length; //cut_off length
+  size_t u_cnt=0;
 
   //declaration for random number generator
   // typedef model::local_operator::engine_type engine_type;
@@ -260,7 +261,6 @@ class worm{
     size_t n = ops.size();
     size_t label = sp.size();
     int site;
-
     for (int i=0; i<s; i++){
       // set_dots(bond[i], 0, i);
       site = bp->operator[](i);
@@ -269,6 +269,23 @@ class worm{
       sp[site].set_prev(label);
       label += 1;
     }
+    // if (s == 2){
+    //   for (int i=0; i<s; i++){
+    //     site = bp->operator[](i);
+    //     sp.push_back( Dotv2(sp[site].prev(), site, n-1, i, site));
+    //     sp[sp[site].prev()].set_next(label);
+    //     sp[site].set_prev(label);
+    //     label += 1;
+    //   }
+    // }else if (s == 3){
+    //   //* virtual onesite operator.
+    //   int i = 1;
+    //   site = bp->operator[](i);
+    //   sp.push_back( Dotv2(sp[site].prev(), site, n-1, i, site));
+    //   sp[sp[site].prev()].set_next(label);
+    //   sp[site].set_prev(label);
+    //   label += 1;
+    // }
   }
   // //*overload for r value
   // inline void append_ops(OPS& ops, std::vector<int> && bond,  int state, int op_type, double tau){
@@ -346,38 +363,59 @@ class worm{
       // wlength += (dir==0) ? -opstate.tau() : opstate.tau();
       size_t size = opstate.size();
       size_t cindex = dot.leg(dir_in, size);
+      size_t index = dot.leg(0, size);
+      
 
       size_t num;
       int tmp;
-      if (fl!=0){
-        opstate.update_state(cindex, fl);
-        num = opstate.state();
-        tmp = loperators[opstate.op_type()].markov[num](cindex*(sps_sites[site] - 1) + sps_sites[site]-fl, rand_src);
-      }else{
-        num = opstate.state();
-        tmp = loperators[opstate.op_type()].markov[num](0, rand_src);
-      }
-
-      int tmp_wlength = opstate.tau() - tau_prime;
-      if (!(dir^(tmp_wlength>0)) & (tmp_wlength!=0)) wlength += std::abs(tmp_wlength);
-      else wlength += (1 - std::abs(tmp_wlength));
-      tau_prime = opstate.tau();
-
       int nindex;
-      //* if worm stop at this operator
-      if (tmp == 0){
-        nindex = static_cast<size_t>((2 * size)*uniform(rand_src));
-        dir = nindex/(size);
-        site = opstate.bond(nindex%size);
-        fl = 0;
-      }else{
-        tmp--;
-        nindex = tmp/(sps_sites[site] - 1);
-        fl = tmp % (sps_sites[site] - 1) + 1;
+      
+      if (u_cnt==2829 || u_cnt == 2826) {
+        dout << "update cnt : " << u_cnt << endl;
+      }
+      u_cnt++;
+      if ((size==2) | ((size == 3) && (index == 1))){
+        if (fl!=0){
+          opstate.update_state(cindex, fl);
+          num = opstate.state();
+          tmp = loperators[opstate.op_type()].markov[num](cindex*(sps_sites[site] - 1) + sps_sites[site]-fl, rand_src);
+        }else{
+          num = opstate.state();
+          tmp = loperators[opstate.op_type()].markov[num](0, rand_src);
+        }
+
+        int tmp_wlength = opstate.tau() - tau_prime;
+        if (!(dir^(tmp_wlength>0)) & (tmp_wlength!=0)) wlength += std::abs(tmp_wlength);
+        else wlength += (1 - std::abs(tmp_wlength));
+        tau_prime = opstate.tau();
+
+        //* if worm stop at this operator
+        if (tmp == 0){
+          if (size==3) { //* virtual onesite.
+            dir = static_cast<size_t>(2*uniform(rand_src));
+            nindex = cindex;
+            site = opstate.bond(nindex%size);          
+          }else{
+            nindex = static_cast<size_t>((2 * size)*uniform(rand_src));
+            dir = nindex/(size);
+            site = opstate.bond(nindex%size);
+          }
+          fl = 0;
+        }else{
+          tmp--;
+          nindex = tmp/(sps_sites[site] - 1);
+          fl = tmp % (sps_sites[site] - 1) + 1;
+          opstate.update_state(nindex, fl);
+          //n* assigin for next step
+          dir = nindex/(size);
+          site = opstate.bond(nindex%size);
+        }
+      } else if (size == 3){
+        opstate.update_state(cindex, fl);
+        nindex = dot.leg(dir, size);
         opstate.update_state(nindex, fl);
-        //n* assigin for next step
-        dir = nindex/(size);
-        site = opstate.bond(nindex%size);
+      } else{
+        std::invalid_argument("not implemented");
       }
 
 
@@ -395,7 +433,17 @@ class worm{
         // printf("test tmp : %d, state : %d\n", tmp_, num ^ (fl_ << (nls*nindex_)));
         
       }
+      if (size==3){
+        if(next_dot != opstate.next_dot(cindex, nindex, clabel)) {
+          dout << "update cnt : " << u_cnt << endl;
+          throw std::invalid_argument("something wrong");
+        }
+        if (opstate.state() == 137492){
+          dout << "update cnt : " << u_cnt << endl;
+        }
+      }
       #endif 
+
       next_dot = opstate.next_dot(cindex, nindex, clabel);
       return 0;
     }

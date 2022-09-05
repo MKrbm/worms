@@ -12,11 +12,16 @@
 #include <fstream>
 #include "outgoing_weight.hpp"
 #include "funcs.hpp"
+#include "operator.hpp"
 
 
 namespace model{
-// template <class MC = bcl::heatbath>
-// class local_operator;
+  using namespace std;
+  using VS = vector<size_t>;
+  using VVS = vector<VS>;
+  using VI = vector<int>;
+  using VVI = vector<VI>;
+  using VD = vector<double>;
 
 /*
 *params
@@ -44,9 +49,9 @@ public:
   markov_v(std::vector<markov_t> markov, std::vector<long long> s2i)
   :markov(markov), s2i(s2i){}
   markov_t & operator[](size_t s) { 
-    // auto i = s2i[s];
-    auto i = s;
-    if (i < 0) std::invalid_argument("probability that state s appears have to be 0"); 
+    auto i = s2i[s];
+    // auto i = s;
+    if (i < 0) throw std::invalid_argument("probability that state s appears have to be 0"); 
     return markov[i]; 
   }
 };
@@ -149,6 +154,7 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
     signs.push_back(x >= 0 ? 1 : -1);
     x = std::abs(x);
     if (x < thres) x = 0;
+    if (std::abs(y) < thres) y = 0;
 
     if (y!=0 && x==0){
       std::cerr << "cannot reweighting since support doesn't cover the original matrix" << std::endl;
@@ -166,15 +172,35 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
   std::vector<long long> state2index;
 
   state2index.resize(ham_vector.size(), -1);
-  for (size_t s=0; s < ham_vector.size(); s++){
-    // if (ham_vector[s] == 0 ) continue;
-    state2index[s] = markov_tmp.size();
-    std::vector<double> ogw = ogwt.init_table(ham_vector, s, zw);
-    markov_tmp.push_back(markov_t(MC(), ogw));
+  if (leg > 2 && ham_vector.size() > 1E5){
+    std::cout << "too big size of ham_vector for non-bond operator : In the case, only virtually one site operator at center is accepted" << std::endl;
+    if (leg != 3) throw std::invalid_argument("leg more than 3 is not implemented yet");
+    spin_state::Operator state(nullptr, &ogwt.pows, 0, 0, 0);
+    for (size_t s=0; s < ham_vector.size(); s++){
+      // if (s==149780){
+      //   cout << "??" << endl;
+      // }
+      state.set_state(s);
+      if (state.get_local_state(0) != state.get_local_state(3) && state.get_local_state(2) != state.get_local_state(5)) continue;
+      // #ifndef NDEBUG
+      // auto ogw_ = ogwt.init_table(ham_vector, s, zw);
+      // if (!ogw_.size()) throw std::invalid_argument("cannot be considered as virtual one site operator");
+      // #endif
+      state2index[s] = markov_tmp.size();
+      std::vector<double> ogw = ogwt.init_table(ham_vector, s, zw);
+      markov_tmp.push_back(markov_t(MC(), ogw));
+    }
+     markov = markov_v(markov_tmp, state2index);
+  }else{
+    for (size_t s=0; s < ham_vector.size(); s++){
+      // if (ham_vector[s] == 0 ) continue;
+      state2index[s] = markov_tmp.size();
+      std::vector<double> ogw = ogwt.init_table(ham_vector, s, zw);
+      markov_tmp.push_back(markov_t(MC(), ogw));
+    }
+    markov = markov_v(markov_tmp, state2index);
   }
 
-  markov = markov_v(markov_tmp, state2index);
-  
 
   //* free memories
   // ham.resize(0);
