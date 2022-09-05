@@ -4,8 +4,8 @@
 #include <memory>
 #include <iterator>
 #include <tuple>
-// #include "model.hpp"
 #include "automodel.hpp"
+#include "operator.hpp"
 
 using std::cout;
 using std::endl;
@@ -17,8 +17,7 @@ namespace spin_state{
   class OpStatev2;
   class Wormsv2;
   
-  using US = unsigned short;
-  using VUS = vector<US>;
+
   using WORM = std::tuple<int, int, double>;
   using WORM_ARR = std::vector<WORM>; //  site, spin, dot_label, tau (dot label is needed for reverse lookup)
   using DOT_ARR = std::vector<std::tuple<int,int,int,int>>;   //prev, next, dot_type, index, (index refers to the legs of the dot with respect to the class of dots)

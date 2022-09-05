@@ -7,6 +7,12 @@ from nsp.utils.func import *
 from nsp.utils.print import beauty_array
 from header import *
 import argparse
+from save_npy import *
+
+parser = argparse.ArgumentParser(description='Reproduce original paper results')
+parser = argparse.ArgumentParser(description='Reproduce original paper results')
+parser.add_argument('-af','--add_first', help='adding first', action='store_true')
+args = parser.parse_args()
 
 
 
@@ -29,36 +35,46 @@ lh = SzSz + SxSx + SySy
 
 lh = -lh # use minus of local hamiltonian for monte-carlo (exp(-beta H ))
 bonds = [[0,1], [0, 2], [1, 2]]
-lh2 = sum_ham(lh, bonds, 3, 2)
+lh2 = sum_ham(lh/2, bonds, 3, 2)
 LH = sum_ham(lh2/2, [[0,1,2], [3, 4, 5]], 6, 2) + sum_ham(lh2, [[1, 2, 3], [2, 3, 4]], 6, 2)
 # set_seed(33244233)
 
-# X = sum_ham(LH, [[0, 1], [1, 2], [3, 4]])  for N = 64
 X = LH # for N = 8
 N = 8
-loss_mes = nsp.loss.MES(X, [N, N])
+loss = nsp.loss.MES(X, [N, N])
 t = 0.001
 ret_min_grad = 1e10
 
 best_fun = 1E10
-for _ in range(100):
+for _ in range(10):
     model = nsp.model.UnitaryRiemanGenerator(N, dtype=torch.float64)
-    solver = UnitaryTransTs(RiemanUnitaryCG, model, loss_mes, lr = 0.005, momentum=0.1)
+    solver = UnitaryTransTs(RiemanUnitaryCG, model, loss, lr = 0.005, momentum=0.1)
     ret = solver.run(10000, False)
     if ret.fun < best_fun:
         print(f"\nbest_fun : {ret.fun}\n")
         best_fun = ret.fun
         best_model = model
 
-lh = loss_mes._transform([best_model.matrix()]*loss_mes._n_unitaries, original = True).detach().numpy()
+lh = loss._transform([best_model.matrix()]*loss._n_unitaries, original = True).detach().numpy()
 
 print(f"\nbest fun was : {best_fun}\n")
-path = "../array/majumdar_ghosh/optimize8_v2/0"
-if not os.path.exists(path):
-    os.makedirs(path)
-np.save(path,lh)
-print("save : ", path+".npy")
-beauty_array(lh,path + ".txt")
+act = loss.act.tolist()
+LH = nsp.utils.base_conv.change_order(lh, act)
+save_npy("../array/majumdar_ghosh/optimize8", [LH])
+I_not1 = torch.logical_not(torch.eye(act[0]))
+I_not2 = torch.logical_not(torch.eye(act[1]))
+ML = torch.kron(I_not1, torch.eye(act[1]))
+MR = torch.kron(torch.eye(act[0]), I_not2)
+MI = torch.kron(I_not1, I_not2) + torch.eye(np.prod(act))    
+LH_3_site = (torch.kron(torch.eye(N),ML * lh) + torch.kron(MR * lh,torch.eye(N)))
+LH_2_site = MI * lh
+LH_2_site = nsp.utils.base_conv.change_order(LH_2_site, act)
+LH_3_site = nsp.utils.base_conv.change_order(LH_3_site, act + [act[0]])
+
+save_npy("../array/majumdar_ghosh/optimize8_af", [LH_2_site, LH_3_site])
+
+
+
 
 
 

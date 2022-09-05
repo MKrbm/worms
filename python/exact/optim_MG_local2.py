@@ -7,6 +7,7 @@ from nsp.utils.func import *
 from nsp.utils.print import beauty_array
 from header import *
 import argparse
+from save_npy import *
 
 
 
@@ -29,7 +30,7 @@ lh = SzSz + SxSx + SySy
 
 lh = -lh # use minus of local hamiltonian for monte-carlo (exp(-beta H ))
 bonds = [[0,1], [0, 2], [1, 2]]
-lh2 = sum_ham(lh, bonds, 3, 2)
+lh2 = sum_ham(lh/2, bonds, 3, 2)
 LH = sum_ham(lh2/2, [[0,1,2], [3, 4, 5]], 6, 2) + sum_ham(lh2, [[1, 2, 3], [2, 3, 4]], 6, 2)
 
 D = 8
@@ -46,26 +47,24 @@ t = 0.001
 ret_min_grad = 1e10
 
 best_fun = 1E10
-for _ in range(1000):
+for _ in range(1):
     models = [nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64) for _ in range(L)]
     cg2 = RiemanNonTransUnitaryCG([(models[i], models[(i+1)%L]) for i in range(L)], [loss]*L)
     solver2 = UnitaryNonTransTs(cg2)
-    ret = solver2.run(10000, disable_message=False)
+    ret = solver2.run(1000, disable_message=False)
     if ret.fun < best_fun:
         print(f"\nbest_fun : {ret.fun}\n")
         best_fun = ret.fun
         best_model = models
 
 # lh = loss_mes._transform([model.matrix()]*loss_mes._n_unitaries).detach().numpy()
+LHs = []
+LHs = [loss._transform_kron([best_model[i].matrix(), best_model[(i+1)%L].matrix()], original=True).detach().numpy() for i in range(L)]
 
+folder = "../array/majumdar_ghosh/optimize8_4"
+co = nsp.utils.base_conv.change_order
 
-path = "../array/majumdar_ghosh/optimize8_4/0"
-if not os.path.exists(path):
-    os.makedirs(path)
-np.save(path,lh)
-print("save : ", path+".npy")
-beauty_array(lh,path + ".txt")
-
+save_npy(folder, [co(lh, [8, 8]) for lh in LHs])
 
 
 

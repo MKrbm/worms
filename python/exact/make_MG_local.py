@@ -18,8 +18,8 @@ parser = argparse.ArgumentParser(description='Reproduce original paper results')
 parser = argparse.ArgumentParser(description='Reproduce original paper results')
 parser.add_argument('-l','--lattice', help='lattice (model) Name', required=True, choices=lattice)
 args = vars(parser.parse_args())
-
 lat = args["lattice"]
+
 Sz = np.zeros([2,2])
 Sz[0,0] = 1/2
 Sz[1,1] = -1/2

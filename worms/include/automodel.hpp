@@ -15,15 +15,10 @@
 #include <fstream>
 #include "localoperator.hpp"
 #include "load_npy.hpp"
-// #include "model.hpp"
+#include "model.hpp"
 
 namespace model{
-  using namespace std;
-  using VS = vector<size_t>;
-  using VVS = vector<VS>;
-  using VI = vector<int>;
-  using VVI = vector<VI>;
-  using VD = vector<double>;
+
 
   size_t num_type(std::vector<size_t> bond_type);
 

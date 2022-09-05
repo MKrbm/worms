@@ -5,11 +5,17 @@
 #include <iterator>
 #include <tuple>
 #include <vector>
-#include "state2.hpp"
 
 
 namespace spin_state{
-
+  using namespace std;
+  using VS = vector<size_t>;
+  using VVS = vector<VS>;
+  using VI = vector<int>;
+  using VVI = vector<VI>;
+  using VD = vector<double>;
+  using US = unsigned short;
+  using VUS = vector<US>;
   class Operator{
     const VS* const bond_ptr_;
     const VS* const pows_ptr_;
