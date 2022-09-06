@@ -174,7 +174,7 @@ class UnitaryNonTransTs:
 
         min_loss = self.optim.loss_val().item()
         ini_loss = min_loss
-        eye = [torch.eye(model.D) for model in self.optim.models]
+        eye = [torch.eye(model.D, dtype=torch.float64) for model in self.optim.models]
         lub = self.optim.loss_val(eye).item()
         if not disable_message:
             print("target loss      : {:.10f}".format(self.target))

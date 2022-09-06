@@ -8,7 +8,15 @@ from nsp.utils.print import beauty_array
 from header import *
 import argparse
 from save_npy import *
+from datetime import datetime
+from random import randint
 
+parser = argparse.ArgumentParser(description='Optimize majumdar gosh')
+parser.add_argument('-N','--num_unit_cells', help='# of independent unit cell', type = int, default = 4)
+parser.add_argument('-I','--num_iter', help='# of iterations', type = int, default = 10)
+args = vars(parser.parse_args())
+L = args["num_unit_cells"]
+M = args["num_iter"]
 
 
 Sz = np.zeros([2,2])
@@ -34,7 +42,6 @@ lh2 = sum_ham(lh/2, bonds, 3, 2)
 LH = sum_ham(lh2/2, [[0,1,2], [3, 4, 5]], 6, 2) + sum_ham(lh2, [[1, 2, 3], [2, 3, 4]], 6, 2)
 
 D = 8
-L = 4
 models = [nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64) for _ in range(L)]
 model = copy.deepcopy(models[0])
 loss = nsp.loss.MES(LH, [D,D], inv = model._inv)
@@ -42,24 +49,32 @@ loss = nsp.loss.MES(LH, [D,D], inv = model._inv)
 
 # set_seed(33244233)
 # X = LH
-loss_mes = nsp.loss.MES(LH, [D, D])
+loss_mes = nsp.loss.MES(LH, [D, D], pout = False)
+print(loss_mes.pout)
 t = 0.001
 ret_min_grad = 1e10
 
 best_fun = 1E10
-for _ in range(1):
+print(f"iteration : {M}")
+for _ in range(M):
+    seed = randint(0, 2<<32 - 1)
+    torch.manual_seed(seed)
+    np.random.seed(seed)
     models = [nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64) for _ in range(L)]
-    cg2 = RiemanNonTransUnitaryCG([(models[i], models[(i+1)%L]) for i in range(L)], [loss]*L)
+    cg2 = RiemanNonTransUnitaryCG([(models[i], models[(i+1)%L]) for i in range(L)], [loss]*L, pout = False)
     solver2 = UnitaryNonTransTs(cg2)
-    ret = solver2.run(100, disable_message=False)
+    ret = solver2.run(1000, disable_message=True)
+    print(f"res = {ret.fun} / seed = {seed}")
     if ret.fun < best_fun:
-        print(f"\nbest_fun : {ret.fun}\n")
+        print(f"\nbest_fun updated : {ret.fun}\n")
         best_fun = ret.fun
         best_model = models
 
 # lh = loss_mes._transform([model.matrix()]*loss_mes._n_unitaries).detach().numpy()
 LHs = []
 LHs = [loss._transform_kron([best_model[i].matrix(), best_model[(i+1)%L].matrix()], original=True).detach().numpy() for i in range(L)]
+
+print(f"\nbest fun was : {best_fun}\n")
 
 
 folder = f"../array/majumdar_ghosh/optimize8_{L}"

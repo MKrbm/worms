@@ -72,7 +72,8 @@ class BaseRiemanNonTransUnitaryOptimizer(abc.ABC):
         self.grad_tol = grad_tol
         # super(BaseRiemanUnitaryOptimizer, self).__init__(model.parameters(), defaults)
 
-        print("number of models is : ",len(self.models))
+        if pout:
+            print("number of models is : ",len(self.models))
         
     def loss_val(self, models = None):
         """

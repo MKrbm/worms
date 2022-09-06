@@ -27,7 +27,9 @@ class BaseMatirxLoss(abc.ABC):
         act : Union[list, np.ndarray], 
         inv = cc,
         mineig_zero = True,
-        einsum=False):
+        einsum=False,
+        pout = True,
+        ):
         
         self._inverse = inv
         self.X = convert_type(X, torch.Tensor)
@@ -57,7 +59,7 @@ class BaseMatirxLoss(abc.ABC):
             self._transform = self._transform_einsum
         else:
             self._transform = self._transform_kron
-
+        self.pout = pout
         # if (X.shape)
         
 
@@ -80,7 +82,8 @@ class BaseMatirxLoss(abc.ABC):
     def _transform_kron(self, U_list : list, original = False):
         U = self._kron(U_list)
         if self.X.dtype != U.dtype:
-            print("dtype changes from {} to {}".format(self.X.dtype, U.dtype))
+            if self.pout:
+                print("dtype changes from {} to {}".format(self.X.dtype, U.dtype))
             self.X = cast_dtype(self.X, U.dtype)
         if original:
             return self._inverse(U) @ self.X_original @ U
