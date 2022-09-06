@@ -37,7 +37,7 @@ D = 8
 L = 4
 models = [nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64) for _ in range(L)]
 model = copy.deepcopy(models[0])
-loss = nsp.loss.MES(torch.Tensor(LH), [D,D], inv = model._inv)
+loss = nsp.loss.MES(LH, [D,D], inv = model._inv)
 
 
 # set_seed(33244233)
@@ -51,7 +51,7 @@ for _ in range(1):
     models = [nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64) for _ in range(L)]
     cg2 = RiemanNonTransUnitaryCG([(models[i], models[(i+1)%L]) for i in range(L)], [loss]*L)
     solver2 = UnitaryNonTransTs(cg2)
-    ret = solver2.run(1000, disable_message=False)
+    ret = solver2.run(100, disable_message=False)
     if ret.fun < best_fun:
         print(f"\nbest_fun : {ret.fun}\n")
         best_fun = ret.fun
@@ -61,10 +61,30 @@ for _ in range(1):
 LHs = []
 LHs = [loss._transform_kron([best_model[i].matrix(), best_model[(i+1)%L].matrix()], original=True).detach().numpy() for i in range(L)]
 
-folder = "../array/majumdar_ghosh/optimize8_4"
+
+folder = f"../array/majumdar_ghosh/optimize8_{L}"
 co = nsp.utils.base_conv.change_order
 
 save_npy(folder, [co(lh, [8, 8]) for lh in LHs])
+# save_npy(folder, LHs)
+
+
+I_not1 = np.logical_not(np.eye(D))
+I_not2 = np.logical_not(np.eye(D))
+ML = np.kron(I_not1, np.eye(D))
+MR = np.kron(np.eye(D), I_not2)
+MI = np.kron(I_not1, I_not2) + np.eye(D*D)
+LH_3s = [np.kron(np.eye(D), ML * LHs[(i+1)%L]) + np.kron(MR * LHs[i],np.eye(D)) for i in range(len(LHs))]
+LH_2s = [MI * lh for lh in LHs]
+
+LH_3s = [co(lh, [8, 8, 8]) for lh in LH_3s]
+LH_2s = [co(lh, [8, 8]) for lh in LH_2s]
+
+folder = f"../array/majumdar_ghosh/optimize8_{L}_af"
+save_npy(folder, LH_2s + LH_3s)
+
+# save_npy(folder, LHs)
+
 
 
 
