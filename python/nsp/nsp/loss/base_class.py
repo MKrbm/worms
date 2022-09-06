@@ -128,11 +128,11 @@ class BaseMatirxLoss(abc.ABC):
         if self._type == np.ndarray:
             self.U = np.eye(1)
             for u in U_list:
-                self.U = np.kron(u, self.U)
+                self.U = np.kron(self.U, u)
         else:
             self.U = torch.eye(1)
             for u in U_list:
-                self.U = torch.kron(u, self.U)
+                self.U = torch.kron(self.U, u)
         return self.U
 
 
