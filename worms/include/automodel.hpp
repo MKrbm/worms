@@ -114,6 +114,7 @@ public:
     //* raed all numpy files in given path.
     std::vector<std::string> path_list;
     get_npy_path(ham_path, path_list);
+    std::sort(path_list.begin(), path_list.end());
 
     //* if repeat = true
     VI types_tmp;

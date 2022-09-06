@@ -96,7 +96,6 @@ template <class MC>
 local_operator<MC>::local_operator(int leg, size_t sps)
   :leg(leg), size(pow(sps, leg)), ogwt(leg, sps), sps(sps)
   {
-    std::cout << "malloc" << std::endl;
     ham_rate = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
     ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
   }
