@@ -84,7 +84,7 @@ public:
 
   local_operator(int leg, size_t sps = 2);
 
-  void set_ham(double off_set = 0, double thres = 1E-8, bool dw = false);
+  void set_ham(double off_set = 0, double thres = 1E-6, bool dw = false);
   void set_trans_weights();
   void check_trans_prob();
   int index2num(std::array<int, 2> index);
