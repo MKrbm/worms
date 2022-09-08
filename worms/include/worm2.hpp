@@ -31,7 +31,7 @@
 #include "operator.hpp"
 #include "automodel.hpp"
 #include "funcs.hpp"
-#define SEED 1645589969
+#define SEED 1662509963
 /* inherit UnionFindTree and add find_and_flip function*/
 
 // template <typename MODEL>
@@ -99,7 +99,9 @@ class worm{
   engine_type rand_src = engine_type(rseed);
   // engine_type rand_src = engine_type(SEED);
   #else
+  // unsigned rseed = static_cast <unsigned> (time(0));
   unsigned rseed = SEED;
+  // SEED = rseed;
   engine_type rand_src = engine_type(SEED);
   engine_type test_src = engine_type(SEED);
   #endif
@@ -327,7 +329,7 @@ class worm{
   params(member variables)
   ------
   */
-  int worm_process_op(size_t& next_dot, size_t& dir, size_t& site, double& wlength, size_t& fl, double& tau_prime){
+  int worm_process_op(size_t& next_dot, size_t& dir, size_t& site, double& wlength, int& fl, double& tau_prime){
 
     size_t clabel = next_dot;
     auto& dot = spacetime_dots[clabel];
@@ -370,7 +372,7 @@ class worm{
       int tmp;
       int nindex;
       
-      if (u_cnt==2829 || u_cnt == 2826) {
+      if (u_cnt==9 || u_cnt == 2826) {
         dout << "update cnt : " << u_cnt << endl;
       }
       u_cnt++;
@@ -439,6 +441,10 @@ class worm{
     pres.resize(0);
     psop.resize(0);
     for (WORMS::iterator wsi = worms_list.begin(); wsi != worms_list.end(); ++wsi){
+      // dout << "worm_update / debug_cnt = " << d_cnt << endl;
+      // if (d_cnt == 3){
+      //   int y;
+      // }
       size_t w_label, site;
       double tau;
       std::tie(site, w_label , tau) = *wsi;
@@ -448,8 +454,8 @@ class worm{
       size_t dir = (size_t)2 * r;//n initial direction is 1.
       size_t ini_dir = dir;
       // size_t fl = 1;
-      size_t fl = static_cast<size_t>((sps_sites[site]-1)*uniform(rand_src)) + 1;
-      size_t ini_fl = fl;
+      int fl = static_cast<int>((sps_sites[site]-1)*uniform(rand_src)) + 1;
+      int ini_fl = fl;
       int wl = wlength;
       int br = 0;
       bool wh = true; //* worm head still exists.
@@ -469,7 +475,7 @@ class worm{
            }
           }
         dot = &spacetime_dots[d_label];
-      }while((d_label != w_label || ((ini_dir == dir ? -1 : 1)*ini_fl + fl)%sps_sites[site] !=0)); 
+      }while((d_label != w_label || ((ini_dir == dir ? -1 : 1)*ini_fl + fl + sps_sites[site])%sps_sites[site] !=0)); 
       if(br==1){
         bocnt++;
         break;
@@ -563,7 +569,7 @@ class worm{
 
     int label = 0;
     std::cout << "debug cnt = " << d_cnt << std::endl;
-    if (d_cnt == 1308){
+    if (d_cnt == 3){
       cout << "stop" << endl;
     }
     d_cnt ++;
