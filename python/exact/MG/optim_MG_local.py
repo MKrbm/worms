@@ -54,7 +54,6 @@ elif (args.loss == "l1"):
     loss = nsp.loss.L1(X, [N, N])
 t = 0.001
 ret_min_grad = 1e10
-
 best_fun = 1E10
 for _ in range(10):
     seed = datetime.now()

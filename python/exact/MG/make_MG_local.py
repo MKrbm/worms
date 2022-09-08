@@ -3,6 +3,8 @@ from scipy import sparse
 import os
 import sys
 sys.path.insert(0, "../nsp") 
+from ..save_npy import *
+
 from nsp.utils.func import *
 from nsp.utils.print import beauty_array
 import argparse
@@ -14,8 +16,9 @@ lattice = [
     "chain8_af"
 ]
 
-parser = argparse.ArgumentParser(description='Reproduce original paper results')
-parser = argparse.ArgumentParser(description='Reproduce original paper results')
+loss = ["mes", "l1"]
+
+parser = argparse.ArgumentParser(description='Optimize majumdar gosh')
 parser.add_argument('-l','--lattice', help='lattice (model) Name', required=True, choices=lattice)
 args = vars(parser.parse_args())
 lat = args["lattice"]
