@@ -20,6 +20,16 @@ int main(int argc, char **argv) {
   char tmp[256];
   auto _ = getcwd(tmp, 256);
   cout << tmp << endl;
+  //* argparse  
+  argparse::ArgumentParser parser("test", "argparse test program", "Apache License 2.0");
+
+  parser.addArgument({"-L1"}, "set shape[0]");
+  parser.addArgument({"-L2"}, "set shape[1]");
+  parser.addArgument({"-L3"}, "set shape[2]");
+  parser.addArgument({"-T"}, "set temperature");
+  parser.addArgument({"-m"}, "set model");
+  auto args = parser.parseArgs(argc, argv);
+
 
   Config cfg;
   cfg.setAutoConvert(true);
@@ -33,6 +43,7 @@ int main(int argc, char **argv) {
 
   const Setting& root = cfg.getRoot();
   string model_name = root["model"];
+  model_name = args.safeGet<string>("m", model_name);
   cout << "model name is \t : \t" << model_name << endl;
   const Setting& mcfg = root["models"][model_name];
   const Setting& shape_cfg = mcfg.lookup("length");
@@ -94,15 +105,9 @@ int main(int argc, char **argv) {
     fix_wdensity = config.lookup("fix_wdensity");
   }
 
-  //* argparse  
-  argparse::ArgumentParser parser("test", "argparse test program", "Apache License 2.0");
 
-  parser.addArgument({"-L1"}, "set shape[0]");
-  parser.addArgument({"-L2"}, "set shape[1]");
-  parser.addArgument({"-L3"}, "set shape[2]");
-  parser.addArgument({"-T"}, "set temperature");
 
-  auto args = parser.parseArgs(argc, argv);
+
 
   shapes[0] = args.safeGet<size_t>("L1", shapes[0]);
   shapes[1] = args.safeGet<size_t>("L2", shapes[1]);
