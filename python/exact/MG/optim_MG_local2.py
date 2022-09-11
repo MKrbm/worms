@@ -2,22 +2,33 @@ import numpy as np
 from scipy import sparse
 import os
 import sys
-sys.path.insert(0, "../nsp") 
-from nsp.utils.func import *
-from nsp.utils.print import beauty_array
+sys.path.insert(0, "../../nsp") 
 from header import *
+from nsp.utils.print import beauty_array
 import argparse
+sys.path.insert(0, "..") 
 from save_npy import *
 from datetime import datetime
 from random import randint
 
 parser = argparse.ArgumentParser(description='Optimize majumdar gosh')
-parser.add_argument('-N','--num_unit_cells', help='# of independent unit cell', type = int, default = 4)
-parser.add_argument('-I','--num_iter', help='# of iterations', type = int, default = 10)
-args = vars(parser.parse_args())
-L = args["num_unit_cells"]
-M = args["num_iter"]
 
+loss = ["mes", "l1"]
+
+
+parser.add_argument('-loss','--loss', help='loss_methods', required=True, choices=loss)
+parser.add_argument('-N','--num_unit_cells', help='# of independent unit cell', type = int, default = 4)
+parser.add_argument('-M','--num_iter', help='# of iterations', type = int, default = 10)
+
+args = vars(parser.parse_args())
+M = args["num_iter"]
+L = args["num_unit_cells"]
+loss_name = args["loss"]
+
+if (args["loss"] == "mes"):
+    loss_ = nsp.loss.MES
+elif (args["loss"] == "l1"):
+    loss_ = nsp.loss.L1
 
 Sz = np.zeros([2,2])
 Sz[0,0] = 1/2
@@ -44,13 +55,11 @@ LH = sum_ham(lh2/2, [[0,1,2], [3, 4, 5]], 6, 2) + sum_ham(lh2, [[1, 2, 3], [2, 3
 D = 8
 models = [nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64) for _ in range(L)]
 model = copy.deepcopy(models[0])
-loss = nsp.loss.MES(LH, [D,D], inv = model._inv)
+loss = loss_(LH, [D,D])
 
 
 # set_seed(33244233)
 # X = LH
-loss_mes = nsp.loss.MES(LH, [D, D], pout = False)
-print(loss_mes.pout)
 t = 0.001
 ret_min_grad = 1e10
 
@@ -61,23 +70,24 @@ for _ in range(M):
     torch.manual_seed(seed)
     np.random.seed(seed)
     models = [nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64) for _ in range(L)]
-    cg2 = RiemanNonTransUnitaryCG([(models[i], models[(i+1)%L]) for i in range(L)], [loss]*L, pout = False)
-    solver2 = UnitaryNonTransTs(cg2)
-    ret = solver2.run(1000, disable_message=True)
+    cg2 = RiemanNonTransUnitaryCG([(models[i], models[(i+1)%L]) for i in range(L)], [loss]*L, pout = False, lr = 0.005, momentum = 0.05)
+    # cg2 = RiemanNonTransUnitaryCG([(models[i], models[(i+1)%L]) for i in range(L)], [loss]*L, pout = False)
+    solver2 = UnitaryNonTransTs(cg2, af = True)
+    ret = solver2.run(300, disable_message=False)
     print(f"res = {ret.fun} / seed = {seed}")
     if ret.fun < best_fun:
         print(f"\nbest_fun updated : {ret.fun}\n")
         best_fun = ret.fun
-        best_model = models
+        best_model = ret.model
 
 # lh = loss_mes._transform([model.matrix()]*loss_mes._n_unitaries).detach().numpy()
 LHs = []
-LHs = [loss._transform_kron([best_model[i].matrix(), best_model[(i+1)%L].matrix()], original=True).detach().numpy() for i in range(L)]
 
 print(f"\nbest fun was : {best_fun}\n")
 
 
-folder = f"../array/majumdar_ghosh/optimize8_{L}"
+LHs = [loss._transform_kron([best_model[i].matrix(), best_model[(i+1)%L].matrix()], original=True).detach().numpy() for i in range(L)]
+folder = f"../..//array/majumdar_ghosh/optim_{L}_{loss_name}"
 co = nsp.utils.base_conv.change_order
 
 save_npy(folder, [co(lh, [8, 8]) for lh in LHs])
@@ -95,7 +105,7 @@ LH_2s = [MI * lh for lh in LHs]
 LH_3s = [co(lh, [8, 8, 8]) for lh in LH_3s]
 LH_2s = [co(lh, [8, 8]) for lh in LH_2s]
 
-folder = f"../array/majumdar_ghosh/optimize8_{L}_af"
+folder = f"../..//array/majumdar_ghosh/optim_{L}_{loss_name}_af"
 save_npy(folder, LH_2s + LH_3s)
 
 # save_npy(folder, LHs)
