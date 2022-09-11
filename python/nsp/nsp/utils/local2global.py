@@ -2,6 +2,7 @@ from numba import njit
 import numpy as np
 from scipy import sparse
 from .base_conv import num2state, state2num
+from .func import stoquastic
 
 @njit
 def get_nonzero_index(X, thres = 1e-10):
@@ -58,3 +59,23 @@ def l2nl(ham, L, bond = [], sps = 2, thres=1e-10):
         ham = np.array(ham)
         return _l2nl(ham, L, bond , sps, thres)
     
+def sum_ham(h, bonds, L, sps, stoquastic_=False):
+    h = np.kron(h, np.eye(int((sps**L)/h.shape[0])))
+    ori_shape = h.shape
+    H = np.zeros_like(h)
+    h = h.reshape(L*2*(sps,))
+    for bond in bonds:
+        trans = np.arange(L)
+        _trans = [i for i in range(L)]
+        for i, b in enumerate(bond):
+            trans[b] = i
+        l = len(bond)
+        for i in range(L):
+            if i not in bond:
+                trans[i] = l
+                l+=1
+        trans = np.concatenate([trans, trans+L])
+        H += h.transpose(trans).reshape(ori_shape)
+    if stoquastic_:
+        return stoquastic(H)
+    return H

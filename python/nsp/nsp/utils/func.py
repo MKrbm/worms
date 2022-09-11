@@ -347,21 +347,3 @@ def mul(H, h, al, from_left=True):
 #     return h.reshape(L*2*(sps,)).transpose(trans).reshape(ori_shape)
 
 
-def sum_ham(h, bonds, L, sps):
-    h = np.kron(h, np.eye(int((sps**L)/h.shape[0])))
-    ori_shape = h.shape
-    H = np.zeros_like(h)
-    h = h.reshape(L*2*(sps,))
-    for bond in bonds:
-        trans = np.arange(L)
-        _trans = [i for i in range(L)]
-        for i, b in enumerate(bond):
-            trans[b] = i
-        l = len(bond)
-        for i in range(L):
-            if i not in bond:
-                trans[i] = l
-                l+=1
-        trans = np.concatenate([trans, trans+L])
-        H += h.transpose(trans).reshape(ori_shape)
-    return H
