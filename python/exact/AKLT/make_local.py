@@ -12,29 +12,32 @@ from datetime import datetime
 from random import randint
 
 
-lattice = [
+J = [1, 2]
+J = [float(j) for j in J]
+models = [
     "original",
     "optm1",
     "optm2",
-    "optm2_multi"
+    "optm2_multi",
+    "optm3"
 ]
 
 loss = ["mes", "l1"]
 
 parser = argparse.ArgumentParser(description='Optimize majumdar gosh')
-parser.add_argument('-l','--lattice', help='lattice (model) Name', required=True, choices=lattice)
+parser.add_argument('-m','--model', help='lattice (model) Name', required=True, choices=models)
 parser.add_argument('-loss','--loss', help='loss_methods', choices=loss, nargs='?', const='all',default="mes")
-parser.add_argument('-N','--num_unit_cells', help='# of independent unit cell', type = int, default = 4)
-parser.add_argument('-I','--num_iter', help='# of iterations', type = int, default = 10)
+parser.add_argument('-L','--num_unit_cells', help='# of independent unit cell', type = int, default = 2)
+parser.add_argument('-M','--num_iter', help='# of iterations', type = int, default = 10)
 args = vars(parser.parse_args())
 L = args["num_unit_cells"]
 M = args["num_iter"]
-if (args["loss"] == "mes"):
-    loss_f = nsp.loss.MES
-elif (args["loss"] == "l1"):
-    loss_f = nsp.loss.L1
 loss_name = args["loss"]
-lat = args["lattice"]
+if (loss_name == "mes"):
+    loss_f = nsp.loss.MES
+elif (loss_name == "l1"):
+    loss_f = nsp.loss.L1
+lat = args["model"]
 
 Sz = np.zeros([3,3])
 Sz[0,0] = 1
@@ -55,10 +58,10 @@ lh = SzSz + SxSx + SySy
 t = 0.001
 ret_min_grad = 1e10
 best_fun = 1E10
-lh = -(lh + lh@lh/3 )
+lh = -(lh*J[0] + lh@lh*J[1])
 if lat == "original":
     H = lh
-    save_npy(f"../../array/AKLT/original", [H])
+    save_npy(f"../../array/AKLT/original_J={J[1]:.2}", [H])
 
 
 elif lat == "optm1":
@@ -77,19 +80,19 @@ elif lat == "optm1":
     H = nsp.utils.base_conv.change_order(H, [D, D])
     save_npy(f"../../array/AKLT/optm1", [H])
 
-elif lat == "optm2":
-    bonds = [[0, 1], [2, 3]]
-    LH = sum_ham(lh/2, bonds, 4, 3)
-    LH += sum_ham(lh, [[1, 2]], 4, 3)
-    D = 3 ** 2
+elif lat == "optm3":
+    bonds = [[0, 1], [1, 2], [3, 4], [4, 5]]
+    LH = sum_ham(lh/2, bonds, 6, 3)
+    LH += sum_ham(lh, [[2, 3]], 6, 3)
+    D = 3 ** 3
     loss = loss_f(LH, [D, D], pout = False)
     for _ in range(M):
         seed = randint(0, 2<<32 - 1)
         torch.manual_seed(seed)
         np.random.seed(seed)
         model = nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64)
-        solver = UnitaryTransTs(RiemanUnitaryCG, model, loss, lr = 0.005, momentum=0.1)
-        ret = solver.run(1000, False)
+        solver = UnitaryTransTs(RiemanUnitarySGD, model, loss, lr = 0.001, momentum=0.1)
+        ret = solver.run(10000, False)
         print(f"res = {ret.fun} / seed = {seed}")
         if ret.fun < best_fun:
             print(f"\nbest_fun updated : {ret.fun}\n")
@@ -98,7 +101,39 @@ elif lat == "optm2":
     lh = loss._transform([best_model.matrix()]*loss._n_unitaries, original = True).detach().numpy()
     H = nsp.utils.base_conv.change_order(lh, [D, D])
     # H = stoquastic(LH)
-    save_npy(f"../../array/AKLT/optm2_{loss_name}", [H])
+    save_npy(f"../../array/AKLT/optm3_{loss_name}", [H])
+
+
+elif lat == "optm2":
+    bonds = [[0, 1], [2, 3]]
+    LH = sum_ham(lh/2, bonds, 4, 3)
+    LH += sum_ham(lh, [[1, 2]], 4, 3)
+    D = 3 ** 2
+    loss = loss_f(LH, [D, D], pout = False)
+    loss_mes = nsp.loss.MES(LH, [D, D], pout = False)
+    for _ in range(M):
+        seed = randint(0, 2<<32 - 1)
+        torch.manual_seed(seed)
+        np.random.seed(seed)
+        model = nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64)
+        solver = UnitaryTransTs(RiemanUnitaryCG, model, loss, lr = 0.005, momentum=0.1, af = False)
+        ret = solver.run(10000, False)
+        # if loss_name == "mes":
+        #     solver = UnitaryTransTs(RiemanUnitaryCG, model, loss_mes, lr = 0.005, momentum=0.1, af = False)
+        #     ret = solver.run(1000, False)
+        print(f"res = {ret.fun} / seed = {seed}")
+        best_loss = loss_mes([model.matrix()]*loss._n_unitaries).detach().numpy()
+        print(f"loss(mes) : {best_loss}")
+
+        if ret.fun < best_fun:
+            print(f"\nbest_fun updated : {ret.fun}\n")
+            best_fun = ret.fun
+            best_model = model
+    lh = loss._transform([best_model.matrix()]*loss._n_unitaries, original = True).detach().numpy()
+    best_loss = loss_mes([best_model.matrix()]*loss._n_unitaries).detach().numpy()
+    print(f"best loss : {best_loss}")
+    H = nsp.utils.base_conv.change_order(lh, [D, D])
+    save_npy(f"../../array/AKLT/optm2_{loss_name}_J={J[1]:.2}", [H])
 
     I_not1 = torch.logical_not(torch.eye(D))
     I_not2 = torch.logical_not(torch.eye(D))
@@ -109,7 +144,7 @@ elif lat == "optm2":
     LH_2_site = MI * lh
     LH_2_site = nsp.utils.base_conv.change_order(LH_2_site, [D, D])
     LH_3_site = nsp.utils.base_conv.change_order(LH_3_site, [D, D, D])
-    save_npy(f"../../array/AKLT/optm2_{loss_name}_af", [LH_2_site, LH_3_site])
+    save_npy(f"../../array/AKLT/optm2_{loss_name}_J={J[1]:.2}_af", [LH_2_site, LH_3_site])
 
 
 elif lat == "optm2_multi":
@@ -124,8 +159,8 @@ elif lat == "optm2_multi":
         np.random.seed(seed)
         models = [nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64) for _ in range(L)]
         cg = RiemanNonTransUnitaryCG([(models[i], models[(i+1)%L]) for i in range(L)], [loss]*L, pout = False)
-        solver = UnitaryNonTransTs(cg)
-        ret = solver.run(1000, False)
+        solver = UnitaryNonTransTs(cg, af=False)
+        ret = solver.run(2000, False)
         print(f"res = {ret.fun} / seed = {seed}")
         if ret.fun < best_fun:
             print(f"\nbest_fun updated : {ret.fun}\n")
