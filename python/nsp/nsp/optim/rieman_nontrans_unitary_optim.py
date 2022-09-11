@@ -75,22 +75,39 @@ class BaseRiemanNonTransUnitaryOptimizer(abc.ABC):
         if pout:
             print("number of models is : ",len(self.models))
         
-    def loss_val(self, models = None):
+    def loss_val(self, models = None, af = False, ML = None, MR = None, I = None):
         """
         calculate loss 
+        args:
+            af : boolean, if true, adding each term first and optimize them. 
         """
+        if not af:
+            if models is None:
+                models = self.models
+                loss_ = torch.zeros(1, dtype=torch.float64)
+                for acts, loss in zip(self.models_act, self.loss_list):
+                    loss_ += loss([models[a].matrix() for a in acts])
+                return loss_
 
-        if models is None:
-            models = self.models
-            loss_ = torch.zeros(1, dtype=torch.float64)
-            for acts, loss in zip(self.models_act, self.loss_list):
-                loss_ += loss([models[a].matrix() for a in acts])
-            return loss_
-
+            else:
+                loss_ = torch.zeros(1, dtype=torch.float64)
+                for acts, loss in zip(self.models_act, self.loss_list):
+                    loss_ += loss([models[a] for a in acts])
+                return loss_
         else:
+            X = []
+            if models is None:
+                models = self.models
+                for acts, loss in zip(self.models_act, self.loss_list):
+                    X.append(loss._preprocess([models[a].matrix() for a in acts]))
+
+            else:
+                for acts, loss in zip(self.models_act, self.loss_list):
+                    X.append(loss._preprocess([models[a] for a in acts]))
+            X_ = [(torch.kron(I,ML * X[(i+1)%len(X)]) + torch.kron(MR * X[i],I)) for i in range(len(X))]
             loss_ = torch.zeros(1, dtype=torch.float64)
-            for acts, loss in zip(self.models_act, self.loss_list):
-                loss_ += loss([models[a] for a in acts])
+            for x_ in X_:
+                loss_ += loss.forward(x_)
             return loss_
     def _riemannian_grad(self, params, model:UnitaryRiemanGenerator, translated=True):
         """
@@ -208,8 +225,8 @@ class RiemanNonTransUnitarySGD(BaseRiemanNonTransUnitaryOptimizer):
 
     def __init__(self,
                 models_act : List[Tuple[UnitaryRiemanGenerator]], loss_list : List[BaseMatirxLoss], 
-                lr = 0.01,
-                momentum=0, 
+                lr = 0.005,
+                momentum=0.1, 
                 weight_decay=0, 
                 grad_tol = 1e-8, 
                 *, 
@@ -243,6 +260,7 @@ class RiemanNonTransUnitaryCG(BaseRiemanNonTransUnitaryOptimizer):
     def __init__(self,
                 models_act : List[Tuple[UnitaryRiemanGenerator]], loss_list : List[BaseMatirxLoss], 
                 momentum=0, 
+                lr = 0,
                 weight_decay=0, 
                 grad_tol = 1e-8, 
                 *, 

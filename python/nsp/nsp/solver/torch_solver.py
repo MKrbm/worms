@@ -33,7 +33,9 @@ class UnitaryTransTs:
         model : unitary matrix (model) that you wanna optimize
         loss : loss function you want to minimize.
         seed : if given, reset matrix with this seed
+        af : boolean, adding each term before calculating eigenvalue. Currently, only available for 1D chain lattice.
         prt : wether print out or not 
+
     """
 
     model : BaseMatrixGenerator
@@ -45,6 +47,7 @@ class UnitaryTransTs:
             model : BaseMatrixGenerator,
             loss : BaseMatirxLoss,
             seed = None,
+            af = False,
             prt = True,
             **kwargs
             ):
@@ -52,6 +55,15 @@ class UnitaryTransTs:
         self.model = model
         self.loss = loss
         self.target = loss.target
+        self.af = af
+        if af:
+            print("Turn on adding first settings. Note that available only for 1D chain")
+            D = model.D
+            I_not = torch.logical_not(torch.eye(D))
+            self.I = torch.eye(D)
+            MI = torch.kron(I_not, I_not) + torch.eye(D**2)   
+            self.ML = torch.kron(I_not, torch.eye(D)) + MI/2
+            self.MR = torch.kron(torch.eye(D), I_not) + MI/2
         if seed:
             self.model.reset_params(seed)
         if issubclass(optim_method, BaseRiemanUnitaryOptimizer):
@@ -91,13 +103,23 @@ class UnitaryTransTs:
         optim = self.optim
 
         # interval = n_iter / 100
-        min_loss = loss([model.matrix()]*loss._n_unitaries).item()
-        ini_loss = min_loss
-        
+        if not self.af:
+            lossupper = loss(torch.eye(model.D, dtype=torch.float64))
+            min_loss = loss([model.matrix()]*loss._n_unitaries).item()
+            ini_loss = min_loss
+        else:
+            X = loss._preprocess(torch.eye(model.D, dtype=torch.float64))
+            X_ = (torch.kron(self.I,self.ML * X) + torch.kron(self.MR * X,self.I))
+            lossupper = loss.forward(X_)
+
+            X = loss._preprocess([model.matrix()]*loss._n_unitaries)
+            X_ = (torch.kron(self.I,self.ML * X) + torch.kron(self.MR * X,self.I))
+            min_loss = loss.forward(X_).item()
+            ini_loss = min_loss
         if not disable_message: 
             print("target loss      : {:.10f}".format(self.target))
             print("initial loss     : {:.10f}".format(ini_loss))
-            print("loss upper bound : {:.10f}\n".format(loss(torch.eye(model.D)))) # n* loss if you take identity matrix as a unitary matrix
+            print("loss upper bound : {:.10f}\n".format(lossupper)) # n* loss if you take identity matrix as a unitary matrix
             print("="*50, "\n")
         # for t in tqdm(range(n_iter)):
         ret = {}
@@ -106,8 +128,14 @@ class UnitaryTransTs:
         max_cnt = 15
         with tqdm(range(n_iter), disable=disable_message) as pbar:
             for t, ch in enumerate(pbar):
-                U = model.matrix()
-                loss_ = loss(U)
+                if not self.af:
+                    U = model.matrix()
+                    loss_ = loss(U)
+                elif self.af:
+                    U = model.matrix()
+                    X = loss._preprocess(U)
+                    X_ = (torch.kron(self.I,self.ML * X) + torch.kron(self.MR * X,self.I))
+                    loss_ = loss.forward(X_)
                 if (abs(loss_.item() - loss_old)<1E-9):
                     loss_same_cnt += 1
                     if loss_same_cnt > max_cnt:
@@ -144,6 +172,7 @@ class UnitaryNonTransTs:
 
     Args:
         optim : Instance of RiemanNonTransUnitaryCG or RiemanNonTransUnitarySGD
+        af : boolean, adding each term before calculating eigenvalue. Currently, only available for 1D chain lattice.
     """
 
     optim : Union[RiemanNonTransUnitaryCG, RiemanNonTransUnitarySGD]
@@ -152,6 +181,7 @@ class UnitaryNonTransTs:
             optim : Union[RiemanNonTransUnitaryCG, RiemanNonTransUnitarySGD],
             seed = None,
             prt = True,
+            af = False,
             **kwargs
             ):
         self.prt = prt
@@ -168,14 +198,24 @@ class UnitaryNonTransTs:
         for loss in self.optim.loss_list:
             self.target += loss.target
 
+        self.af = af
+        if af:
+            print("Turn on adding first settings. Note that available only for 1D chain")
+        D = optim.models[0].D
+        I_not = torch.logical_not(torch.eye(D))
+        self.I = torch.eye(D)
+        MI = torch.kron(I_not, I_not) + torch.eye(D**2)   
+        self.ML = torch.kron(I_not, torch.eye(D)) + MI/2
+        self.MR = torch.kron(torch.eye(D), I_not) + MI/2
+
     def run(self, n_iter, disable_message=False):
         
         optim = self.optim
 
-        min_loss = self.optim.loss_val().item()
+        min_loss = self.optim.loss_val(af=self.af, ML = self.ML, MR = self.MR, I = self.I).item()
         ini_loss = min_loss
         eye = [torch.eye(model.D, dtype=torch.float64) for model in self.optim.models]
-        lub = self.optim.loss_val(eye).item()
+        lub = self.optim.loss_val(eye, af=self.af, ML = self.ML, MR = self.MR, I = self.I).item()
         if not disable_message:
             print("target loss      : {:.10f}".format(self.target))
             print("initial loss     : {:.10f}".format(ini_loss))
@@ -187,7 +227,7 @@ class UnitaryNonTransTs:
         max_cnt = 15
         with tqdm(range(n_iter), disable=disable_message) as pbar:
             for t, ch in enumerate(pbar):
-                loss_ = self.optim.loss_val()
+                loss_ = self.optim.loss_val(af=self.af, ML = self.ML, MR = self.MR, I = self.I)
                 if (abs(loss_.item() - loss_old)<1E-9):
                     loss_same_cnt += 1
                     if loss_same_cnt > max_cnt:

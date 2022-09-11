@@ -34,7 +34,6 @@ class MES(BaseMatirxLoss):
         # print(torch.diag(stoquastic(A, p_def = self.p_def)))
         # print("\n\n")
         A = stoquastic(A, p_def = self.p_def)
-
         return eigvalsh_(A)[-1]
 
 class MES_SL(BaseMatirxLoss):

@@ -67,11 +67,13 @@ class BaseMatirxLoss(abc.ABC):
         """
         if _U is not given by list, repete _U by len(act) times.
         """
-        
+        return self.forward(self._preprocess(U_list))
+
+    def _preprocess(self, U_list : list, original = False):
         if not isinstance(U_list, list):
             U_list = [U_list] * self._n_unitaries
         self._matrix_check(U_list)
-        return self.forward(self._transform(U_list))
+        return self._transform(U_list, original)
 
     @abc.abstractmethod
     def forward(self, A):
