@@ -147,7 +147,7 @@ class UnitaryTransTs:
                 pbar.set_postfix_str("iter={}, loss={:.5f}".format(t,loss_.item()))
                 if (loss_.item() < min_loss or min_loss is None):
                     min_loss = loss_.item()
-                    self.best_model.set_params(model._params, True)
+                    self.best_model.set_params(model._params.detach().clone(), True)
                 optim.zero_grad()
                 loss_.backward()
                 if optim.step():
