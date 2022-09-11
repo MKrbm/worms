@@ -15,4 +15,5 @@ import copy
 from matplotlib import pyplot as plt
 import random
 from nsp.utils.func import *
+from nsp.utils.local2global import *
 from nsp.utils import save_fig

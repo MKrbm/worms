@@ -18,7 +18,7 @@ models = [
     "original",
     "optm1",
     "optm2",
-    "optm2_multi",
+    "optm2_nt",
     "optm3"
 ]
 
@@ -113,24 +113,25 @@ elif lat == "optm2":
     loss_mes = nsp.loss.MES(LH, [D, D], pout = False)
     for _ in range(M):
         seed = randint(0, 2<<32 - 1)
+        seed = 692441695
         torch.manual_seed(seed)
         np.random.seed(seed)
         model = nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64)
-        solver = UnitaryTransTs(RiemanUnitaryCG, model, loss, lr = 0.005, momentum=0.1, af = False)
+        solver = UnitaryTransTs(RiemanUnitaryCG, model, loss, lr = 0.005, momentum=0.1, af = True)
         ret = solver.run(10000, False)
         # if loss_name == "mes":
         #     solver = UnitaryTransTs(RiemanUnitaryCG, model, loss_mes, lr = 0.005, momentum=0.1, af = False)
         #     ret = solver.run(1000, False)
         print(f"res = {ret.fun} / seed = {seed}")
-        best_loss = loss_mes([model.matrix()]*loss._n_unitaries).detach().numpy()
+        best_loss = loss_mes([ret.model.matrix()]*loss._n_unitaries).detach().numpy()
         print(f"loss(mes) : {best_loss}")
 
         if ret.fun < best_fun:
             print(f"\nbest_fun updated : {ret.fun}\n")
             best_fun = ret.fun
-            best_model = model
+            best_model = ret.model
     lh = loss._transform([best_model.matrix()]*loss._n_unitaries, original = True).detach().numpy()
-    best_loss = loss_mes([best_model.matrix()]*loss._n_unitaries).detach().numpy()
+    best_loss = loss([best_model.matrix()]*loss._n_unitaries).detach().numpy()
     print(f"best loss : {best_loss}")
     H = nsp.utils.base_conv.change_order(lh, [D, D])
     save_npy(f"../../array/AKLT/optm2_{loss_name}_J={J[1]:.2}", [H])
@@ -147,7 +148,7 @@ elif lat == "optm2":
     save_npy(f"../../array/AKLT/optm2_{loss_name}_J={J[1]:.2}_af", [LH_2_site, LH_3_site])
 
 
-elif lat == "optm2_multi":
+elif lat == "optm2_nt":
     bonds = [[0, 1], [2, 3]]
     LH = sum_ham(lh/2, bonds, 4, 3)
     LH += sum_ham(lh, [[1, 2]], 4, 3)
@@ -155,21 +156,20 @@ elif lat == "optm2_multi":
     loss = loss_f(LH, [D, D], pout = False)
     for _ in range(M):
         seed = randint(0, 2<<32 - 1)
+        seed = 1561045271
         torch.manual_seed(seed)
         np.random.seed(seed)
         models = [nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64) for _ in range(L)]
-        cg = RiemanNonTransUnitaryCG([(models[i], models[(i+1)%L]) for i in range(L)], [loss]*L, pout = False)
-        solver = UnitaryNonTransTs(cg, af=False)
-        ret = solver.run(2000, False)
+        cg = RiemanNonTransUnitaryCG([(models[i], models[(i+1)%L]) for i in range(L)], [loss]*L, pout = False, lr = 0.01)
+        solver = UnitaryNonTransTs(cg, af=True)
+        ret = solver.run(1000, False)
         print(f"res = {ret.fun} / seed = {seed}")
         if ret.fun < best_fun:
             print(f"\nbest_fun updated : {ret.fun}\n")
             best_fun = ret.fun
-            best_model = models
-    # lh = loss._transform([best_model.matrix()]*loss._n_unitaries, original = True).detach().numpy()
-    # H = stoquastic(LH)
+            best_model = ret.model
     LHs = [loss._transform_kron([best_model[i].matrix(), best_model[(i+1)%L].matrix()], original=True).detach().numpy() for i in range(L)]
-    folder = f"../../array/AKLT/optm2_{L}"
+    folder = f"../../array/AKLT/optm2_nt{L}_{loss_name}_J={J[1]:.2}"
     co = nsp.utils.base_conv.change_order
 
     save_npy(folder, [co(lh, [D, D]) for lh in LHs])
@@ -185,4 +185,4 @@ elif lat == "optm2_multi":
     LH_3s = [co(lh, [D]*3) for lh in LH_3s]
     LH_2s = [co(lh, [D]*2) for lh in LH_2s]
 
-    save_npy(f"../../array/AKLT/optm2_{L}_{loss_name}_af", LH_2s + LH_3s)
+    save_npy(f"../../array/AKLT/optm2_nt{L}_{loss_name}_J={J[1]:.2}_af", LH_2s + LH_3s)
