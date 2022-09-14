@@ -12,7 +12,7 @@ from datetime import datetime
 from random import randint
 
 
-J = [1, 2]
+J = [1, 0.5]
 J = [float(j) for j in J]
 models = [
     "original",
@@ -117,8 +117,8 @@ elif lat == "optm2":
         torch.manual_seed(seed)
         np.random.seed(seed)
         model = nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64)
-        solver = UnitaryTransTs(RiemanUnitaryCG, model, loss, lr = 0.005, momentum=0.1, af = True)
-        ret = solver.run(10000, False)
+        solver = UnitaryTransTs(RiemanUnitarySGD, model, loss, lr = 0.005, momentum=0.1, af = False)
+        ret = solver.run(3000, False)
         # if loss_name == "mes":
         #     solver = UnitaryTransTs(RiemanUnitaryCG, model, loss_mes, lr = 0.005, momentum=0.1, af = False)
         #     ret = solver.run(1000, False)
@@ -161,7 +161,7 @@ elif lat == "optm2_nt":
         np.random.seed(seed)
         models = [nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64) for _ in range(L)]
         cg = RiemanNonTransUnitaryCG([(models[i], models[(i+1)%L]) for i in range(L)], [loss]*L, pout = False, lr = 0.01)
-        solver = UnitaryNonTransTs(cg, af=True)
+        solver = UnitaryNonTransTs(cg, af=False)
         ret = solver.run(1000, False)
         print(f"res = {ret.fun} / seed = {seed}")
         if ret.fun < best_fun:
