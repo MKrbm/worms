@@ -12,7 +12,7 @@ from datetime import datetime
 from random import randint
 
 
-J = [1, 0.5]
+J = [1, 1/3]
 J = [float(j) for j in J]
 models = [
     "original",
@@ -66,7 +66,7 @@ if lat == "original":
 
 elif lat == "optm1":
     H = lh
-    D = 3 ** 2
+    D = 3
     loss = loss_f(H, [D, D], pout = False)
     for _ in range(M):
         seed = datetime.now()
@@ -76,8 +76,9 @@ elif lat == "optm1":
         if ret.fun < best_fun:
             print(f"\nbest_fun : {ret.fun}\n")
             best_fun = ret.fun
-            best_model = model
-    H = nsp.utils.base_conv.change_order(H, [D, D])
+            best_model = ret.model
+    lh = loss._transform([best_model.matrix()]*loss._n_unitaries, original = True).detach().numpy()
+    H = nsp.utils.base_conv.change_order(lh, [D, D])
     save_npy(f"../../array/AKLT/optm1", [H])
 
 elif lat == "optm3":
@@ -113,7 +114,7 @@ elif lat == "optm2":
     loss_mes = nsp.loss.MES(LH, [D, D], pout = False)
     for _ in range(M):
         seed = randint(0, 2<<32 - 1)
-        seed = 692441695
+        # seed = 692441695
         torch.manual_seed(seed)
         np.random.seed(seed)
         model = nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64)
