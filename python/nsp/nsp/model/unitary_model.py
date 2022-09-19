@@ -101,6 +101,11 @@ class BaseMatrixGenerator(abc.ABC, torch.nn.Module):
             self.set_params(params)
         return self._get_matrix()
 
+    def numpy(self, params = None):
+        u = self.matrix(params)
+        return u.detach().numpy()
+        
+
     def reset_params(self, seed = None):
         if seed:
             torch.manual_seed(seed)

@@ -95,20 +95,22 @@ class BaseRiemanNonTransUnitaryOptimizer(abc.ABC):
                     loss_ += loss([models[a] for a in acts])
                 return loss_
         else:
-            X = []
-            if models is None:
-                models = self.models
-                for acts, loss in zip(self.models_act, self.loss_list):
-                    X.append(loss._preprocess([models[a].matrix() for a in acts]))
+            raise NotImplementedError("Implemented for the conference but this needs update")
+            # X = []
+            # if models is None:
+            #     models = self.models
+            #     for acts, loss in zip(self.models_act, self.loss_list):
+            #         X.append(loss._preprocess([models[a].matrix() for a in acts]))
 
-            else:
-                for acts, loss in zip(self.models_act, self.loss_list):
-                    X.append(loss._preprocess([models[a] for a in acts]))
-            X_ = [(torch.kron(I,ML * X[(i+1)%len(X)]) + torch.kron(MR * X[i],I)) for i in range(len(X))]
-            loss_ = torch.zeros(1, dtype=torch.float64)
-            for x_ in X_:
-                loss_ += loss.forward(x_)
+            # else:
+            #     for acts, loss in zip(self.models_act, self.loss_list):
+            #         X.append(loss._preprocess([models[a] for a in acts]))
+            # X_ = [(torch.kron(I,ML * X[(i+1)%len(X)]) + torch.kron(MR * X[i],I)) for i in range(len(X))]
+            # loss_ = torch.zeros(1, dtype=torch.float64)
+            # for x_ in X_:
+            #     loss_ += loss.forward(x_)
             return loss_
+            
     def _riemannian_grad(self, params, model:UnitaryRiemanGenerator, translated=True):
         """
         The geodesic emanating from W(U(D) embeded in euclid space) in the direction \tilde{S} = S W is given by
@@ -258,14 +260,9 @@ class RiemanNonTransUnitarySGD(BaseRiemanNonTransUnitaryOptimizer):
 class RiemanNonTransUnitaryCG(BaseRiemanNonTransUnitaryOptimizer):
 
     def __init__(self,
-                models_act : List[Tuple[UnitaryRiemanGenerator]], loss_list : List[BaseMatirxLoss], 
-                momentum=0, 
-                lr = 0,
-                weight_decay=0, 
-                grad_tol = 1e-8, 
-                *, 
-                pout = False):
-        super().__init__(models_act, loss_list, lr = 0.01)
+                models_act : List[Tuple[UnitaryRiemanGenerator]], loss_list : List[BaseMatirxLoss],
+                *args, **kwargs):
+        super().__init__(models_act, loss_list, *args, **kwargs)
 
     def _golden(self, grad_U_list, delta=0.001):
         
