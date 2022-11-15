@@ -60,6 +60,31 @@ def l2nl(ham, L, bond = [], sps = 2, thres=1e-10):
         return _l2nl(ham, L, bond , sps, thres)
     
 def sum_ham(h, bonds, L, sps, stoquastic_=False):
+    if not isinstance(h, sparse._csr.csr_matrix):
+        raise TypeError("h is not sparse matrix")
+    h = sparse.kron(h, sparse.eye(int((sps**L)/h.shape[0])))
+    ori_shape = h.shape
+    # H = np.zeros_like(h)
+    H = sparse.csr_matrix(h.shape, dtype = np.float64)
+    h = h.reshape(L*2*(sps,))
+    for bond in bonds:
+        trans = np.arange(L)
+        _trans = [i for i in range(L)]
+        for i, b in enumerate(bond):
+            trans[b] = i
+        l = len(bond)
+        for i in range(L):
+            if i not in bond:
+                trans[i] = l
+                l+=1
+        trans = np.concatenate([trans, trans+L])
+        H += h.transpose(trans).reshape(ori_shape)
+    if stoquastic_:
+        return stoquastic(H)
+    return H
+
+
+def sum_ham_sparse(h, bonds, L, sps, stoquastic_=False):
     h = np.kron(h, np.eye(int((sps**L)/h.shape[0])))
     ori_shape = h.shape
     H = np.zeros_like(h)
