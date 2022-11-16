@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
   Config cfg;
   cfg.setAutoConvert(true);
 
-  try { cfg.readFile("/home/user/project/config/model.cfg");}
+  try { cfg.readFile("/home/project/config/model.cfg");}
   catch(const FileIOException &fioex)
   {
     cerr << "I/O error while reading file." << endl;

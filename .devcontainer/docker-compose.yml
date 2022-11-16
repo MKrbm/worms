@@ -3,9 +3,10 @@ version: '3.4'
 services:
   main:
     container_name: worms
-    build:
-      context: .
-      dockerfile: ./Dockerfile
+    image: kei0709/ubuntu22.04-cpp
+    # build:
+    #   context: .
+    #   dockerfile: ./Dockerfile
       # args:
       #   VARIANT: ubuntu-22.04
       #   USERNAME: user
