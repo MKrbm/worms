@@ -12,7 +12,7 @@ from datetime import datetime
 from random import randint
 
 
-J = [1, 1/3]
+J = [1, 2]
 J = [float(j) for j in J]
 models = [
     "original",
@@ -28,16 +28,18 @@ parser = argparse.ArgumentParser(description='Optimize majumdar gosh')
 parser.add_argument('-m','--model', help='lattice (model) Name', required=True, choices=models)
 parser.add_argument('-loss','--loss', help='loss_methods', choices=loss, nargs='?', const='all',default="mes")
 parser.add_argument('-L','--num_unit_cells', help='# of independent unit cell', type = int, default = 2)
+parser.add_argument('-af','--add_first', help='adding first', action='store_true')
 parser.add_argument('-M','--num_iter', help='# of iterations', type = int, default = 10)
-args = vars(parser.parse_args())
-L = args["num_unit_cells"]
-M = args["num_iter"]
-loss_name = args["loss"]
+args = parser.parse_args()
+L = args.num_unit_cells
+M = args.num_iter
+loss_name = args.loss
+af = args.add_first
 if (loss_name == "mes"):
     loss_f = nsp.loss.MES
 elif (loss_name == "l1"):
     loss_f = nsp.loss.L1
-lat = args["model"]
+lat = args.model
 
 Sz = np.zeros([3,3])
 Sz[0,0] = 1
@@ -79,7 +81,7 @@ elif lat == "optm1":
             best_model = ret.model
     lh = loss._transform([best_model.matrix()]*loss._n_unitaries, original = True).detach().numpy()
     H = nsp.utils.base_conv.change_order(lh, [D, D])
-    save_npy(f"../../array/AKLT/optm1", [H])
+    save_npy(f"../../array/AKLT/optm_J={J[1]:.2}", [H])
 
 elif lat == "optm3":
     bonds = [[0, 1], [1, 2], [3, 4], [4, 5]]
@@ -92,7 +94,7 @@ elif lat == "optm3":
         torch.manual_seed(seed)
         np.random.seed(seed)
         model = nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64)
-        solver = UnitaryTransTs(RiemanUnitarySGD, model, loss, lr = 0.001, momentum=0.1)
+        solver = UnitaryTransTs(RiemanUnitaryCG, model, loss, lr = 0.001, momentum=0.1)
         ret = solver.run(10000, False)
         print(f"res = {ret.fun} / seed = {seed}")
         if ret.fun < best_fun:
@@ -102,7 +104,7 @@ elif lat == "optm3":
     lh = loss._transform([best_model.matrix()]*loss._n_unitaries, original = True).detach().numpy()
     H = nsp.utils.base_conv.change_order(lh, [D, D])
     # H = stoquastic(LH)
-    save_npy(f"../../array/AKLT/optm3_{loss_name}", [H])
+    # save_npy(f"../../array/AKLT/optm3_{loss_name}", [H])
 
 
 elif lat == "optm2":
@@ -118,7 +120,7 @@ elif lat == "optm2":
         torch.manual_seed(seed)
         np.random.seed(seed)
         model = nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64)
-        solver = UnitaryTransTs(RiemanUnitarySGD, model, loss, lr = 0.005, momentum=0.1, af = False)
+        solver = UnitaryTransTs(RiemanUnitarySGD, model, loss, lr = 0.001, momentum=0.1, af = af)
         ret = solver.run(3000, False)
         # if loss_name == "mes":
         #     solver = UnitaryTransTs(RiemanUnitaryCG, model, loss_mes, lr = 0.005, momentum=0.1, af = False)

@@ -1,44 +1,36 @@
 # https://github.com/microsoft/vscode-dev-containers/tree/v0.209.6/containers/cpp/.devcontainer/base.Dockerfile
 
-ARG VARIANT="ubuntu-22.04"
-FROM mcr.microsoft.com/vscode/devcontainers/cpp:0-${VARIANT}
-ARG USERNAME=user
-ARG GROUPNAME=user
-ARG PY_VERSION="3.9"
-# ARG UID=1001
-# ARG GID=1001
-RUN usermod -l user vscode
-RUN groupmod -n user vscode
-RUN echo "root:root" | chpasswd
-RUN echo "$USERNAME:$USERNAME" | chpasswd
-RUN usermod -d /home/$USERNAME -m $USERNAME
-RUN usermod -aG sudo user 
-WORKDIR /home/${USERNAME}/project
-RUN git config --global --add safe.directory /home/${USERNAME}/project
+FROM ubuntu:22.04 as base_ubuntu
 
+
+ENV TZ=Asia/Tokyo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+WORKDIR /home/project
+RUN apt-get update -y && apt-get -y install git vim software-properties-common htop cmake openssh-server
+COPY terminal-colors-branch.sh /tmp/
+RUN cat /tmp/terminal-colors-branch.sh >> ~/.bashrc
 # # # install some utilities
-RUN apt-get update -y && apt-get -y install software-properties-common htop cmake\
-    openssh-server cmake-curses-gui &&\
-    add-apt-repository ppa:deadsnakes/ppa
+RUN apt-get update -y && apt-get -y install software-properties-common &&\
+  add-apt-repository ppa:deadsnakes/ppa
   
 
 # n* install python 3.9
+ARG PY_VERSION="3.9"
+RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get -y install python${PY_VERSION}-distutils python${PY_VERSION}-dev python${PY_VERSION} 
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${PY_VERSION} 1 && update-alternatives --install /usr/bin/python python /usr/bin/python${PY_VERSION} 1 && \
     apt-get -y install python3-pip
 
-# ADD requirements.txt requirements.txt
-# RUN pip3 install -r requirements.txt
-# RUN rm -rf environment.yml
-# n* installed python
-
-RUN apt-get update -y && apt-get -y install 
-
+# n* install c++
+RUN apt-get update -y && apt-get -y install htop build-essential cmake clang libssl-dev vim openssh-server cmake-curses-gui git
 
 # n* install boost for c++
-RUN sudo apt-get -y install libboost-dev
+RUN apt-get -y install libboost-dev
 
-
+# n* git setup
+RUN git config --global --add safe.directory /home/project
+RUN git config --global core.autocrlf input
 
 # n* install conda
 # ENV PATH="/home/$USERNAME/miniconda3/bin:$PATH"
@@ -70,8 +62,3 @@ RUN sudo apt-get -y install libboost-dev
 
 
 
-
-USER $USERNAME
-RUN git config --global --add safe.directory /home/user/project
-RUN git config --global core.autocrlf input
-WORKDIR /home/${USERNAME}/project
