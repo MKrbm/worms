@@ -19,11 +19,9 @@ services:
       - type: bind
         source: ~/.ssh
         target: /root/.ssh
-        read_only: true
       - type: bind
         source: ~/.gitconfig
         target: /etc/gitconfig
-        read_only: true
     # ports:
       # - "8884:8888" #set by yourself
     cap_add: 
