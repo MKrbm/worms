@@ -123,4 +123,7 @@
     "C_Cpp.intelliSenseEngineFallback": "Enabled",
     "task.saveBeforeRun": "never",
     "cmake.saveBeforeBuild": false,
+    "files.eol": "\n",
+    "cmake.skipConfigureIfCachePresent": true,
+    "cmake.configureOnEdit": false,
 }

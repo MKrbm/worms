@@ -5,7 +5,7 @@ import sys
 sys.path.insert(0, "../nsp") 
 from ..save_npy import *
 
-from nsp.utils.func import *
+from nsp.utils import *
 from nsp.utils.print import beauty_array
 import argparse
 

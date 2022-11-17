@@ -3,10 +3,11 @@ version: '3.4'
 services:
   main:
     container_name: worms
-    image: kei0709/ubuntu22.04-cpp
-    # build:
-    #   context: .
-    #   dockerfile: ./Dockerfile
+    image: kei0709/ubuntu22.04-cpp:amd64
+    # build: .
+    command: sleep infinity
+      # context: .
+      # dockerfile: ./Dockerfile
       # args:
       #   VARIANT: ubuntu-22.04
       #   USERNAME: user
@@ -23,8 +24,8 @@ services:
         source: ~/.gitconfig
         target: /etc/gitconfig
         read_only: true
-    ports:
-      - "8884:8888" #set by yourself
+    # ports:
+      # - "8884:8888" #set by yourself
     cap_add: 
       - SYS_PTRACE
     privileged: true
