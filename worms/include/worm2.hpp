@@ -396,6 +396,7 @@ class worm{
         dir = nindex/(size);
         site = opstate.bond(nindex%size);
         fl = 0;
+        cout << "zw" << endl;
       }else{
         tmp--;
         nindex = tmp/(sps_sites[site] - 1);

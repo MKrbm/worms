@@ -112,7 +112,8 @@
       "stop_token": "cpp",
       "cfenv": "cpp",
       "typeindex": "cpp",
-      "*.h++": "cpp"
+      "*.h++": "cpp",
+      "*.traits": "cpp"
     },
     // "python.defaultInterpreterPath": "/home/keisuke/miniconda3/envs/quspin/bin/python",
     "python.analysis.extraPaths": [

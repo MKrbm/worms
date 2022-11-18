@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   main:
-    container_name: worms
+    # container_name: worms
     image: kei0709/ubuntu22.04-cpp:amd64
     # build: .
     command: sleep infinity
@@ -32,3 +32,6 @@ services:
     stdin_open: true
     tty: true
     working_dir: /home/project
+    environment:
+      DOCKER_BUILDKIT: 1
+      COMPOSE_DOCKER_CLI_BUILD: 1
