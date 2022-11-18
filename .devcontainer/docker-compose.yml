@@ -2,28 +2,23 @@ version: '3.4'
 
 services:
   main:
-    # container_name: worms
+    container_name: worms
     image: kei0709/ubuntu22.04-cpp:amd64
-    # build: .
-    command: sleep infinity
-      # context: .
-      # dockerfile: ./Dockerfile
-      # args:
-      #   VARIANT: ubuntu-22.04
-      #   USERNAME: user
-      #   GROUPNAME: user
+    # build:
+    #   context: .
+    #   dockerfile: ./Dockerfile
     volumes:
-      - source: ../
-        target: /home/project
-        type: bind
+      - ../:/home/user/project:delegated
       - type: bind
         source: ~/.ssh
-        target: /root/.ssh
+        target: /home/user/.ssh
+        read_only: true
       - type: bind
         source: ~/.gitconfig
         target: /etc/gitconfig
+        read_only: true
     # ports:
-      # - "8884:8888" #set by yourself
+    #   - "8881:8888" #set by yourself
     cap_add: 
       - SYS_PTRACE
     privileged: true
@@ -31,7 +26,4 @@ services:
       - seccomp:unconfined
     stdin_open: true
     tty: true
-    working_dir: /home/project
-    environment:
-      DOCKER_BUILDKIT: 1
-      COMPOSE_DOCKER_CLI_BUILD: 1
+    working_dir: /home/user/project

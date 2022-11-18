@@ -52,7 +52,7 @@ int main(int argc, char **argv)
   // Read the file. If there is an error, report it and exit.
   try
   {
-    cfg.readFile("/home/project/test_/example.cfg");
+    cfg.readFile("/home/user/project/test_/example.cfg");
   }
   catch(const FileIOException &fioex)
   {

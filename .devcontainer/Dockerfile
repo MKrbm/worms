@@ -1,16 +1,28 @@
+# https://github.com/microsoft/vscode-dev-containers/tree/v0.209.6/containers/cpp/.devcontainer/base.Dockerfile
+
 FROM ubuntu:22.04 as base
-ARG TARGETARCH
-RUN echo "I'm building for $TARGETARCH"
+
+# setup non-root user. If you use remote-container, you don't need to adjust this UID.
+ARG USERNAME=user
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME
+
+RUN echo "root:root" | chpasswd
+RUN echo "$USERNAME:$USERNAME" | chpasswd
+# change time-zone
 ENV TZ=Asia/Tokyo
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-RUN apt-get update -y && apt-get -y install git vim software-properties-common htop cmake openssh-server
+# change terminal colors
 COPY terminal-colors-branch.sh /tmp/
 RUN cat /tmp/terminal-colors-branch.sh >> ~/.bashrc
-# # # install some utilities
-RUN apt-get update -y && apt-get -y install software-properties-common &&\
-  add-apt-repository ppa:deadsnakes/ppa
-  
+
+RUN apt-get update -y && apt-get -y install git vim software-properties-common htop cmake openssh-server sudo
+
+RUN adduser $USERNAME sudo
 
 # n* install python 3.9
 ARG PY_VERSION="3.9"
@@ -26,30 +38,38 @@ RUN apt-get update -y && apt-get -y install htop build-essential cmake clang lib
 RUN apt-get -y install libboost-dev
 
 # n* git setup
-RUN git config --global --add safe.directory /home/project
+RUN git config --global --add safe.directory /home/${USERNAME}/project
 RUN git config --global core.autocrlf input
 
-ARG CONDA_VER=latest
+USER $USERNAME
 
+# change terminal colors
+RUN cat /tmp/terminal-colors-branch.sh >> ~/.bashrc
+
+WORKDIR /home/${USERNAME}
+ARG CONDA_VER=latest
 
 # x86
 FROM base as base-amd64
 ARG OS_TYPE=x86_64
-RUN curl -LO "http://repo.continuum.io/miniconda/Miniconda3-${CONDA_VER}-Linux-${OS_TYPE}.sh"
-RUN bash Miniconda3-${CONDA_VER}-Linux-${OS_TYPE}.sh -p /miniconda -b
-RUN rm Miniconda3-${CONDA_VER}-Linux-${OS_TYPE}.sh
-ENV PATH=/miniconda/bin:${PATH}
-RUN conda update -y conda
-
 
 # aarch64
 FROM base as base-arm64
 ARG OS_TYPE=aarch64
-RUN curl -LO "http://repo.continuum.io/miniconda/Miniconda3-${CONDA_VER}-Linux-${OS_TYPE}.sh"
-RUN bash Miniconda3-${CONDA_VER}-Linux-${OS_TYPE}.sh -p /miniconda -b
-RUN rm Miniconda3-${CONDA_VER}-Linux-${OS_TYPE}.sh
-ENV PATH=/miniconda/bin:${PATH}
-RUN conda update -y conda
 
 FROM base-${TARGETARCH} as target
-WORKDIR /home/project
+
+# install conda
+ARG CONDA=Miniconda3-${CONDA_VER}-Linux-${OS_TYPE}.sh
+RUN wget -P /home/${USERNAME} \
+    http://repo.continuum.io/miniconda/${CONDA} \
+    && mkdir /home/${USERNAME}/.conda \
+    && bash ${CONDA} -b\
+    # && ./home/${USERNAME}/anaconda3/bin/conda init
+    && rm -f ${CONDA}
+ENV PATH=/home/${USERNAME}/miniconda3/bin:$PATH
+ENV PATH=/home/${USERNAME}/miniconda3/condabin:$PATH
+RUN conda init 
+RUN conda update -y conda
+
+WORKDIR /home/${USERNAME}/project
