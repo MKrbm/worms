@@ -37,7 +37,7 @@ SySy = np.kron(Sy,Sy).real.astype(np.float64)
 
 lh = SzSz + SxSx + SySy
 
-lh = -lh # use minus of local hamiltonian for monte-carlo (exp(-beta H ))
+# lh = -lh # use minus of local hamiltonian for monte-carlo (exp(-beta H ))
 
 if lat == "original":
     H = lh
