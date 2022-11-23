@@ -1,63 +1,128 @@
-// #define RANDOM_SEED 0
-#include "exec.hpp"
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <libconfig.h++>
+#include <dirent.h>
+#include <filesystem>
+#include <unistd.h>
+#include <automodel.hpp>
+#include <exec2.hpp>
+#include <options.hpp>
+#include <argparse.hpp>
+#include <funcs.hpp>
+using namespace std;
+using namespace libconfig;
 
-// #define DEBUG 1
-#define MESTIME 1
-
-
-#if MESTIME
-  using std::chrono::high_resolution_clock;
-  using std::chrono::duration_cast;
-  using std::chrono::duration;
-  using std::chrono::milliseconds;
-  using std::chrono::microseconds;
-
-#endif
-using std::cout;
-using std::endl;
-
-
-int main(int argc, char* argv[])
-{
+using namespace std;
 
 
-  std::vector<std::string> path_list = {"../python/array/MG_ori_bond.npy"};
-  size_t L = 6;
-  double sft = 0;
-  bool pom = 1;
-  typedef bcl::st2013 bcl_t;
-  model::MG<bcl_t> spin_model(path_list, L, sft, pom);
-  lattice::graph lattice = spin_model.lattice;
-  lattice.print();
+int main(int argc, char **argv) {
+  char tmp[256];
+  auto _ = getcwd(tmp, 256);
+  cout << tmp << endl;
 
-  // options opt(argc, argv, 16, 1, 1.0, "heisernberg");
-  // if (!opt.valid) std::exit(-1);
-  // int L = opt.L;
-  // int dim = opt.dim;
-  // double J = 1;
-  // double h = opt.H;
-  // double J1 = opt.J1;
-  // double J2 = opt.J2;
-  // std::string model_name = opt.MN;
+  Config cfg;
+  cfg.setAutoConvert(true);
+
+  try { cfg.readFile("/home/user/project/config/model.cfg");}
+  catch(const FileIOException &fioex)
+  {
+    cerr << "I/O error while reading file." << endl;
+    return(EXIT_FAILURE);
+  }
+  catch(const ParseException &px)
+  {
+    cerr << "error while parsing items" << endl;
+    cerr << "Maybe some list include multiple types (e.g. = [1.0, 1, 1])" << endl;
+    return(EXIT_FAILURE);
+  }
+
+  const Setting& root = cfg.getRoot();
+  string model_name = root["model"];
+  cout << "model name is \t : \t" << model_name << endl;
+  const Setting& mcfg = root["models"][model_name];
+  const Setting& shape_cfg = mcfg.lookup("length");
+  const Setting& params_cfg = mcfg.lookup("params");
+  const Setting& types_cfg = mcfg.lookup("types");
+  const Setting& dofs_cfg = mcfg.lookup("dofs");
 
 
+  double shift;
+  string file, basis, cell, ham_path;
+  bool repeat; // true if repeat params and types.
+  bool zero_worm;
+  vector<size_t> shapes;
+  vector<int> types;
+  vector<double> params;
+  vector<size_t> dofs;
 
-  // std::cout << "main.cpp no longer available" << std::endl;
+  for (int i=0; i<shape_cfg.getLength(); i++) {int tmp = shape_cfg[i]; shapes.push_back(tmp);}
+  for (int i=0; i<dofs_cfg.getLength(); i++) {dofs.push_back((size_t)dofs_cfg[i]);}
+  for (int i=0; i<params_cfg.getLength(); i++) {params.push_back((float)params_cfg[i]);}
+  for (int i=0; i<types_cfg.getLength(); i++) {types.push_back(types_cfg[i]);}
 
-  // if (model_name == "heisernberg"){
-  //   model::heisenberg spin_model(L,h,dim);
-  //   exe_worm(spin_model, &opt);
-  // }else if (model_name == "shastry"){
-  //   model::Shastry spin_model(L, J1, J2);
-  //   exe_worm(spin_model, &opt);
-  // }else if (model_name == "shastry_v2"){
-  //   model::Shastry_2 spin_model(L, J1, J2);
-  //   exe_worm(spin_model, &opt);
-  // }else if (model_name == "test1"){
-  //   model::test spin_model(L);
-  //   exe_worm(spin_model, &opt);
-  // }else{
-  //   std::cout << model_name << " is not avilable yet" << std::endl;
-  // }
 
+  file = (string) mcfg.lookup("file").c_str();
+  basis = (string) mcfg.lookup("basis").c_str();
+  cell = (string) mcfg.lookup("cell").c_str();
+  ham_path = (string) mcfg.lookup("ham_path").c_str();
+  repeat = (bool) mcfg.lookup("repeat");
+  shift = (double) mcfg.lookup("shift");
+  zero_worm = (bool) mcfg.lookup("zero_worm");
+
+  cout << file << endl;
+
+  //* settings for monte-carlo
+  const Setting& settings = root["mc_settings"];
+
+  size_t sweeps, therms, cutoff_l;
+  double T = 0;
+  bool fix_wdensity = false;
+  try
+  {
+    const Setting& config = settings["config"];
+    sweeps = (long) config.lookup("sweeps");
+    therms = (long) config.lookup("therms");
+    cutoff_l = (long) config.lookup("cutoff_length");
+    T = (double) config.lookup("temperature");
+    fix_wdensity = config.lookup("fix_wdensity");
+
+  }
+  catch(...)
+  {
+    cout << "I/O error while reading mc_settings.default settings" << endl;
+    cout << "read config file from default instead" << endl;
+    const Setting& config = settings["default"];
+    sweeps = (long) config.lookup("sweeps");
+    therms = (long) config.lookup("therms");
+    cutoff_l = (long) config.lookup("cutoff_length");
+    T = (double) config.lookup("temperature");
+    fix_wdensity = config.lookup("fix_wdensity");
+  }
+
+  //* argparse  
+  argparse::ArgumentParser parser("test", "argparse test program", "Apache License 2.0");
+
+  parser.addArgument({"-L1"}, "set shape[0]");
+  parser.addArgument({"-L2"}, "set shape[1]");
+  parser.addArgument({"-L3"}, "set shape[2]");
+  parser.addArgument({"-T"}, "set temperature");
+
+  auto args = parser.parseArgs(argc, argv);
+
+  shapes[0] = args.safeGet<size_t>("L1", shapes[0]);
+  shapes[1] = args.safeGet<size_t>("L2", shapes[1]);
+  shapes[2] = args.safeGet<size_t>("L3", shapes[2]);
+  T = args.safeGet<double>("T", T);
+
+  cout << "zero_wom : " << (zero_worm ? "YES" : "NO") << endl;
+  cout << "repeat : " << (repeat ? "YES" : "NO") << endl;
+
+
+  //* finish argparse
+
+  model::base_lattice lat(basis, cell, shapes, file, true);
+  model::base_model<bcl::st2013> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat);
+  cout << lat.bonds << endl;
+  exe_worm(spin, T, sweeps, therms, cutoff_l, fix_wdensity);  
 }

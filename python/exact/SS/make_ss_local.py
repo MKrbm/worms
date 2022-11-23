@@ -1,16 +1,19 @@
 import numpy as np
-from scipy import sparse
-import os
+import argparse
 import sys
-sys.path.insert(0, "../") 
-sys.path.insert(0, "../../nsp") 
+sys.path.append('../../nsp')
+from nsp.utils.base_conv import *
+from header import *
 from nsp.utils.func import *
+from nsp.utils.local2global import *
 from nsp.utils.print import beauty_array
+sys.path.insert(0, "..") 
 from save_npy import *
 import argparse
 
 lattice = [
     "original",
+    "dimer_original"
 ]
 
 loss = ["mes", "l1"]
@@ -37,12 +40,21 @@ SySy = np.kron(Sy,Sy).real.astype(np.float64)
 
 lh = SzSz + SxSx + SySy
 
-# lh = -lh # use minus of local hamiltonian for monte-carlo (exp(-beta H ))
+lh = -lh # use minus of local hamiltonian for monte-carlo (exp(-beta H ))
 
 if lat == "original":
     H = lh
-    path = ["../../array/J1J2/original"]
+    path = ["../../array/SS/original"]
     save_npy(path[0], [H, H])
+
+if lat == "dimer_original":
+    # dimer basis
+    H1 = sum_ham(lh, [[1,2],[1,3]], 4, 2)
+    H1 += sum_ham(lh/4, [[0,1],[2,3]], 4, 2)
+
+    H2 = sum_ham(lh, [[0,2],[0,3]], 4, 2)
+    H2 += sum_ham(lh/4, [[0,1],[2,3]], 4, 2)
+    save_npy("../../array/SS/dimer_original", [H1, H2])
 
 
 

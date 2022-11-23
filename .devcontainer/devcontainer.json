@@ -6,7 +6,8 @@
 		"docker-compose.yml"
 	],
 	"service": "main",
-	"workspaceFolder": "/home/project",
+	"workspaceFolder": "/home/user/project",
+  "remoteUser": "user",
 	"extensions": [
     "eamodio.gitlens",
 		"ms-vscode.cpptools",
