@@ -24,6 +24,19 @@ int main(int argc, char **argv) {
   Config cfg;
   cfg.setAutoConvert(true);
 
+  //* argparse  
+  argparse::ArgumentParser parser("test", "argparse test program", "Apache License 2.0");
+
+  parser.addArgument({"-L1"}, "set shape[0]");
+  parser.addArgument({"-L2"}, "set shape[1]");
+  parser.addArgument({"-L3"}, "set shape[2]");
+  parser.addArgument({"-J1"}, "set params[0]");
+  parser.addArgument({"-T"}, "set temperature");
+  parser.addArgument({"-m"}, "model name");
+  parser.addArgument({"-ham"}, "path to hamiltonian");
+  auto args = parser.parseArgs(argc, argv);
+
+
   try { cfg.readFile("/home/user/project/config/model.cfg");}
   catch(const FileIOException &fioex)
   {
@@ -39,6 +52,8 @@ int main(int argc, char **argv) {
 
   const Setting& root = cfg.getRoot();
   string model_name = root["model"];
+  bool print_lat = (bool) root["print_lattice"];
+  model_name = args.safeGet<std::string>("m", model_name);
   cout << "model name is \t : \t" << model_name << endl;
   const Setting& mcfg = root["models"][model_name];
   const Setting& shape_cfg = mcfg.lookup("length");
@@ -100,29 +115,30 @@ int main(int argc, char **argv) {
     fix_wdensity = config.lookup("fix_wdensity");
   }
 
-  //* argparse  
-  argparse::ArgumentParser parser("test", "argparse test program", "Apache License 2.0");
 
-  parser.addArgument({"-L1"}, "set shape[0]");
-  parser.addArgument({"-L2"}, "set shape[1]");
-  parser.addArgument({"-L3"}, "set shape[2]");
-  parser.addArgument({"-T"}, "set temperature");
 
-  auto args = parser.parseArgs(argc, argv);
+
+  // parser
+
 
   shapes[0] = args.safeGet<size_t>("L1", shapes[0]);
   shapes[1] = args.safeGet<size_t>("L2", shapes[1]);
   shapes[2] = args.safeGet<size_t>("L3", shapes[2]);
   T = args.safeGet<double>("T", T);
+  T = args.safeGet<double>("T", T);
+  params[0] = args.safeGet<float>("J1",  params[0]);
+  ham_path = args.safeGet<std::string>("ham", ham_path);
+
 
   cout << "zero_wom : " << (zero_worm ? "YES" : "NO") << endl;
   cout << "repeat : " << (repeat ? "YES" : "NO") << endl;
+  cout << "params : " << params << endl;
 
 
   //* finish argparse
 
   model::base_lattice lat(basis, cell, shapes, file, true);
   model::base_model<bcl::st2013> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat);
-  cout << lat.bonds << endl;
+  // cout << lat.bonds << endl;
   exe_worm(spin, T, sweeps, therms, cutoff_l, fix_wdensity);  
 }

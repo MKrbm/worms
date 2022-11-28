@@ -233,4 +233,10 @@
   <EDGE type="1"><SOURCE vertex="2"/><TARGET vertex="1" offset="1 0"/></EDGE>
 </UNITCELL>
 
+<UNITCELL name="SS3" dimension="2">
+  <VERTEX><COORDINATE>0 0</COORDINATE></VERTEX>
+  <EDGE type="0"><SOURCE vertex="1"/><TARGET vertex="1" offset="1 0"/></EDGE>
+  <EDGE type="1"><SOURCE vertex="1"/><TARGET vertex="1" offset="0 1"/></EDGE>
+</UNITCELL>
+
 </LATTICES>
