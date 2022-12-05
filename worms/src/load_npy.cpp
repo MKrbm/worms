@@ -43,6 +43,9 @@ void get_npy_path(std::string dir_path, std::vector<std::string>& npy_path){
       }
       closedir(di);
   }else{
-    std::cout << "cannot open folder : " << dir_path << std::endl;
+    std::string err = "cannot open folder : ";
+    err += dir_path;
+    throw std::runtime_error(err);
+    // std::cout << "cannot open folder : " << dir_path << std::endl;
   }
 }
