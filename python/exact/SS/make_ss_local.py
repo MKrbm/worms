@@ -84,13 +84,13 @@ if lat == "dimer_original":
     save_npy(f"../../array/SS/dimer_original_J={J}", [H1, H2])
 
 if lat == "dimer_basis":
-    # dimer lattice and dimer basis
+    #* dimer lattice and single-triplet basis
     H1 = sum_ham(J[0]*lh, [[1,2],[1,3]], 4, 2)
     H1 += sum_ham(J[1]*lh/4, [[0,1],[2,3]], 4, 2)
 
     H2 = sum_ham(J[0]*lh, [[0,2],[0,3]], 4, 2)
     H2 += sum_ham(J[1]*lh/4, [[0,1],[2,3]], 4, 2)
-    save_npy(f"../../array/SS/dimer_basis_J_{J}", [U.T@H1@U, U.T@H2@U])
+    save_npy(f"../../array/SS/dimer_basis_J_{J}", [U.T@H1@U, U.T@H2@U]) 
 
 if lat == "dimer_optm":
     # dimer lattice and dimer basis
