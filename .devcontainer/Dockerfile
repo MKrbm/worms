@@ -1,4 +1,5 @@
 FROM kei0709/ubuntu22.04-cpp:${TARGETARCH}
+# FROM --platform=linux/arm64 ubuntu:latest
 
 
 # ARG ARC=amd64

@@ -8,7 +8,8 @@ services:
     # environment:
     #   DOCKER_BUILDKIT: 1
     #   COMPOSE_DOCKER_CLI_BUILD: 1
-    # image: kei0709/ubuntu22.04-cpp:${TAG}
+    # image: sonoisa/deep-learning-coding:pytorch1.12.0_tensorflow2.9.1
+    # image: ubuntu:jammy-20221101
     build:
       context: .
       dockerfile: ./Dockerfile
