@@ -3,8 +3,11 @@ execute_dir := /home/user/project/execute
 python_dir := /home/user/project/python/reduce_nsp
 local_ham_dir := ${python_dir}/make_local
 
+#* for log files
 LOGPATH = /home/user/project/python/reduce_nsp/make_local/logs
 LOGFILE = $(LOGPATH)/$(shell date --iso=seconds)
+
+
 
 #* for shastry-surtherland
 M = 120
@@ -22,9 +25,9 @@ endif
 SSOutputDimerOptim = ${local_ham_dir}/SS/array/dimer_optim_J_[${J},1]_M_${M}
 SSOutputSinglet = ${local_ham_dir}/SS/array/singlet_J_[${J},1]
 SSOutputOriginal = ${local_ham_dir}/SS/array/original
-SSResDimerOptim = ${local_ham_dir}/SS/out/dimer_optim_L_[${L},${L}]_J_[${J},1]_T_${T}_N_${N}_M_${M}
-SSResSinglet = ${local_ham_dir}/SS/out/singlet_L_[${L},${L}]_J_[${J},1]_T_${T}_N_${N}
-SSResOriginal = ${local_ham_dir}/SS/out/original_L_[${L},${L}]_J_[${J},1]_T_${T}_N_${N}
+SSResDimerOptim = ${local_ham_dir}/out/SS/dimer_optim_L_[${L},${L}]_J_[${J},1]_T_${T}_N_${N}_M_${M}
+SSResSinglet = ${local_ham_dir}/out/SS/singlet_L_[${L},${L}]_J_[${J},1]_T_${T}_N_${N}
+SSResOriginal = ${local_ham_dir}/out/SS/original_L_[${L},${L}]_J_[${J},1]_T_${T}_N_${N}
 
 
 # .PHONY: SSGenLocal
@@ -42,17 +45,21 @@ ${SSOutputOriginal}:
 	python make_ss_local.py -l dimer_optim -J ${J} -M ${M} -P ${P} > ${LOGFILE}
 
 ${SSResDimerOptim}: ${SSOutputDimerOptim}
-	@cd ${execute_dir};\
+	cd ${execute_dir};\
+	mkdir -p $(shell dirname ${SSResDimerOptim}); \
 	../Release/main -m SS2 -ham ${SSOutputDimerOptim} -N ${N} -J1 ${J} -T ${T} \
 	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2)) >  ${SSResDimerOptim}
 
 ${SSResSinglet}: ArgCheck ${SSOutputSinglet}
-	@cd ${execute_dir};\
+	cd ${execute_dir};\
+	echo ${SSResDimerOptim};\
+	mkdir -p $(dirname ${SSResSinglet}); \
 	../Release/main -m SS2 -ham ${SSOutputSinglet} -N ${N} -J1 ${J} -T ${T} \
 	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2)) >  ${SSResSinglet}
 
 ${SSResOriginal}: ArgCheck ${SSOutputOriginal}
-	@cd ${execute_dir};\
+	cd ${execute_dir};\
+	mkdir -p $(dirname ${SSResOriginal}); \
 	../Release/main -m SS1 -ham ${SSOutputOriginal} -N ${N} -J1 ${J} \
 	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2)) >  ${SSResOriginal}
 
