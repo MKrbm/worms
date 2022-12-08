@@ -31,6 +31,7 @@ int main(int argc, char **argv) {
   parser.addArgument({"-L2"}, "set shape[1]");
   parser.addArgument({"-L3"}, "set shape[2]");
   parser.addArgument({"-J1"}, "set params[0]");
+  parser.addArgument({"-N"}, "# of montecarlo steps");
   parser.addArgument({"-T"}, "set temperature");
   parser.addArgument({"-m"}, "model name");
   parser.addArgument({"-ham"}, "path to hamiltonian");
@@ -125,7 +126,7 @@ int main(int argc, char **argv) {
   shapes[1] = args.safeGet<size_t>("L2", shapes[1]);
   shapes[2] = args.safeGet<size_t>("L3", shapes[2]);
   T = args.safeGet<double>("T", T);
-  T = args.safeGet<double>("T", T);
+  sweeps = args.safeGet<int>("N", sweeps);
   params[0] = args.safeGet<float>("J1",  params[0]);
   ham_path = args.safeGet<std::string>("ham", ham_path);
 

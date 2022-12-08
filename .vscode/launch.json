@@ -6,6 +6,7 @@
       "type": "python",
       "request": "launch",
       "program": "${file}",
+      "args": ["-l", "dimer_optim", "-J", "1", "-M", "180", "-P", "1"],
       "console": "integratedTerminal",
       "justMyCode": true,
       "cwd": "${fileDirname}",
@@ -16,7 +17,6 @@
       "request": "launch",
       // Resolved by CMake Tools:
       "program": "${command:cmake.launchTargetPath}",
-      "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}/build",
       "environment": [

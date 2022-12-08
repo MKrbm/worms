@@ -16,6 +16,10 @@ Release/
 build_/
 Debug/
 Release/
+**/logs
+**/dataframe
+**/array
+**/out
 # lib/
 *.wiki*
 #hidden folder
