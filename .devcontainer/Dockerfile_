@@ -39,8 +39,8 @@ RUN apt-get update -y && apt-get -y install htop build-essential cmake clang lib
 # n* install boost for c++
 RUN apt-get -y install libboost-dev
 
-# n* git setup
-RUN git config --global --add safe.directory /home/${USERNAME}/project
+# # n* git setup
+# RUN git config --global --add safe.directory /home/${USERNAME}/project
 RUN git config --global core.autocrlf input
 
 USER $USERNAME
