@@ -41,20 +41,29 @@ ${SSOutputOriginal}:
 	@cd ${local_ham_dir}/SS;\
 	python make_ss_local.py -l dimer_optim -J ${J} -M ${M} -P ${P} > ${LOGFILE}
 
-SSDimerOptim: ArgCheck ${SSOutputDimerOptim}
+${SSResDimerOptim}: ${SSOutputDimerOptim}
 	@cd ${execute_dir};\
 	../Release/main -m SS2 -ham ${SSOutputDimerOptim} -N ${N} -J1 ${J} -T ${T} \
 	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2)) >  ${SSResDimerOptim}
 
-SSSinglet: ArgCheck ${SSOutputSinglet}
+${SSResSinglet}: ArgCheck ${SSOutputSinglet}
 	@cd ${execute_dir};\
 	../Release/main -m SS2 -ham ${SSOutputSinglet} -N ${N} -J1 ${J} -T ${T} \
 	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2)) >  ${SSResSinglet}
 
-SSOriginal: ArgCheck ${SSOutputOriginal}
+${SSResOriginal}: ArgCheck ${SSOutputOriginal}
 	@cd ${execute_dir};\
 	../Release/main -m SS1 -ham ${SSOutputOriginal} -N ${N} -J1 ${J} \
 	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2)) >  ${SSResOriginal}
+
+
+PHONY:. SSDimerOptim
+PHONY:. SSSinglet
+PHONY:. SSOriginal
+
+SSDimerOptim: ${SSResDimerOptim}
+SSSinglet: ${SSResSinglet}
+SSOriginal: ${SSResOriginal}
 # ifeq ($(lat), dimer_optim)
 # 	@cd ${execute_dir};\
 # 	../Release/main -m SS2 -ham ${SSOutput} -N ${N} -J1 ${J} \
