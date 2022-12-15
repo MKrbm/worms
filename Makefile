@@ -15,6 +15,8 @@ N = 100000
 P = 12
 L = 4
 T = 1.0
+
+PHONY:. ArgCheck
 ArgCheck:
 ifeq ($(L),)
 	$(error Lattice size is not specified.)
@@ -42,25 +44,24 @@ ${SSOutputSinglet}:
 
 ${SSOutputOriginal}: 
 	@cd ${local_ham_dir}/SS;\
-	python make_ss_local.py -l dimer_optim -J ${J} -M ${M} -P ${P} > ${LOGFILE}
+	python make_ss_local.py -l original -J ${J} -M ${M} -P ${P} > ${LOGFILE}
 
 ${SSResDimerOptim}: ${SSOutputDimerOptim}
-	cd ${execute_dir};\
+	@cd  ${execute_dir};\
 	mkdir -p $(shell dirname ${SSResDimerOptim}); \
 	../Release/main -m SS2 -ham ${SSOutputDimerOptim} -N ${N} -J1 ${J} -T ${T} \
 	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2)) >  ${SSResDimerOptim}
 
-${SSResSinglet}: ArgCheck ${SSOutputSinglet}
-	cd ${execute_dir};\
-	echo ${SSResDimerOptim};\
-	mkdir -p $(dirname ${SSResSinglet}); \
+${SSResSinglet}: ${SSOutputSinglet}
+	@cd  ${execute_dir};\
+	mkdir -p $(shell dirname ${SSResSinglet}); \
 	../Release/main -m SS2 -ham ${SSOutputSinglet} -N ${N} -J1 ${J} -T ${T} \
 	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2)) >  ${SSResSinglet}
 
-${SSResOriginal}: ArgCheck ${SSOutputOriginal}
-	cd ${execute_dir};\
-	mkdir -p $(dirname ${SSResOriginal}); \
-	../Release/main -m SS1 -ham ${SSOutputOriginal} -N ${N} -J1 ${J} \
+${SSResOriginal}: ${SSOutputOriginal}
+	@cd  ${execute_dir};\
+	mkdir -p $(shell dirname ${SSResOriginal}); \
+	../Release/main -m SS1 -ham ${SSOutputOriginal} -N ${N} -J1 ${J}  -T ${T} \
 	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2)) >  ${SSResOriginal}
 
 
@@ -71,6 +72,11 @@ PHONY:. SSOriginal
 SSDimerOptim: ${SSResDimerOptim}
 SSSinglet: ${SSResSinglet}
 SSOriginal: ${SSResOriginal}
+
+PHONY:. SSAll
+SSAll:. ${SSResDimerOptim} ${SSResSinglet} ${SSResOriginal} 
+
+# ${SSResDimerOptim} ${SSResSinglet} ${SSResOriginal} : SSDimerOptim SSSinglet SSOriginal
 # ifeq ($(lat), dimer_optim)
 # 	@cd ${execute_dir};\
 # 	../Release/main -m SS2 -ham ${SSOutput} -N ${N} -J1 ${J} \

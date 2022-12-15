@@ -77,6 +77,8 @@ u = np.array([
 
 def dimer_optim(M, queue, i):
     best_fun = 1E10
+    torch.set_num_threads(1)
+    message = True
     for _ in range(M):
         seed = randint(0, 2<<32 - 1)
         torch.manual_seed(seed)
@@ -156,9 +158,10 @@ if __name__ == "__main__":
                 best_model = res.model
         print("best fun is : ", best_fun)
         U = best_model[0].matrix()
+        print(U)
         H1_ = loss1._transform_kron([U, U], original=True).detach().numpy()
         H2_ = loss2._transform_kron([U, U], original=True).detach().numpy()
-        save_npy(f"array/dimer_optim_J_{J_str}_M_{M}", [H1_, H2_])
+        # save_npy(f"array/dimer_optim_J_{J_str}_M_{M}", [H1_, H2_])
         
 
 
