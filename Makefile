@@ -61,7 +61,7 @@ ${SSResSinglet}: ${SSOutputSinglet}
 ${SSResOriginal}: ${SSOutputOriginal}
 	@cd  ${execute_dir};\
 	mkdir -p $(shell dirname ${SSResOriginal}); \
-	../Release/main -m SS1 -ham ${SSOutputOriginal} -N ${N} -J1 ${J} \
+	../Release/main -m SS1 -ham ${SSOutputOriginal} -N ${N} -J1 ${J}  -T ${T} \
 	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2)) >  ${SSResOriginal}
 
 
