@@ -6,7 +6,7 @@ __pycache__/
 # C extensions
 *.so
 *.pdf
-
+*.zip
 python_copy
 # Distribution / packaging
 .Python
