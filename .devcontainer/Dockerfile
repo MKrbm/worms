@@ -15,4 +15,3 @@ RUN echo "ssh-add -l >/dev/null || alias ssh='ssh-add -l >/dev/null || ssh-add &
 
 SHELL ["/bin/bash", "-c"]
 RUN ./python-package.sh
-FROM --platform=linux/arm64 ubuntu:latest

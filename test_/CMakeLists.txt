@@ -7,6 +7,12 @@ target_link_libraries(npy worm) # link library
 add_executable(header ./header_test.cpp ./explict.cpp ./header.h)
 target_include_directories(header PUBLIC "${PROJECT_BINARY_DIR}" ${FetchContent_includes})
 
+find_package(MPI REQUIRED)
+message(STATUS "Run: ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} EXECUTABLE ${MPIEXEC_POSTFLAGS} ARGS")
+add_executable(MPI_test ./MPI_test.cpp )
+target_include_directories(MPI_test PUBLIC "${PROJECT_BINARY_DIR}")
+target_link_libraries(MPI_test PUBLIC MPI::MPI_CXX)
+
 
 
 add_executable(lattice_test ./lattice_test.cpp )
