@@ -1,11 +1,14 @@
 import os
 import datetime
+from matplotlib import pyplot as plt
 
-def save_fig(pl, folder, name, dpi=400, overwrite = False):
+def save_fig(fig, folder, name, dpi=400, overwrite = False):
     path = folder +"/" + name
-    if (not overwrite) and os.path.exists(path):
+    if (not overwrite) and os.path.exists(path+ ".jpeg"):
         print("Failed save figure : given path exsist {}".format(path))
         dt = datetime.datetime.today()  # ローカルな現在の日付と時刻を取得
-        name = "_".join(str(dt).split(" ")) + ".jpeg"
+        name = name + "_" + "_".join(str(dt).split(" "))
         print("Instead, figure name changes : {}".format(folder+"/" + name))
-    pl.savefig(folder+"/" + name, dpi = dpi)
+    fig.tight_layout()
+    fig.savefig(folder+"/" + name + ".jpeg", dpi = dpi)
+    # plt.close(fig)
