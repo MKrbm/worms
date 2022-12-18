@@ -7,7 +7,10 @@ from quspin.tools.lanczos import lanczos_full,lanczos_iter,FTLM_static_iteration
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-
+import argparse
+parser = argparse.ArgumentParser(description='exact diagonalization of shastry_surtherland')
+parser.add_argument('-J','--coupling', help='coupling constant (NN)', type = float, default = 1)
+args = parser.parse_args()
 
 '''
 calculate exact 4 x 4 shastry model
@@ -28,7 +31,7 @@ Z   = -(s+1) # spin inversion
 spin_basis_general(N_2d,kxblock=(T_x,0),kyblock=(T_y,0),pxblock=(P_x,0),pyblock=(P_y,0),zblock=(Z,0), pauli=True)
 
 # set up coupling 
-J1 = 0.4
+J1 = args.coupling
 J2 = 1
 J_zz = [[J1,i,T_x[i]] for i in range(N_2d)]+[[J1,i,T_y[i]] for i in range(N_2d)] 
 J_zz = J_zz + [[J2,0,5],[J2,2,7],[J2,8,13],[J2,10,15],[J2,1,14],[J2,3,12],[J2,6,9],[J2,4,11]]
