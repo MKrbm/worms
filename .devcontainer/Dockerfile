@@ -12,6 +12,6 @@ RUN echo 'eval $(ssh-agent) > /dev/null \n' >> $HOME/.bashrc
 RUN echo "ssh-add -l >/dev/null || alias ssh='ssh-add -l >/dev/null || ssh-add && unalias ssh; ssh' \n \
     fi \n " \
     >> $HOME/.bashrc
-
+RUN echo "source /usr/share/bash-completion/completions/git \n" >> ~/.bashrc
 SHELL ["/bin/bash", "-c"]
 RUN ./python-package.sh
