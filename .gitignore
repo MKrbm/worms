@@ -8,6 +8,7 @@ __pycache__/
 *.pdf
 
 *.jpeg
+*.zip
 python_copy
 # Distribution / packaging
 .Python
