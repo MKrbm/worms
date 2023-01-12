@@ -52,14 +52,17 @@ M = 240
 lats = ["dimer_optim", "original", "singlet"]
 
 files = []
-Js = np.arange(0.1, 1.2, 0.01)
+Js = np.arange(0.1, 0.9, 0.01)
 T =  np.logspace(-1, 0.2, num=20)
-N = 100000
-L = 8
+N = 100000; L = 8
+# N = 1000000; L = 4
+if L == 8:
+    T = np.concatenate([np.logspace(-1.6, -1, num=5)[:-1], T])
+
 for lat in lats:
     df[lat] = {}
     for J in Js:
-        df[lat][J] = {}
+        df[lat][np.round(J,3)] = {}
         for t in T:
             if lat is "dimer_optim":
                 file_name = f"{lat}_L_[{L},{L}]_J_[{J:.3},1]_T_{t:.5}_N_{N}_M_{M}"
@@ -70,7 +73,7 @@ for lat in lats:
                 try:
                     energy, sign, time = process_line(a)
                     # print(f"J={J}, T={t}, s = {sign[0]}")
-                    df[lat][J][t] = sign[0]
+                    df[lat][np.round(J,3)][t] = sign[0]
                 except:
                     print(a)
                     print(file_name)
@@ -84,9 +87,9 @@ for key in dfs.keys():
 
 fig, ax = plt.subplots(2, 1, figsize=(20, 20))
 lat = "dimer_optim"
-J_list = [0.3, 0.55]
-gap = 2
-p1 = dfs[lat].plot(y = [(elem) for elem in dfs[lat].columns[::gap] if J_list[0] < elem < J_list[1]],
+J_list = [0.4, 0.5]
+gap = 1
+p1 = dfs[lat].plot(y = [(elem) for elem in dfs[lat].columns[::gap] if J_list[0] < elem <= J_list[1]],
                         ax = ax[0], style='s-', colormap='rainbow')
 leg = ax[0].legend(handles=p1.legend().legendHandles, fontsize=15, loc="center right")
 ax[0].add_artist(leg)
@@ -95,14 +98,14 @@ ax[0].set_ylabel(r'$J / J_D$', fontsize=20)
 ax[0].set_title("dimer_optim", fontsize=20)
 
 lat = "singlet"
-p1 = dfs[lat].plot(y = [(elem) for elem in dfs[lat].columns[::gap] if J_list[0] < elem < J_list[1]],
+p1 = dfs[lat].plot(y = [(elem) for elem in dfs[lat].columns[::gap] if J_list[0] < elem <= J_list[1]],
                         ax = ax[1], style='s-', colormap='rainbow')
 leg = ax[1].legend(handles=p1.legend().legendHandles, fontsize=15, loc="center right")
 ax[1].add_artist(leg)
 ax[1].set_xlabel(r'$T$', fontsize=20)
 ax[1].set_ylabel(r'$J / J_D$', fontsize=20)
 ax[1].set_title("singlet", fontsize=20)
-save_fig(fig,f"images/SS", f"L_{L}_J_[{J_list[0]:.3},{J_list[1]:.3},J]_T_[{T[0]:.3},{T[-1]:.3}]_gap_{Js[gap] - Js[0]:.2}", 400, overwrite = False)
+save_fig(fig,f"images/SS", f"L_{L}_J_[{J_list[0]:.3},{J_list[1]:.3},J]_T_[{T[0]:.3},{T[-1]:.3}]_gap_{Js[gap] - Js[0]:.2}", 400, overwrite = True)
 
 
 
@@ -110,8 +113,8 @@ from matplotlib import pyplot as plt
 
 fig, ax = plt.subplots(2, 1, figsize=(20, 20))
 lat = "dimer_optim"
-J_list = [0.3, 0.5]
-gap = 2
+# J_list = [0.4, 0.6]
+# gap = 2
 
 legend_elements = []
 legend_elements.append(Line2D([0], [0],  color="black", marker = "s", linestyle="-", label = "optimized"))
@@ -121,13 +124,13 @@ legend_elements.append(Line2D([0], [0],  color="black", marker = "x", linestyle=
 
 fig, ax = plt.subplots(1, 1, figsize=(20, 10))
 lat = "dimer_optim"
-p1 = dfs[lat].plot(y = [(elem) for elem in dfs[lat].columns[::gap] if J_list[0] < elem < J_list[1]],
+p1 = dfs[lat].plot(y = [(elem) for elem in dfs[lat].columns[::gap] if J_list[0] < elem <= J_list[1]],
                         ax = ax, style='s-', colormap='rainbow')
 leg = ax.legend(handles=p1.legend().legendHandles, fontsize=15, loc="center right")
 ax.add_artist(leg)
 
 lat = "singlet"
-p1 = dfs[lat].plot(y = [(elem) for elem in dfs[lat].columns[::gap] if J_list[0] < elem < J_list[1]],
+p1 = dfs[lat].plot(y = [(elem) for elem in dfs[lat].columns[::gap] if J_list[0] < elem <= J_list[1]],
                         ax = ax, style = "x:", colormap='rainbow')
 leg = ax.legend(handles=p1.legend().legendHandles, fontsize=15, loc="center right")
 leg = ax.legend(handles=legend_elements, fontsize=15, loc="lower right")
@@ -135,6 +138,6 @@ ax.set_xlabel(r'$T$', fontsize=20)
 ax.set_ylabel(r'$J / J_D$', fontsize=20)
 ax.set_title("compare", fontsize=20)
 
-save_fig(fig,f"images/SS", f"compare_L_{L}_J_[{J_list[0]:.3},{J_list[1]:.3},J]_T_[{T[0]:.3},{T[-1]:.3}]_gap_{Js[gap] - Js[0]:.2}", 400, overwrite = False)
+save_fig(fig,f"images/SS", f"compare_L_{L}_J_[{J_list[0]:.3},{J_list[1]:.3},J]_T_[{T[0]:.3},{T[-1]:.3}]_gap_{Js[gap] - Js[0]:.2}", 400, overwrite = True)
 
 # save_fig(plt,"images", f'hist_annealing_vs_cg_D={D}_L={type(loss).__name__}.jpeg', 400, overwrite = overwrite)

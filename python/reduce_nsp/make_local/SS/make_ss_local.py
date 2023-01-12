@@ -158,10 +158,10 @@ if __name__ == "__main__":
                 best_model = res.model
         print("best fun is : ", best_fun)
         U = best_model[0].matrix()
-        print(U)
         H1_ = loss1._transform_kron([U, U], original=True).detach().numpy()
         H2_ = loss2._transform_kron([U, U], original=True).detach().numpy()
-        # save_npy(f"array/dimer_optim_J_{J_str}_M_{M}", [H1_, H2_])
+        save_npy(f"array/dimer_optim_J_{J_str}_M_{M}", [H1_, H2_])
+        save_npy(f"array/U_dimer_optim_J_{J_str}_M_{M}", [U.detach().numpy()])
         
 
 

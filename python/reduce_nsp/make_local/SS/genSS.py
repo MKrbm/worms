@@ -12,7 +12,7 @@ import subprocess
 import re
 
 os.chdir("/home/user/project")
-Js = np.arange(0.1, 0.5, 0.01)
+Js = np.arange(0.1, 1.2, 0.01)
 T =  np.logspace(-1.6, -1, num=15)
 print(T)
 # print(np.logspace(-1.6, -1, num=10)[::1])

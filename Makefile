@@ -74,7 +74,7 @@ SSSinglet: ${SSResSinglet}
 SSOriginal: ${SSResOriginal}
 
 PHONY:. SSAll
-SSAll:. ${SSResDimerOptim} ${SSResSinglet} ${SSResOriginal} 
+SSAll:. ${SSResDimerOptim} ${SSResSinglet}
 
 # ${SSResDimerOptim} ${SSResSinglet} ${SSResOriginal} : SSDimerOptim SSSinglet SSOriginal
 # ifeq ($(lat), dimer_optim)
