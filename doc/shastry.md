@@ -371,3 +371,36 @@ Theoritically, average sign goes down from 1 as $T \rightarrow 0$ for small $J_1
         [-0.64076698 -0.52660956 -0.52660956 -0.375      -0.15       -0.125      -0.125      -0.125      -0.00734321  0.25160956  0.25160956  0.4         0.4         0.4         0.4         0.49811019]
         energy spectrum of stochastic H2_optim : 
         [-0.52660956 -0.52660956 -0.52660956 -0.425      -0.375      -0.125      -0.125      -0.125       0.25160956  0.25160956  0.25160956  0.4         0.4         0.4         0.4         0.4       ]
+
+  - # average sign behave inconsistently at low temperature 
+  
+  ![](img/L_8_J_%5B0.47%2C0.48%2CJ%5D_T_%5B0.0501%2C0.1%5D_gap_0.002.jpeg)
+
+  - average sign for singlet seems fine.
+  - Above image is for N = 100,000 if simulate with N = 10,000,000, then the result is 
+
+        J                    = 0.48
+        T                    = 0.07
+        Total Energy         = -17.7178 +- 0.00252413
+        Elapsed time         = 583.1 sec
+        Speed                = 17235.5 MCS/sec
+        Energy per site      = -0.553682 +- 7.88791e-05
+        average sign         = 0.954002 +- 9.48048e-05
+        dimer operator       = 0.0119363
+        # of operators       = 565.744
+        # of neg sign op     = 7.21165
+        breakout rate        = 0
+
+  and 
+  
+        J                    = 0.478
+        T                    = 0.07
+        Total Energy         = -17.6917 +- 0.00251726
+        Elapsed time         = 573.553 sec
+        Speed                = 17522.4 MCS/sec
+        Energy per site      = -0.552867 +- 7.86644e-05
+        average sign         = 0.954143 +- 9.46628e-05
+        dimer operator       = 0.0119521
+        # of operators       = 565.273
+        # of neg sign op     = 7.23234
+        breakout rate        = 0
