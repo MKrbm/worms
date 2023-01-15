@@ -1,0 +1,1 @@
+# bash script for installation of libconfig
