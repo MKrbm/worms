@@ -8,8 +8,6 @@ include(libconfig)
 include(eigen3)
 include(npy)
 
-FetchContent_MakeAvailable(npy)
-FetchContent_MakeAvailable(libconfig)
 
 
 #* list all targets

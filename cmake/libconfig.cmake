@@ -10,4 +10,5 @@ else(libconfig_FOUND)
     libconfig
     GIT_REPOSITORY https://github.com/hyperrealm/libconfig.git
     )
+  FetchContent_MakeAvailable(libconfig)
 endif(libconfig_FOUND)

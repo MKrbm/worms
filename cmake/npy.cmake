@@ -5,3 +5,4 @@ FetchContent_Declare(
 )
 list(APPEND FetchContent_includes "${CMAKE_BINARY_DIR}/_deps/npy-src/include")
 list(APPEND FetchContents npy)
+FetchContent_MakeAvailable(npy)
