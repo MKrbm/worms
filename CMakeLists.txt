@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # c and c++ compiler
-set(CMAKE_C_COMPILER/usr/bin/aarch64-linux-gnu-gcc CACHE PATH "")
+set(CMAKE_C_COMPILER /usr/bin/aarch64-linux-gnu-gcc CACHE PATH "")
 set(CMAKE_CXX_COMPILER /usr/bin/aarch64-linux-gnu-g++ CACHE PATH "")
 
 
