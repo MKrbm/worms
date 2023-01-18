@@ -10,6 +10,7 @@ services:
     #   COMPOSE_DOCKER_CLI_BUILD: 1
     # image: sonoisa/deep-learning-coding:pytorch1.12.0_tensorflow2.9.1
     # image: ubuntu:jammy-20221101
+    # image: gcc:latest
     build:
       context: .
       dockerfile: ./Dockerfile

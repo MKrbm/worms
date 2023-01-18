@@ -15,7 +15,7 @@ python_copy
 build/
 Debug/
 Release/
-build_/
+build*/
 build_test/
 Debug/
 Release/
