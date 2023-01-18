@@ -11,7 +11,7 @@ find_package(MPI REQUIRED)
 message(STATUS "Run: ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPIEXEC_PREFLAGS} EXECUTABLE ${MPIEXEC_POSTFLAGS} ARGS")
 add_executable(MPI_test ./MPI_test2.cpp )
 target_include_directories(MPI_test PUBLIC "${PROJECT_BINARY_DIR}")
-target_link_libraries(MPI_test PUBLIC MPI::MPI_CXX)
+target_link_libraries(MPI_test PUBLIC MPI::MPI_CXX worm)
 
 
 

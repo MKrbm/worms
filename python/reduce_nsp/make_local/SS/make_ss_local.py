@@ -164,7 +164,7 @@ if __name__ == "__main__":
         save_npy(f"array/U_dimer_optim_J_{J_str}_M_{M}", [U.detach().numpy()])
         
 
-
+        
     if lat == "plq_original": #plaquette original
         # dimer lattice and dimer basis
         square1 = [[0,1], [1,2], [2,3], [3,0]]

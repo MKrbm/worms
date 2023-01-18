@@ -15,7 +15,8 @@ python_copy
 build/
 Debug/
 Release/
-build_/
+build*/
+build_test/
 Debug/
 Release/
 **/logs
@@ -31,6 +32,7 @@ Release/
 !.vscode 
 !.devcontainer
 !.gitignore
+!doc
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

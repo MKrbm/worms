@@ -15,3 +15,4 @@ RUN echo "ssh-add -l >/dev/null || alias ssh='ssh-add -l >/dev/null || ssh-add &
 RUN echo "source /usr/share/bash-completion/completions/git \n" >> ~/.bashrc
 SHELL ["/bin/bash", "-c"]
 RUN ./python-package.sh
+RUN apt-get install libopenmpi-dev liblapack-dev libblas-dev libboost-dev libeigen3-dev

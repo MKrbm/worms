@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   main:
-    container_name: worms
+    container_name: test
     # env_file: 
     #   - .env
     # environment:
@@ -10,16 +10,16 @@ services:
     #   COMPOSE_DOCKER_CLI_BUILD: 1
     # image: sonoisa/deep-learning-coding:pytorch1.12.0_tensorflow2.9.1
     # image: ubuntu:jammy-20221101
-    # image: gcc:latest
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-    volumes:
-      # - ../:/home/user/project:delegated
-      - type: bind
-        source: ~/.ssh
-        target: /home/user/.ssh
-        read_only: true
+    image: gcc:latest
+    # build:
+    #   context: .
+    #   dockerfile: ./Dockerfile
+    # volumes:
+    #   - ../:/home/user/project:delegated
+    #   - type: bind
+    #     source: ~/.ssh
+    #     target: /home/user/.ssh
+    #     read_only: true
       # - type: bind
       #   source: ~/.gitconfig
       #   target: /home/user/.gitconfig

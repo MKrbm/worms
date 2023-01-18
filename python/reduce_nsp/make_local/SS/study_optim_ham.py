@@ -35,7 +35,7 @@ lh = SzSz + SxSx + SySy
 
 lh = -lh # use minus of local hamiltonian for monte-carlo (exp(-beta H ))
 
-
+np.set_printoptions(linewidth=200, precision=4, suppress=True)
 u = np.array([
     [0,1,0,0],
     [1/np.sqrt(2), 0, 1/np.sqrt(2), 0],
@@ -48,17 +48,37 @@ print(J)
 H1 = sum_ham(J[0]*lh, [[1,2],[1,3]], 4, 2)
 H1 += sum_ham(J[1]*lh/4, [[0,1],[2,3]], 4, 2)
 
-print(sum_ham(lh, [[1,2],[1,3]], 4, 2))
-print(sum_ham(lh/4, [[0,1],[2,3]], 4, 2))
+# print(sum_ham(lh, [[1,2],[1,3]], 4, 2))
+# print(sum_ham(lh/4, [[0,1],[2,3]], 4, 2))
 
 H2 = sum_ham(J[0]*lh, [[0,2],[0,3]], 4, 2)
 H2 += sum_ham(J[1]*lh/4, [[0,1],[2,3]], 4, 2)
+print("\nH1")
+print(H1)
+print("\nH2")
+print(H1)
+
 
 
 H1_optim = np.load(f"array/dimer_optim_J_{J_str}_M_{240}/0.npy")
 H2_optim = np.load(f"array/dimer_optim_J_{J_str}_M_{240}/1.npy")
 H1_singlet = np.load(f"array/singlet_J_{J_str}/0.npy")
 H2_singlet = np.load(f"array/singlet_J_{J_str}/1.npy")
+
+print("\nH1 singlet")
+print(H1_singlet)
+print("\nH2 singlet")
+print(H2_singlet)
+
+
+print("\nH1 optimized")
+print(H1_optim)
+print("\nH2 optimized")
+print(H2_optim)
+
+np.save("H1", H1)
+np.save("H1_singlet", H1_singlet)
+np.save("H1_optim", H1_optim)
 
 from contextlib import contextmanager
 @contextmanager

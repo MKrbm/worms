@@ -20,3 +20,6 @@
 - どこで何が起こってるかを調べる
 
 - なぜいきなり悪くなる? warmのせい？
+
+- kagome lattice model で minus sign problem を見る。
+- 比熱のピークは見れる？

@@ -22,7 +22,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 COPY terminal-colors-branch.sh /tmp/
 RUN cat /tmp/terminal-colors-branch.sh >> ~/.bashrc
 
-RUN apt-get update -y && apt-get -y install git vim software-properties-common htop cmake openssh-server sudo libeigen3-dev
+RUN apt-get update -y && apt-get -y install git vim software-properties-common htop cmake openssh-server sudo libeigen3-dev 
 
 RUN adduser $USERNAME sudo
 
