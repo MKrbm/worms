@@ -1,5 +1,8 @@
 version: '3.4'
 
+volumes:
+  worm_data:
+
 services:
   main:
     container_name: worms
@@ -15,7 +18,7 @@ services:
       context: .
       dockerfile: ./Dockerfile
     volumes:
-      # - ../:/home/user/project:delegated
+      - worm_data:/home/user/project
       - type: bind
         source: ~/.ssh
         target: /home/user/.ssh
