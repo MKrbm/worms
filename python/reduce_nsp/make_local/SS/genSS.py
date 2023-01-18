@@ -14,7 +14,7 @@ import re
 os.chdir("/home/user/project")
 # Js = np.arange(0.47, 0.49, 0.002)
 T =  np.logspace(-1.3, -1, num=15)
-Js = np.arange(0.47, 0.55, 0.005)
+Js = np.arange(0.47, 0.5, 0.005)
 # T =  np.logspace(-1.6, -1, num=15)
 print(T)
 # print(np.logspace(-1.6, -1, num=10)[::1])
