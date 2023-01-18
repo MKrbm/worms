@@ -178,7 +178,7 @@ std::vector<double> exe_worm_parallel(
   size_t cutoff_l, 
   bool fix_wdensity, 
   int rank,
-  std::vector<BC::observable> res// contains results such as energy, average_sign,, etc
+  std::vector<BC::observable>& res// contains results such as energy, average_sign,, etc
 ){
 
   // cout << "Hi" << endl;
@@ -281,6 +281,7 @@ std::vector<double> exe_worm_parallel(
   );
   return_value.push_back(elapsed);
   return_value.push_back((therms+sweeps) / elapsed);
+
 
 
   res.push_back(ene);

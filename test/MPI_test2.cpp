@@ -151,25 +151,33 @@ int main(int argc, char **argv) {
   std::vector<BC::observable> res;
   exe_worm_parallel(spin, T, sweeps, therms, cutoff_l, fix_wdensity, rank, res);  
 
+  BC::observable ene=res[0]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
+  BC::observable ave_sign=res[1]; // average sign 
+  BC::observable sglt=res[2]; 
+  BC::observable n_neg_ele=res[3]; 
+  BC::observable n_ops=res[4]; 
+
+  
   std::cout << "Total Energy         = "
           << ene.mean()/ave_sign.mean()<< " +- " 
-          << std::sqrt(std::pow(ene.error(r)/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2))
+          << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2))
           << std::endl;
 
-  std::cout << "Elapsed time         = " << elapsed << " sec\n"
-            << "Speed                = " << (therms+sweeps) / elapsed << " MCS/sec\n";
+  // std::cout << "Elapsed time         = " << elapsed << " sec\n"
+  //           << "Speed                = " << (therms+sweeps) / elapsed << " MCS/sec\n";
   std::cout << "Energy per site      = "
-            << ene.mean()/ave_sign.mean() / spin_model.L << " +- " 
-            << std::sqrt(std::pow(ene.error(r)/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2)) / spin_model.L
+            << ene.mean()/ave_sign.mean() / lat.L << " +- " 
+            << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) / lat.L
             << std::endl
             << "average sign         = "
-            << ave_sign.mean() << " +- " << ave_sign.error(r) << std::endl
+            << ave_sign.mean() << " +- " << ave_sign.error() << std::endl
             << "dimer operator       = "
             << sglt.mean() << std::endl 
             << "# of operators       = "
             << n_ops.mean() << std::endl
             << "# of neg sign op     = "
-            << n_neg_ele.mean() << std::endl
-            << "breakout rate        = "
-            << 1-r << std::endl;
+            << n_neg_ele.mean() << std::endl;
+
+  MPI_Finalize();
+
 }
