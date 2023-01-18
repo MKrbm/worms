@@ -18,7 +18,8 @@ services:
       context: .
       dockerfile: ./Dockerfile
     volumes:
-      - worm_data:/home/user/project
+      # - worm_data:/home/user/project
+      - .:/home/user/project
       - type: bind
         source: ~/.ssh
         target: /home/user/.ssh
