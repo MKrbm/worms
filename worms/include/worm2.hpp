@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <utility>
 #include <bcl.hpp>
+#include <stdlib.h>
 
 #ifdef __APPLE__
 #  include <mach-o/dyld.h>
@@ -95,11 +96,11 @@ class worm{
   typedef std::mt19937 engine_type;
 
   #ifdef NDEBUG
-  unsigned rseed = static_cast <unsigned> (time(0));
-  engine_type rand_src = engine_type(rseed);
-  // engine_type rand_src = engine_type(SEED);
-  #else
   // unsigned rseed = static_cast <unsigned> (time(0));
+  // engine_type rand_src = engine_type(rseed);
+  engine_type rand_src;
+  #else
+  unsigned rseed = static_cast <unsigned> (time(0) + srand(id));
   unsigned rseed = SEED;
   // SEED = rseed;
   engine_type rand_src = engine_type(SEED);
@@ -122,15 +123,19 @@ class worm{
 
   typedef bcl::markov<engine_type> markov_t;
 
-  worm(double beta, MODEL model_, size_t cl = SIZE_MAX)
+  worm(double beta, MODEL model_, size_t cl = SIZE_MAX, int rank = 0)
   :spin_model(model_), L(spin_model.L), beta(beta), rho(-1), N_op(spin_model.N_op), 
   bonds(spin_model.bonds),bond_type(spin_model.bond_type) ,state(spin_model.L),cstate(spin_model.L), cutoff_length(cl),
   loperators(spin_model.loperators), sps_sites(spin_model._sps_sites)
   {
-    cout << "beta          : " << beta << endl;
-    cout << "cutoff length : " << cutoff_length << endl;
+    // cout << "beta          : " << beta << endl;
+    // cout << "cutoff length : " << cutoff_length << endl;
     // dout << "seed number : " << rseed << endl;
-    printd("seed number : %u", rseed);
+    // printf("seed number : %u", rseed);
+    srand(rank);
+    unsigned rseed = static_cast <unsigned> (time(0)) + rand() * (rank + 1);
+    rand_src = engine_type(rseed);
+    cout << rseed << endl;
     double max_diagonal_weight = loperators[0].max_diagonal_weight_;
     for (auto const& lop : loperators){
       max_diagonal_weight = std::max(max_diagonal_weight, lop.max_diagonal_weight_);

@@ -194,7 +194,7 @@ std::vector<double> exe_worm_parallel(
   double beta = 1 / T;
 
 
-  worm<MC> solver(beta, spin_model, cutoff_l); //template needs for std=14
+  worm<MC> solver(beta, spin_model, cutoff_l, rank); //template needs for std=14
   // spin_model.lattice.print(std::cout);
 
   #if MESTIME
@@ -257,9 +257,9 @@ std::vector<double> exe_worm_parallel(
       }
     }
     if (i == therms / 2){
-      if (!fix_wdensity) std::cout << "Info: average number worms per MCS is reset from " << spin_model.L
-                << " to " << wdensity << "\n\n";
-      else std::cout << "Info: average number worms per MCS is " << wdensity << "\n\n";
+      if (!fix_wdensity && (rank == 0)) std::cout << "Info: average number worms per MCS is reset from " << spin_model.L
+                << " to " << wdensity << "(rank=" << rank << ")" <<"\n\n";
+      else if (rank == 0) std::cout << "Info: average number worms per MCS is " << wdensity << "(rank=" << rank << ")" <<"\n\n";
     }
     cnt++;
   }

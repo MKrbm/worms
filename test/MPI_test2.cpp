@@ -12,10 +12,28 @@
 #include <observable.hpp>
 #include <funcs.hpp>
 #include <mpi.h>
+
+#include <boost/mpi.hpp>
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+
+
 using namespace std;
 using namespace libconfig;
 
 using namespace std;
+
+template <class T>
+class VectorPlus {
+public:
+  T operator()(const T &lhs, const T &rhs) const {
+    const auto n = lhs.size();
+    auto r = T(n);
+    std::transform(lhs.begin(), lhs.end(), rhs.begin(), r.begin(), std::plus<>());
+    return r;
+  }
+};
 
 
 int main(int argc, char **argv) {
@@ -24,7 +42,9 @@ int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
+  boost::mpi::communicator world;
 
+  cout << world.rank() << endl;
 
   char tmp[256];
   auto _ = getcwd(tmp, 256);
@@ -126,7 +146,8 @@ int main(int argc, char **argv) {
   }
 
 
-
+  // boost::serialization::access world;
+  BC::observable local_result;
 
   // parser
   shapes[0] = args.safeGet<size_t>("L1", shapes[0]);
@@ -137,46 +158,64 @@ int main(int argc, char **argv) {
   params[0] = args.safeGet<float>("J1",  params[0]);
   ham_path = args.safeGet<std::string>("ham", ham_path);
 
-
-  cout << "zero_wom : " << (zero_worm ? "YES" : "NO") << endl;
-  cout << "repeat : " << (repeat ? "YES" : "NO") << endl;
-  cout << "params : " << params << endl;
+  if (rank == 0){
+    cout << "zero_wom : " << (zero_worm ? "YES" : "NO") << endl;
+    cout << "repeat : " << (repeat ? "YES" : "NO") << endl;
+    cout << "params : " << params << endl;
+  }
 
 
   //* finish argparse
 
-  model::base_lattice lat(basis, cell, shapes, file, true);
-  model::base_model<bcl::st2013> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat);
-  cout << lat.bonds << endl;
+
+  model::base_lattice lat(basis, cell, shapes, file, !world.rank());
+  model::base_model<bcl::st2013> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat, !world.rank());
+
+  // output MC step info 
+  if (rank == 0 ) cout << "therms(each process)    : " << therms << endl
+                       << "sweeps(in total)        : " << sweeps * size << endl;
+
+  for (int i=0; i<40; i++) cout << "-" ;
+  cout << endl;
+
+
+  // simulate with worm algorithm (parallel computing is enable)
   std::vector<BC::observable> res;
   exe_worm_parallel(spin, T, sweeps, therms, cutoff_l, fix_wdensity, rank, res);  
 
-  BC::observable ene=res[0]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
-  BC::observable ave_sign=res[1]; // average sign 
-  BC::observable sglt=res[2]; 
-  BC::observable n_neg_ele=res[3]; 
-  BC::observable n_ops=res[4]; 
 
-  
-  std::cout << "Total Energy         = "
-          << ene.mean()/ave_sign.mean()<< " +- " 
-          << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2))
-          << std::endl;
+  auto _res = boost::mpi::all_reduce(world, res, VectorPlus<std::vector<BC::observable>>()); //all reduce (sum over all results)
 
-  // std::cout << "Elapsed time         = " << elapsed << " sec\n"
-  //           << "Speed                = " << (therms+sweeps) / elapsed << " MCS/sec\n";
-  std::cout << "Energy per site      = "
-            << ene.mean()/ave_sign.mean() / lat.L << " +- " 
-            << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) / lat.L
-            << std::endl
-            << "average sign         = "
-            << ave_sign.mean() << " +- " << ave_sign.error() << std::endl
-            << "dimer operator       = "
-            << sglt.mean() << std::endl 
-            << "# of operators       = "
-            << n_ops.mean() << std::endl
-            << "# of neg sign op     = "
-            << n_neg_ele.mean() << std::endl;
+
+  if (world.rank()==0)
+  {
+    BC::observable ene=_res[0]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
+    BC::observable ave_sign=_res[1]; // average sign 
+    BC::observable sglt=_res[2]; 
+    BC::observable n_neg_ele=_res[3]; 
+    BC::observable n_ops=_res[4]; 
+    cout << ene.count() << endl;
+    std::cout << "beta                 = " << 1.0 / T << endl;
+    std::cout << "Total Energy         = "
+            << ene.mean()/ave_sign.mean()<< " +- " 
+            << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2))
+            << std::endl;
+
+    // std::cout << "Elapsed time         = " << elapsed << " sec\n"
+    //           << "Speed                = " << (therms+sweeps) / elapsed << " MCS/sec\n";
+    std::cout << "Energy per site      = "
+              << ene.mean()/ave_sign.mean() / lat.L << " +- " 
+              << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) / lat.L
+              << std::endl
+              << "average sign         = "
+              << ave_sign.mean() << " +- " << ave_sign.error() << std::endl
+              << "dimer operator       = "
+              << sglt.mean() << std::endl 
+              << "# of operators       = "
+              << n_ops.mean() << std::endl
+              << "# of neg sign op     = "
+              << n_neg_ele.mean() << std::endl;
+  }
 
   MPI_Finalize();
 
