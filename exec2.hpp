@@ -27,9 +27,7 @@
   using std::chrono::duration;
   using std::chrono::milliseconds;
   using std::chrono::microseconds;
-
 #endif
-
 
 using namespace libconfig;
 using namespace std;
