@@ -16,6 +16,7 @@ build/
 Debug/
 Release/
 build_/
+build_test/
 Debug/
 Release/
 **/logs

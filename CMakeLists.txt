@@ -54,6 +54,6 @@ FOREACH(name main debug heisenberg SS ladder MG)
         )
 ENDFOREACH(name)
 
-add_subdirectory(test_)
+add_subdirectory(test)
 
 configure_file(MainConfig.h.in MainConfig.h)
