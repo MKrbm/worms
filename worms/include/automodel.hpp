@@ -128,7 +128,7 @@ public:
         params_tmp.insert(params_tmp.end(), params.begin(), params.end());
         for (auto &x : types) x += types.size();
       }
-      cout << "repeat params " << r_cnt << " times." << endl;
+      if(print) cout << "repeat params " << r_cnt << " times." << endl;
       types = types_tmp;
       params = params_tmp;
     }

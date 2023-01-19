@@ -44,11 +44,11 @@ int main(int argc, char **argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   boost::mpi::communicator world;
 
-  cout << world.rank() << endl;
+  // cout << world.rank() << endl;
 
   char tmp[256];
   auto _ = getcwd(tmp, 256);
-  cout << tmp << endl;
+  // cout << tmp << endl;
 
   Config cfg;
   cfg.setAutoConvert(true);
@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
   string model_name = root["model"];
   bool print_lat = (bool) root["print_lattice"];
   model_name = args.safeGet<std::string>("m", model_name);
-  cout << "model name is \t : \t" << model_name << endl;
+  if(world.rank() == 0) cout << "model name is \t : \t" << model_name << endl;
   const Setting& mcfg = root["models"][model_name];
   const Setting& shape_cfg = mcfg.lookup("length");
   const Setting& params_cfg = mcfg.lookup("params");
@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
   shift = (double) mcfg.lookup("shift");
   zero_worm = (bool) mcfg.lookup("zero_worm");
 
-  cout << file << endl;
+  // cout << file << endl;
 
   //* settings for monte-carlo
   const Setting& settings = root["mc_settings"];
@@ -158,6 +158,7 @@ int main(int argc, char **argv) {
   params[0] = args.safeGet<float>("J1",  params[0]);
   ham_path = args.safeGet<std::string>("ham", ham_path);
 
+  sweeps = sweeps / size;
   if (rank == 0){
     cout << "zero_wom : " << (zero_worm ? "YES" : "NO") << endl;
     cout << "repeat : " << (repeat ? "YES" : "NO") << endl;
@@ -175,8 +176,8 @@ int main(int argc, char **argv) {
   if (rank == 0 ) cout << "therms(each process)    : " << therms << endl
                        << "sweeps(in total)        : " << sweeps * size << endl;
 
-  for (int i=0; i<40; i++) cout << "-" ;
-  cout << endl;
+  if (rank == 0) {for (int i=0; i<40; i++) cout << "-"; cout << endl;}
+
 
 
   // simulate with worm algorithm (parallel computing is enable)
@@ -194,7 +195,6 @@ int main(int argc, char **argv) {
     BC::observable sglt=_res[2]; 
     BC::observable n_neg_ele=_res[3]; 
     BC::observable n_ops=_res[4]; 
-    cout << ene.count() << endl;
     std::cout << "beta                 = " << 1.0 / T << endl;
     std::cout << "Total Energy         = "
             << ene.mean()/ave_sign.mean()<< " +- " 
