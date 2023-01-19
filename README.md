@@ -16,6 +16,15 @@
     - chose unit cell by ourself, then find the best local similarity transformation.7
   - make container handle cuda.
 
+- ## v5
+  - dockerfile update.
+    - ### poor performance on M1 mac
+      - gRPC FUSE 
+        - cmkae configure (second time) takes 6.43
+      - volume mount
+        - cmkae configure (second time) takes 3.53
+      
+
 - ## v1.2
   - OS-X get some error when import torchvision. (`/home/user/miniconda3/envs/py39/lib/python3.9/site-packages/torchvision/io/image.py:13`)
   - Please just ignore that.
