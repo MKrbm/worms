@@ -135,7 +135,6 @@ class worm{
     srand(rank);
     unsigned rseed = static_cast <unsigned> (time(0)) + rand() * (rank + 1);
     rand_src = engine_type(rseed);
-    cout << rseed << endl;
     double max_diagonal_weight = loperators[0].max_diagonal_weight_;
     for (auto const& lop : loperators){
       max_diagonal_weight = std::max(max_diagonal_weight, lop.max_diagonal_weight_);
