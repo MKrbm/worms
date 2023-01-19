@@ -47,24 +47,27 @@ ${SSOutputOriginal}:
 	python make_ss_local.py -l original -J ${J} -M ${M} -P ${P} > ${LOGFILE}
 
 ${SSResDimerOptim}: ${SSOutputDimerOptim}
-	@cd  ${execute_dir};\
+	cd  ${execute_dir};\
 	mkdir -p $(shell dirname ${SSResDimerOptim}); \
-	../Release/main -m SS2 -ham ${SSOutputDimerOptim} -N ${N} -J1 ${J} -T ${T} \
-	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2)) >  ${SSResDimerOptim}
+	./mpi_bash.sh -f ${SSResDimerOptim} ../Release/main_MPI -m SS2 -ham ${SSOutputDimerOptim} -N ${N} -J1 ${J} -T ${T} \
+	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2))
 
 ${SSResSinglet}: ${SSOutputSinglet}
-	@cd  ${execute_dir};\
+	cd  ${execute_dir};\
 	mkdir -p $(shell dirname ${SSResSinglet}); \
-	../Release/main -m SS2 -ham ${SSOutputSinglet} -N ${N} -J1 ${J} -T ${T} \
-	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2)) >  ${SSResSinglet}
+	./mpi_bash.sh -f ${SSResSinglet} ../Release/main_MPI -m SS2 -ham ${SSOutputSinglet} -N ${N} -J1 ${J} -T ${T} \
+	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2))
 
 ${SSResOriginal}: ${SSOutputOriginal}
-	@cd  ${execute_dir};\
+	cd  ${execute_dir};\
 	mkdir -p $(shell dirname ${SSResOriginal}); \
-	../Release/main -m SS1 -ham ${SSOutputOriginal} -N ${N} -J1 ${J}  -T ${T} \
-	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2)) >  ${SSResOriginal}
+	./mpi_bash.sh -f ${SSResOriginal} ../Release/main_MPI -m SS1 -ham ${SSOutputOriginal} -N ${N} -J1 ${J}  -T ${T} \
+	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2))
 
 
+.PHONY: clean
+clean:
+	rm -f ${SSResDimerOptim}
 PHONY:. SSDimerOptim
 PHONY:. SSSinglet
 PHONY:. SSOriginal
