@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
   if (rank == 0 ) cout << "therms(each process)    : " << therms << endl
                        << "sweeps(in total)        : " << sweeps * size << endl;
 
-  for (int i=0; i<40; i++) cout << "-" ;
+  if (rank == 0) for (int i=0; i<40; i++) cout << "-" ;
   cout << endl;
 
 
