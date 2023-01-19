@@ -1,4 +1,4 @@
-#include "../include/worm2.hpp"
+#include "../include/worm.hpp"
 
 template class worm<bcl::heatbath>;
 template class worm<bcl::st2010>;
