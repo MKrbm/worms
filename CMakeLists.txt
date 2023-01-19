@@ -46,13 +46,20 @@ add_subdirectory(./worms) #call /LoopAlgo/CMakeLists.txst
 
 
 # add executable
-FOREACH(name main debug heisenberg SS ladder MG)
+
+# search for MPI
+find_package(MPI REQUIRED)
+FIND_PACKAGE(Boost COMPONENTS mpi serialization REQUIRED)
+
+FOREACH(name main debug main_MPI)
     add_executable(${name} ${name}.cpp)
-    target_link_libraries(${name} worm)
+    target_link_libraries(${name} worm  ${Boost_LIBRARIES} MPI::MPI_CXX)
     target_include_directories(${name} PUBLIC
             "${PROJECT_BINARY_DIR}"
+            "${Boost_INCLUDE_DIRS}"
         )
 ENDFOREACH(name)
+
 
 add_subdirectory(test)
 
