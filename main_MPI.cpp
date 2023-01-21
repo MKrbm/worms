@@ -195,17 +195,33 @@ int main(int argc, char **argv) {
     BC::observable sglt=_res[2]; 
     BC::observable n_neg_ele=_res[3]; 
     BC::observable n_ops=_res[4]; 
+    BC::observable N2 =_res[5];
+    BC::observable N =_res[6];
+
+    double ene_err = std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2));
+    double ene_mean = ene.mean()/ave_sign.mean();
+
+    double c_mean = (N2.mean() - N.mean()) / ave_sign.mean() - (N.mean() / ave_sign.mean()) * (N.mean() / ave_sign.mean());
+    double c_err = std::sqrt(std::pow(N2.error()/ave_sign.mean(), 2) + std::pow(N.error()/ave_sign.mean(), 2) + std::pow(N2.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2) + std::pow(N.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2));
+    double n_err = std::sqrt(std::pow(N.error()/ave_sign.mean(), 2) + std::pow(N.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2));
+    c_err += n_err * n_err;
+
+    
     std::cout << "beta                 = " << 1.0 / T << endl;
     std::cout << "Total Energy         = "
             << ene.mean()/ave_sign.mean()<< " +- " 
-            << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2))
+            << ene_err
             << std::endl;
 
     // std::cout << "Elapsed time         = " << elapsed << " sec\n"
     //           << "Speed                = " << (therms+sweeps) / elapsed << " MCS/sec\n";
     std::cout << "Energy per site      = "
               << ene.mean()/ave_sign.mean() / lat.L << " +- " 
-              << std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) / lat.L
+              << ene_err / lat.L
+              << std::endl
+              << "specific heat        = "
+              << c_mean / lat.L << " +- " 
+              << c_err / lat.L
               << std::endl
               << "average sign         = "
               << ave_sign.mean() << " +- " << ave_sign.error() << std::endl

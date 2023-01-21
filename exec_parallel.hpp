@@ -52,6 +52,13 @@ std::vector<double> exe_worm_parallel(
   BC::observable sglt; 
   BC::observable n_neg_ele; 
   BC::observable n_ops; 
+  BC::observable N2; // average of square of number of operators (required for specific heat)
+  BC::observable N; // average of number of operators (required for specific heat)
+
+  BC::observable M; // magnetization
+  BC::observable M2; // magnetization^2
+  BC::observable K; // matnetic susceptibility
+
 
   double beta = 1 / T;
 
@@ -98,11 +105,10 @@ std::vector<double> exe_worm_parallel(
         // w_rate *= spin_model.loperators[op.op_type()].ham_rate_vector[op.state()];
         // cout << spin_model.loperators[op.op_type()].ham_rate_vector[op.state()]<< endl;
       }
-      double ene_tmp = - (double)solver.ops_main.size() / beta;
-      for (int e=0; e<spin_model.N_op; e++){
-        ene_tmp += spin_model.shifts[e] * spin_model.bond_t_size[e];
-      }
-      // ene << ene_tmp * sign;
+      double m = (double)solver.ops_main.size();
+      double ene_tmp = - m / beta + spin_model.shift();
+      N2 << (m * m) * sign;
+      N << m * sign;
       ene << ene_tmp * sign;
       ave_sign << sign;
       sglt << sglt_ / spin_model.L;
@@ -151,6 +157,8 @@ std::vector<double> exe_worm_parallel(
   res.push_back(sglt);
   res.push_back(n_neg_ele);
   res.push_back(n_ops);
+  res.push_back(N2);
+  res.push_back(N);
   return return_value;
 }
 
