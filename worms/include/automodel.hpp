@@ -30,23 +30,24 @@ namespace model{
 
 
 class model::base_lattice{
+private:
+  VS bond_t_legsize;
+protected:
+  vector<VVS> type2bonds;
+  VS bond_t_size;
 public:
-
   const size_t L;
   const size_t Nb; // number of bonds.
   const size_t N_op;
   const VVS bonds;
   const VS bond_type;
   const VS site_type;
-  vector<VVS> type2bonds;
-  VS bond_t_size;
-  VS bond_t_legsize;
   // size_t max_l;
   double rho = 0;
-  VD shifts;
   // VS _sps_sites; 
   // VI leg_size; //size of local operators;
   // VS bond_t_size;
+
 
   base_lattice(int L, VVS bonds)
   :L(L), Nb(bonds.size()), N_op(1), bonds(bonds), bond_type(VS(bonds.size(), 0)), site_type(VS(L, 0)){}
@@ -86,13 +87,17 @@ template <class MC>
 class model::base_model : public model::base_lattice
 {
 private:
+  VD shifts;
+  double origin_shift;
 public:
   VS _sps_sites; //degree of freedom
   using MCT = MC;
   const size_t leg_size = 2; //accepts only bond operators 
-  VD shifts;
   std::vector<local_operator<MCT>> loperators;
+  
   size_t sps_sites(size_t i){return _sps_sites[i];}
+  double shift() const {return origin_shift;}
+
   //* default constructor
   base_model( model::base_lattice lat, 
               VS dofs, 
@@ -184,6 +189,12 @@ public:
     //* initial settings for local bond operators
     VD off_sets(N_op, shift);
     initial_setting(off_sets, 1E-8, zero_worm);
+
+    //* calculate origin shift
+    origin_shift = 0;
+    for (int e=0; e< N_op; e++){
+      origin_shift +=  shifts[e] *  bond_t_size[e];
+    }
   }
 
 
