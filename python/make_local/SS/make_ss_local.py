@@ -1,7 +1,7 @@
 import numpy as np
 import argparse
 import sys
-sys.path.append('../..')
+sys.path.append('../../reduce_nsp')
 from nsp.utils.base_conv import *
 from header import *
 from nsp.utils.func import *
@@ -65,8 +65,12 @@ SxSx = np.kron(Sx,Sx).real.astype(np.float64)
 SySy = np.kron(Sy,Sy).real.astype(np.float64)
 
 lh = SzSz + SxSx + SySy
+I = np.eye(2)
+o = np.kron(I, Sz) + np.kron(Sz, I)
 
 lh = -lh # use minus of local hamiltonian for monte-carlo (exp(-beta H ))
+
+preceision = 5 # elements smaller than 1E-6 in magnitude reduce to zero
 
 u = np.array([
     [0,1,0,0],
@@ -74,6 +78,10 @@ u = np.array([
     [-1/np.sqrt(2), 0, 1/np.sqrt(2), 0],
     [0,0,0,1]
 ])
+U = np.kron(u, u)
+
+O = np.kron(o, o)
+O = np.round(O, preceision) # local order operator  
 
 def dimer_optim(M, queue, i):
     best_fun = 1E10
@@ -106,11 +114,11 @@ def dimer_optim(M, queue, i):
 if __name__ == "__main__":
     J_str = str(J).replace(" ", "")
     print(f"number of process is : {num_processes}")
-    U = np.kron(u, u)
     if lat == "original":
         H = lh
         path = ["array/original"]
         save_npy(path[0], [H, H])
+        save_npy("array/original_z", Sz)
 
     if lat == "dimer_original":
         # take lattice as dimer
@@ -121,6 +129,15 @@ if __name__ == "__main__":
         H2 += sum_ham(J[1]*lh/4, [[0,1],[2,3]], 4, 2)
         save_npy(f"array/dimer_original_J_{J_str}", [H1, H2])
 
+
+
+        O /= 4 # divide by 4 because overwrapped 4 times. 
+        try:
+            save_npy(f"array/dimer_original_J_{J_str}_z", [O/(H1 + 1E-8), O/(H2+1E-8)]) 
+        except:
+            print("support of operator is not covered by a support of Hamiltonian")
+
+
     if lat == "singlet":
         #* dimer lattice and single-triplet basis
         H1 = sum_ham(J[0]*lh, [[1,2],[1,3]], 4, 2)
@@ -129,6 +146,13 @@ if __name__ == "__main__":
         H2 = sum_ham(J[0]*lh, [[0,2],[0,3]], 4, 2)
         H2 += sum_ham(J[1]*lh/4, [[0,1],[2,3]], 4, 2)
         save_npy(f"array/singlet_J_{J_str}", [U.T@H1@U, U.T@H2@U]) 
+        
+        O /= 4 # divide by 4 because overwrapped 4 times. 
+
+        try:
+            save_npy(f"array/singlet_J_{J_str}_z",  [O/(H1 + 1E-8), O/(H2+1E-8)]) 
+        except:
+            print("support of operator is not covered by a support of Hamiltonian")
 
     if lat == "dimer_optim":
         # dimer lattice and dimer basis
@@ -158,10 +182,21 @@ if __name__ == "__main__":
                 best_model = res.model
         print("best fun is : ", best_fun)
         U = best_model[0].matrix()
-        H1_ = loss1._transform_kron([U, U], original=True).detach().numpy()
-        H2_ = loss2._transform_kron([U, U], original=True).detach().numpy()
-        save_npy(f"array/dimer_optim_J_{J_str}_M_{M}", [H1_, H2_])
-        save_npy(f"array/U_dimer_optim_J_{J_str}_M_{M}", [U.detach().numpy()])
+        H1 = loss1._transform_kron([U, U], original=True).detach().numpy()
+        H2 = loss2._transform_kron([U, U], original=True).detach().numpy()
+        U = U.detach().numpy()
+        save_npy(f"array/dimer_optim_J_{J_str}_M_{M}", [H1, H2])
+        save_npy(f"array/U_dimer_optim_J_{J_str}_M_{M}", [U])
+        U = np.kron(U, U)
+
+        O /= 4 # divide by 4 because overwrapped 4 times.
+
+        try:
+            save_npy(f"array/dimer_optim_J_{J_str}_z_M_{M}",  [O/(H1 + 1E-8), O/(H2+1E-8)])
+        except:
+            print("support of operator is not covered by a support of Hamiltonian")
+
+
         
 
         
