@@ -118,7 +118,8 @@
     // "python.defaultInterpreterPath": "/home/keisuke/miniconda3/envs/quspin/bin/python",
     "python.analysis.extraPaths": [
       "${workspaceFolder}/customModule",
-      "./python/nsp"
+      "./python/nsp",
+      "./python/reduce_nsp"
     ],
     "C_Cpp.errorSquiggles": "Disabled",
     "C_Cpp.intelliSenseEngineFallback": "Enabled",

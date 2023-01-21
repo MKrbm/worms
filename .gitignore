@@ -8,6 +8,7 @@ __pycache__/
 *.pdf
 
 *.jpeg
+!doc/**/*.jpeg
 *.zip
 python_copy
 # Distribution / packaging
@@ -28,6 +29,9 @@ Release/
 #hidden folder
 #Exclude all dlls
 .*
+
+# python numpy array data
+*.npy
 #Except for .vscode
 !.vscode 
 !.devcontainer
