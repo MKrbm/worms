@@ -14,6 +14,7 @@
 #include <worm.hpp>
 #include <observable.hpp>
 #include <automodel.hpp>
+#include <autoobservable.hpp>
 
 
 // #define DEBUG 1
@@ -40,7 +41,8 @@ std::vector<double> exe_worm_parallel(
   size_t cutoff_l, 
   bool fix_wdensity, 
   int rank,
-  std::vector<BC::observable>& res// contains results such as energy, average_sign,, etc
+  std::vector<BC::observable>& res, // contains results such as energy, average_sign,, etc
+  model::observable obs,
 ){
 
   // cout << "Hi" << endl;
@@ -54,8 +56,13 @@ std::vector<double> exe_worm_parallel(
   BC::observable n_ops; 
   BC::observable N2; // average of square of number of operators (required for specific heat)
   BC::observable N; // average of number of operators (required for specific heat)
+  BC::observable dH2; // second derivative by magnetic field
+  BC::observable dH; // first derivative by magnetic field
 
-  BC::observable M; // magnetization
+  BC::observable 
+  
+  
+  ; // magnetization
   BC::observable M2; // magnetization^2
   BC::observable K; // matnetic susceptibility
 
@@ -94,6 +101,9 @@ std::vector<double> exe_worm_parallel(
       double n_neg = 0;
       double n_op = 0;
       double sglt_ = 0;
+
+      double sum_ot = 0; // \sum_{tau} O_{tau} : sum of observables 
+      double sum_2_ot = 0; // \sum_{tau} (O_{tau})^2 : sum of square of observables 
       for (const auto&  s : solver.state) {
         if (s==0) sglt_++;
       }
@@ -102,6 +112,11 @@ std::vector<double> exe_worm_parallel(
         sign *= sign_;
         if (sign_ == -1) n_neg++;
         n_op++;
+
+        // calculate kai (susceptibility)
+        double _op_tmp = obs.obs_operators(op.op_type(), op.state());
+        sum_ot += _op_tmp;
+        sum_2_ot += _op_tmp*_op_tmp;
         // w_rate *= spin_model.loperators[op.op_type()].ham_rate_vector[op.state()];
         // cout << spin_model.loperators[op.op_type()].ham_rate_vector[op.state()]<< endl;
       }
@@ -114,6 +129,8 @@ std::vector<double> exe_worm_parallel(
       sglt << sglt_ / spin_model.L;
       n_neg_ele << n_neg;
       n_ops << n_op;
+      dH << (sum_ot / beta) * sign;
+      dH2 << (sum_ot*sum_ot - sum_2_ot) / (2*beta) * sign;
     }
     if (i <= therms / 2) {
       if (!fix_wdensity){
@@ -159,6 +176,8 @@ std::vector<double> exe_worm_parallel(
   res.push_back(n_ops);
   res.push_back(N2);
   res.push_back(N);
+  res.push_back(dH);
+  res.push_back(dH2);
   return return_value;
 }
 
