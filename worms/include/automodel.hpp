@@ -18,8 +18,6 @@
 #include "model.hpp"
 
 namespace model{
-
-
   size_t num_type(std::vector<size_t> bond_type);
 
   class base_lattice;
@@ -97,6 +95,7 @@ public:
   
   size_t sps_sites(size_t i){return _sps_sites[i];}
   double shift() const {return origin_shift;}
+  const std::vector<local_operator<MCT>> get_local_operators() const {return loperators;}
 
   //* default constructor
   base_model( model::base_lattice lat, 

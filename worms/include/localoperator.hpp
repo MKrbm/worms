@@ -61,7 +61,7 @@ class local_operator{
 public:
   using VECD = std::vector<double>;
   using TPROB = std::vector<VECD>; //type for transition probability. typically, this is 2D matrix with 4 x 4 elements( check notebook for detail definition of this type).
-  std::vector<std::vector<double>> ham_;
+  std::vector<std::vector<double>> ham_prime;
   std::vector<std::vector<double>> ham; // virtual hamiltonian (or maybe absolute of original hamiltonian)
   std::vector<std::vector<double>> ham_rate; // original hamiltonian
 private:
@@ -76,7 +76,7 @@ public:
   double max_diagonal_weight_;
   double total_weights; //sum of diagonal elemtns of ham
 
-  std::vector<int> signs; //list of sign defined via the sign of ham_;
+  std::vector<int> signs; //list of sign defined via the sign of ham_prime;
   std::vector<TPROB> trans_prob; //num_configuration x 4 x 4 matrix.
   std::array<int, 2> num2index(int num);
   markov_v markov;
@@ -113,7 +113,7 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
   // std::cout << "Hi" << std::endl;
   int N = size*size;
   ene_shift=0;
-  ham_ = ham;
+  ham_prime = ham;
 
   std::vector<double> ham_vector;
   std::vector<double> ham_rate_vector;
@@ -121,20 +121,20 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
   ham_vector = std::vector<double>(size*size, 0);
   ham_rate_vector = std::vector<double>(size*size, 0);
 
-  for (int i=0; i<ham_.size();i++){
+  for (int i=0; i<ham_prime.size();i++){
     ene_shift = std::min(ene_shift, ham[i][i]);
     ene_shift = std::min(ene_shift, ham_rate[i][i]);
   }
   ene_shift *= -1;
   ene_shift += off_set;
-  for (int i=0; i<ham_.size();i++){
-    ham_[i][i] += ene_shift;
+  for (int i=0; i<ham_prime.size();i++){
+    ham_prime[i][i] += ene_shift;
     ham_rate[i][i] += ene_shift;
   }
 
   for (int i=0; i<N; i++){
     auto index = num2index(i);
-    ham_vector[i] = ham_[index[0]][index[1]];
+    ham_vector[i] = ham_prime[index[0]][index[1]];
     ham_rate_vector[i] = ham_rate[index[0]][index[1]];
   }
 
@@ -143,8 +143,8 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
   double tmp=0;
   max_diagonal_weight_ = 0;
   for (int i=0; i<size; i++) {
-    tmp += ham_[i][i];
-    max_diagonal_weight_ = std::max(max_diagonal_weight_, ham_[i][i]);
+    tmp += ham_prime[i][i];
+    max_diagonal_weight_ = std::max(max_diagonal_weight_, ham_prime[i][i]);
   }
 
   for (int i=0; i<ham_vector.size(); i++){
@@ -176,15 +176,10 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
     if (leg != 3) throw std::invalid_argument("leg more than 3 is not implemented yet");
     spin_state::Operator state(nullptr, &ogwt.pows, 0, 0, 0);
     for (size_t s=0; s < ham_vector.size(); s++){
-      // if (s==149780){
-      //   cout << "??" << endl;
-      // }
       state.set_state(s);
+      
       if (state.get_local_state(0) != state.get_local_state(3) && state.get_local_state(2) != state.get_local_state(5)) continue;
-      // #ifndef NDEBUG
-      // auto ogw_ = ogwt.init_table(ham_vector, s, zw);
-      // if (!ogw_.size()) throw std::invalid_argument("cannot be considered as virtual one site operator");
-      // #endif
+
       state2index[s] = markov_tmp.size();
       std::vector<double> ogw = ogwt.init_table(ham_vector, s, zw);
       markov_tmp.push_back(markov_t(MC(), ogw));
