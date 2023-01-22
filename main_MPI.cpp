@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <unistd.h>
 #include <automodel.hpp>
+#include <autoobservable.hpp>
 #include <exec_parallel.hpp>
 #include <options.hpp>
 #include <argparse.hpp>
@@ -93,7 +94,7 @@ int main(int argc, char **argv) {
 
 
   double shift;
-  string file, basis, cell, ham_path;
+  string file, basis, cell, ham_path, obs_path;
   bool repeat; // true if repeat params and types.
   bool zero_worm;
   vector<size_t> shapes;
@@ -111,6 +112,7 @@ int main(int argc, char **argv) {
   basis = (string) mcfg.lookup("basis").c_str();
   cell = (string) mcfg.lookup("cell").c_str();
   ham_path = (string) mcfg.lookup("ham_path").c_str();
+  obs_path = (string) mcfg.lookup("obs_path").c_str();
   repeat = (bool) mcfg.lookup("repeat");
   shift = (double) mcfg.lookup("shift");
   zero_worm = (bool) mcfg.lookup("zero_worm");
@@ -157,6 +159,7 @@ int main(int argc, char **argv) {
   sweeps = args.safeGet<int>("N", sweeps);
   params[0] = args.safeGet<float>("J1",  params[0]);
   ham_path = args.safeGet<std::string>("ham", ham_path);
+  obs_path = args.safeGet<std::string>("ham", obs_path);
 
   sweeps = sweeps / size;
   if (rank == 0){
@@ -171,6 +174,8 @@ int main(int argc, char **argv) {
 
   model::base_lattice lat(basis, cell, shapes, file, !world.rank());
   model::base_model<bcl::st2013> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat, !world.rank());
+  
+  model::observable obs(spin, obs_path, !world.rank());
 
   // output MC step info 
   if (rank == 0 ) cout << "therms(each process)    : " << therms << endl
@@ -197,6 +202,8 @@ int main(int argc, char **argv) {
     BC::observable n_ops=_res[4]; 
     BC::observable N2 =_res[5];
     BC::observable N =_res[6];
+    BC::observable dH =_res[7];
+    BC::observable dH2 =_res[8];
 
     double ene_err = std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2));
     double ene_mean = ene.mean()/ave_sign.mean();
@@ -230,7 +237,7 @@ int main(int argc, char **argv) {
               << "# of operators       = "
               << n_ops.mean() << std::endl
               << "# of neg sign op     = "
-              << n_neg_ele.mean() << std::endl;
+              << n_neg_ele.mean() << std::endl;dddd
   }
 
   MPI_Finalize();
