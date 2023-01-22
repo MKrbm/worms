@@ -78,10 +78,11 @@ u = np.array([
     [-1/np.sqrt(2), 0, 1/np.sqrt(2), 0],
     [0,0,0,1]
 ])
-U = np.kron(u, u)
+
 
 O = np.kron(o, o)
 O = np.round(O, preceision) # local order operator  
+U = np.kron(u, u)
 
 def dimer_optim(M, queue, i):
     best_fun = 1E10
@@ -133,24 +134,26 @@ if __name__ == "__main__":
 
         O /= 4 # divide by 4 because overwrapped 4 times. 
         try:
-            save_npy(f"array/dimer_original_J_{J_str}_z", [O/(H1 + 1E-8), O/(H2+1E-8)]) 
+            save_npy(f"array/dimer_original_J_{J_str}_z", [O, O]) 
         except:
             print("support of operator is not covered by a support of Hamiltonian")
 
 
     if lat == "singlet":
         #* dimer lattice and single-triplet basis
+        
         H1 = sum_ham(J[0]*lh, [[1,2],[1,3]], 4, 2)
         H1 += sum_ham(J[1]*lh/4, [[0,1],[2,3]], 4, 2)
 
         H2 = sum_ham(J[0]*lh, [[0,2],[0,3]], 4, 2)
         H2 += sum_ham(J[1]*lh/4, [[0,1],[2,3]], 4, 2)
+
         save_npy(f"array/singlet_J_{J_str}", [U.T@H1@U, U.T@H2@U]) 
         
         O /= 4 # divide by 4 because overwrapped 4 times. 
-
+        O = U.T @ O @ U
         try:
-            save_npy(f"array/singlet_J_{J_str}_z",  [O/(H1 + 1E-8), O/(H2+1E-8)]) 
+            save_npy(f"array/singlet_J_{J_str}_z",  [O, O]) 
         except:
             print("support of operator is not covered by a support of Hamiltonian")
 
@@ -181,18 +184,19 @@ if __name__ == "__main__":
                 best_fun = res.fun
                 best_model = res.model
         print("best fun is : ", best_fun)
-        U = best_model[0].matrix()
-        H1 = loss1._transform_kron([U, U], original=True).detach().numpy()
-        H2 = loss2._transform_kron([U, U], original=True).detach().numpy()
-        U = U.detach().numpy()
+        u = best_model[0].matrix()
+        H1 = loss1._transform_kron([u, u], original=True).detach().numpy()
+        H2 = loss2._transform_kron([u, u], original=True).detach().numpy()
+        u = u.detach().numpy()
         save_npy(f"array/dimer_optim_J_{J_str}_M_{M}", [H1, H2])
-        save_npy(f"array/U_dimer_optim_J_{J_str}_M_{M}", [U])
-        U = np.kron(U, U)
+        save_npy(f"array/U_dimer_optim_J_{J_str}_M_{M}", [u])
+        U = np.kron(u, u)
 
         O /= 4 # divide by 4 because overwrapped 4 times.
+        O = U.T @ O @ U
 
         try:
-            save_npy(f"array/dimer_optim_J_{J_str}_z_M_{M}",  [O/(H1 + 1E-8), O/(H2+1E-8)])
+            save_npy(f"array/dimer_optim_J_{J_str}_z_M_{M}",  [O, O])
         except:
             print("support of operator is not covered by a support of Hamiltonian")
 
