@@ -140,7 +140,7 @@ class worm{
       auto const& lop = loperators[i];
       auto accept = std::vector<double>(lop.size, 0);
 
-      auto const& ham = lop.ham_;
+      auto const& ham = lop.ham_prime;
       for (int j=0; j<lop.size; j++) {
         accept[j] = ham[j][j]/max_diagonal_weight;
       }

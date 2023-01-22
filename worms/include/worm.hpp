@@ -95,17 +95,18 @@ class worm{
   // typedef model::local_operator::engine_type engine_type;
   typedef std::mt19937 engine_type;
 
-  #ifdef NDEBUG
-  // unsigned rseed = static_cast <unsigned> (time(0));
-  // engine_type rand_src = engine_type(rseed);
   engine_type rand_src;
-  #else
-  unsigned rseed = static_cast <unsigned> (time(0) + srand(id));
-  unsigned rseed = SEED;
-  // SEED = rseed;
-  engine_type rand_src = engine_type(SEED);
-  engine_type test_src = engine_type(SEED);
-  #endif
+  engine_type test_src;
+  // #ifdef NDEBUG
+  // // unsigned rseed = static_cast <unsigned> (time(0));
+  // // engine_type rand_src = engine_type(rseed);
+  // #else
+  // unsigned rseed = static_cast <unsigned> (time(0) + srand(id));
+  // unsigned rseed = SEED;
+  // // SEED = rseed;
+  // engine_type rand_src = engine_type(SEED);
+  // engine_type test_src = engine_type(SEED);
+  // #endif
 
 
   // random distribution from 0 to 1
@@ -133,8 +134,13 @@ class worm{
     // dout << "seed number : " << rseed << endl;
     // printf("seed number : %u", rseed);
     srand(rank);
+    #ifdef NDEBUG
     unsigned rseed = static_cast <unsigned> (time(0)) + rand() * (rank + 1);
     rand_src = engine_type(rseed);
+    #else
+    rand_src = engine_type(SEED);
+    test_src = engine_type(SEED);
+    #endif
     double max_diagonal_weight = loperators[0].max_diagonal_weight_;
     for (auto const& lop : loperators){
       max_diagonal_weight = std::max(max_diagonal_weight, lop.max_diagonal_weight_);
@@ -145,7 +151,7 @@ class worm{
       state_funcs.push_back({lop.ogwt.pows, lop.ogwt.L});
       auto accept = std::vector<double>(lop.size, 0);
 
-      auto const& ham = lop.ham_;
+      auto const& ham = lop.ham_prime;
       for (int j=0; j<lop.size; j++) {
         accept[j] = ham[j][j]/max_diagonal_weight;
       }
