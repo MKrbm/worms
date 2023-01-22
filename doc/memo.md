@@ -23,3 +23,6 @@
 
 - kagome lattice model で minus sign problem を見る。
 - 比熱のピークは見れる？
+
+$\frac{\frac{\partial}{\partial h}Z}{Z}$
+$\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$

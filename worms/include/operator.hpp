@@ -75,7 +75,7 @@ namespace spin_state{
       op.print(os);
       return os;
     }
-    VUS const get_state_vec(){
+    VUS get_state_vec() const {
       VUS state_vec(size()*2);
       for (int i=0; i<size()*2; i++) {
         state_vec[i] = get_local_state(i);

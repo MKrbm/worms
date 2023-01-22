@@ -85,7 +85,10 @@ int main(int argc, char **argv) {
   string model_name = root["model"];
   bool print_lat = (bool) root["print_lattice"];
   model_name = args.safeGet<std::string>("m", model_name);
-  if(world.rank() == 0) cout << "model name is \t : \t" << model_name << endl;
+  if(world.rank() == 0) {
+    cout << "model name is \t : \t" << model_name << endl;
+    cout << "run on \t : \t" << size << " nodes" << endl;
+  }
   const Setting& mcfg = root["models"][model_name];
   const Setting& shape_cfg = mcfg.lookup("length");
   const Setting& params_cfg = mcfg.lookup("params");
@@ -174,11 +177,11 @@ int main(int argc, char **argv) {
 
   model::base_lattice lat(basis, cell, shapes, file, !world.rank());
   model::base_model<bcl::st2013> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat, !world.rank());
-  
   model::observable obs(spin, obs_path, !world.rank());
 
   // output MC step info 
   if (rank == 0 ) cout << "therms(each process)    : " << therms << endl
+                       << "sweeps(each process)    : " << sweeps << endl 
                        << "sweeps(in total)        : " << sweeps * size << endl;
 
   if (rank == 0) {for (int i=0; i<40; i++) cout << "-"; cout << endl;}
@@ -187,7 +190,7 @@ int main(int argc, char **argv) {
 
   // simulate with worm algorithm (parallel computing is enable)
   std::vector<BC::observable> res;
-  exe_worm_parallel(spin, T, sweeps, therms, cutoff_l, fix_wdensity, rank, res);  
+  exe_worm_parallel(spin, T, sweeps, therms, cutoff_l, fix_wdensity, rank, res, obs);  
 
 
   auto _res = boost::mpi::all_reduce(world, res, VectorPlus<std::vector<BC::observable>>()); //all reduce (sum over all results)
@@ -202,8 +205,8 @@ int main(int argc, char **argv) {
     BC::observable n_ops=_res[4]; 
     BC::observable N2 =_res[5];
     BC::observable N =_res[6];
-    BC::observable dH =_res[7];
-    BC::observable dH2 =_res[8];
+    BC::observable dH =_res[7]; // $\frac{\frac{\partial}{\partial h}Z}{Z}$ 
+    BC::observable dH2 =_res[8]; // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
 
     double ene_err = std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2));
     double ene_mean = ene.mean()/ave_sign.mean();
@@ -211,7 +214,16 @@ int main(int argc, char **argv) {
     double c_mean = (N2.mean() - N.mean()) / ave_sign.mean() - (N.mean() / ave_sign.mean()) * (N.mean() / ave_sign.mean());
     double c_err = std::sqrt(std::pow(N2.error()/ave_sign.mean(), 2) + std::pow(N.error()/ave_sign.mean(), 2) + std::pow(N2.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2) + std::pow(N.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2));
     double n_err = std::sqrt(std::pow(N.error()/ave_sign.mean(), 2) + std::pow(N.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2));
-    c_err += n_err * n_err;
+    c_err += 2 * n_err;
+
+    double _dH2 = dH2.mean() / ave_sign.mean();
+    double _dH = dH.mean() / ave_sign.mean();
+    double mag = _dH * T / lat.L ;
+    double mag_err = std::sqrt(std::pow(dH.error()/ave_sign.mean(), 2) + std::pow(dH.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) * T / lat.L;
+    double sus = (_dH2 - _dH * _dH ) * T / lat.L; // suscetibility
+    double sus_err = std::sqrt(std::pow(dH2.error()/ave_sign.mean(), 2) + std::pow(dH2.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) * T / lat.L;
+    sus_err += 2 * _dH * mag_err;
+    
 
     
     std::cout << "beta                 = " << 1.0 / T << endl;
@@ -230,6 +242,10 @@ int main(int argc, char **argv) {
               << c_mean / lat.L << " +- " 
               << c_err / lat.L
               << std::endl
+              << "magnetization        = "
+              << mag << " +- " << mag_err << std::endl 
+              << "susceptibility       = "
+              << sus << " +- " << sus_err << std::endl
               << "average sign         = "
               << ave_sign.mean() << " +- " << ave_sign.error() << std::endl
               << "dimer operator       = "
@@ -237,7 +253,7 @@ int main(int argc, char **argv) {
               << "# of operators       = "
               << n_ops.mean() << std::endl
               << "# of neg sign op     = "
-              << n_neg_ele.mean() << std::endl;dddd
+              << n_neg_ele.mean() << std::endl;
   }
 
   MPI_Finalize();

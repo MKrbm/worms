@@ -42,7 +42,7 @@ std::vector<double> exe_worm_parallel(
   bool fix_wdensity, 
   int rank,
   std::vector<BC::observable>& res, // contains results such as energy, average_sign,, etc
-  model::observable obs,
+  model::observable obs
 ){
 
   // cout << "Hi" << endl;
@@ -58,8 +58,6 @@ std::vector<double> exe_worm_parallel(
   BC::observable N; // average of number of operators (required for specific heat)
   BC::observable dH2; // second derivative by magnetic field
   BC::observable dH; // first derivative by magnetic field
-
-  BC::observable 
   
   
   ; // magnetization
@@ -115,10 +113,11 @@ std::vector<double> exe_worm_parallel(
 
         // calculate kai (susceptibility)
         double _op_tmp = obs.obs_operators(op.op_type(), op.state());
+        // if (_op_tmp != 0) {
+        //   cout << op.get_state_vec() << " " << _op_tmp << " " << _op_tmp << endl;
+        // }
         sum_ot += _op_tmp;
         sum_2_ot += _op_tmp*_op_tmp;
-        // w_rate *= spin_model.loperators[op.op_type()].ham_rate_vector[op.state()];
-        // cout << spin_model.loperators[op.op_type()].ham_rate_vector[op.state()]<< endl;
       }
       double m = (double)solver.ops_main.size();
       double ene_tmp = - m / beta + spin_model.shift();
@@ -129,8 +128,8 @@ std::vector<double> exe_worm_parallel(
       sglt << sglt_ / spin_model.L;
       n_neg_ele << n_neg;
       n_ops << n_op;
-      dH << (sum_ot / beta) * sign;
-      dH2 << (sum_ot*sum_ot - sum_2_ot) / (2*beta) * sign;
+      dH << sum_ot * sign;
+      dH2 << (sum_ot*sum_ot - sum_2_ot) * sign / 2 ;
     }
     if (i <= therms / 2) {
       if (!fix_wdensity){

@@ -58,14 +58,14 @@ public:
 
 template <class MC=bcl::heatbath>
 class local_operator{
+private:
+  std::vector<double> _ham_vector;
 public:
+  double ham_vector(int i) {return _ham_vector[i];}
   using VECD = std::vector<double>;
   using TPROB = std::vector<VECD>; //type for transition probability. typically, this is 2D matrix with 4 x 4 elements( check notebook for detail definition of this type).
   std::vector<std::vector<double>> ham_prime;
   std::vector<std::vector<double>> ham; // virtual hamiltonian (or maybe absolute of original hamiltonian)
-  std::vector<std::vector<double>> ham_rate; // original hamiltonian
-private:
-public:
   typedef MC MCT;
   outgoing_weight ogwt;
 
@@ -96,7 +96,6 @@ template <class MC>
 local_operator<MC>::local_operator(int leg, size_t sps)
   :leg(leg), size(pow(sps, leg)), ogwt(leg, sps), sps(sps)
   {
-    ham_rate = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
     ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
   }
 
@@ -114,28 +113,20 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
   int N = size*size;
   ene_shift=0;
   ham_prime = ham;
-
-  std::vector<double> ham_vector;
-  std::vector<double> ham_rate_vector;
-
-  ham_vector = std::vector<double>(size*size, 0);
-  ham_rate_vector = std::vector<double>(size*size, 0);
+  _ham_vector = std::vector<double>(N, 0);
 
   for (int i=0; i<ham_prime.size();i++){
     ene_shift = std::min(ene_shift, ham[i][i]);
-    ene_shift = std::min(ene_shift, ham_rate[i][i]);
   }
   ene_shift *= -1;
   ene_shift += off_set;
   for (int i=0; i<ham_prime.size();i++){
     ham_prime[i][i] += ene_shift;
-    ham_rate[i][i] += ene_shift;
   }
 
   for (int i=0; i<N; i++){
     auto index = num2index(i);
-    ham_vector[i] = ham_prime[index[0]][index[1]];
-    ham_rate_vector[i] = ham_rate[index[0]][index[1]];
+    _ham_vector[i] = ham_prime[index[0]][index[1]];
   }
 
 
@@ -147,49 +138,48 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
     max_diagonal_weight_ = std::max(max_diagonal_weight_, ham_prime[i][i]);
   }
 
-  for (int i=0; i<ham_vector.size(); i++){
-    auto& x = ham_vector[i];
-    auto& y = ham_rate_vector[i];
+  for (int i=0; i<_ham_vector.size(); i++){
+    auto& x = _ham_vector[i];
     signs.push_back(x >= 0 ? 1 : -1);
     x = std::abs(x);
     if (x < thres) x = 0;
-    if (std::abs(y) < thres) y = 0;
+    // if (std::abs(y) < thres) y = 0;
 
-    if (y!=0 && x==0){
-      std::cerr << "cannot reweighting since support doesn't cover the original matrix" << std::endl;
-      std::cerr << "y : " << y << "  x : " << x << std::endl;
-      std::terminate();
-    }
-    if (x!= 0) y = y/x;
+    // if (y!=0 && x==0){
+    //   std::cerr << "cannot reweighting since support doesn't cover the original matrix" << std::endl;
+    //   std::cerr << "y : " << y << "  x : " << x << std::endl;
+    //   std::terminate();
+    // }
+    // if (x!= 0) y = y/x;
   }
   // set transition probability
-  // std::cout << ham_vector << std::endl;
+  // std::cout << _ham_vector << std::endl;
   // std::cout << "a" << std::endl;
 
 
   std::vector<markov_t> markov_tmp;
   std::vector<long long> state2index;
 
-  state2index.resize(ham_vector.size(), -1);
-  if (leg > 2 && ham_vector.size() > 1E5){
-    std::cout << "too big size of ham_vector for non-bond operator : In the case, only virtually one site operator at center is accepted" << std::endl;
+  state2index.resize(_ham_vector.size(), -1);
+  if (leg > 2 && _ham_vector.size() > 1E5){
+    std::cout << "too big size of _ham_vector for non-bond operator : In the case, only virtually one site operator at center is accepted" << std::endl;
     if (leg != 3) throw std::invalid_argument("leg more than 3 is not implemented yet");
     spin_state::Operator state(nullptr, &ogwt.pows, 0, 0, 0);
-    for (size_t s=0; s < ham_vector.size(); s++){
+    for (size_t s=0; s < _ham_vector.size(); s++){
       state.set_state(s);
       
       if (state.get_local_state(0) != state.get_local_state(3) && state.get_local_state(2) != state.get_local_state(5)) continue;
 
       state2index[s] = markov_tmp.size();
-      std::vector<double> ogw = ogwt.init_table(ham_vector, s, zw);
+      std::vector<double> ogw = ogwt.init_table(_ham_vector, s, zw);
       markov_tmp.push_back(markov_t(MC(), ogw));
     }
      markov = markov_v(markov_tmp, state2index);
   }else{
-    for (size_t s=0; s < ham_vector.size(); s++){
-      // if (ham_vector[s] == 0 ) continue;
+    for (size_t s=0; s < _ham_vector.size(); s++){
+      // if (_ham_vector[s] == 0 ) continue;
       state2index[s] = markov_tmp.size();
-      std::vector<double> ogw = ogwt.init_table(ham_vector, s, zw);
+      std::vector<double> ogw = ogwt.init_table(_ham_vector, s, zw);
       markov_tmp.push_back(markov_t(MC(), ogw));
     }
     markov = markov_v(markov_tmp, state2index);
@@ -198,7 +188,6 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
 
   //* free memories
   // ham.resize(0);
-  // ham_rate.resize(0);
 }
 
 

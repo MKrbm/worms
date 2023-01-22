@@ -159,7 +159,7 @@ public:
     VVS dofs_list(N_op);
     for (int i=0; i<N_op; i++) {
       for (auto b : type2bonds[i][0]) {dofs_list[i].push_back(_sps_sites[site_type[b]]);} //size should be leg_size
-      loperators.push_back(local_operator<MC>(type2bonds[i][0].size(), dofs_list[i][0]));  // local_operator only accepts one sps yet.
+      loperators.push_back(local_operator<MC>(type2bonds[i][0].size(), dofs_list[i][0]));  // local_operator only accepts one sps type yet.
     }
 
     for (int p_i=0; p_i<path_list.size(); p_i++) {
@@ -180,7 +180,6 @@ public:
       for (int i=0; i<shape[0]; i++) for (int j=0; j<shape[1]; j++)
       {
         auto x = data[i * shape[1] + j] * params[p_i];
-        loperator.ham_rate[j][i] += x;
         loperator.ham[j][i] += x;
       }
     }

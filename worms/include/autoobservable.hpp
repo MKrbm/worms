@@ -60,19 +60,20 @@ class model::observable
       std::sort(path_list.begin(), path_list.end());
 
       for (int p_i=0; p_i<path_list.size(); p_i++) {
-        auto loperator = loperators[p_i];
+        model::local_operator<MCT> loperator = loperators[p_i];
         std::string path = path_list[p_i];
         auto pair = load_npy(path);
         VS shape = pair.first;
         VD data = pair.second;
         size_t S = shape[0];
         if (shape[0]!= shape[1]){ std::cerr << "require square matrix" << std::endl; exit(1); }
+        if (data.size() != loperator.ham_prime.size() * loperator.ham_prime.size()){ std::cerr << "size of observable does not match to size of local operator" << std::endl; exit(1); }
         if (print) std::cout << "obs operator is read from " << path << std::endl;
         std::vector<double> _obs(S*S);
         for (int i=0; i<S; i++) for (int j=0; j<S; j++)
         {
           double y = data[i * S + j];
-          double x = loperator.ham_prime[j][i];
+          double x = loperator.ham_vector(i * S + j); // x is absolute of the $\hat{h}_\prime[j][i]$ (note that $\hat{h}_\prime$ is a local hamiltonian whose origin shifts by ene_shift from original local hamiltonian)
           if (abs(y) < 1e-8) {_obs[i * S + j] = 0; continue;}
           if (abs(x) < 1e-8) x = 0;
           if (x == 0) { std::cerr << "denominator is zero for " << i << " " << j << "which lead to infinite variance"; exit(1); }

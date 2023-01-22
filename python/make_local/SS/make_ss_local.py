@@ -66,6 +66,7 @@ SySy = np.kron(Sy,Sy).real.astype(np.float64)
 
 lh = SzSz + SxSx + SySy
 I = np.eye(2)
+I4 = np.eye(4)
 o = np.kron(I, Sz) + np.kron(Sz, I)
 
 lh = -lh # use minus of local hamiltonian for monte-carlo (exp(-beta H ))
@@ -80,7 +81,7 @@ u = np.array([
 ])
 
 
-O = np.kron(o, o)
+O = np.kron(o, I4) + np.kron(I4, o)
 O = np.round(O, preceision) # local order operator  
 U = np.kron(u, u)
 

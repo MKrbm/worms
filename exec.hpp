@@ -233,8 +233,6 @@ std::vector<double> exe_worm_parallel(
         sign *= sign_;
         if (sign_ == -1) n_neg++;
         n_op++;
-        // w_rate *= spin_model.loperators[op.op_type()].ham_rate_vector[op.state()];
-        // cout << spin_model.loperators[op.op_type()].ham_rate_vector[op.state()]<< endl;
       }
       double ene_tmp = - (double)solver.ops_main.size() / beta;
       for (int e=0; e<spin_model.N_op; e++){
