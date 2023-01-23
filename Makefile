@@ -1,10 +1,10 @@
 # make_local := ./make_local
 execute_dir := /home/user/project/execute
-python_dir := /home/user/project/python/reduce_nsp
+python_dir := /home/user/project/python
 local_ham_dir := ${python_dir}/make_local
 
 #* for log files
-LOGPATH = /home/user/project/python/reduce_nsp/make_local/logs
+LOGPATH = /home/user/project/python/make_local/logs
 LOGFILE = $(LOGPATH)/$(shell date --iso=seconds)
 
 
@@ -49,25 +49,28 @@ ${SSOutputOriginal}:
 ${SSResDimerOptim}: ${SSOutputDimerOptim}
 	cd  ${execute_dir};\
 	mkdir -p $(shell dirname ${SSResDimerOptim}); \
-	./mpi_bash.sh -f ${SSResDimerOptim} ../Release/main_MPI -m SS2 -ham ${SSOutputDimerOptim} -N ${N} -J1 ${J} -T ${T} \
+	./mpi_bash.sh -f ${SSResDimerOptim} ../Release/main_MPI -m SS2 -ham ${SSOutputDimerOptim} -N ${N} -T ${T} \
 	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2))
 
 ${SSResSinglet}: ${SSOutputSinglet}
 	cd  ${execute_dir};\
 	mkdir -p $(shell dirname ${SSResSinglet}); \
-	./mpi_bash.sh -f ${SSResSinglet} ../Release/main_MPI -m SS2 -ham ${SSOutputSinglet} -N ${N} -J1 ${J} -T ${T} \
+	./mpi_bash.sh -f ${SSResSinglet} ../Release/main_MPI -m SS2 -ham ${SSOutputSinglet} -N ${N} -T ${T} \
 	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2))
 
 ${SSResOriginal}: ${SSOutputOriginal}
 	cd  ${execute_dir};\
 	mkdir -p $(shell dirname ${SSResOriginal}); \
-	./mpi_bash.sh -f ${SSResOriginal} ../Release/main_MPI -m SS1 -ham ${SSOutputOriginal} -N ${N} -J1 ${J}  -T ${T} \
+	./mpi_bash.sh -f ${SSResOriginal} ../Release/main_MPI -m SS1 -ham ${SSOutputOriginal} -N ${N} -P1 ${J}  -T ${T} \
 	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2))
 
 
-.PHONY: clean
-clean:
-	rm -f ${SSResDimerOptim}
+.PHONY: clean_worm clean_ham
+clean_worm:
+	rm -f ${SSResDimerOptim} ${SSResSinglet} ${SSResDimerOptim}
+
+clean_ham:
+	rm -rf ${SSOutputDimerOptim} ${SSOutputSinglet} ${SSOutputOriginal}
 PHONY:. SSDimerOptim
 PHONY:. SSSinglet
 PHONY:. SSOriginal
