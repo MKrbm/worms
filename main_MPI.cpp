@@ -65,6 +65,8 @@ int main(int argc, char **argv) {
   parser.addArgument({"-T"}, "set temperature");
   parser.addArgument({"-m"}, "model name");
   parser.addArgument({"-ham"}, "path to hamiltonian");
+  parser.addArgument({"-obs"}, "path to observables");
+
   auto args = parser.parseArgs(argc, argv);
 
 
@@ -115,7 +117,8 @@ int main(int argc, char **argv) {
   basis = (string) mcfg.lookup("basis").c_str();
   cell = (string) mcfg.lookup("cell").c_str();
   ham_path = (string) mcfg.lookup("ham_path").c_str();
-  obs_path = (string) mcfg.lookup("obs_path").c_str();
+  try { obs_path = (string) mcfg.lookup("obs_path").c_str();}
+  catch(const SettingNotFoundException &nfex) { obs_path = "";}
   repeat = (bool) mcfg.lookup("repeat");
   shift = (double) mcfg.lookup("shift");
   zero_worm = (bool) mcfg.lookup("zero_worm");
@@ -160,9 +163,18 @@ int main(int argc, char **argv) {
   shapes[2] = args.safeGet<size_t>("L3", shapes[2]);
   T = args.safeGet<double>("T", T);
   sweeps = args.safeGet<int>("N", sweeps);
-  params[0] = args.safeGet<float>("J1",  params[0]);
-  ham_path = args.safeGet<std::string>("ham", ham_path);
-  obs_path = args.safeGet<std::string>("ham", obs_path);
+  params[0] = args.safeGet<float>("P1",  params[0]);
+  params[1] = args.safeGet<float>("P2",  params[1]);
+
+  try { 
+    ham_path = args.get<std::string>("ham");
+    try { obs_path = args.get<std::string>("obs");}
+    catch(...) { 
+      if (rank == 0) cout << "obs_path is not given. Elements of observables are set to zero" << endl;
+      obs_path = "";
+    }
+  }
+  catch(...) {}
 
   sweeps = sweeps / size;
   if (rank == 0){
