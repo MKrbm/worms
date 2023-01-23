@@ -416,7 +416,7 @@ dkai_LT_h = dM_LT_h / h_prime
 ##### plot results susceptibility #####
 
 # setting up plot and inset
-fig,ax = plt.subplots(2, figsize=(1.5*fig_size,fig_size))
+fig,ax = plt.subplots(figsize=(1.5*fig_size,fig_size))
 # axs[0].errorbar(T,kai_FL_h,dka_FL_h,marker=".",label="FTLM diff",zorder=-1)
 # axs[0].errorbar(T,kai_LT_h,dkai_LT_h,marker=".",label="LTLM diff",zorder=-2)
 
@@ -428,8 +428,8 @@ fig,ax = plt.subplots(2, figsize=(1.5*fig_size,fig_size))
 # axs[0].set_title(f"susceptibility (calculated by numerical differentiation dh = {h_prime - h }) vs T")
 
 
-ax.errorbar(T,M2_FT * (beta) * N_2d ,dM2_FT * (-beta),marker=".",label="FTLM",zorder=-1)
-ax.errorbar(T,M2_LT * (beta) * N_2d ,dM2_LT * (-beta),marker=".",label="LTLM",zorder=-2)
+ax.errorbar(T,M2_FT * (beta) * N_2d , dM2_FT * (-beta),marker=".",label="FTLM",zorder=-1)
+ax.errorbar(T,M2_LT * (beta) * N_2d , dM2_LT * (-beta),marker=".",label="LTLM",zorder=-2)
 ax.set_xscale("log")
 xmin,xmax = ax.get_xlim()
 ax.legend(loc="lower right")
