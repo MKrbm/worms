@@ -6,10 +6,10 @@ from quspin.basis import spin_basis_1d, spin_basis_general
 from quspin.operators import hamiltonian,quantum_operator
 from quspin.tools.lanczos import lanczos_full,lanczos_iter,FTLM_static_iteration,LTLM_static_iteration
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import argparse
-
 
 sys.path.insert(0, "/home/user/project/python/reduce_nsp")
 from nsp.utils import save_fig
@@ -36,6 +36,9 @@ parser.add_argument('-m','--n_Krylov', help='dimernsion of Krylov space', type =
 
 
 args = parser.parse_args()
+
+
+
 
 '''
 calculate exact 4 x 4 shastry model
@@ -274,7 +277,7 @@ xmin,xmax = ax.get_xlim()
 ax.legend(loc="lower right")
 ax.set_xlabel("temperature")
 ax.set_ylabel("energy")
-
+ax.grid(which="both", ls="-")
 save_fig(fig,f"images/SS/J_{J1}_h_{h}/M_{m}_N_{N_samples}", f"E", 400, overwrite = True)
 
 
@@ -290,7 +293,7 @@ axs[0].set_xscale("log")
 xmin,xmax = ax.get_xlim()
 axs[0].legend(loc="lower right")
 axs[0].set_ylabel("energy")
-
+axs[0].grid(which="both", ls="-")
 
 axs[1].plot(T, C, marker='.', label = "derivative of E_FT", zorder=-1)
 axs[1].plot(T,C_poly,marker=".",label="FTLM poly",zorder=-3)
@@ -298,6 +301,7 @@ axs[1].plot(T,C_poly,marker=".",label="FTLM poly",zorder=-3)
 xmin,xmax = ax.get_xlim()
 axs[1].set_xlabel("temperature")
 axs[1].set_ylabel("energy")
+axs[1].grid(which="both", ls="-")
 
 fig.tight_layout()
 save_fig(fig,f"images/SS/J_{J1}_h_{h}/M_{m}_N_{N_samples}", f"C", 400, overwrite = True)
@@ -311,7 +315,7 @@ xmin,xmax = ax.get_xlim()
 axs[0].legend(loc="lower right")
 axs[0].set_xlabel("temperature")
 axs[0].set_ylabel("magnetization")
-
+axs[0].grid(which="both", ls="-")
 axs[1].errorbar(T,M2_FT,dM2_FT,marker=".",label="FTLM",zorder=-1)
 axs[1].errorbar(T,M2_LT,dM2_LT,marker=".",label="LTLM",zorder=-2)
 axs[1].set_xscale("log")
@@ -319,7 +323,7 @@ xmin,xmax = ax.get_xlim()
 axs[1].legend(loc="lower right")
 axs[1].set_xlabel("temperature")
 axs[1].set_ylabel("magnetization^2")
-
+axs[1].grid(which="both", ls="-")
 fig.tight_layout()
 save_fig(fig,f"images/SS/J_{J1}_h_{h}/M_{m}_N_{N_samples}", f"M", 400, overwrite = True)
 
@@ -431,6 +435,7 @@ fig,ax = plt.subplots(figsize=(1.5*fig_size,fig_size))
 ax.errorbar(T,M2_FT * (beta) * N_2d , dM2_FT * (-beta),marker=".",label="FTLM",zorder=-1)
 ax.errorbar(T,M2_LT * (beta) * N_2d , dM2_LT * (-beta),marker=".",label="LTLM",zorder=-2)
 ax.set_xscale("log")
+ax.grid(which="both", ls="-")
 xmin,xmax = ax.get_xlim()
 ax.legend(loc="lower right")
 ax.set_xlabel("temperature")
