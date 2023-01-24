@@ -6,6 +6,8 @@ import sys
 
 def process_line_SS(stdout):
     energy = []
+    cq = []
+    susc = []
     sign = []
     time = []
     dimer = []
@@ -20,6 +22,21 @@ def process_line_SS(stdout):
             line = line.split("+-")
             energy = [float(line[0]), float(line[1])]
 
+        pat = "specific heat"
+        if pat in line:
+            line = line.replace(pat,"")
+            line = line.replace(" ","")
+            line = line.replace("=","")
+            line = line.split("+-")
+            cq = [float(line[0]), float(line[1])]
+        
+        pat = "susceptibility"
+        if pat in line:
+            line = line.replace(pat,"")
+            line = line.replace(" ","")
+            line = line.replace("=","")
+            line = line.split("+-")
+            susc = [float(line[0]), float(line[1])]
 
         pat = "average sign"
         if pat in line:
@@ -39,4 +56,4 @@ def process_line_SS(stdout):
             
 
             
-    return energy, sign, time
+    return energy, cq, susc, sign, time
