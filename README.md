@@ -42,3 +42,8 @@
     - setup with `pip install -r .devcontainer/requirements.txt`
     - export requirement with `pip freeze > requirements.txt`
       - note that you need to delete `PyGObject==3.42.0` and add `--extra-index-url https://download.pytorch.org/whl/cpu` before calling torch packages.
+
+
+- ## packages
+  - libconfig
+    when installing libconfig, you need to make sure to install with `-BBUILD_SHARED_LIBS=OFF`. With this you can install static library. If you rather want to install with shared libs, you need to set `option(BUILD_SHARED_LIBS  "Enable shared library" OFF)` in `cmake/libconfig.cmake`. Also 
