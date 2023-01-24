@@ -49,28 +49,33 @@ ${SSOutputOriginal}:
 ${SSResDimerOptim}: ${SSOutputDimerOptim}
 	cd  ${execute_dir};\
 	mkdir -p $(shell dirname ${SSResDimerOptim}); \
-	./mpi_bash.sh -f ${SSResDimerOptim} ../Release/main_MPI -m SS2 -ham ${SSOutputDimerOptim} -N ${N} -T ${T} \
+	./mpi_bash.sh -f ${SSResDimerOptim} ../Release/main_MPI -m SS2 -ham ${SSOutputDimerOptim}/H -obs ${SSOutputDimerOptim}/Sz -N ${N} -T ${T} \
 	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2))
 
 ${SSResSinglet}: ${SSOutputSinglet}
 	cd  ${execute_dir};\
 	mkdir -p $(shell dirname ${SSResSinglet}); \
-	./mpi_bash.sh -f ${SSResSinglet} ../Release/main_MPI -m SS2 -ham ${SSOutputSinglet} -N ${N} -T ${T} \
+	./mpi_bash.sh -f ${SSResSinglet} ../Release/main_MPI -m SS2 -ham ${SSOutputSinglet}/H -obs ${SSOutputSinglet}/Sz -N ${N} -T ${T} \
 	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2))
 
 ${SSResOriginal}: ${SSOutputOriginal}
 	cd  ${execute_dir};\
 	mkdir -p $(shell dirname ${SSResOriginal}); \
-	./mpi_bash.sh -f ${SSResOriginal} ../Release/main_MPI -m SS1 -ham ${SSOutputOriginal} -N ${N} -P1 ${J}  -T ${T} \
+	./mpi_bash.sh -f ${SSResOriginal} ../Release/main_MPI -m SS1 -ham ${SSOutputOriginal}/H -obs ${SSOutputOriginal}/Sz -N ${N} -P1 ${J}  -T ${T} \
 	-L1 $$(( $(L)/2)) -L2 $$(( $(L)/2))
 
 
-.PHONY: clean_worm clean_ham
+.PHONY: clean_worm clean_ham clean
+
 clean_worm:
 	rm -f ${SSResDimerOptim} ${SSResSinglet} ${SSResDimerOptim}
 
 clean_ham:
 	rm -rf ${SSOutputDimerOptim} ${SSOutputSinglet} ${SSOutputOriginal}
+
+
+clean: clean_worm clean_ham
+
 PHONY:. SSDimerOptim
 PHONY:. SSSinglet
 PHONY:. SSOriginal
