@@ -119,8 +119,9 @@ if __name__ == "__main__":
     if lat == "original":
         H = lh
         path = ["array/original"]
-        save_npy(path[0], [H, H])
-        save_npy("array/original_z", Sz)
+        save_npy("array/original/H", [H, H])
+        o /= 4 # divide by 4 because overwrapped 4 times.
+        save_npy("array/original/Sz", [o, np.zeros_like(o)])
 
     if lat == "dimer_original":
         # take lattice as dimer
@@ -129,13 +130,10 @@ if __name__ == "__main__":
 
         H2 = sum_ham(J[0]*lh, [[0,2],[0,3]], 4, 2)
         H2 += sum_ham(J[1]*lh/4, [[0,1],[2,3]], 4, 2)
-        save_npy(f"array/dimer_original_J_{J_str}", [H1, H2])
-
-
-
+        save_npy(f"array/dimer_original_J_{J_str}/H", [H1, H2])
         O /= 4 # divide by 4 because overwrapped 4 times. 
         try:
-            save_npy(f"array/dimer_original_J_{J_str}_z", [O, O]) 
+            save_npy(f"array/dimer_original_J_{J_str}/Sz", [O, O]) 
         except:
             print("support of operator is not covered by a support of Hamiltonian")
 
@@ -149,12 +147,12 @@ if __name__ == "__main__":
         H2 = sum_ham(J[0]*lh, [[0,2],[0,3]], 4, 2)
         H2 += sum_ham(J[1]*lh/4, [[0,1],[2,3]], 4, 2)
 
-        save_npy(f"array/singlet_J_{J_str}", [U.T@H1@U, U.T@H2@U]) 
+        save_npy(f"array/singlet_J_{J_str}/H", [U.T@H1@U, U.T@H2@U]) 
         
         O /= 4 # divide by 4 because overwrapped 4 times. 
         O = U.T @ O @ U
         try:
-            save_npy(f"array/singlet_J_{J_str}_z",  [O, O]) 
+            save_npy(f"array/singlet_J_{J_str}/Sz",  [O, O]) 
         except:
             print("support of operator is not covered by a support of Hamiltonian")
 
@@ -162,7 +160,6 @@ if __name__ == "__main__":
         # dimer lattice and dimer basis
         H1 = sum_ham(J[0]*lh, [[1,2],[1,3]], 4, 2)
         H1 += sum_ham(J[1]*lh/4, [[0,1],[2,3]], 4, 2)
-
         H2 = sum_ham(J[0]*lh, [[0,2],[0,3]], 4, 2)
         H2 += sum_ham(J[1]*lh/4, [[0,1],[2,3]], 4, 2)
 
@@ -189,20 +186,17 @@ if __name__ == "__main__":
         H1 = loss1._transform_kron([u, u], original=True).detach().numpy()
         H2 = loss2._transform_kron([u, u], original=True).detach().numpy()
         u = u.detach().numpy()
-        save_npy(f"array/dimer_optim_J_{J_str}_M_{M}", [H1, H2])
-        save_npy(f"array/U_dimer_optim_J_{J_str}_M_{M}", [u])
+        save_npy(f"array/dimer_optim_J_{J_str}_M_{M}/H", [H1, H2])
+        save_npy(f"array/dimer_optim_J_{J_str}_M_{M}/U", [u])
         U = np.kron(u, u)
 
         O /= 4 # divide by 4 because overwrapped 4 times.
         O = U.T @ O @ U
 
         try:
-            save_npy(f"array/dimer_optim_J_{J_str}_z_M_{M}",  [O, O])
+            save_npy(f"array/dimer_optim_J_{J_str}_M_{M}/Sz",  [O, O])
         except:
             print("support of operator is not covered by a support of Hamiltonian")
-
-
-        
 
         
     if lat == "plq_original": #plaquette original
