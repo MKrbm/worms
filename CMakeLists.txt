@@ -13,6 +13,21 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_COMPILER /usr/bin/aarch64-linux-gnu-gcc CACHE PATH "")
 set(CMAKE_CXX_COMPILER /usr/bin/aarch64-linux-gnu-g++ CACHE PATH "")
 
+# debug when use find_package
+set(CMAKE_FIND_DEBUG_MODE OFF) #turn on to print out debug info for find_package
+
+# cmake use rpath for linking shared libraries at runtime
+set(CMAKE_SKIP_RPATH OFF)
+set(BUILD_RPATH_USE_ORIGIN ON)
+
+# cmake use system path for finding libraries
+# if these variables set to ON (True) and if you installed boost package via miniconda, find_package will look for miniconda path first and result in error
+# set(CMAKE_FIND_USE_CMAKE_SYSTEM_PATH FALSE)
+set(CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH FALSE)
+
+
+message(STATUS "CMAKE_FIND_USE_CMAKE_SYSTEM_PATH = ${CMAKE_FIND_USE_CMAKE_SYSTEM_PATH}")
+
 
 unset(CMAKE_Fortran_COMPILER CACHE)
 
@@ -47,8 +62,13 @@ add_subdirectory(./worms) #call /LoopAlgo/CMakeLists.txst
 
 # add executable
 
-# search for MPI
+# search for  
+message(STATUS "CMAKE_MODULE_PATH = ${CMAKE_MODULE_PATH}")
+message(STATUS "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
+
 find_package(MPI REQUIRED)
+
+
 FIND_PACKAGE(Boost COMPONENTS mpi serialization REQUIRED)
 
 FOREACH(name main debug main_MPI)
