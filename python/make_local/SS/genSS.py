@@ -1,6 +1,6 @@
 import numpy as np
 import sys
-sys.path.append('../../')
+sys.path.append('../../reduce_nsp')
 from nsp.utils.base_conv import *
 import argparse
 from nsp.utils.func import *
@@ -13,9 +13,11 @@ import re
 
 os.chdir("/home/user/project")
 # Js = np.arange(0.47, 0.49, 0.002)
-T =  np.logspace(-1.3, -1, num=15)
+# T =  np.logspace(-1.3, -1, num=15)
 Js = np.arange(0.47, 0.5, 0.005)
-# T =  np.logspace(-1.6, -1, num=15)
+# T =  np.logspace(-1.6, 0, num=20)
+T =  np.logspace(-1, 0, num=15)
+
 print(T)
 # print(np.logspace(-1.6, -1, num=10)[::1])
 
@@ -33,7 +35,7 @@ print(T)
 for J in Js:
     for t in T:
         print(f"J = {J:.3} T = {t:.3}")
-        out = subprocess.Popen(["make", "N=10000000" ,f"J={J:.3}", "M=240", f"T={t:.5}", "L=8", "SSAll"], 
+        out = subprocess.Popen(["make", "N=1000000" ,f"J={J:.3}", "M=240", f"T={t:.5}", "L=4", "SSSinglet", "-B"], 
                 stdout=subprocess.PIPE, 
                 stderr=subprocess.STDOUT)
         stdout,stderr = out.communicate()
