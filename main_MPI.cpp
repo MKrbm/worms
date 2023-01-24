@@ -60,12 +60,13 @@ int main(int argc, char **argv) {
   parser.addArgument({"-L1"}, "set shape[0]");
   parser.addArgument({"-L2"}, "set shape[1]");
   parser.addArgument({"-L3"}, "set shape[2]");
-  parser.addArgument({"-J1"}, "set params[0]");
   parser.addArgument({"-N"}, "# of montecarlo steps");
   parser.addArgument({"-T"}, "set temperature");
   parser.addArgument({"-m"}, "model name");
   parser.addArgument({"-ham"}, "path to hamiltonian");
   parser.addArgument({"-obs"}, "path to observables");
+  parser.addArgument({"-P1"}, "set params[0]");
+  parser.addArgument({"-P2"}, "set params[1]");
 
   auto args = parser.parseArgs(argc, argv);
 
