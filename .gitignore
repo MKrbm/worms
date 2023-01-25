@@ -24,7 +24,11 @@ Release/
 **/dataframe
 **/array
 **/out
-# lib/
+
+
+# packages / libraries
+ALPSCore/
+
 *.wiki*
 #hidden folder
 #Exclude all dlls
