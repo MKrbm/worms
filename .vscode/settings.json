@@ -113,7 +113,10 @@
       "cfenv": "cpp",
       "typeindex": "cpp",
       "*.h++": "cpp",
-      "*.traits": "cpp"
+      "*.traits": "cpp",
+      "csignal": "cpp",
+      "hash_set": "cpp",
+      "fft": "cpp"
     },
     // "python.defaultInterpreterPath": "/home/keisuke/miniconda3/envs/quspin/bin/python",
     "python.analysis.extraPaths": [
