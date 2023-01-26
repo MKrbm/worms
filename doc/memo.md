@@ -26,3 +26,13 @@
 
 $\frac{\frac{\partial}{\partial h}Z}{Z}$
 $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
+
+
+
+- # 聞くこと
+  - gccのversionの不一致
+  - amd64でinstallできな(22.04)
+  - hdf5 libraryのバージョンが1.10で良いのか？
+  - Eigen のバージョンもこれで良い？ (my version is 3.4.0-2ubuntu2 / required 3.3.4)
+  - 他の手法で(pipなど)でboostがインストールされているときに、勝手にそっちを参照してしまう現象について。
+
