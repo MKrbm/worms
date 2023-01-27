@@ -52,4 +52,4 @@
     You might install boost in two different ways. One with apt-get and the other with conda(pip). If you try to use boost library with find_package in cmake, you may find out it will search first in conda environment. If you want to use boost with apt-get, do one of following things.
     - add `set(CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH FALSE)` in `CMakeLists.txt`. 
     - remove path to miniconda3 from `PATH environment`
-    - alternatively (better answer), you can just add /usr/lib/aarch64-linux-gnu on top of current $PATH by PATH="/usr/lib/aarch64-linux-gnu:/home/user/miniconda3/bin:$PATH"
+    - alternatively (better answer), you can just add x86_64-linux-gnu(/usr/lib/aarch64-linux-gnu) on top of current $PATH by PATH="/usr/lib/x86_64-linux-gnu:$PATH"(PATH="/usr/lib/aarch64-linux-gnu:$PATH")
