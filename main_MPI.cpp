@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <functional>
 #include <libconfig.h++>
 #include <dirent.h>
 #include <filesystem>
@@ -19,33 +20,33 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 
+#include <jackknife.hpp>
+#include <alps/alea/batch.hpp>
+#include <alps/utilities/mpi.hpp>
+
 
 using namespace std;
 using namespace libconfig;
 
 using namespace std;
 
-template <class T>
-class VectorPlus {
-public:
-  T operator()(const T &lhs, const T &rhs) const {
-    const auto n = lhs.size();
-    auto r = T(n);
-    std::transform(lhs.begin(), lhs.end(), rhs.begin(), r.begin(), std::plus<>());
-    return r;
-  }
-};
+double elapsed;
 
 
 int main(int argc, char **argv) {
-
+  
   int rank, size;
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  boost::mpi::communicator world;
 
-  // cout << world.rank() << endl;
+  //set up alps::mpi::reducer
+  alps::alea::mpi_reducer red_(alps::mpi::communicator(), 0);
+  alps::alea::reducer_setup setup = red_.get_setup();
+
+  // alps::mpi::communicator comm_;
+
+  // cout << rank << endl;
 
   char tmp[256];
   auto _ = getcwd(tmp, 256);
@@ -60,7 +61,13 @@ int main(int argc, char **argv) {
   parser.addArgument({"-L1"}, "set shape[0]");
   parser.addArgument({"-L2"}, "set shape[1]");
   parser.addArgument({"-L3"}, "set shape[2]");
-  parser.addArgument({"-N"}, "# of montecarlo steps");
+  parser.addArgument({"-N"}, "# of montecarlo steps (sweeps)");
+  parser.addArgument({"-K"}, "# of montecarlo steps for thermalization");
+  parser.addArgument({"--split-sweeps"},
+              "bool that determines whether to split # sweeps among processes",
+              argparse::ArgumentType::StoreTrue
+              );
+
   parser.addArgument({"-T"}, "set temperature");
   parser.addArgument({"-m"}, "model name");
   parser.addArgument({"-ham"}, "path to hamiltonian");
@@ -87,8 +94,8 @@ int main(int argc, char **argv) {
   const Setting& root = cfg.getRoot();
   string model_name = root["model"];
   bool print_lat = (bool) root["print_lattice"];
-  model_name = args.safeGet<std::string>("m", model_name);
-  if(world.rank() == 0) {
+  model_name = args.safeGet<string>("m", model_name);
+  if(rank == 0) {
     cout << "model name is \t : \t" << model_name << endl;
     cout << "run on \t : \t" << size << " nodes" << endl;
   }
@@ -155,8 +162,6 @@ int main(int argc, char **argv) {
   }
 
 
-  // boost::serialization::access world;
-  BC::observable local_result;
 
   // parser
   shapes[0] = args.safeGet<size_t>("L1", shapes[0]);
@@ -164,12 +169,13 @@ int main(int argc, char **argv) {
   shapes[2] = args.safeGet<size_t>("L3", shapes[2]);
   T = args.safeGet<double>("T", T);
   sweeps = args.safeGet<int>("N", sweeps);
+  therms = args.safeGet<int>("K", therms);
   params[0] = args.safeGet<float>("P1",  params[0]);
   params[1] = args.safeGet<float>("P2",  params[1]);
 
   try { 
-    ham_path = args.get<std::string>("ham");
-    try { obs_path = args.get<std::string>("obs");}
+    ham_path = args.get<string>("ham");
+    try { obs_path = args.get<string>("obs");}
     catch(...) { 
       if (rank == 0) cout << "obs_path is not given. Elements of observables are set to zero" << endl;
       obs_path = "";
@@ -177,7 +183,8 @@ int main(int argc, char **argv) {
   }
   catch(...) {}
 
-  sweeps = sweeps / size;
+  if (args.has("split-sweeps")) sweeps = sweeps / size;
+  sweeps = (sweeps / 2) * 2; // make sure sweeps is even number
   if (rank == 0){
     cout << "zero_wom : " << (zero_worm ? "YES" : "NO") << endl;
     cout << "repeat : " << (repeat ? "YES" : "NO") << endl;
@@ -188,9 +195,9 @@ int main(int argc, char **argv) {
   //* finish argparse
 
 
-  model::base_lattice lat(basis, cell, shapes, file, !world.rank());
-  model::base_model<bcl::st2013> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat, !world.rank());
-  model::observable obs(spin, obs_path, !world.rank());
+  model::base_lattice lat(basis, cell, shapes, file, !rank);
+  model::base_model<bcl::st2013> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat, !rank);
+  model::observable obs(spin, obs_path, !rank);
 
   // output MC step info 
   if (rank == 0 ) cout << "therms(each process)    : " << therms << endl
@@ -202,73 +209,95 @@ int main(int argc, char **argv) {
 
 
   // simulate with worm algorithm (parallel computing is enable)
-  std::vector<BC::observable> res;
+  vector<batch_res> res;
   exe_worm_parallel(spin, T, sweeps, therms, cutoff_l, fix_wdensity, rank, res, obs);  
 
 
-  auto _res = boost::mpi::all_reduce(world, res, VectorPlus<std::vector<BC::observable>>()); //all reduce (sum over all results)
+  batch_res as = res[0]; // average sign 
+  batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
+  batch_res sglt = res[2];
+  batch_res n_neg_ele = res[3];
+  batch_res n_ops = res[4];
+  batch_res N2 = res[5];
+  batch_res N = res[6];
+  batch_res dH = res[7]; // $\frac{\frac{\partial}{\partial h}Z}{Z}$ 
+  batch_res dH2 = res[8]; // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
 
 
-  if (world.rank()==0)
-  {
-    BC::observable ene=_res[0]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
-    BC::observable ave_sign=_res[1]; // average sign 
-    BC::observable sglt=_res[2]; 
-    BC::observable n_neg_ele=_res[3]; 
-    BC::observable n_ops=_res[4]; 
-    BC::observable N2 =_res[5];
-    BC::observable N =_res[6];
-    BC::observable dH =_res[7]; // $\frac{\frac{\partial}{\partial h}Z}{Z}$ 
-    BC::observable dH2 =_res[8]; // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
+  as.reduce(red_);
+  ene.reduce(red_);
+  sglt.reduce(red_);
+  n_neg_ele.reduce(red_);
+  n_ops.reduce(red_);
+  N2.reduce(red_);
+  N.reduce(red_);
+  dH.reduce(red_);
+  dH2.reduce(red_);
 
-    double ene_err = std::sqrt(std::pow(ene.error()/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2));
-    double ene_mean = ene.mean()/ave_sign.mean();
+  double elapsed_max, elapsed_min;
+  MPI_Allreduce(&elapsed, &elapsed_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+  MPI_Allreduce(&elapsed, &elapsed_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
 
-    double c_mean = (N2.mean() - N.mean()) / ave_sign.mean() - (N.mean() / ave_sign.mean()) * (N.mean() / ave_sign.mean());
-    double c_err = std::sqrt(std::pow(N2.error()/ave_sign.mean(), 2) + std::pow(N.error()/ave_sign.mean(), 2) + std::pow(N2.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2) + std::pow(N.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2));
-    double n_err = std::sqrt(std::pow(N.error()/ave_sign.mean(), 2) + std::pow(N.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2));
-    c_err += 2 * n_err;
 
-    double _dH2 = dH2.mean() / ave_sign.mean();
-    double _dH = dH.mean() / ave_sign.mean();
-    double mag = _dH * T / lat.L ;
-    double mag_err = std::sqrt(std::pow(dH.error()/ave_sign.mean(), 2) + std::pow(dH.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) * T / lat.L;
-    double sus = (_dH2 - _dH * _dH ) * T / lat.L; // suscetibility
-    double sus_err = std::sqrt(std::pow(dH2.error()/ave_sign.mean(), 2) + std::pow(dH2.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(),2)) * T / lat.L;
-    sus_err += 2 * _dH * mag_err;
+  if (setup.have_result) {
     
+    std::function<double(double, double, double)> f;
 
+    pair<double, double> as_mean = jackknife_reweight_single(as);  // calculate <S>
+    pair<double, double> nop_mean = jackknife_reweight_single(n_ops);  // calculate <S>
+    pair<double, double> nnop_mean = jackknife_reweight_single(n_neg_ele);  // calculate <S>
+
+
+
+    // calculate energy
+    pair<double, double> ene_mean = jackknife_reweight_div(ene, as);  // calculate <SH> / <S>
+
+
+    // calculat heat capacity
+    f = [](double x1, double x2, double y) { return (x2 - x1)/y - (x1/y)*(x1/y); }; 
+    pair<double, double > c_mean = jackknife_reweight_any(N, N2, as, f);  
+
+    // calculate magnetization
+    pair<double, double> m_mean = jackknife_reweight_div(dH, as); 
+
+    // calculate susceptibility
+    f = [](double x1, double x2, double y) { return x2/y - (x1/y)*(x1/y); };
+    pair<double, double> chi_mean = jackknife_reweight_any(dH, dH2, as, f); 
+
+
+    cout << "Elapsed time         = " << elapsed_max << "(" << elapsed_min <<") sec\n"
+         << "Speed                = " << (therms+sweeps) / elapsed_max << " MCS/sec\n";
+
+    cout << "beta                 = " << 1.0 / T 
+         << endl
+         << "Total Energy         = "
+         << ene_mean.first << " +- " 
+         << ene_mean.second
+         << endl;
     
-    std::cout << "beta                 = " << 1.0 / T << endl;
-    std::cout << "Total Energy         = "
-            << ene.mean()/ave_sign.mean()<< " +- " 
-            << ene_err
-            << std::endl;
+    cout << "Average sign         = "
+         << as_mean.first << " +- " 
+         << as_mean.second 
+         << endl
+         << "Energy per site      = "
+         << ene_mean.first / lat.L << " +- " 
+         << ene_mean.second / lat.L
+         << endl
+         << "Specific heat        = "
+         << c_mean.first / lat.L << " +- " 
+         << c_mean.second / lat.L
+         << endl
+         << "magnetization        = "
+         << m_mean.first * T / lat.L << " +- " << m_mean.second * T / lat.L
+         << endl
+         << "susceptibility       = "
+         << chi_mean.first  * T / lat.L << " +- " << chi_mean.second  * T / lat.L << endl
+         << "# of operators       = "
+         << nop_mean.first << " +- " << nop_mean.second << endl
+         << "# of neg sign op     = "
+         << nnop_mean.first << " +- " << nnop_mean.second << endl;
 
-    // std::cout << "Elapsed time         = " << elapsed << " sec\n"
-    //           << "Speed                = " << (therms+sweeps) / elapsed << " MCS/sec\n";
-    std::cout << "Energy per site      = "
-              << ene.mean()/ave_sign.mean() / lat.L << " +- " 
-              << ene_err / lat.L
-              << std::endl
-              << "specific heat        = "
-              << c_mean / lat.L << " +- " 
-              << c_err / lat.L
-              << std::endl
-              << "magnetization        = "
-              << mag << " +- " << mag_err << std::endl 
-              << "susceptibility       = "
-              << sus << " +- " << sus_err << std::endl
-              << "average sign         = "
-              << ave_sign.mean() << " +- " << ave_sign.error() << std::endl
-              << "dimer operator       = "
-              << sglt.mean() << std::endl 
-              << "# of operators       = "
-              << n_ops.mean() << std::endl
-              << "# of neg sign op     = "
-              << n_neg_ele.mean() << std::endl;
   }
-
   MPI_Finalize();
 
 }
