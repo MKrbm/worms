@@ -461,7 +461,7 @@ Theoritically, average sign goes down from 1 as $T \rightarrow 0$ for small $J_1
   ![](img/E_0.47.jpeg)
   - ## specific heat
   worm
-  ![](img/singlet_cq_J_0.47jpeg)
+  ![](img/singlet_cq_J_0.47.jpeg)
 
   Lancoz
   ![](img/C_0.47.jpeg)
