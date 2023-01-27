@@ -9,6 +9,9 @@ include(eigen3)
 include(npy)
 
 
+# link alpscore
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+find_package(ALPSCore REQUIRED alea)
 
 #* list all targets
 # function(getAllSubdirs dir dirs)
@@ -47,7 +50,7 @@ add_subdirectory(./lib/lattice) #call /lib/bcl/CMakeLists.txst
 
 
 
-target_link_libraries(worm bcl config++ lattice) # link library
+target_link_libraries(worm bcl config++ lattice ${ALPSCore_LIBRARIES}) # link library
 
 
 message(STATUS "include from path : ${FetchContent_includes}")
