@@ -1,6 +1,16 @@
 {
   "version": "0.2.0",
   "configurations": [
+  
+    {
+      "type": "julia",
+      "request": "launch",
+      "name": "Julia",
+      "cwd": "${fileDirname}",
+      "program": "${file}",
+      "stopOnEntry": false
+    },
+
     {
       "name": "Python: Current File",
       "type": "python",

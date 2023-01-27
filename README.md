@@ -43,6 +43,11 @@
     - export requirement with `pip freeze > requirements.txt`
       - note that you need to delete `PyGObject==3.42.0` and add `--extra-index-url https://download.pytorch.org/whl/cpu` before calling torch packages.
 
+- ## Julia
+  - x86_64-linux-gnu
+    - `wget https://julialang-s3.julialang.org/bin/linux/x64/1.8/julia-1.8.5-linux-x86_64.tar.gz` (see https://julialang.org/downloads/)
+    - add `export PATH="$PATH:/home/sammy/julia-1.8.1/bin"` to `.bashrc`
+
 
 - ## packages
   - libconfig
