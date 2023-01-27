@@ -16,24 +16,33 @@
 #include <automodel.hpp>
 #include <autoobservable.hpp>
 
+#include <alps/alea/batch.hpp>
+
+// batch_obs type is used to store results of observables
+typedef alps::alea::batch_acc<double> batch_obs;
+typedef alps::alea::batch_result<double> batch_res;
+
+using namespace libconfig;
+using namespace std;
 
 // #define DEBUG 1
 #define MESTIME 1
 
 #if MESTIME
-  using std::chrono::high_resolution_clock;
-  using std::chrono::duration_cast;
-  using std::chrono::duration;
-  using std::chrono::milliseconds;
-  using std::chrono::microseconds;
+using std::chrono::high_resolution_clock;
+using std::chrono::duration_cast;
+using std::chrono::duration;
+using std::chrono::milliseconds;
+using std::chrono::microseconds;
 #endif
 
-using namespace libconfig;
-using namespace std;
+extern double elapsed;
+
+
 
 // parallel version of exe_worm
 template <typename MC>
-std::vector<double> exe_worm_parallel(
+void exe_worm_parallel(
   model::base_model<MC> spin_model, 
   double T, 
   size_t sweeps, 
@@ -41,7 +50,7 @@ std::vector<double> exe_worm_parallel(
   size_t cutoff_l, 
   bool fix_wdensity, 
   int rank,
-  std::vector<BC::observable>& res, // contains results such as energy, average_sign,, etc
+  std::vector<batch_res>& res, // contains results such as energy, average_sign,, etc
   model::observable obs
 ){
 
@@ -49,15 +58,16 @@ std::vector<double> exe_worm_parallel(
   using SPINMODEL = model::base_model<MC>;
   if (cutoff_l < 0) cutoff_l = numeric_limits<decltype(cutoff_l)>::max();
 
-  BC::observable ene; // signed energy i.e. $\sum_i E_i S_i / N_MC$
-  BC::observable ave_sign; // average sign 
-  BC::observable sglt; 
-  BC::observable n_neg_ele; 
-  BC::observable n_ops; 
-  BC::observable N2; // average of square of number of operators (required for specific heat)
-  BC::observable N; // average of number of operators (required for specific heat)
-  BC::observable dH2; // second derivative by magnetic field
-  BC::observable dH; // first derivative by magnetic field
+
+  batch_obs ave_sign(1, sweeps); // average sign 
+  batch_obs ene(1, sweeps); // signed energy i.e. $\sum_i E_i S_i / N_MC$
+  batch_obs sglt(1, sweeps); 
+  batch_obs n_neg_ele(1, sweeps); 
+  batch_obs n_ops(1, sweeps); 
+  batch_obs N2(1, sweeps); // average of square of number of operators (required for specific heat)
+  batch_obs N(1, sweeps); // average of number of operators (required for specific heat)
+  batch_obs dH2(1, sweeps); // second derivative by magnetic field
+  batch_obs dH(1, sweeps); // first derivative by magnetic field
   
   
   ; // magnetization
@@ -73,11 +83,8 @@ std::vector<double> exe_worm_parallel(
 
   #if MESTIME
   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-
-  auto t1 = high_resolution_clock::now();
-  auto t2 = high_resolution_clock::now();
-  double du_time = 0;
-  double wu_time = 0;
+  // double du_time = 0;
+  // double wu_time = 0;
   #endif
 
 
@@ -148,35 +155,25 @@ std::vector<double> exe_worm_parallel(
     cnt++;
   }
 
-
   #if MESTIME
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-
-  double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / (double)1E3;
+  elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / (double)1E3;
   #endif
-
-  double r = 1-solver.bocnt/ (double)(therms+sweeps);
+  double r = 1-solver.bocnt/ (double)(therms+sweeps); // # of loops breaked out divded by total number of loops.
   // double r_ = 1-r_;
 
-  std::vector<double> return_value;
-  return_value.push_back(ene.mean()/ave_sign.mean());
-  return_value.push_back(
-    std::sqrt(std::pow(ene.error(r)/ave_sign.mean(), 2) + std::pow(ene.mean()/std::pow(ave_sign.mean(),2) * ave_sign.error(r),2))
-  );
-  return_value.push_back(elapsed);
-  return_value.push_back((therms+sweeps) / elapsed);
 
 
 
-  res.push_back(ene);
-  res.push_back(ave_sign);
-  res.push_back(sglt);
-  res.push_back(n_neg_ele);
-  res.push_back(n_ops);
-  res.push_back(N2);
-  res.push_back(N);
-  res.push_back(dH);
-  res.push_back(dH2);
-  return return_value;
+  res.push_back(ave_sign.finalize());
+  res.push_back(ene.finalize());
+  res.push_back(sglt.finalize());
+  res.push_back(n_neg_ele.finalize());
+  res.push_back(n_ops.finalize());
+  res.push_back(N2.finalize());
+  res.push_back(N.finalize());
+  res.push_back(dH.finalize());
+  res.push_back(dH2.finalize());
+  return;
 }
 
