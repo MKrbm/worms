@@ -1,7 +1,10 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.14)
 
 # include(cmake/prefix.cmake)
 project(worms VERSION 1.0.0 LANGUAGES CXX)
+
+# cmake will find modules from this path with include command
+# you don't need to run include if there is no option to download from github
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 # C++ standards
@@ -38,12 +41,6 @@ include(CheckLanguage)
 check_language(Fortran)
 message(STATUS "${CMAKE_Fortran_COMPILER} is available")
 option(RANDOM_SEED "wether using random seed or not " ON)
-include_directories(${worms_SOURCE_DIR})
-
-#include libraries
-# include(bcl)
-# include(eigen3)
-# include(npy)
 
 message(STATUS "after include directory: ${CMAKE_Fortran_COMPILER} is available")
 message("None = ${CMAKE_C_FLAGS}")
@@ -57,10 +54,10 @@ set(CMAKE_CXX_FLAGS_GPROF
     FORCE )
 
 MARK_AS_ADVANCED(CMAKE_CXX_FLAGS_GPROF)
+
+include_directories(${worms_SOURCE_DIR})
+
 add_subdirectory(./worms) #call /LoopAlgo/CMakeLists.txst
-
-
-# add executable
 
 # search for  
 message(STATUS "CMAKE_MODULE_PATH = ${CMAKE_MODULE_PATH}")
@@ -71,7 +68,7 @@ find_package(MPI REQUIRED)
 
 FIND_PACKAGE(Boost COMPONENTS mpi serialization REQUIRED)
 
-FOREACH(name main debug main_MPI)
+FOREACH(name main_MPI)
     add_executable(${name} ${name}.cpp)
     target_link_libraries(${name} worm  ${Boost_LIBRARIES} MPI::MPI_CXX)
     target_include_directories(${name} PUBLIC
@@ -80,7 +77,11 @@ FOREACH(name main debug main_MPI)
         )
 ENDFOREACH(name)
 
+# add_executable(worm-gtest gtest/example.cpp)
+# target_link_libraries(worm-gtest worm)
+# target_include_directories(worm-gtest PUBLIC "${PROJECT_BINARY_DIR}")
+# add_test(NAME test COMMAND  worm-gtest)
 
-add_subdirectory(test)
-
+add_subdirectory(./gtest)
+# add_subdirectory(examples)
 configure_file(MainConfig.h.in MainConfig.h)

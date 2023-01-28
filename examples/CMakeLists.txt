@@ -1,5 +1,5 @@
-add_executable(test ./test.cpp)
-target_link_libraries(test worm) # link library
+add_executable(examples ./test.cpp)
+target_link_libraries(examples worm) # link library
 
 add_executable(npy ./npy_test.cpp)
 target_link_libraries(npy worm) # link library
