@@ -129,10 +129,7 @@ class worm{
   bonds(spin_model.bonds),bond_type(spin_model.bond_type) ,state(spin_model.L),cstate(spin_model.L), cutoff_length(cl),
   loperators(spin_model.loperators), sps_sites(spin_model._sps_sites)
   {
-    // cout << "beta          : " << beta << endl;
-    // cout << "cutoff length : " << cutoff_length << endl;
-    // dout << "seed number : " << rseed << endl;
-    // printf("seed number : %u", rseed);
+
     srand(rank);
     #ifdef NDEBUG
     unsigned rseed = static_cast <unsigned> (time(0)) + rand() * (rank + 1);

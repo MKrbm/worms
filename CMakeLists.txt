@@ -13,8 +13,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # c and c++ compiler
-set(CMAKE_C_COMPILER /usr/bin/aarch64-linux-gnu-gcc CACHE PATH "")
-set(CMAKE_CXX_COMPILER /usr/bin/aarch64-linux-gnu-g++ CACHE PATH "")
+# set(CMAKE_C_COMPILER /usr/bin/aarch64-linux-gnu-gcc CACHE PATH "")
+# set(CMAKE_CXX_COMPILER /usr/bin/aarch64-linux-gnu-g++ CACHE PATH "")
 
 # debug when use find_package
 set(CMAKE_FIND_DEBUG_MODE OFF) #turn on to print out debug info for find_package
@@ -41,6 +41,9 @@ include(CheckLanguage)
 check_language(Fortran)
 message(STATUS "${CMAKE_Fortran_COMPILER} is available")
 option(RANDOM_SEED "wether using random seed or not " ON)
+
+include(CTest)
+enable_testing()
 
 message(STATUS "after include directory: ${CMAKE_Fortran_COMPILER} is available")
 message("None = ${CMAKE_C_FLAGS}")
