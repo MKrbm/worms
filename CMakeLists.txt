@@ -23,6 +23,9 @@ set(CMAKE_FIND_DEBUG_MODE OFF) #turn on to print out debug info for find_package
 set(CMAKE_SKIP_RPATH OFF)
 set(BUILD_RPATH_USE_ORIGIN ON)
 
+# set working_dir (main_MPI will execute from this directory)
+set(WORKING_DIR "${CMAKE_BINARY_DIR}" CACHE  STRING "The working directory for the project")
+
 # cmake use system path for finding libraries
 # if these variables set to ON (True) and if you installed boost package via miniconda, find_package will look for miniconda path first and result in error
 # set(CMAKE_FIND_USE_CMAKE_SYSTEM_PATH FALSE)
