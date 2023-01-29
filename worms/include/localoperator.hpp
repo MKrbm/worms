@@ -62,10 +62,12 @@ private:
   std::vector<double> _ham_vector;
 public:
   double ham_vector(int i) {return _ham_vector[i];}
+  const std::vector<double> & ham_vector() {return _ham_vector;}
+  const std::vector<std::vector<double>> & ham() const {return _ham;}
   using VECD = std::vector<double>;
   using TPROB = std::vector<VECD>; //type for transition probability. typically, this is 2D matrix with 4 x 4 elements( check notebook for detail definition of this type).
   std::vector<std::vector<double>> ham_prime;
-  std::vector<std::vector<double>> ham; // virtual hamiltonian (or maybe absolute of original hamiltonian)
+  std::vector<std::vector<double>> _ham; // virtual hamiltonian (or maybe absolute of original hamiltonian)
   typedef MC MCT;
   outgoing_weight ogwt;
 
@@ -74,7 +76,7 @@ public:
   const int size; // size of operator (2**leg)
   double ene_shift = 0; //energy shift to ensure that diagonal elements of hamiltonian are non-negative
   double max_diagonal_weight_;
-  double total_weights; //sum of diagonal elemtns of ham
+  double total_weights; //sum of diagonal elemtns of _ham
 
   std::vector<int> signs; //list of sign defined via the sign of ham_prime;
   std::vector<TPROB> trans_prob; //num_configuration x 4 x 4 matrix.
@@ -88,15 +90,50 @@ public:
   void set_trans_weights();
   void check_trans_prob();
   int index2num(std::array<int, 2> index);
+  friend bool operator==(const local_operator<MC>& lhs, const local_operator<MC>& rhs) 
+  { 
+    bool cmp = true;
+    cmp &= (lhs._ham == rhs._ham);
+    cmp &= lhs._ham_vector == rhs._ham_vector;
+    cmp &= lhs.ham_prime == rhs.ham_prime;
+    cmp &= lhs.leg == rhs.leg;
+    cmp &= lhs.size == rhs.size;
+    cmp &= lhs.ene_shift == rhs.ene_shift;
+    cmp &= lhs.max_diagonal_weight_ == rhs.max_diagonal_weight_;
+    cmp &= lhs.total_weights == rhs.total_weights;
+    cmp &= lhs.signs == rhs.signs;
+    cmp &= lhs.sps == rhs.sps;
+
+
+    return cmp; 
+  }
 };
 
+// template <class M>
+// bool operator==(const local_operator<M>& lhs, const local_operator<M>& rhs) 
+// { 
+//   bool cmp = true;
+//   cmp &= (lhs._ham == rhs._ham);
+//   cmp &= lhs._ham_vector == rhs._ham_vector;
+//   cmp &= lhs.ham_prime == rhs.ham_prime;
+//   cmp &= lhs.leg == rhs.leg;
+//   cmp &= lhs.size == rhs.size;
+//   cmp &= lhs.ene_shift == rhs.ene_shift;
+//   cmp &= lhs.max_diagonal_weight_ == rhs.max_diagonal_weight_;
+//   cmp &= lhs.total_weights == rhs.total_weights;
+//   cmp &= lhs.signs == rhs.signs;
+//   cmp &= lhs.sps == rhs.sps;
+
+
+//   return cmp; 
+// }
 
 
 template <class MC>
 local_operator<MC>::local_operator(int leg, size_t sps)
   :leg(leg), size(pow(sps, leg)), ogwt(leg, sps), sps(sps)
   {
-    ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
+    _ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
   }
 
 /*
@@ -112,11 +149,11 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
   // std::cout << "Hi" << std::endl;
   int N = size*size;
   ene_shift=0;
-  ham_prime = ham;
+  ham_prime = _ham;
   _ham_vector = std::vector<double>(N, 0);
 
   for (int i=0; i<ham_prime.size();i++){
-    ene_shift = std::min(ene_shift, ham[i][i]);
+    ene_shift = std::min(ene_shift, _ham[i][i]);
   }
   ene_shift *= -1;
   ene_shift += off_set;
@@ -187,7 +224,7 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
 
 
   //* free memories
-  // ham.resize(0);
+  // _ham.resize(0);
 }
 
 

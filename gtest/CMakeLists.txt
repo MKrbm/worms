@@ -1,19 +1,27 @@
 set (test_src
      example
-     worm
+     lattice
+     model
     )
+
+
 # enable_testing()
+
+include_directories(${worms_SOURCE_DIR})
+
 include(GoogleTest)
 FOREACH(name ${test_src})
   add_executable(${name}-gtest ${name}.cpp)
   target_link_libraries(${name}-gtest worm gtest_main)
   target_include_directories(${name}-gtest PUBLIC "${PROJECT_BINARY_DIR}")
-  gtest_discover_tests(${name}-gtest)
-  # list(APPEND gtest_targets ${name}-gtest)
-  # add_test(
-  #   NAME ${name} 
-  #   COMMAND ${name}-gtest
-  #   CONFIGURATIONS Release
-  #   WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
+  gtest_discover_tests(${name}-gtest 
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
 ENDFOREACH(name)
+
+
+add_executable(worm-gtest worm.cpp)
+target_link_libraries(worm-gtest worm gtest_main)
+target_include_directories(worm-gtest PUBLIC "${PROJECT_BINARY_DIR}")
+  
 

@@ -2,4 +2,5 @@
 #define VERSION_MAJOR @worms_VERSION_MAJOR@
 #define VERSION_MINOR @worms_VERSION_MINOR@
 #cmakedefine RANDOM_SEED
+#cmakedefine WORKING_DIR "${WORKING_DIR}"
 // #cmakedefine NDEBUG

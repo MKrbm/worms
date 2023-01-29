@@ -132,4 +132,8 @@
     "cmake.skipConfigureIfCachePresent": true,
     "cmake.configureOnEdit": false,
     "julia.environmentPath": "/home/user/project/julia_practice",
+    "python.analysis.typeCheckingMode": "basic",
+    "cSpell.words": [
+      "specificheat"
+    ],
 }

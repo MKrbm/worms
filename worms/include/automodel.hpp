@@ -159,7 +159,7 @@ public:
     VVS dofs_list(N_op);
     for (int i=0; i<N_op; i++) {
       for (auto b : type2bonds[i][0]) {dofs_list[i].push_back(_sps_sites[site_type[b]]);} //size should be leg_size
-      loperators.push_back(local_operator<MC>(type2bonds[i][0].size(), dofs_list[i][0]));  // local_operator only accepts one sps type yet.
+      loperators.push_back(local_operator<MC>(type2bonds[i][0].size(), dofs_list[i][0]));  // local_operator only accepts one sps type yet. Also, currently only available for bond operator.
     }
 
     for (int p_i=0; p_i<path_list.size(); p_i++) {
@@ -180,7 +180,7 @@ public:
       for (int i=0; i<shape[0]; i++) for (int j=0; j<shape[1]; j++)
       {
         auto x = data[i * shape[1] + j] * params[p_i];
-        loperator.ham[j][i] += x;
+        loperator._ham[j][i] += x;
       }
     }
 
@@ -195,6 +195,36 @@ public:
     }
   }
 
+
+  //* simple constructor
+  base_model( model::base_lattice lat, 
+              VS dofs, 
+              std::vector<std::vector<std::vector<double>>> hams, 
+              double shift, 
+              bool zero_worm)
+  :base_lattice(lat)
+  {
+    if (N_op != hams.size()) {std::cerr << "size of hams does not match to N_op\n"; exit(1);}
+    for (int t : site_type) {_sps_sites.push_back(dofs[t]);}
+    VVS dofs_list(N_op);
+    for (int i=0; i<N_op; i++) {
+      for (auto b : type2bonds[i][0]) {dofs_list[i].push_back(_sps_sites[site_type[b]]);} //size should be leg_size
+      loperators.push_back(local_operator<MC>(type2bonds[i][0].size(), dofs_list[i][0])); // local_operator only accepts one 
+      for (int j=0; j<hams[i].size(); j++) for (int k=0; k<hams[i][j].size(); k++) {
+        loperators[i]._ham[j][k] = hams[i][j][k];
+      }
+    }
+
+    //* initial settings for local bond operators
+    VD off_sets(N_op, shift);
+    initial_setting(off_sets, 1E-8, zero_worm);
+
+    //* calculate origin shift
+    origin_shift = 0;
+    for (int e=0; e< N_op; e++){
+      origin_shift +=  shifts[e] *  bond_t_size[e];
+    }
+  }
 
 
 

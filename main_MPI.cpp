@@ -15,14 +15,16 @@
 #include <funcs.hpp>
 #include <mpi.h>
 
-#include <boost/mpi.hpp>
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/base_object.hpp>
+// #include <boost/mpi.hpp>
+// #include <boost/serialization/serialization.hpp>
+// #include <boost/serialization/access.hpp>
+// #include <boost/serialization/base_object.hpp>
 
 #include <jackknife.hpp>
 #include <alps/alea/batch.hpp>
 #include <alps/utilities/mpi.hpp>
+
+
 
 
 using namespace std;
@@ -30,11 +32,17 @@ using namespace libconfig;
 
 using namespace std;
 
+
+
 double elapsed;
 
 
 int main(int argc, char **argv) {
   
+  #ifdef WORKING_DIR
+  chdir(WORKING_DIR);
+  #endif
+
   int rank, size;
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -50,7 +58,7 @@ int main(int argc, char **argv) {
 
   char tmp[256];
   auto _ = getcwd(tmp, 256);
-  // cout << tmp << endl;
+  cout << tmp << endl;
 
   Config cfg;
   cfg.setAutoConvert(true);

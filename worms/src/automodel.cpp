@@ -42,6 +42,7 @@ std::tuple<size_t, VVS, VS, VS> base_lattice::initilizer_xml(string basis_name, 
   switch (cell.dimension()) {
   case 1:
     {
+      if (shapes.size()!=1) {std::cerr << "Wrong number of shapes for 1D lattice"; exit(1);}
       lattice::graph lat(bs, cell, lattice::extent(shapes[0]));
       if (print) lat.print(std::cout);
       return make_tuple(lat.num_sites(), generate_bonds(lat), generate_bond_type(lat), generate_site_type(lat));
@@ -49,6 +50,7 @@ std::tuple<size_t, VVS, VS, VS> base_lattice::initilizer_xml(string basis_name, 
     }
   case 2:
     {
+      if (shapes.size()!=2) {std::cerr << "Wrong number of shapes for 2D lattice"; exit(1);}
       lattice::graph lat(bs, cell, lattice::extent(shapes[0], shapes[1]));
       if (print) lat.print(std::cout);
       return make_tuple(lat.num_sites(), generate_bonds(lat), generate_bond_type(lat), generate_site_type(lat));
@@ -57,6 +59,7 @@ std::tuple<size_t, VVS, VS, VS> base_lattice::initilizer_xml(string basis_name, 
     break;
   case 3:
     {
+      if (shapes.size()!=3) {std::cerr << "Wrong number of shapes for 3D lattice"; exit(1);}
       lattice::graph lat(bs, cell, lattice::extent(shapes[0], shapes[1], shapes[2]));
       if (print) lat.print(std::cout);
       return make_tuple(lat.num_sites(), generate_bonds(lat), generate_bond_type(lat), generate_site_type(lat));
