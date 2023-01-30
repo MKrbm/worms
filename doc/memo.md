@@ -35,4 +35,5 @@ $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
   - hdf5 libraryのバージョンが1.10で良いのか？
   - Eigen のバージョンもこれで良い？ (my version is 3.4.0-2ubuntu2 / required 3.3.4)
   - 他の手法で(pipなど)でboostがインストールされているときに、勝手にそっちを参照してしまう現象について。
+  - ALPS core の最新の二つについてエラーが起きる
 

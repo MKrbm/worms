@@ -197,9 +197,9 @@ TEST(WormTest, HXYZ1D) {
 }
 
 
-TEST(WormTest, Heisenberg2D) {
+TEST(WormTest, HXXZ2D) {
 
-  std::vector<size_t> shapes = {4, 4};
+  std::vector<size_t> shapes = {3, 4};
   model::base_lattice lat("square lattice", "simple2d", shapes, "../config/lattices.xml", false);
 
 
@@ -208,68 +208,75 @@ TEST(WormTest, Heisenberg2D) {
   std::vector<int> types = {0};
   double shift = 0.25;
   bool zw = false;
-  model::base_model<bcl::st2013> spin(lat, dofs, "../gtest/model_array/Heisenberg/original/Jz_1.0_Jx_1.0_h_0.0/H", 
+  model::base_model<bcl::st2013> spin(lat, dofs, "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_-0.3_h_1/H", 
         params, types, shift, zw, false, false); //heisenberg with J = 1, h =0 (H = J \sum S\cdot S - h)
 
 
 
-  model::observable obs(spin, "", false);
+  model::observable obs(spin, "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_-0.3_h_1/Sz", false);
   vector<batch_res> res;
 
   double T;
   size_t sweeps, therms;
 
+
   T = 1;
   sweeps = 1000000;
   therms = 100000;
 
+  run_worm(spin, T, sweeps, therms, res, obs, lat);
 
-  //dont fix worm density. Not printout density information.
-  exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, obs);
+  /*
+  expected results
+  {'Jz': 1, 'Jx': -0.3, 'Jy': -0.3, 'h': 0.99}
+  T               = 1
+  E               = -0.2130737070380524
+  C               = 0.13058676049042242
+  M               = 0.10711963760183496
+  M^2             = 0.02053812620325055
+  Chi             = 0.10876765815723832
+  */
+}
 
-  batch_res as = res[0];  
-  batch_res ene = res[1]; 
-  batch_res sglt = res[2];
-  batch_res n_neg_ele = res[3];
-  batch_res n_ops = res[4];
-  batch_res N2 = res[5];
-  batch_res N = res[6];
-  batch_res dH = res[7];  
-  batch_res dH2 = res[8]; 
+TEST(WormTest, HXYZ2D) {
 
-  std::function<double(double, double, double)> f;
+  std::vector<size_t> shapes = {3, 4};
+  model::base_lattice lat("square lattice", "simple2d", shapes, "../config/lattices.xml", false);
 
-  pair<double, double> as_mean = jackknife_reweight_single(as);          // calculate <S>
-  pair<double, double> nop_mean = jackknife_reweight_single(n_ops);      // calculate <S>
-  pair<double, double> nnop_mean = jackknife_reweight_single(n_neg_ele); // calculate <S>
 
-  // calculate energy
-  pair<double, double> ene_mean = jackknife_reweight_div(ene, as); // calculate <SH> / <S>
+  vector<size_t> dofs = {2};
+  std::vector<double> params = {1.0};
+  std::vector<int> types = {0};
+  double shift = 0.25;
+  bool zw = false;
+  model::base_model<bcl::st2013> spin(lat, dofs, "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_0.5_h_1/H", 
+        params, types, shift, zw, false, false); //heisenberg with J = 1, h =0 (H = J \sum S\cdot S - h)
 
-  // calculat heat capacity
-  f = [](double x1, double x2, double y)
-  { return (x2 - x1) / y - (x1 / y) * (x1 / y); };
-  pair<double, double> c_mean = jackknife_reweight_any(N, N2, as, f);
 
-  // calculate magnetization
-  pair<double, double> m_mean = jackknife_reweight_div(dH, as);
 
-  // calculate susceptibility
-  f = [](double x1, double x2, double y)
-  { return x2 / y - (x1 / y) * (x1 / y); };
-  pair<double, double> chi_mean = jackknife_reweight_any(dH, dH2, as, f);
+  model::observable obs(spin, "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_0.5_h_1/Sz", false);
+  vector<batch_res> res;
 
-  cout << lat.L << endl;
-  cout << "temperature          = " << T
-       << endl
-       << "Average sign         = "
-       << as_mean.first << " +- " 
-       << as_mean.second   
-       << endl
-       << "Energy per site      = "
-       << ene_mean.first / lat.L << " +- "
-       << ene_mean.second / lat.L
-       << endl;
+  double T;
+  size_t sweeps, therms;
+
+
+  T = 0.4;
+  sweeps = 1000000;
+  therms = 100000;
+
+  run_worm(spin, T, sweeps, therms, res, obs, lat);
+
+  /*
+  expected results
+  {'Jz': 1, 'Jx': -0.3, 'Jy': 0.5, 'h': 1}
+  T               = 0.4
+  E               = -0.31290500262456744
+  C               = 0.20476937630462452
+  M               = 0.11860093087143614
+  M^2             = 0.02034135779893476
+  Chi             = 0.13907915083508915
+  */
 }
 
 
