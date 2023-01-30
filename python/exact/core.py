@@ -179,29 +179,28 @@ def lancoz_estimate(_H, params_dict ,M, N_samples, Kdim, beta, model_name = "HXX
     dC_poly = dH2_poly * (beta**2)
 
     T = 1 / beta
+    chi_FT = M2_FT - M_FT**2
+    dchi_FT = dM2_FT + dM_FT * M_FT * 2
+    chi_LT = M2_LT - M_LT**2
+    dchi_LT = dM2_LT + dM_LT * M_LT * 2
+
 
     if printout:
         beta = beta[0]
-        chi_FT = M2_FT - M_FT**2
-        dchi_FT = dM2_FT + dM_FT * M_FT * 2
-        chi_LT = M2_LT - M_LT**2
-        chi_LT = dM2_LT + dM_LT * M_LT * 2
 
-        print("model name : {}".format(model_name))
-        print("N_sites : {}".format(N_sites))
-        print("params : {}".format(params_str))
-        print("N_samples : {}".format(N_samples))
-        print("Kdim : {}".format(Kdim))
+        print("model name             : {}".format(model_name))
+        print("N_sites                : {}".format(N_sites))
+        print("params                 : {}".format(params_str))
+        print("N_samples              : {}".format(N_samples))
+        print("Kdim                   : {}".format(Kdim))
         print("---------------------------------")
         print(f"temperature           = {T[0]}")
         print(f"energy(per site)      =  {E_poly / N_sites } += {dE_poly / N_sites}")
         print(f"specific heat         =  {C_poly[0] / N_sites} += {dC_poly[0] / N_sites}")
         print(f"magnetization(FTLM)   =  {M_FT} += {dM_FT}")
         print(f"magnetization(LTLM)   =  {M_LT} += {dM_LT}")
-        print(f"suceptibility(FTLM)   =   \
-            {chi_FT * (beta) * N_sites} += {dchi_FT * (beta)* N_sites}")
-        print(f"suceptibility(LTLM)   =  \
-            {chi_LT * (beta) * N_sites} += {chi_LT * (beta)* N_sites}")
+        print(f"suceptibility(FTLM)   =  {chi_FT * (beta) * N_sites} += {dchi_FT * (beta)* N_sites}")
+        print(f"suceptibility(LTLM)   =  {chi_LT * (beta) * N_sites} += {dchi_LT * (beta)* N_sites}")
         return
 
 
@@ -219,7 +218,7 @@ def lancoz_estimate(_H, params_dict ,M, N_samples, Kdim, beta, model_name = "HXX
     # setting up plot and inset
     fig_size=6 # figure aspect ratio parameter
     fig,ax = plt.subplots(figsize=(1.5*fig_size,fig_size))
-    ax.errorbar(T,E_poly,dE_poly,marker=".",label="FTLM_poly",zorder=-2)
+    ax.errorbar(T,E_poly / N_sites ,dE_poly / N_sites,marker=".",label="FTLM_poly",zorder=-2)
 
     ax.set_xscale("log")
     xmin,xmax = ax.get_xlim()
@@ -233,23 +232,23 @@ def lancoz_estimate(_H, params_dict ,M, N_samples, Kdim, beta, model_name = "HXX
     ##### plot results #####
     #
     # setting up plot and inset
-    fig,axs = plt.subplots(ncols=2, figsize=(1.5*fig_size,2*fig_size))
+    fig,axs = plt.subplots(nrows=2, figsize=(1.5*fig_size,2*fig_size))
     C = np.gradient(E_poly, T)
-    axs[0].plot(T, C, marker='.', label = "derivative of E_poly", zorder=-1)
-    axs[0].plot(T,C_poly,marker=".",label="Lancoz poly",zorder=-3)
+    axs[0].plot(T, C / N_sites, marker='.', label = "derivative of E_poly", zorder=-1)
+    axs[0].plot(T,C_poly / N_sites,marker=".",label="Lancoz poly",zorder=-3)
 
     axs[0].set_xscale("log")
     xmin,xmax = ax.get_xlim()
     axs[0].legend(loc="lower right")
-    axs[0].set_ylabel("energy")
+    axs[0].set_ylabel("specific heat")
     axs[0].grid(which="both", ls="-")
 
-    axs[1].plot(T, C, marker='.', label = "derivative of E_poly", zorder=-1)
-    axs[1].plot(T,C_poly,marker=".",label="Lancoz poly",zorder=-3)
+    axs[1].plot(T, C / N_sites, marker='.', label = "derivative of E_poly", zorder=-1)
+    axs[1].plot(T,C_poly / N_sites,marker=".",label="Lancoz poly",zorder=-3)
 
     xmin,xmax = ax.get_xlim()
     axs[1].set_xlabel("temperature")
-    axs[1].set_ylabel("energy")
+    axs[1].set_ylabel("spqciific heat")
     axs[1].grid(which="both", ls="-")
 
     fig.tight_layout()
@@ -280,8 +279,8 @@ def lancoz_estimate(_H, params_dict ,M, N_samples, Kdim, beta, model_name = "HXX
 
 
     fig,ax = plt.subplots(figsize=(1.5*fig_size,fig_size))
-    ax.errorbar(T,M2_FT * (beta) * N_sites , dM2_FT * (beta),marker=".",label="FTLM",zorder=-1)
-    ax.errorbar(T,M2_LT * (beta) * N_sites , dM2_LT * (beta),marker=".",label="LTLM",zorder=-2)
+    ax.errorbar(T,chi_FT * (beta) * N_sites , dchi_FT * (beta),marker=".",label="FTLM",zorder=-1)
+    ax.errorbar(T,chi_LT * (beta) * N_sites , dchi_LT * (beta),marker=".",label="LTLM",zorder=-2)
     ax.set_xscale("log")
     ax.grid(which="both", ls="-")
     xmin,xmax = ax.get_xlim()
