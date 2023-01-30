@@ -112,7 +112,7 @@ def lancoz_estimate(_H, params_dict ,M, N_samples, Kdim, beta, model_name = "HXX
     a = ""
     for k, v in params_dict.items():
         v = float(v)
-        a += f"{k}_{v:.2}_"
+        a += f"{k}_{v:.4g}_"
     params_str = a[:-1]
 
     N_sites = basis.N
@@ -182,19 +182,26 @@ def lancoz_estimate(_H, params_dict ,M, N_samples, Kdim, beta, model_name = "HXX
 
     if printout:
         beta = beta[0]
+        chi_FT = M2_FT - M_FT**2
+        dchi_FT = dM2_FT + dM_FT * M_FT * 2
+        chi_LT = M2_LT - M_LT**2
+        chi_LT = dM2_LT + dM_LT * M_LT * 2
+
         print("model name : {}".format(model_name))
         print("N_sites : {}".format(N_sites))
         print("params : {}".format(params_str))
         print("N_samples : {}".format(N_samples))
         print("Kdim : {}".format(Kdim))
         print("---------------------------------")
-        print(f"temperature            = {T[0]}")
+        print(f"temperature           = {T[0]}")
         print(f"energy(per site)      =  {E_poly / N_sites } += {dE_poly / N_sites}")
         print(f"specific heat         =  {C_poly[0] / N_sites} += {dC_poly[0] / N_sites}")
         print(f"magnetization(FTLM)   =  {M_FT} += {dM_FT}")
         print(f"magnetization(LTLM)   =  {M_LT} += {dM_LT}")
-        print(f"suceptibility(FTLM)   =  {M2_FT * (beta) * N_sites} += {dM2_FT * (-beta)}")
-        print(f"suceptibility(LTLM)   =  {M2_LT * (beta) * N_sites} += {dM2_LT * (-beta)}")
+        print(f"suceptibility(FTLM)   =   \
+            {chi_FT * (beta) * N_sites} += {dchi_FT * (beta)* N_sites}")
+        print(f"suceptibility(LTLM)   =  \
+            {chi_LT * (beta) * N_sites} += {chi_LT * (beta)* N_sites}")
         return
 
 
@@ -226,7 +233,7 @@ def lancoz_estimate(_H, params_dict ,M, N_samples, Kdim, beta, model_name = "HXX
     ##### plot results #####
     #
     # setting up plot and inset
-    fig,axs = plt.subplots(2, figsize=(1.5*fig_size,2*fig_size))
+    fig,axs = plt.subplots(ncols=2, figsize=(1.5*fig_size,2*fig_size))
     C = np.gradient(E_poly, T)
     axs[0].plot(T, C, marker='.', label = "derivative of E_poly", zorder=-1)
     axs[0].plot(T,C_poly,marker=".",label="Lancoz poly",zorder=-3)
@@ -273,8 +280,8 @@ def lancoz_estimate(_H, params_dict ,M, N_samples, Kdim, beta, model_name = "HXX
 
 
     fig,ax = plt.subplots(figsize=(1.5*fig_size,fig_size))
-    ax.errorbar(T,M2_FT * (beta) * N_sites , dM2_FT * (-beta),marker=".",label="FTLM",zorder=-1)
-    ax.errorbar(T,M2_LT * (beta) * N_sites , dM2_LT * (-beta),marker=".",label="LTLM",zorder=-2)
+    ax.errorbar(T,M2_FT * (beta) * N_sites , dM2_FT * (beta),marker=".",label="FTLM",zorder=-1)
+    ax.errorbar(T,M2_LT * (beta) * N_sites , dM2_LT * (beta),marker=".",label="LTLM",zorder=-2)
     ax.set_xscale("log")
     ax.grid(which="both", ls="-")
     xmin,xmax = ax.get_xlim()

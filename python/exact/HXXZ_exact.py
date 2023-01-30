@@ -74,7 +74,7 @@ if lat == "2D":
 
     basis_2d = spin_basis_general(N_2d ,pauli=False)
     H_SS = quantum_operator(ops_dict,basis=basis_2d, dtype=np.float64, check_symm=False)
-    M = hamiltonian([["z",M_list]],[],basis=basis_2d, dtype=np.float64)
+    M = hamiltonian([["z",M_list]],[],basis=basis_2d, dtype=np.float64, check_symm=False)
 
     # define magnetization observable
 

@@ -20,6 +20,7 @@ import multiprocessing
 
 lattice = [
     "1D",
+    "2D"
 ]
 u_algorithm = [
     "original",
@@ -37,6 +38,7 @@ parser.add_argument('-l','--lattice', help='lattice (model) Name', required=True
 parser.add_argument('-u','--unitary_algorithm', help='algorithm determine local unitary matrix', default = "original", choices=u_algorithm)
 parser.add_argument('-Jz','--coupling_z', help='coupling constant (Jz)', type = float, default = 1) # SxSx + SySy + 
 parser.add_argument('-Jx','--coupling_x', help='coupling constant (Jx)', type = float, default = 1) 
+parser.add_argument('-Jy','--coupling_y', help='coupling constant (Jy)', type = float, default = 1) 
 parser.add_argument('-H','--magnetization', help='represent magnetization', type = float, default = 0) # + h * Sz
 
 # optimizer settings
@@ -49,6 +51,7 @@ args = parser.parse_args()
 print(args)
 Jz = args.coupling_z
 Jx = args.coupling_x
+Jy = args.coupling_y
 h = args.magnetization
 lat = args.lattice
 ua = args.unitary_algorithm
@@ -65,12 +68,12 @@ Sy[0,1] = -1j/2
 
 I = np.eye(2)
 
-params_dict = dict(Jz=Jz, Jx=Jx, h=h)
+params_dict = dict(Jz=Jz, Jx=Jx,Jy=Jy, h=h)
 
 a = ""
 for k, v in params_dict.items():
     v = float(v)
-    a += f"{k}_{v:.2}_"
+    a += f"{k}_{v:.4g}_"
 params_str = a[:-1]
 
 
@@ -79,7 +82,7 @@ SxSx = np.kron(Sx,Sx).real.astype(np.float64)
 SySy = np.kron(Sy,Sy).real.astype(np.float64)
 o = np.kron(I, Sz) + np.kron(Sz, I)
 
-lh = Jz * SzSz + Jx*(SxSx + SySy)
+lh = Jz * SzSz + Jx * SxSx + Jy * SySy
 
 
 
@@ -89,6 +92,17 @@ if __name__ == "__main__":
         H = lh - h * o / 2
         H *= -1
         path = "array/1D"
+        if ua == "original":
+            path += "/original"
+            path += "/" + params_str
+            save_npy(path+"/H", [H])
+            o /= 2 # divide by 4 because overwrapped 4 times.
+            save_npy(path+"/Sz", [o])
+
+    if lat == "2D":
+        H = lh - h * o / 4
+        H *= -1
+        path = "array/2D"
         if ua == "original":
             path += "/original"
             path += "/" + params_str
