@@ -20,11 +20,12 @@ lattice = [
 
 parser = argparse.ArgumentParser(description='exact diagonalization of shastry_surtherland')
 parser.add_argument('-l','--lattice', help='lattice (model) Name', required=True, choices=lattice)
-parser.add_argument('-Jz','--coupling_z', help='coupling constant (NN)', type = float, default = 1)
-parser.add_argument('-Jx','--coupling_x', help='coupling constant (NN)', type = float, default = 1)
+parser.add_argument('-Jz','--coupling_z', help='coupling constant (Jz)', type = float, default = 1) # SxSx + SySy + 
+parser.add_argument('-Jx','--coupling_x', help='coupling constant (Jx)', type = float, default = 1) 
+parser.add_argument('-Jy','--coupling_y', help='coupling constant (Jy)', type = float, default = 1) 
 
 parser.add_argument('-H','--magnetic', help='magnetic field', type = float, default = 0)
-parser.add_argument('-n','--n_samples', help='# of samples', type = int, default = 50)
+parser.add_argument('-N','--n_samples', help='# of samples', type = int, default = 50)
 parser.add_argument('-m','--n_Krylov', help='dimernsion of Krylov space', type = int, default = 50)
 parser.add_argument('-T', "--temperature", help = "temperature", type = float)
 parser.add_argument('-L', "--length", help = "length of side", type = int, default = 4)
@@ -47,7 +48,7 @@ else:
 
 
 if lat == "2D":
-    Lx, Ly = L, L
+    Lx, Ly = 3, 5
     N_2d = Lx*Ly 
     if N_2d >= 16:
         print("Warning: N_2d is too large for exact diagonalization. Please use Lanczos method instead")
@@ -59,16 +60,17 @@ if lat == "2D":
 
     Jz = args.coupling_z
     Jx = args.coupling_x
+    Jy = args.coupling_y
     h = args.magnetic
     N = args.n_samples
     K = args.n_Krylov
 
 
     J_zz = [[1,i,T_x[i]] for i in range(N_2d)]+[[1,i,T_y[i]] for i in range(N_2d)] 
-    J_xy = [[1,i,T_x[i]] for i in range(N_2d)]+[[1,i,T_y[i]] for i in range(N_2d)]
     h_list = [[-1.0,i] for i in range(N_2d)]
     ops_dict = dict(Jz=[["zz", J_zz]], # J for z
-                    Jx=[["yy",J_xy], ["xx",J_xy]], # J for x and y
+                    Jx=[["xx",J_zz]],
+                    Jy=[["yy",J_zz]], # J for x and y
                     h=[["z",h_list]])
     M_list = [[1.0/N_2d,i] for i in range(N_2d)]
 
@@ -80,7 +82,7 @@ if lat == "2D":
 
 
     # define hamiltonian for given parameters
-    params_dict=dict(Jz=Jz,Jx=Jx,h=h)
+    params_dict = dict(Jz=Jz, Jx=Jx,Jy=Jy, h=h)
 
     # print(T)
     beta = 1.0/(T+1e-15) 
@@ -89,10 +91,11 @@ if lat == "2D":
 
 elif lat == "1D":
 
-    L = 10
+    L = 9
 
     Jz = args.coupling_z
     Jx = args.coupling_x
+    Jy = args.coupling_y
     h = args.magnetic
     N = args.n_samples
     K = args.n_Krylov
@@ -102,7 +105,8 @@ elif lat == "1D":
     J_xy = [[1,i,(i+1)%L] for i in range(L)]
     h_list = [[-1.0,i] for i in range(L)]
     ops_dict = dict(Jz=[["zz", J_zz]], # J for z
-                    Jx=[["yy",J_xy], ["xx",J_xy]], # J for x and y
+                    Jx=[["xx",J_xy]], # J for x and y
+                    Jy = [["yy",J_xy]],
                     h=[["z",h_list]])
     M_list = [[1.0/L,i] for i in range(L)]
 
