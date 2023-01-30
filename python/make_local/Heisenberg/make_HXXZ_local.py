@@ -37,7 +37,7 @@ parser.add_argument('-l','--lattice', help='lattice (model) Name', required=True
 parser.add_argument('-u','--unitary_algorithm', help='algorithm determine local unitary matrix', default = "original", choices=u_algorithm)
 parser.add_argument('-Jz','--coupling_z', help='coupling constant (Jz)', type = float, default = 1) # SxSx + SySy + 
 parser.add_argument('-Jx','--coupling_x', help='coupling constant (Jx)', type = float, default = 1) 
-parser.add_argument('-m','--magnetization', help='represent magnetization', type = float, default = 1) # + h * Sz
+parser.add_argument('-H','--magnetization', help='represent magnetization', type = float, default = 0) # + h * Sz
 
 # optimizer settings
 parser.add_argument('-loss','--loss', help='loss_methods', choices=loss, nargs='?', const='all',default="mes")
