@@ -114,10 +114,12 @@ int main(int argc, char **argv) {
   const Setting& dofs_cfg = mcfg.lookup("dofs");
 
 
+
   double shift;
   string file, basis, cell, ham_path, obs_path;
   bool repeat; // true if repeat params and types.
   bool zero_worm;
+  size_t ns_unit;
   vector<size_t> shapes;
   vector<int> types;
   vector<double> params;
@@ -138,6 +140,7 @@ int main(int argc, char **argv) {
   repeat = (bool) mcfg.lookup("repeat");
   shift = (double) mcfg.lookup("shift");
   zero_worm = (bool) mcfg.lookup("zero_worm");
+  try {ns_unit = (size_t) mcfg.lookup("ns_unit");} catch(...) {ns_unit = 1;}
 
   // cout << file << endl;
 
@@ -206,6 +209,8 @@ int main(int argc, char **argv) {
   model::base_lattice lat(basis, cell, shapes, file, !rank);
   model::base_model<bcl::st2013> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat, !rank);
   model::observable obs(spin, obs_path, !rank);
+
+  size_t n_sites = lat.L * ns_unit;
 
   // output MC step info 
   if (rank == 0 ) cout << "therms(each process)    : " << therms << endl
@@ -288,18 +293,18 @@ int main(int argc, char **argv) {
          << as_mean.second 
          << endl
          << "Energy per site      = "
-         << ene_mean.first / lat.L << " +- " 
-         << ene_mean.second / lat.L
+         << ene_mean.first / n_sites << " +- " 
+         << ene_mean.second / n_sites
          << endl
          << "Specific heat        = "
-         << c_mean.first / lat.L << " +- " 
-         << c_mean.second / lat.L
+         << c_mean.first / n_sites << " +- " 
+         << c_mean.second / n_sites
          << endl
          << "magnetization        = "
-         << m_mean.first * T / lat.L << " +- " << m_mean.second * T / lat.L
+         << m_mean.first * T / n_sites << " +- " << m_mean.second * T / n_sites
          << endl
          << "susceptibility       = "
-         << chi_mean.first  * T / lat.L << " +- " << chi_mean.second  * T / lat.L << endl
+         << chi_mean.first  * T / n_sites << " +- " << chi_mean.second  * T / n_sites << endl
          << "# of operators       = "
          << nop_mean.first << " +- " << nop_mean.second << endl
          << "# of neg sign op     = "
