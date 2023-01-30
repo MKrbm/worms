@@ -69,11 +69,19 @@ public:
   base_lattice(std::tuple<size_t, VVS, VS, VS> tp)
   :base_lattice(get<0>(tp), get<1>(tp), get<2>(tp), get<3>(tp)){}
 
-  base_lattice(std::string basis_name = "chain lattice", std::string cell_name = "simple1d", VS shapes = {6}, std::string file = "../config/lattice_xml.txt", bool print = false);
+  base_lattice(
+      std::string basis_name = "chain lattice", 
+      std::string cell_name = "simple1d", 
+      VS shapes = {6}, 
+      std::string file = "../config/lattice_xml.txt", 
+      bool print = false
+    );
 
 
   //* initilizer function reading xml file.
-  static std::tuple<size_t, VVS, VS, VS> initilizer_xml(std::string basis_name, std::string cell_name, VS shapes, std::string file, bool print);
+  static std::tuple<size_t, VVS, VS, VS> initilizer_xml(
+          std::string basis_name, std::string cell_name,
+          VS shapes, std::string file, bool print);
 };
 
 /*
