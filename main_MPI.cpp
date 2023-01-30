@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
 
   char tmp[256];
   auto _ = getcwd(tmp, 256);
-  cout << tmp << endl;
+  // cout << tmp << endl;
 
   Config cfg;
   cfg.setAutoConvert(true);
@@ -107,11 +107,18 @@ int main(int argc, char **argv) {
     cout << "model name is \t : \t" << model_name << endl;
     cout << "run on \t : \t" << size << " nodes" << endl;
   }
-  const Setting& mcfg = root["models"][model_name];
-  const Setting& shape_cfg = mcfg.lookup("length");
-  const Setting& params_cfg = mcfg.lookup("params");
-  const Setting& types_cfg = mcfg.lookup("types");
-  const Setting& dofs_cfg = mcfg.lookup("dofs");
+  const Setting *mcfg;
+  try {mcfg = &root["models"][model_name];}
+  catch(const SettingNotFoundException &nfex)
+  {
+    throw std::runtime_error("model name not found");
+    return(EXIT_FAILURE);
+  }
+  // const Setting& mcfg = root["models"][model_name];
+  const Setting& shape_cfg = mcfg->lookup("length");
+  const Setting& params_cfg = mcfg->lookup("params");
+  const Setting& types_cfg = mcfg->lookup("types");
+  const Setting& dofs_cfg = mcfg->lookup("dofs");
 
 
 
@@ -131,16 +138,16 @@ int main(int argc, char **argv) {
   for (int i=0; i<types_cfg.getLength(); i++) {types.push_back(types_cfg[i]);}
 
 
-  file = (string) mcfg.lookup("file").c_str();
-  basis = (string) mcfg.lookup("basis").c_str();
-  cell = (string) mcfg.lookup("cell").c_str();
-  ham_path = (string) mcfg.lookup("ham_path").c_str();
-  try { obs_path = (string) mcfg.lookup("obs_path").c_str();}
+  file = (string) mcfg->lookup("file").c_str();
+  basis = (string) mcfg->lookup("basis").c_str();
+  cell = (string) mcfg->lookup("cell").c_str();
+  ham_path = (string) mcfg->lookup("ham_path").c_str();
+  try { obs_path = (string) mcfg->lookup("obs_path").c_str();}
   catch(const SettingNotFoundException &nfex) { obs_path = "";}
-  repeat = (bool) mcfg.lookup("repeat");
-  shift = (double) mcfg.lookup("shift");
-  zero_worm = (bool) mcfg.lookup("zero_worm");
-  try {ns_unit = (size_t) mcfg.lookup("ns_unit");} catch(...) {ns_unit = 1;}
+  repeat = (bool) mcfg->lookup("repeat");
+  shift = (double) mcfg->lookup("shift");
+  zero_worm = (bool) mcfg->lookup("zero_worm");
+  try {ns_unit = (size_t) mcfg->lookup("ns_unit");} catch(...) {ns_unit = 1;}
 
   // cout << file << endl;
 
