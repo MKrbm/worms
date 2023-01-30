@@ -33,7 +33,7 @@ parser.add_argument('-L', "--length", help = "length of side", type = int, defau
 args = parser.parse_args()
 lat = args.lattice
 T = args.temperature
-L = args.lenght
+L = args.length
 if T is None:
     T = np.concatenate([np.logspace(-1.6, 0, num=80)[:-1], np.logspace(0, 2, num = 20)])
     printout = False
