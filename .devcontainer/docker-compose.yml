@@ -5,7 +5,7 @@ volumes:
 
 services:
   main:
-    container_name: worms
+    container_name: worms_gpu
     # env_file: 
     #   - .env
     # environment:
@@ -13,10 +13,10 @@ services:
     #   COMPOSE_DOCKER_CLI_BUILD: 1
     # image: sonoisa/deep-learning-coding:pytorch1.12.0_tensorflow2.9.1
     # image: ubuntu:jammy-20221101
-    # image: gcc:latest
-    build:
-      context: .
-      dockerfile: ./Dockerfile
+    image: kei0709/ubuntu22.04-cpp-gpu:amd64
+    # build:
+    #   context: .
+    #   dockerfile: ./Dockerfile
     volumes:
       # - worm_data:/home/user/project
       - ..:/home/user/project
@@ -38,3 +38,10 @@ services:
     stdin_open: true
     tty: true
     working_dir: /home/user/project
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
