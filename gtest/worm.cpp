@@ -126,7 +126,7 @@ TEST(WormTest, Heisenberg1D) {
   */
 }
 
-TEST(WormTest, Heisenberg1D2) {
+TEST(WormTest, HXXZ1D) {
 
   model::base_lattice lat = chain(9);
   vector<size_t> dofs = {2};
@@ -134,16 +134,16 @@ TEST(WormTest, Heisenberg1D2) {
   std::vector<int> types = {0};
   double shift = 0.25;
   bool zw = false;
-  model::base_model<bcl::st2013> spin(lat, dofs, "../gtest/model_array/Heisenberg/1D/original/Jz_1_Jx_-0.3_Jy_1_h_0.25/H", params, types, shift, zw, false, false);
+  model::base_model<bcl::st2013> spin(lat, dofs, "../gtest/model_array/Heisenberg/1D/original/Jz_1_Jx_-0.3_Jy_-0.3_h_1/H", params, types, shift, zw, false, false);
   // cerr << heisenberg1D_hams << endl;
 
-  model::observable obs(spin, "../gtest/model_array/Heisenberg/1D/original/Jz_1_Jx_-0.3_Jy_1_h_0.25/Sz", false);
+  model::observable obs(spin, "../gtest/model_array/Heisenberg/1D/original/Jz_1_Jx_-0.3_Jy_-0.3_h_1/Sz", false);
   vector<batch_res> res;
 
   double T;
   size_t sweeps, therms;
 
-  T = 0.4;
+  T = 0.3;
   sweeps = 1000000;
   therms = 100000;
 
@@ -151,14 +151,50 @@ TEST(WormTest, Heisenberg1D2) {
 
   /*
   expect the following res
-  T   = 1
-  E   = -0.11794811240370676
-  C   = 0.08996577957529565
-  M   = 0.03730406777171547
-  chi = 0.1613498985228055
+  {'Jz': 1, 'Jx': -0.3, 'Jy': -0.3, 'h': 1}
+  T               = 0.3
+  E               = -0.2730339836265664
+  C               = 0.13699753184107943
+  M               = 0.20530285681405502
+  M^2             = 0.05188517444027588
+  Chi             = 0.2911610229843903
   */
 }
 
+TEST(WormTest, HXYZ1D) {
+
+  model::base_lattice lat = chain(9);
+  vector<size_t> dofs = {2};
+  std::vector<double> params = {1.0};
+  std::vector<int> types = {0};
+  double shift = 0.25;
+  bool zw = false;
+  model::base_model<bcl::st2013> spin(lat, dofs, "../gtest/model_array/Heisenberg/1D/original/Jz_1_Jx_-0.3_Jy_0.5_h_1/H", params, types, shift, zw, false, false);
+  // cerr << heisenberg1D_hams << endl;
+
+  model::observable obs(spin, "../gtest/model_array/Heisenberg/1D/original/Jz_1_Jx_-0.3_Jy_0.5_h_1/Sz", false);
+  vector<batch_res> res;
+
+  double T;
+  size_t sweeps, therms;
+
+  T = 0.5;
+  sweeps = 1000000;
+  therms = 100000;
+
+  run_worm(spin, T, sweeps, therms, res, obs, lat);
+
+  /*
+  expect the following res
+  {'Jz': 1, 'Jx': -0.3, 'Jy': 0.5, 'h': 1}
+  T               = 0.5
+  E               = -0.24160516290075712
+  C               = 0.11037705233953687
+  M               = 0.1989775975186055
+  M^2             = 0.052966399306237574
+  Chi             = 0.21764501570217254
+  */
+}
 
 
 TEST(WormTest, Heisenberg2D) {
@@ -239,7 +275,7 @@ TEST(WormTest, Heisenberg2D) {
 
 TEST(WormTest, Heisenberg2DNS) { // with negative sign
 
-  std::vector<size_t> shapes = {3, 3};
+  std::vector<size_t> shapes = {5, 3};
   model::base_lattice lat("square lattice", "simple2d", shapes, "../config/lattices.xml", false);
 
 
@@ -248,12 +284,13 @@ TEST(WormTest, Heisenberg2DNS) { // with negative sign
   std::vector<int> types = {0};
   double shift = 0.25;
   bool zw = false;
-  model::base_model<bcl::st2013> spin(lat, dofs, "../gtest/model_array/Heisenberg/2D/original/Jz_1.0_Jx_1.0_h_1.0/H", 
+  model::base_model<bcl::st2013> spin(lat, dofs, 
+        "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_1_h_1/H", 
         params, types, shift, zw, false, false); //heisenberg with J = 1, h =0 (H = J \sum S\cdot S - h)
 
 
 
-  model::observable obs(spin, "../gtest/model_array/Heisenberg/2D/original/Jz_1.0_Jx_1.0_h_1.0/Sz", false);
+  model::observable obs(spin, "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_1_h_1/Sz", false);
   vector<batch_res> res;
 
   double T;
