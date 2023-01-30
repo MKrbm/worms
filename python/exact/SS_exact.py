@@ -19,8 +19,20 @@ parser.add_argument('-J','--coupling', help='coupling constant (NN)', type = flo
 parser.add_argument('-H','--magnetic', help='magnetic field', type = float, default = 0)
 parser.add_argument('-n','--n_samples', help='# of samples', type = int, default = 50)
 parser.add_argument('-m','--n_Krylov', help='dimernsion of Krylov space', type = int, default = 50)
+parser.add_argument('-T', "--temperature", help = "temperature", type = float)
+
 
 args = parser.parse_args()
+
+T = args.temperature
+if T is None:
+    T = np.logspace(-1.6, 0.3, num=80) 
+    printout = False
+else:
+    if T < 0:
+        raise ValueError("Temperature must be positive")
+    T = np.array([T])
+    printout = True
 
 
 Lx, Ly = 4, 4 
@@ -58,7 +70,6 @@ M2 = M**2
 # define hamiltonian for given parameters
 params_dict=dict(Jp=J1,h=h)
 
-T = np.logspace(-1.6, 0.3, num=80) 
 beta = 1.0/(T+1e-15) 
 
 lancoz_estimate(H_SS, params_dict, M, N, K, beta, model_name="SS")
