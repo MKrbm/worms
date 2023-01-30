@@ -136,7 +136,7 @@ void exe_worm_parallel(
       n_neg_ele << n_neg;
       n_ops << n_op;
       dH << sum_ot * sign;
-      dH2 << (sum_ot*sum_ot - sum_2_ot) * sign / 2 ;
+      dH2 << (sum_ot*sum_ot - sum_2_ot) * sign;
     }
     if (i <= therms / 2) {
       if (!fix_wdensity){
