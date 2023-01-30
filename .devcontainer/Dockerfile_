@@ -2,7 +2,7 @@
 
 FROM ubuntu:22.04 as base
 RUN echo "I'm $TARGETARCH"
-ARG ARCH=amd64
+# ARG ARCH=amd64
 # RUN echo "I'm building for $TARGETARCH"
 # setup non-root user. If you use remote-container, you don't need to adjust this UID.
 ARG USERNAME=user

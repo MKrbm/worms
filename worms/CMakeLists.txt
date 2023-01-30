@@ -3,14 +3,15 @@ project(worm_lib
     DESCRIPTION "worm_algorithm library"
     LANGUAGES CXX)
 
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+find_package(ALPSCore REQUIRED alea)
+
 include(libconfig)
 include(eigen3)
 include(npy)
 include(googletest)
 
 # link alpscore
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-find_package(ALPSCore REQUIRED alea)
 
 #* list all targets
 # function(getAllSubdirs dir dirs)

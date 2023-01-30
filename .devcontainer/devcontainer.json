@@ -34,7 +34,8 @@
     "ms-python.python",
     "streetsidesoftware.code-spell-checker",
     "usernamehw.indent-one-space",
-    "lesgrieve.paste-indent"
+    "lesgrieve.paste-indent",
+    
 	],
 	
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
