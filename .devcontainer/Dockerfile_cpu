@@ -13,7 +13,7 @@ RUN ./python-package.sh
 
 USER root
 #install libboost, openmpi, ninja
-RUN apt-get install -y libopenmpi-dev liblapack-dev libblas-dev libboost-dev libeigen3-dev libboost-mpi-dev libboost-serialization-dev libboost-filesystem-dev libboost-system-dev ninja-build
+RUN apt-get install -y libopenmpi-dev liblapack-dev libblas-dev libboost-dev libboost-mpi-dev libboost-serialization-dev libboost-filesystem-dev libboost-system-dev ninja-build
 
 # setting the locale to UTF-8
 RUN apt-get update && apt-get install -y locales
@@ -26,4 +26,20 @@ ENV LC_ALL en_US.UTF-8
 RUN apt-get install -y hstr 
 USER ${USERNAME}
 RUN hstr --show-configuration >> ~/.bashrc
+
+
+#install ALPSCore and libconfig
+USER root
+RUN sudo apt-get install -y libhdf5-dev=1.10.7+repack-4ubuntu2 libeigen3-dev
+COPY install-libconfig.sh install-libconfig.sh
+COPY install-alpscore.sh install-alpscore.sh
+RUN ./install-libconfig.sh
+RUN ./install-alpscore.sh
+
+# RUN rm -r ALPSCore
+# RUN rm -r libconfig
+
+
+#install libconfig
+# ENTRYPOINT ["/bin/bash", "/install-libconfig.sh"]
 
