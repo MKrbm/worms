@@ -27,10 +27,13 @@ parser.add_argument('-H','--magnetic', help='magnetic field', type = float, defa
 parser.add_argument('-n','--n_samples', help='# of samples', type = int, default = 50)
 parser.add_argument('-m','--n_Krylov', help='dimernsion of Krylov space', type = int, default = 50)
 parser.add_argument('-T', "--temperature", help = "temperature", type = float)
+parser.add_argument('-L', "--length", help = "length of side", type = int, default = 4)
+
 
 args = parser.parse_args()
 lat = args.lattice
 T = args.temperature
+L = args.lenght
 if T is None:
     T = np.concatenate([np.logspace(-1.6, 0, num=80)[:-1], np.logspace(0, 2, num = 20)])
     printout = False
@@ -44,8 +47,10 @@ else:
 
 
 if lat == "2D":
-    Lx, Ly = 4, 4 
+    Lx, Ly = L, L
     N_2d = Lx*Ly 
+    if N_2d >= 16:
+        print("Warning: N_2d is too large for exact diagonalization. Please use Lanczos method instead")
     s = np.arange(N_2d)
     x = s%Lx 
     y = s//Lx 
