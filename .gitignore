@@ -26,7 +26,8 @@ Release/
 **/out
 
 # julia
-julia_practice
+julia_practice/
+julia_test/
 
 # packages / libraries
 ALPSCore
