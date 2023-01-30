@@ -16,24 +16,50 @@
 
 
 namespace model{
-  using namespace std;
-  using VS = vector<size_t>;
-  using VVS = vector<VS>;
-  using VI = vector<int>;
-  using VVI = vector<VI>;
-  using VD = vector<double>;
+using namespace std;
+using VS = vector<size_t>;
+using VVS = vector<VS>;
+using VI = vector<int>;
+using VVI = vector<VI>;
+using VD = vector<double>;
+
+template<class MC=bcl::heatbath> class local_operator;
+
+// definition of equality operator.
+template <class MC>
+bool operator==(const local_operator<MC>& lhs, const local_operator<MC>& rhs)
+{ 
+  bool cmp = true;
+  cmp &= (lhs._ham == rhs._ham);
+  cmp &= lhs._ham_vector == rhs._ham_vector;
+  cmp &= lhs.ham_prime == rhs.ham_prime;
+  cmp &= lhs.leg == rhs.leg;
+  cmp &= lhs.size == rhs.size;
+  cmp &= lhs.ene_shift == rhs.ene_shift;
+  cmp &= lhs.max_diagonal_weight_ == rhs.max_diagonal_weight_;
+  cmp &= lhs.total_weights == rhs.total_weights;
+  cmp &= lhs.signs == rhs.signs;
+  cmp &= lhs.sps == rhs.sps;
+  return cmp; 
+}
+
+
+
 
 /*
-*params
+template argument
+-------
+MC : type of algorithm for generating transition matrix
+
+
+params
 -------
 leg : number of sites bond operato acts on. typically 2.
 size : number of hilbert space of bond operator.
 sps : spin freedom per site.
-*template argument
--------
-MC : type of algorithm for generating transition matrix
 
-*variables
+
+variables
 -------
 TPROB : type of transition matrix
 */
@@ -56,7 +82,7 @@ public:
   }
 };
 
-template <class MC=bcl::heatbath>
+template <class MC>
 class local_operator{
 private:
   std::vector<double> _ham_vector;
@@ -90,24 +116,22 @@ public:
   void set_trans_weights();
   void check_trans_prob();
   int index2num(std::array<int, 2> index);
-  friend bool operator==(const local_operator<MC>& lhs, const local_operator<MC>& rhs) 
-  { 
-    bool cmp = true;
-    cmp &= (lhs._ham == rhs._ham);
-    cmp &= lhs._ham_vector == rhs._ham_vector;
-    cmp &= lhs.ham_prime == rhs.ham_prime;
-    cmp &= lhs.leg == rhs.leg;
-    cmp &= lhs.size == rhs.size;
-    cmp &= lhs.ene_shift == rhs.ene_shift;
-    cmp &= lhs.max_diagonal_weight_ == rhs.max_diagonal_weight_;
-    cmp &= lhs.total_weights == rhs.total_weights;
-    cmp &= lhs.signs == rhs.signs;
-    cmp &= lhs.sps == rhs.sps;
-
-
-    return cmp; 
-  }
+  friend bool operator==<>(const local_operator<MC>& lhs, const local_operator<MC>& rhs);
 };
+  // { 
+  //   bool cmp = true;
+  //   cmp &= (lhs._ham == rhs._ham);
+  //   cmp &= lhs._ham_vector == rhs._ham_vector;
+  //   cmp &= lhs.ham_prime == rhs.ham_prime;
+  //   cmp &= lhs.leg == rhs.leg;
+  //   cmp &= lhs.size == rhs.size;
+  //   cmp &= lhs.ene_shift == rhs.ene_shift;
+  //   cmp &= lhs.max_diagonal_weight_ == rhs.max_diagonal_weight_;
+  //   cmp &= lhs.total_weights == rhs.total_weights;
+  //   cmp &= lhs.signs == rhs.signs;
+  //   cmp &= lhs.sps == rhs.sps;
+  //   return cmp; 
+  // }
 
 // template <class M>
 // bool operator==(const local_operator<M>& lhs, const local_operator<M>& rhs) 
@@ -180,19 +204,7 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
     signs.push_back(x >= 0 ? 1 : -1);
     x = std::abs(x);
     if (x < thres) x = 0;
-    // if (std::abs(y) < thres) y = 0;
-
-    // if (y!=0 && x==0){
-    //   std::cerr << "cannot reweighting since support doesn't cover the original matrix" << std::endl;
-    //   std::cerr << "y : " << y << "  x : " << x << std::endl;
-    //   std::terminate();
-    // }
-    // if (x!= 0) y = y/x;
   }
-  // set transition probability
-  // std::cout << _ham_vector << std::endl;
-  // std::cout << "a" << std::endl;
-
 
   std::vector<markov_t> markov_tmp;
   std::vector<long long> state2index;
@@ -221,11 +233,10 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
     }
     markov = markov_v(markov_tmp, state2index);
   }
-
-
-  //* free memories
-  // _ham.resize(0);
 }
+
+
+
 
 
 template <class MC>
