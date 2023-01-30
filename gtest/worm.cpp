@@ -187,7 +187,7 @@ TEST(WormTest, Heisenberg2D) {
 
 TEST(WormTest, Heisenberg2DNS) { // with negative sign
 
-  std::vector<size_t> shapes = {4, 4};
+  std::vector<size_t> shapes = {3, 3};
   model::base_lattice square4("square lattice", "simple2d", shapes, "../config/lattices.xml", false);
 
 
@@ -196,7 +196,7 @@ TEST(WormTest, Heisenberg2DNS) { // with negative sign
   std::vector<int> types = {0};
   double shift = 0.25;
   bool zw = false;
-  model::base_model<bcl::st2013> spin(square4, dofs, "../gtest/model_array/Heisenberg/original/Jz_1.0_Jx_1.0_h_0.0/H", 
+  model::base_model<bcl::st2013> spin(square4, dofs, "../gtest/model_array/Heisenberg/original/Jz_1.0_Jx_1.0_h_1.0/H", 
         params, types, shift, zw, false, false); //heisenberg with J = 1, h =0 (H = J \sum S\cdot S - h)
 
 
