@@ -27,6 +27,8 @@
 $\frac{\frac{\partial}{\partial h}Z}{Z}$
 $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
 
+$\langle x_{\tau} | \hat{o}_i \hat{o}_j |x^\prime_{\tau} \rangle$
+
 
 
 - # 聞くこと

@@ -56,7 +56,7 @@ using size_t = std::size_t;
 
 
 template <class MODEL>
-class worm{
+class Worm{
   public:
   typedef typename MODEL::MDT base_spin_model;
   static const size_t max_L = base_spin_model::max_L;
@@ -122,7 +122,7 @@ class worm{
 
   typedef bcl::markov<engine_type> markov_t;
 
-  worm(double beta, MODEL model_, size_t cl = SIZE_MAX)
+  Worm(double beta, MODEL model_, size_t cl = SIZE_MAX)
   :model(model_), L(model.L), beta(beta), rho(-1),
   bonds(model.bonds),bond_type(model.bond_type) ,state(model.L),cstate(model.L), cutoff_length(cl),
   loperators(model.loperators), leg_sizes(model.leg_size)
@@ -150,7 +150,7 @@ class worm{
   }
 
 
-  void init_states(){ //* initialized to all up
+  void initStates(){ //* initialized to all up
   for (auto& x : state){
     #ifdef RANDOM_SEED
     x = static_cast<SPIN>(sps * uniform(rand_src));
@@ -160,7 +160,7 @@ class worm{
     }
   }
 
-  void init_dots(bool add_state = true){
+  void initDots(bool add_state = true){
     spacetime_dots.resize(0);
     if (add_state){
       for(int i=0; i<L; i++){
@@ -170,15 +170,15 @@ class worm{
   }
 
   //swapt main and sub
-  void swap_oplist(){
+  void swapOps(){
     std::swap(ops_main, ops_sub);
   }
 
   //main functions
 
-  void diagonal_update(double wdensity){
+  void diagonalUpdate(double wdensity){
     
-    swap_oplist();
+    swapOps();
     // wdensity = 3;
     
     expdist_t expdist(rho * beta + wdensity); //initialize exponential distribution
@@ -191,7 +191,7 @@ class worm{
 
     ops_main.resize(0); //* init_ops_main()
     
-    init_dots(); //*init spacetime_dots
+    initDots(); //*init spacetime_dots
 
     //*init worms
     worms_list.resize(0);
@@ -204,7 +204,7 @@ class worm{
 
         if (r < pstart){
           size_t s = static_cast<int>(L * uniform(rand_src));
-          append_worms(worms_list, s, spacetime_dots.size(), tau);
+          appendWorms(worms_list, s, spacetime_dots.size(), tau);
           set_dots(s, -2 , 0); //*index is always 0 
         }else{
           size_t b = static_cast<size_t>(bonds.size() * uniform(rand_src));
@@ -218,7 +218,7 @@ class worm{
 
           r = uniform(rand_src);
           if (r < accept[u]){
-            append_ops(ops_main, spacetime_dots, &bond, u * state_func::pows[bond.size()] + u, lop_label, tau);
+            appendOps(ops_main, spacetime_dots, &bond, u * state_func::pows[bond.size()] + u, lop_label, tau);
           }
         }
         tau += expdist(rand_src);
@@ -229,7 +229,7 @@ class worm{
           //   cout << "stop" << endl;
           // }
           update_state(opi, cstate);
-          append_ops(ops_main, spacetime_dots, opi->bond_ptr(), opi->state(), opi->op_type(),opi->tau());
+          appendOps(ops_main, spacetime_dots, opi->bond_ptr(), opi->state(), opi->op_type(),opi->tau());
           printStateAtTime(cstate, tau);
         }
         ++opi;
@@ -245,7 +245,7 @@ class worm{
   }
 
   // //*append to ops
-  static void append_ops(OPS& ops, DOTS& sp, const BOND * const bp, int state, int op_type, double tau){
+  static void appendOps(OPS& ops, DOTS& sp, const BOND * const bp, int state, int op_type, double tau){
 
     int s = bp->size();
     ops.push_back(OP_type(bp, state, s, op_type, tau));
@@ -263,7 +263,7 @@ class worm{
     }
   }
   // //*overload for r value
-  // inline void append_ops(OPS& ops, std::vector<int> && bond,  int state, int op_type, double tau){
+  // inline void appendOps(OPS& ops, std::vector<int> && bond,  int state, int op_type, double tau){
   //   int s = bond.size();
   //   ops.push_back(OP_type(&bond, state, s, op_type, tau));
   //   for (int i=0; i<s; i++){
@@ -272,7 +272,7 @@ class worm{
   // }
 
   // //*append to ops
-  // inline void append_ops(OPS& ops, const std::vector<int> * const bp,  int state, int op_type, double tau){
+  // inline void appendOps(OPS& ops, const std::vector<int> * const bp,  int state, int op_type, double tau){
   //   int s = bp->size();
   //   ops.push_back(OP_type(bp, state, s, op_type, tau));
   //   for (int i=0; i<s; i++){
@@ -280,29 +280,29 @@ class worm{
   //   }
   // }
 
-  // inline void append_ops(OPS& ops, OP_type& op){
-  //   append_ops(ops, *op.bond_ptr(), op.state(), op.op_type(), op.tau());
+  // inline void appendOps(OPS& ops, OP_type& op){
+  //   appendOps(ops, *op.bond_ptr(), op.state(), op.op_type(), op.tau());
   // }
 
   //*append to worms
-  inline void append_worms(WORMS& wm, int site, int dot_label, double tau){
+  inline void appendWorms(WORMS& wm, int site, int dot_label, double tau){
     wm.push_back(std::make_tuple(site, dot_label, tau));
   }
  
   /*
-  *perform one step from given worm.
-  If dot is operator then, worm move to exit of the operator. otherwise just assigin spin to dot.
+  *perform one step from given Worm.
+  If dot is operator then, Worm move to exit of the operator. otherwise just assigin spin to dot.
   params
   ------
   int next_dot : next dot.
-  int dir : direction worm is moving toward. 1 : move up, 0 : move down.
-  int spin : current spin state of worm.
-  int site : site worm is at.
+  int dir : direction Worm is moving toward. 1 : move up, 0 : move down.
+  int spin : current spin state of Worm.
+  int site : site Worm is at.
 
   params(member variables)
   ------
   */
-  int worm_process_op(size_t& next_dot, size_t& dir, size_t& site, double& wlength, size_t& fl, double& tau_prime){
+  int wormOpUpdate(size_t& next_dot, size_t& dir, size_t& site, double& wlength, size_t& fl, double& tau_prime){
 
     size_t clabel = next_dot;
     auto& dot = spacetime_dots[clabel];
@@ -316,12 +316,12 @@ class worm{
       return 0;
     }
 
-    // if (dot.at_worm()){ //n* if dot is at worm
+    // if (dot.at_worm()){ //n* if dot is at Worm
     //   std::get<1>(worms_list[dot.label()]) = spin; // see the definition of WORM
     // }
 
     if (dot.at_operator()){
-      size_t dir_in = !dir; //n* direction the worm comes in from the view of operator.
+      size_t dir_in = !dir; //n* direction the Worm comes in from the view of operator.
       auto & opstate = ops_main[dot.label()];
       if (opstate.cnt()==0){
         psop.push_back(dot.label());
@@ -357,7 +357,7 @@ class worm{
       tau_prime = opstate.tau();
 
       int nindex;
-      //* if worm stop at this operator
+      //* if Worm stop at this operator
       if (tmp == 0){
         nindex = static_cast<size_t>((2 * size)*uniform(rand_src));
         dir = nindex/(size);
@@ -396,9 +396,9 @@ class worm{
   }
 
   /*
-  *update worm for W times.
+  *update Worm for W times.
   */
-  void worm_update(double& wcount, double& wlength){
+  void WormUpdate(double& wcount, double& wlength){
     std::copy(state.begin(), state.end(), cstate.begin());
     pres.resize(0);
     psop.resize(0);
@@ -416,13 +416,13 @@ class worm{
       size_t ini_fl = fl;
       int wl = wlength;
       int br = 0;
-      bool wh = true; //* worm head still exists.
+      bool wh = true; //* Worm head still exists.
       double wlength_prime = 0;
       wcount += 1;
       // wlength_prime = (dir == 0) ? tau : -tau;
       do{
         d_label = dot->move_next(dir);
-        size_t status = worm_process_op(d_label, dir, site, wlength_prime, fl, tau);
+        size_t status = wormOpUpdate(d_label, dir, site, wlength_prime, fl, tau);
         if (status != 0){
           if (status == 1){
             wlength_prime = 0;
@@ -441,7 +441,7 @@ class worm{
       
       // wlength += (dir == 0) ? -tau : tau;
       wlength += wlength_prime;
-      check_operators_while_update(w_label, dir ? d_label : dot->prev(), ini_dir, ini_fl, fl, dir);
+      checkOpsInUpdate(w_label, dir ? d_label : dot->prev(), ini_dir, ini_fl, fl, dir);
     }
   }
 
@@ -461,7 +461,7 @@ class worm{
     }else if(dot_type == -2){
       size_t n = worms_list.size();
       spacetime_dots.push_back(
-        Dotv2::worm(spacetime_dots[site].prev(), site, n-1, site)
+        Dotv2::Worm(spacetime_dots[site].prev(), site, n-1, site)
       );
       spacetime_dots[spacetime_dots[site].prev()].set_next(label);
       spacetime_dots[site].set_prev(label);
@@ -516,11 +516,11 @@ class worm{
   * check the operator and state is consistent during the worm_updateg
   params
   ------
-  worm_label : label of dot (worm) we are aiming at.
-  p_label : label of dot before reaching at the current position of worm.
+  worm_label : label of dot (Worm) we are aiming at.
+  p_label : label of dot before reaching at the current position of Worm.
 
   */
-  void check_operators_while_update(int worm_label, int p_label, int ini_dir, int ini_fl, int fl, int dir){
+  void checkOpsInUpdate(int worm_label, int p_label, int ini_dir, int ini_fl, int fl, int dir){
     
     #ifndef NDEBUG
     auto state_ = state;

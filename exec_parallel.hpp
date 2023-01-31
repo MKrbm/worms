@@ -78,7 +78,7 @@ void exe_worm_parallel(
   double beta = 1 / T;
 
 
-  worm<MC> solver(beta, spin_model, cutoff_l, rank); //template needs for std=14
+  Worm<MC> solver(beta, spin_model, cutoff_l, rank); //template needs for std=14
   // spin_model.lattice.print(std::cout);
 
   #if MESTIME
@@ -90,16 +90,16 @@ void exe_worm_parallel(
 
   int n_kink=0;
   int cnt = 0;
-  solver.init_states();
+  solver.initStates();
   double wcount = 0;
   double wlength = 0;
   double wdensity = spin_model.Nb;
   for (int i=0; i < therms + sweeps; i++){
-    // solver.diagonal_update(); 
-    solver.diagonal_update(wdensity); //n* need to be comment out 
+    // solver.diagonalUpdate(); 
+    solver.diagonalUpdate(wdensity); //n* need to be comment out 
     // printf("%dth iteration\n", i);
-    solver.worm_update(wcount, wlength);
-    // printf("complete worm update\n");
+    solver.wormUpdate(wcount, wlength);
+    // printf("complete Worm update\n");
     if (cnt >= therms){
       int sign = 1;
       // double w_rate = 1;

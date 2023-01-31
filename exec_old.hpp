@@ -64,7 +64,7 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
   bool fix_wdensity = opt.fix_wdensity;
 
 
-  worm<SPINMODEL> solver(beta, spin_model, co); //template needs for std=14
+  Worm<SPINMODEL> solver(beta, spin_model, co); //template needs for std=14
   // std::vector<std::vector<int>> states;
   spin_model.lattice.print(std::cout);
 
@@ -81,15 +81,15 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
 
   int n_kink=0;
   int cnt = 0;
-  solver.init_states();
+  solver.initStates();
   double wcount = 0;
   double wlength = 0;
   double wdensity = spin_model.lattice.num_bonds();
   double wdty = opt_ptr->wdty;
   for (int i=0; i < opt.therm + opt.sweeps; i++){
-    // solver.diagonal_update(); 
-    solver.diagonal_update(wdensity); //n* need to be comment out 
-    solver.worm_update(wcount, wlength);
+    // solver.diagonalUpdate(); 
+    solver.diagonalUpdate(wdensity); //n* need to be comment out 
+    solver.WormUpdate(wcount, wlength);
     if (cnt >= opt.therm){
       int sign = 1;
       double mu = 0;
@@ -197,7 +197,7 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
   size_t co = opt.co;
 
 
-  worm<SPINMODEL> solver(beta, spin_model, co); //template needs for std=14
+  Worm<SPINMODEL> solver(beta, spin_model, co); //template needs for std=14
   // std::vector<std::vector<int>> states;
   spin_model.lattice.print(std::cout);
 
@@ -214,17 +214,17 @@ std::vector<double> exe_worm(SPINMODEL spin_model, options* opt_ptr,
 
   int n_kink=0;
   int cnt = 0;
-  solver.init_states();
+  solver.initStates();
   double wcount = 0;
   double wlength = 0;
   double wdensity = spin_model.lattice.num_bonds();
   double wdty = opt_ptr->wdty;
   for (int i=0; i < opt.therm + opt.sweeps; i++){
-    // solver.diagonal_update(); 
-    solver.diagonal_update(wdensity); //n* need to be comment out 
+    // solver.diagonalUpdate(); 
+    solver.diagonalUpdate(wdensity); //n* need to be comment out 
     // printf("%dth iteration\n", i);
-    solver.worm_update(wcount, wlength);
-    // printf("complete worm update\n");
+    solver.WormUpdate(wcount, wlength);
+    // printf("complete Worm update\n");
     if (cnt >= opt.therm){
       int sign = 1;
       double w_rate = 1;

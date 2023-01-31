@@ -1,5 +1,5 @@
 #include "../include/worm.hpp"
 
-template class worm<bcl::heatbath>;
-template class worm<bcl::st2010>;
-template class worm<bcl::st2013>;
+template class Worm<bcl::heatbath>;
+template class Worm<bcl::st2010>;
+template class Worm<bcl::st2013>;

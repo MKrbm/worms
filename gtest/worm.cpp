@@ -75,8 +75,9 @@ void run_worm(
        << "Average sign         = "
        << as_mean.first << " +- " 
        << as_mean.second   
-       << endl
-       << "Energy per site      = "
+       << endl;
+  cout << "-------------------------------------------------" << endl;
+  cout << "Energy per site      = "
        << ene_mean.first / lat.L << " +- "
        << ene_mean.second / lat.L
        << endl
