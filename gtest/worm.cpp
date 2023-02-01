@@ -26,16 +26,16 @@ model::base_lattice chain(size_t N)
 
 std::vector<std::vector<std::vector<double>>> heisenberg1D_hams = {heisenberg1D_ham};
 
-
-void run_worm(
-  model::base_model<bcl::st2013>& spin, 
+typedef bcl::heatbath MC;
+Worm<MC> run_worm(
+  model::base_model<MC>& spin, 
   double T, size_t sweeps, size_t therms,
   std::vector<batch_res> &res, 
   model::observable &obs,
   model::base_lattice &lat
   ){
     //dont fix worm density. Not printout density information.
-  exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, obs);
+  Worm<MC> solver = exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, obs);
 
   batch_res as = res[0];  // average sign
   batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
@@ -90,40 +90,46 @@ void run_worm(
        << endl
        << "susceptibility       = "
        << chi_mean.first  * T / lat.L << " +- " << chi_mean.second  * T / lat.L << endl;
+  return solver;
 }
 
 
-TEST(WormTest, Heisenberg1D) {
+TEST(WormTest, HXXX1D) {
 
-  model::base_lattice lat = chain(9);
+  model::base_lattice lat = chain(12);
   vector<size_t> dofs = {2};
   std::vector<double> params = {1.0};
   std::vector<int> types = {0};
   double shift = 0.25;
   bool zw = false;
-  model::base_model<bcl::st2013> spin(lat, dofs, "../gtest/model_array/Heisenberg/1D/original/Jz_1_Jx_1_h_1/H", params, types, shift, zw, false, false);
+  model::base_model<MC> spin(lat, dofs, 
+  "../gtest/model_array/Heisenberg/1D/original/Jz_-1_Jx_-1_Jy_-1_h_0/H", params, types, shift, zw, false, false);
   // cerr << heisenberg1D_hams << endl;
 
-  model::observable obs(spin, "../gtest/model_array/Heisenberg/1D/original/Jz_1_Jx_1_h_1/Sz", false);
+  model::observable obs(spin, "../gtest/model_array/Heisenberg/1D/original/Jz_-1_Jx_-1_Jy_-1_h_0/Sz", false);
   vector<batch_res> res;
 
   double T;
   size_t sweeps, therms;
 
   T = 1;
-  sweeps = 1000000;
+  sweeps = 5000000;
   therms = 100000;
 
-  run_worm(spin, T, sweeps, therms, res, obs, lat);
+  auto solver = run_worm(spin, T, sweeps, therms, res, obs, lat);
+  cout << solver.obs_sum / solver.phys_cnt * lat.L / 2 << endl;
 
   /*
   expect the following res
 
-  T   = 1
-  E   = -0.29693777450469444
-  C   = 0.1778936802509913
-  M   = 0.1366365772892668
-  chi = 0.13636810663606222
+  {'Jz': -1, 'Jx': -1, 'Jy': -1, 'h': 0}
+  T               = 1
+  E               = -0.13407662647593024
+  C               = 0.0838804656305184
+  M               = 1.8239652944364223e-17
+  M^2             = 0.03682575594234586
+  G               = 2.3651511884691754
+  Chi             = 0.3682490409165057
   */
 }
 
@@ -135,7 +141,7 @@ TEST(WormTest, HXXZ1D) {
   std::vector<int> types = {0};
   double shift = 0.25;
   bool zw = false;
-  model::base_model<bcl::st2013> spin(lat, dofs, "../gtest/model_array/Heisenberg/1D/original/Jz_1_Jx_-0.3_Jy_-0.3_h_1/H", params, types, shift, zw, false, false);
+  model::base_model<MC> spin(lat, dofs, "../gtest/model_array/Heisenberg/1D/original/Jz_1_Jx_-0.3_Jy_-0.3_h_1/H", params, types, shift, zw, false, false);
   // cerr << heisenberg1D_hams << endl;
 
   model::observable obs(spin, "../gtest/model_array/Heisenberg/1D/original/Jz_1_Jx_-0.3_Jy_-0.3_h_1/Sz", false);
@@ -170,7 +176,7 @@ TEST(WormTest, HXYZ1D) {
   std::vector<int> types = {0};
   double shift = 0.25;
   bool zw = false;
-  model::base_model<bcl::st2013> spin(lat, dofs, "../gtest/model_array/Heisenberg/1D/original/Jz_1_Jx_-0.3_Jy_0.5_h_1/H", params, types, shift, zw, false, false);
+  model::base_model<MC> spin(lat, dofs, "../gtest/model_array/Heisenberg/1D/original/Jz_1_Jx_-0.3_Jy_0.5_h_1/H", params, types, shift, zw, false, false);
   // cerr << heisenberg1D_hams << endl;
 
   model::observable obs(spin, "../gtest/model_array/Heisenberg/1D/original/Jz_1_Jx_-0.3_Jy_0.5_h_1/Sz", false);
@@ -209,7 +215,7 @@ TEST(WormTest, HXXZ2D) {
   std::vector<int> types = {0};
   double shift = 0.25;
   bool zw = false;
-  model::base_model<bcl::st2013> spin(lat, dofs, "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_-0.3_h_1/H", 
+  model::base_model<MC> spin(lat, dofs, "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_-0.3_h_1/H", 
         params, types, shift, zw, false, false); //heisenberg with J = 1, h =0 (H = J \sum S\cdot S - h)
 
 
@@ -221,7 +227,7 @@ TEST(WormTest, HXXZ2D) {
   size_t sweeps, therms;
 
 
-  T = 1;
+  T = 0.5;
   sweeps = 1000000;
   therms = 100000;
 
@@ -250,7 +256,7 @@ TEST(WormTest, HXYZ2D) {
   std::vector<int> types = {0};
   double shift = 0.25;
   bool zw = false;
-  model::base_model<bcl::st2013> spin(lat, dofs, "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_0.5_h_1/H", 
+  model::base_model<MC> spin(lat, dofs, "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_0.5_h_1/H", 
         params, types, shift, zw, false, false); //heisenberg with J = 1, h =0 (H = J \sum S\cdot S - h)
 
 
@@ -292,7 +298,7 @@ TEST(WormTest, Heisenberg2DNS) { // with negative sign
   std::vector<int> types = {0};
   double shift = 0.25;
   bool zw = false;
-  model::base_model<bcl::st2013> spin(lat, dofs, 
+  model::base_model<MC> spin(lat, dofs, 
         "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_1_h_1/H", 
         params, types, shift, zw, false, false); //heisenberg with J = 1, h =0 (H = J \sum S\cdot S - h)
 
