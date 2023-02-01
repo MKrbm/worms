@@ -112,24 +112,24 @@ TEST(WormTest, HXXX1D) {
   double T;
   size_t sweeps, therms;
 
-  T = 1;
   sweeps = 5000000;
+  T = 1;
   therms = 100000;
 
   auto solver = run_worm(spin, T, sweeps, therms, res, obs, lat);
   cout << solver.obs_sum / solver.phys_cnt * lat.L / 2 << endl;
 
   /*
-  expect the following res
+  expect the following res 
 
-  {'Jz': -1, 'Jx': -1, 'Jy': -1, 'h': 0}
+  L = 12 {'Jz': -1, 'Jx': -1, 'Jy': -1, 'h': 0}
   T               = 1
-  E               = -0.13407662647593024
-  C               = 0.0838804656305184
-  M               = 1.8239652944364223e-17
-  M^2             = 0.03682575594234586
-  G               = 2.3651511884691754
-  Chi             = 0.3682490409165057
+  E               = -0.13407600893675187
+  C               = 0.08387609895214143
+  M               = 2.0710757781922097e-17
+  M^2             = 0.03068815417665093
+  Chi             = 0.36824933153474
+  G               = 2.8381884028754674
   */
 }
 
