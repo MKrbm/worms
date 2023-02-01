@@ -19,8 +19,8 @@ namespace spin_state{
   
 
   using WORM = std::tuple<size_t, unsigned, size_t, double>;
-  using WORM_ARR = std::vector<WORM>; //  site, spin, dot_label, tau (dot label is needed for reverse lookup)
-  using DOT_ARR = std::vector<std::tuple<int,int,int,int>>;   //prev, next, dot_type, index, (index refers to the legs of the dot with respect to the class of dots)
+  using WORM_ARR = std::vector<WORM>; // site, spin, dot_label, tau (dot label is needed for reverse lookup)
+  using DOT_ARR = std::vector<std::tuple<int,int,int,int>>; //prev, next, dot_type, index, (index refers to the legs of the dot with respect to the class of dots)
 
   struct StateFunc{
   public:
@@ -86,7 +86,6 @@ public:
     if (at_operator()) return dot_type_;
     else return index_;
   }
-
   bool at_operator() const { return dot_type_ >= 0; }
   bool at_origin() const { return dot_type_ == -1; }
   bool at_worm() const { return dot_type_ == -2; }
