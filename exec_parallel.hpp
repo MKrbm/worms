@@ -42,7 +42,7 @@ extern double elapsed;
 
 // parallel version of exe_worm
 template <typename MC>
-void exe_worm_parallel(
+Worm<MC> exe_worm_parallel(
   model::base_model<MC> spin_model, 
   double T, 
   size_t sweeps, 
@@ -174,6 +174,6 @@ void exe_worm_parallel(
   res.push_back(N.finalize());
   res.push_back(dH.finalize());
   res.push_back(dH2.finalize());
-  return;
+  return solver;
 }
 
