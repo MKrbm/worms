@@ -59,18 +59,18 @@ Worm<MC> exe_worm_parallel(
   if (cutoff_l < 0) cutoff_l = numeric_limits<decltype(cutoff_l)>::max();
 
 
-  batch_obs ave_sign(1, sweeps); // average sign 
-  batch_obs ene(1, sweeps); // signed energy i.e. $\sum_i E_i S_i / N_MC$
-  batch_obs sglt(1, sweeps); 
-  batch_obs n_neg_ele(1, sweeps); 
-  batch_obs n_ops(1, sweeps); 
-  batch_obs N2(1, sweeps); // average of square of number of operators (required for specific heat)
-  batch_obs N(1, sweeps); // average of number of operators (required for specific heat)
-  batch_obs dH2(1, sweeps); // second derivative by magnetic field
-  batch_obs dH(1, sweeps); // first derivative by magnetic field
+  batch_obs ave_sign(1); // average sign 
+  batch_obs ene(1); // signed energy i.e. $\sum_i E_i S_i / N_MC$
+  batch_obs sglt(1); 
+  batch_obs n_neg_ele(1); 
+  batch_obs n_ops(1); 
+  batch_obs N2(1); // average of square of number of operators (required for specific heat)
+  batch_obs N(1); // average of number of operators (required for specific heat)
+  batch_obs dH2(1); // second derivative by magnetic field
+  batch_obs dH(1); // first derivative by magnetic field
   
   
-  ; // magnetization
+  // ; // magnetization
   BC::observable M2; // magnetization^2
   BC::observable K; // matnetic susceptibility
 
@@ -164,7 +164,7 @@ Worm<MC> exe_worm_parallel(
 
 
 
-
+  cout << ave_sign.size() << endl;
   res.push_back(ave_sign.finalize());
   res.push_back(ene.finalize());
   res.push_back(sglt.finalize());
