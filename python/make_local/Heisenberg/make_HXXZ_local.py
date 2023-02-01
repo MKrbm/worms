@@ -24,6 +24,7 @@ lattice = [
 ]
 u_algorithm = [
     "original",
+    "2sites",
 ]
 
 loss = ["mes", "l1"]
@@ -67,6 +68,7 @@ Sy[1,0] = 1j/2
 Sy[0,1] = -1j/2
 
 I = np.eye(2)
+I4 = np.eye(4)
 
 params_dict = dict(Jz=Jz, Jx=Jx,Jy=Jy, h=h)
 
@@ -91,14 +93,18 @@ if __name__ == "__main__":
     if lat == "1D":
         H = lh - h * o / 2
         H *= -1
-        path = "array/1D"
+        path = "array/1D/" + ua + "/" + params_str
         if ua == "original":
-            path += "/original"
-            path += "/" + params_str
             save_npy(path+"/H", [H])
-            o /= 2 # divide by 4 because overwrapped 4 times.
-            save_npy(path+"/Sz", [o])
+            save_npy(path+"/Sz", [o/2])
+        if ua == "2sites":
+            LH = H
+            H = sum_ham(LH, [[1,2]], 4, 2)
+            H += sum_ham(LH/2, [[0,1],[2,3]], 4, 2)
+            save_npy(path+"/H", [H])
 
+            o = np.kron(o, I4) + np.kron(I4, o)
+            save_npy(path+"/Sz", [o/2])
     if lat == "2D":
         H = lh - h * o / 4
         H *= -1
