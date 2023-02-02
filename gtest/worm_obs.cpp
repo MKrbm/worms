@@ -75,5 +75,31 @@ TEST(NpyWormObs, SetVector){
   for (int i=0; i < std::pow(4, 4); i++){v.push_back(i);}
   wo._SetWormObs(v);
   EXPECT_EQ(wo({1, 2, 3, 1}), 121);
+  EXPECT_DEATH( wo._SetWormObs(v), "Worm_obs is already set");
 }
 
+
+TEST(NpyWormObs, CheckReadError){
+  model::NpyWormObs wo(4, 2); //dof, legs
+  EXPECT_DEATH( wo.ReadNpy("test.np"), "File path is not"); // expected message is File path is not *.npy
+  EXPECT_DEATH( wo.ReadNpy("_test.npy"), "File does not exist");
+  model::NpyWormObs wo2(4, 2); 
+  EXPECT_DEATH(wo2.ReadNpy("../gtest/model_array/worm_obs/test.npy"), "Require 2D array");
+  EXPECT_DEATH(wo2.ReadNpy("../gtest/model_array/worm_obs/test2.npy"), "Fail to set worm_obs");
+  // EXPECT_EXIT(wo2.ReadNpy("../gtest/model_array/worm_obs/test3.npy"),
+  //       ::testing::ExitedWithCode(0), "");
+}
+
+TEST(NpyWormObs, CheckRead){
+  model::NpyWormObs wo(2, 2);
+  wo.ReadNpy("../gtest/model_array/worm_obs/test3.npy");
+  EXPECT_EQ(wo.worm_obs() == worm_obs_check, true);
+  EXPECT_FLOAT_EQ(wo({1, 1, 0, 0}), 7.95); // matrix element < 0, 0| O | 1, 1>
+  EXPECT_FLOAT_EQ(wo({1, 0, 0, 1}), 84.88); // matrix element < 0, 1| O | 1, 0> (left spin denote tail spin)
+  EXPECT_DEATH(wo.ReadNpy("../gtest/model_array/worm_obs/test3.npy"), "Worm_obs is already set");
+
+  model::NpyWormObs wo2(4, 2);
+  wo2.ReadNpy("../gtest/model_array/worm_obs/test4.npy");
+  EXPECT_FLOAT_EQ(wo2({1, 0, 3, 1}), 3.67);  // matrix element < 3, 1 | O | 1, 0>
+
+}
