@@ -18,7 +18,7 @@ namespace spin_state{
   class Wormsv2;
   
 
-  using WORM = std::tuple<size_t, unsigned, size_t, double>;
+  using WORM = std::tuple<size_t, size_t, double>;
   using WORM_ARR = std::vector<WORM>; // site, spin, dot_label, tau (dot label is needed for reverse lookup)
   using DOT_ARR = std::vector<std::tuple<int,int,int,int>>; //prev, next, dot_type, index, (index refers to the legs of the dot with respect to the class of dots)
 
