@@ -19,6 +19,8 @@
 
 namespace model{
   class observable;
+  class WormObservable;
+  class NpyWormObs;
 }
 
 /*
@@ -32,8 +34,6 @@ vector<vector<double>> obs_operators:
   vector of vector of double. 
   obs_operators[t][s] is the element of local operator of type t at state s.
 */ 
-
-
 class model::observable
 {
   private:
@@ -91,3 +91,85 @@ class model::observable
     }
 
 };
+
+
+
+class model::WormObservable
+{
+  protected:
+    size_t _spin_dof; // spin degree of freedom.
+    size_t _leg_size; // leg size of WormObservable either 1 or 2. 1 for one-site operator and 2 for bond operators.
+  public:
+    WormObservable(size_t spin_dof, size_t legs): _spin_dof(spin_dof), _leg_size(legs) {
+      if (legs != 1 && legs != 2) {std::cerr << "leg size of WormObservable must be 1 or 2" << std::endl; exit(1);}
+    }
+    size_t spin_dof() const {return _spin_dof;}
+    size_t leg_size() const {return _leg_size;}
+    bool is_one_site() const {return _leg_size == 1;}
+
+
+
+    /*
+    return local states of worm observable.
+
+    t   h
+    ↓   ↓ 
+    2   3    ← x'
+    ----
+    0   1    ← x
+
+    If this is one site operator, this only checks tail states. 
+
+    params
+    ------
+    spins = {x_t, x_h, x_t_p, x_h_p}
+    x_h : spin state at lower portion of worm head.
+    x_h_p : spin state at upper portion of worm head.
+    x_t : spin state at lower portion of worm tail.
+    x_t_p : spin state at upper portion of worm tail.
+    */
+    int get_state(std::array<size_t, 4> spins) const  {
+      if (spins[0] >= _spin_dof || spins[1] >= _spin_dof || spins[2] >= _spin_dof || spins[3] >= _spin_dof) {
+        std::cerr << "spin state is out of range" << std::endl; exit(1);
+      }
+      if (is_one_site()){
+        // If heads are different, one_site_operator will return zero.
+        if (spins[1] != spins[3]) return -1; 
+        return spins[0] + spins[2] * _spin_dof;
+      }
+      size_t s = 0;
+      std::array<size_t, 4>::iterator si = spins.end();
+      do {
+        si--;
+        s *= _spin_dof;
+        s += *si;
+      } while (si != spins.begin());
+      return s;
+    }
+
+    double operator() (std::array<size_t, 4> spins) const {
+      int s = get_state(spins);
+      if (s == -1) return 0;
+      return _operator(s);
+    }
+
+    virtual double _operator(size_t state) const {
+      std::cerr << "WormObservable::operator is virtual function" << std::endl;
+      exit(1);
+    }
+};
+
+
+class model::NpyWormObs : public WormObservable
+{
+  private: 
+    std::vector<double> _worm_obs;
+  public:
+    NpyWormObs(size_t sdof, size_t legs);
+    void _SetWormObs(std::vector<double> _obs);
+    void ReadNpy(std::string path);
+    double _operator(size_t state) const;
+};
+
+
+
