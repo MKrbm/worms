@@ -169,6 +169,8 @@ class model::NpyWormObs : public WormObservable
     void _SetWormObs(std::vector<double> _obs);
     void ReadNpy(std::string path);
     double _operator(size_t state) const;
+    
+    std::vector<double> worm_obs() const {return _worm_obs;}
 };
 
 
