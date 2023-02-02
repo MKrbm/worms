@@ -74,7 +74,7 @@ find_package(MPI REQUIRED)
 
 FIND_PACKAGE(Boost COMPONENTS mpi serialization REQUIRED)
 
-FOREACH(name main_MPI)
+FOREACH(name main_MPI debug)
     add_executable(${name} ${name}.cpp)
     target_link_libraries(${name} worm  ${Boost_LIBRARIES} MPI::MPI_CXX)
     target_include_directories(${name} PUBLIC
