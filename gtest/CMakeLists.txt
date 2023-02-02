@@ -1,7 +1,8 @@
 set (test_src
-     example
+     worm_obs
      lattice
      model
+     example
     )
 
 
