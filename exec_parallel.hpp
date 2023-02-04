@@ -16,11 +16,8 @@
 #include <automodel.hpp>
 #include <autoobservable.hpp>
 
-#include <alps/alea/batch.hpp>
 
-// batch_obs type is used to store results of observables
-typedef alps::alea::batch_acc<double> batch_obs;
-typedef alps::alea::batch_result<double> batch_res;
+
 
 using namespace libconfig;
 using namespace std;
@@ -51,7 +48,8 @@ Worm<MC> exe_worm_parallel(
   bool fix_wdensity, 
   int rank,
   std::vector<batch_res>& res, // contains results such as energy, average_sign,, etc
-  model::observable obs
+  model::observable obs,
+  model::WormObs wobs
 ){
 
   // cout << "Hi" << endl;
@@ -78,7 +76,7 @@ Worm<MC> exe_worm_parallel(
   double beta = 1 / T;
 
 
-  Worm<MC> solver(beta, spin_model, cutoff_l, rank); //template needs for std=14
+  Worm<MC> solver(beta, spin_model,wobs, cutoff_l, rank); //template needs for std=14
   // spin_model.lattice.print(std::cout);
 
   #if MESTIME
@@ -174,6 +172,8 @@ Worm<MC> exe_worm_parallel(
   res.push_back(N.finalize());
   res.push_back(dH.finalize());
   res.push_back(dH2.finalize());
+  res.push_back(solver.get_worm_obs().finalize());
+  res.push_back(solver.get_phys_cnt().finalize());
   return solver;
 }
 
