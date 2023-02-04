@@ -80,6 +80,7 @@ int main(int argc, char **argv) {
   parser.addArgument({"-m"}, "model name");
   parser.addArgument({"-ham"}, "path to hamiltonian");
   parser.addArgument({"-obs"}, "path to observables");
+  parser.addArgument({"-wobs"}, "path to worm observables");
   parser.addArgument({"-P1"}, "set params[0]");
   parser.addArgument({"-P2"}, "set params[1]");
 
@@ -123,7 +124,7 @@ int main(int argc, char **argv) {
 
 
   double shift;
-  string file, basis, cell, ham_path, obs_path;
+  string file, basis, cell, ham_path, obs_path, wobs_path;
   bool repeat; // true if repeat params and types.
   bool zero_worm;
   size_t ns_unit;
@@ -144,6 +145,8 @@ int main(int argc, char **argv) {
   ham_path = (string) mcfg->lookup("ham_path").c_str();
   try { obs_path = (string) mcfg->lookup("obs_path").c_str();}
   catch(const SettingNotFoundException &nfex) { obs_path = "";}
+  try { wobs_path = (string) mcfg->lookup("worm_obs_path").c_str();}
+  catch(const SettingNotFoundException &nfex) { wobs_path = "";}
   repeat = (bool) mcfg->lookup("repeat");
   shift = (double) mcfg->lookup("shift");
   zero_worm = (bool) mcfg->lookup("zero_worm");
@@ -198,6 +201,11 @@ int main(int argc, char **argv) {
       if (rank == 0) cout << "obs_path is not given. Elements of observables are set to zero" << endl;
       obs_path = "";
     }
+    try { wobs_path = args.get<string>("wobs");}
+    catch(...) { 
+      if (rank == 0) cout << "wobs_path is not given. Elements of worm observables will set to zero" << endl;
+      wobs_path = "";
+    }
   }
   catch(...) {}
 
@@ -212,9 +220,9 @@ int main(int argc, char **argv) {
 
   //* finish argparse
 
-
   model::base_lattice lat(basis, cell, shapes, file, !rank);
   model::base_model<bcl::st2013> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat, !rank);
+  model::WormObs wobs(spin.sps_sites(0), wobs_path); // all elements of sps_sites are the same.
   model::observable obs(spin, obs_path, !rank);
 
   size_t n_sites = lat.L * ns_unit;
@@ -230,7 +238,7 @@ int main(int argc, char **argv) {
 
   // simulate with worm algorithm (parallel computing is enable)
   vector<batch_res> res;
-  exe_worm_parallel(spin, T, sweeps, therms, cutoff_l, fix_wdensity, rank, res, obs);  
+  exe_worm_parallel(spin, T, sweeps, therms, cutoff_l, fix_wdensity, rank, res, obs, wobs);  
 
 
   batch_res as = res[0]; // average sign 
@@ -242,6 +250,8 @@ int main(int argc, char **argv) {
   batch_res N = res[6];
   batch_res dH = res[7]; // $\frac{\frac{\partial}{\partial h}Z}{Z}$ 
   batch_res dH2 = res[8]; // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
+  batch_res worm_obs = res[9];
+  batch_res phys_conf = res[10];
 
 
   as.reduce(red_);
@@ -253,6 +263,8 @@ int main(int argc, char **argv) {
   N.reduce(red_);
   dH.reduce(red_);
   dH2.reduce(red_);
+  worm_obs.reduce(red_);
+  phys_conf.reduce(red_);
 
   double elapsed_max, elapsed_min;
   MPI_Allreduce(&elapsed, &elapsed_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
@@ -271,6 +283,9 @@ int main(int argc, char **argv) {
 
     // calculate energy
     pair<double, double> ene_mean = jackknife_reweight_div(ene, as);  // calculate <SH> / <S>
+
+    // calculate worm_observable 
+    pair<double, double> worm_obs_mean = jackknife_reweight_div(worm_obs, phys_conf);  // calculate <WoS> / <S>
 
 
     // calculat heat capacity
@@ -312,6 +327,8 @@ int main(int argc, char **argv) {
          << endl
          << "susceptibility       = "
          << chi_mean.first  * T / n_sites << " +- " << chi_mean.second  * T / n_sites << endl
+         << "G                    = "
+         << worm_obs_mean.first << " +- " << worm_obs_mean.second << endl
          << "# of operators       = "
          << nop_mean.first << " +- " << nop_mean.second << endl
          << "# of neg sign op     = "
