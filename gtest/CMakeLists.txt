@@ -1,5 +1,5 @@
 set (test_src
-     worm_obs
+     wobs
      lattice
      model
      example
@@ -21,8 +21,15 @@ FOREACH(name ${test_src})
 ENDFOREACH(name)
 
 
-add_executable(worm-gtest worm.cpp)
-target_link_libraries(worm-gtest worm gtest_main)
-target_include_directories(worm-gtest PUBLIC "${PROJECT_BINARY_DIR}")
+set(worm
+    worm
+    worm_wobs
+    )
+
+FOREACH(name ${worm})
+  add_executable(${name}-gtest ${name}.cpp)
+  target_link_libraries(${name}-gtest worm gtest_main)
+  target_include_directories(${name}-gtest PUBLIC "${PROJECT_BINARY_DIR}")
+ENDFOREACH(name)
   
 
