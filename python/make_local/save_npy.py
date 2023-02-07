@@ -6,5 +6,5 @@ def save_npy(folder, hams):
         os.makedirs(folder)
     for i, ham in enumerate(hams):
         name = f"{i}"
-        np.save(folder + f"/{i}", ham)
+        np.save(folder + f"/{i}", (ham.real).astype(np.float64))
         print(f"save matrix ({ham.shape}): ", folder+ "/" + name + ".npy")
