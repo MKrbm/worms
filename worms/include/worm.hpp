@@ -32,6 +32,7 @@
 #include "operator.hpp"
 #include "automodel.hpp"
 #include "funcs.hpp"
+#include "autoobservable.hpp"
 #define SEED 1662509963
 /* inherit UnionFindTree and add find_and_flip function*/
 
@@ -57,17 +58,15 @@ template <class MCT>
 class Worm{
 
   private:
-
+  model::WormObs _worm_obs;
+  alps::alea::batch_acc<double> _phys_cnt;
   public:
 
   // define observables 
   double phys_cnt = 0; // number of physically meaningful configurations;
   double obs_sum = 0; // sum of observables encountered while worm update. (observable must be non-diagonal operator)
   // end of define observables
-
-
-  // static const size_t sps = 2;
-  // static const size_t sps_sites[site] - 1 = sps-1; // = 1 for spin half model
+  double obs_sum2 = 0;
 
   typedef spin_state::Operator OP_type;
   typedef std::vector<OP_type> OPS;
@@ -106,17 +105,6 @@ class Worm{
 
   engine_type rand_src;
   engine_type test_src;
-  // #ifdef NDEBUG
-  // // unsigned rseed = static_cast <unsigned> (time(0));
-  // // engine_type rand_src = engine_type(rseed);
-  // #else
-  // unsigned rseed = static_cast <unsigned> (time(0) + srand(id));
-  // unsigned rseed = SEED;
-  // // SEED = rseed;
-  // engine_type rand_src = engine_type(SEED);
-  // engine_type test_src = engine_type(SEED);
-  // #endif
-
 
   // random distribution from 0 to 1
   typedef std::uniform_real_distribution<> uniform_t;
@@ -131,12 +119,19 @@ class Worm{
   double rho;
   int cnt=0;
 
+  
 
   typedef bcl::markov<engine_type> markov_t;
+  model::WormObs& get_worm_obs() { return _worm_obs; }
+  alps::alea::batch_acc<double>& get_phys_cnt() { return _phys_cnt; }
+
 
   Worm(double beta, MODEL model_, size_t cl = SIZE_MAX, int rank = 0)
+  :Worm(beta, model_,model::WormObs(model_.sps_sites(0)), cl, rank){}
+
+  Worm(double beta, MODEL model_, model::WormObs worm_obs_, size_t cl = SIZE_MAX, int rank = 0)
   :spin_model(model_), L(spin_model.L), beta(beta), rho(-1), N_op(spin_model.N_op), 
-  bonds(spin_model.bonds),bond_type(spin_model.bond_type) ,state(spin_model.L),cstate(spin_model.L), cutoff_length(cl),
+  bonds(spin_model.bonds),bond_type(spin_model.bond_type) ,state(spin_model.L),cstate(spin_model.L), cutoff_length(cl), _worm_obs(worm_obs_),_phys_cnt(1),
   loperators(spin_model.loperators), sps_sites(spin_model._sps_sites)
   {
 
@@ -195,7 +190,7 @@ class Worm{
   //main functions
 
   void diagonalUpdate(double wdensity){
-    dout << "random : " <<  uniform(rand_src) << endl;
+    // dout << "random : " <<  uniform(rand_src) << endl;
 
     swapOps();
     // wdensity = 3;
@@ -231,17 +226,17 @@ class Worm{
           auto const& bond = bonds[b];
 
           size_t u = state_funcs[lop_label].state2num(cstate, bond);
-          printd("u = %lu\t", u);
-          printd("input = %lu\t", u);
-          printd("opi_type = %lu\n", opi->op_type());
-          dout << endl;
+          // printd("u = %lu\t", u);
+          // printd("input = %lu\t", u);
+          // printd("opi_type = %lu\n", opi->op_type());
+          // dout << endl;
           // size_t u = spin_state::state2num(cstate, bond);
 
 
           r = uniform(rand_src);
 
           if (r < accept[u]){
-            dout << "append r " << r << endl;
+            // dout << "append r " << r << endl;
             appendOps(ops_main, spacetime_dots, &bond, &pows_vec[lop_label] ,u * pows_vec[lop_label][bond.size()] + u, lop_label, tau);
           }
         }
@@ -252,21 +247,22 @@ class Worm{
           
           update_state(opi, cstate);
           appendOps(ops_main, spacetime_dots, opi->bond_ptr(), opi->pows_ptr(), opi->state(), opi->op_type(),opi->tau());
-          printStateAtTime(cstate, tau);
+          // printStateAtTime(cstate, tau);
         }
         ++opi;
       }
     } //end of while loop
 
-    #ifndef NDEBUG
-    for (typename OPS::iterator opi = ops_main.begin(); opi != ops_main.end();++opi){
-      printf("[%d, %d]\n", opi->bond(0), opi->bond(1));
-    }
+    //* comment out 
+    // #ifndef NDEBUG
+    // for (typename OPS::iterator opi = ops_main.begin(); opi != ops_main.end();++opi){
+    //   printf("[%d, %d]\n", opi->bond(0), opi->bond(1));
+    // }
 
-    if (cstate != state){
-      throw std::runtime_error("diagonalUpdate : state is not updated correctly");
-    }
-    #endif 
+    // if (cstate != state){
+    //   throw std::runtime_error("diagonalUpdate : state is not updated correctly");
+    // }
+    // #endif 
   }
 
   /*
@@ -280,6 +276,9 @@ class Worm{
     std::copy(state.begin(), state.end(), cstate.begin());
     pres.resize(0);
     psop.resize(0);
+    dout << "\nStart worm update" << endl;
+    dout << "---------------------" << endl;
+
     for (WORMS::iterator wsi = worms_list.begin(); wsi != worms_list.end(); ++wsi){
 
       // t : tail, h : head. direction of tails is opposite to the direction of the initial head.
@@ -349,18 +348,40 @@ class Worm{
   
 
   void calcHorizontalGreen( double tau, size_t h_site, size_t t_site, 
-                            int h_x, int h_x_prime, int t_x, int t_x_prime){
+                            size_t h_x, size_t h_x_prime, size_t t_x, size_t t_x_prime){
+    int sign = 1;
+    double r = -1;
+
+    _worm_obs.add({t_x, h_x, t_x_prime, h_x_prime}, L, sign, h_site - t_site, 0);
+    if (h_x == h_x_prime && t_x == t_x_prime) _phys_cnt << (double) sign;
+    else _phys_cnt << 0;
+    
+    // if (h_site == t_site && (h_x != h_x_prime )) throw std::runtime_error("h_x and t_x must be same.");
+    // if (h_site == t_site && (h_x != t_x || h_x_prime != t_x_prime )) throw std::runtime_error("h_x and t_x must be same.");
+    // if (h_x == t_x && (h_x != h_x_prime) && (t_x != t_x_prime)) obs_sum ++;
+    // if (h_x != t_x && (h_x != h_x_prime) && (t_x != t_x_prime)) obs_sum2 ++;
+    // if (h_site == t_site) phys_cnt ++ ;
 
 
-    // test specifically for HXXX.
-    // calculate $\langle S^-_i S^+_j \rangle$
-    if (h_site != t_site) {
-      if (h_x == 0 && h_x_prime == 1 && t_x == 1 && t_x_prime == 0) obs_sum ++; 
-      if (h_x == 1 && h_x_prime == 0 && t_x == 0 && t_x_prime == 1) obs_sum ++; 
-    } else {
-      if (h_x != t_x || h_x_prime != t_x_prime) throw std::runtime_error("h_x and t_x must be same.");
-      if (h_x == h_x_prime) phys_cnt++;
-    }
+    // cout << obs_sum / phys_cnt << endl;
+    
+
+
+    // dout << "phys_cnt " << _phys_cnt.store().batch().rowwise().sum()[0]<< endl;
+
+    // std::cout << obs_sum / obs_sum2 << "\t" << obs_sum / phys_cnt * L / 2<< std::endl;
+
+    // if (h_site != t_site) {
+    //   if (h_x == 0 && h_x_prime == 1 && t_x == 1 && t_x_prime == 0) obs_sum ++; 
+    //   if (h_x == 1 && h_x_prime == 0 && t_x == 0 && t_x_prime == 1) obs_sum ++; 
+    // } else {
+    //   if (h_x != t_x || h_x_prime != t_x_prime) throw std::runtime_error("h_x and t_x must be same.");
+    //   if (h_x == h_x_prime) phys_cnt++;
+    // }
+
+    // dout << " phys cnt : " << _phys_cnt.store().batch().rowwise().sum() << endl;
+    // cout << obs_sum << endl;
+    // cout << phys_cnt << endl;
   }
   
   // //*append to ops
@@ -439,15 +460,33 @@ class Worm{
     
     // get imaginary temperature at the next dot.
     if (dotp->at_origin()){ tau_prime = 0; dout << "at origin" << endl;}
-    else if (dotp->at_operator()){ opsp = &ops_main[dotp->label()]; tau_prime = opsp->tau();}
+    else if (dotp->at_operator()){ opsp = &ops_main[dotp->label()]; tau_prime = opsp->tau(); dout << "at ops" << endl;}
     else if (dotp->at_worm()){ 
       tau_prime = std::get<2>(worms_list[dotp->label()]); dout << "at worm" << endl;  
     }
     else{ throw std::runtime_error("dot is not at any of the three places"); }
 
-    dout << tau << " " << tau_prime << " " << wt_tau << " " << dir << " passed ? " << detectWormCross(tau, tau_prime, wt_tau, dir) << endl;
+    // dout << tau << " " << tau_prime << " " << wt_tau << " " << dir << " passed ? " << detectWormCross(tau, tau_prime, wt_tau, dir) << endl;
+    dout << "fl :" << fl << " tau : " << tau << " tau_prime : " << tau_prime << " wt_tau : " << wt_tau << " dir : " << dir << " // passed ? " << detectWormCross(tau, tau_prime, wt_tau, dir);
+    dout << "  site : [" << site << " " << wt_site << "] " << endl;
 
-    if (detectWormCross(tau, tau_prime, wt_tau, dir)){
+    if (fl == 0){
+      int x = 3;
+    }
+
+    if (detectWormCross(tau, tau_prime, wt_tau, dir) && fl != 0){
+
+
+      if (site != wt_site) {
+        obs_sum++;
+        // cout << "add obs_sum" << endl;
+        }
+      if (site == wt_site) {
+        phys_cnt++;
+        // cout << "add phys_cnt" << endl;
+        }
+      // cout << obs_sum / phys_cnt << endl;
+
       size_t h_x, h_x_prime, t_x, t_x_prime;
       Dotv2* wtdot = &spacetime_dots[wt_dot];
 
@@ -458,6 +497,9 @@ class Worm{
       } else if (dir == 0){ 
         h_x = getDotState(dotp->move_next(1), 1); h_x_prime = getDotState(next_dot, 0); 
       } else { throw std::runtime_error("dir should be either 1 or 0"); }
+
+      
+      dout << "site : [" << wt_site << " " << site << "] " << " spin : " << t_x << " " << h_x << " " << t_x_prime << " " << h_x_prime << endl;
 
       // if head is on tail, this case is not regarded as 2point correlation.
       calcHorizontalGreen(tau, site, wt_site, h_x, h_x_prime, t_x, t_x_prime);
@@ -507,8 +549,10 @@ class Worm{
 
       //* if Worm stop at this operator
       if (tmp == 0){        
-        nindex = static_cast<size_t>((2 * leg_size)*uniform(rand_src));
+        nindex = static_cast<size_t>((2*leg_size)*uniform(rand_src));
         dir = nindex/(leg_size);
+        // dir = dir;
+        // leg_i = !(cindex % leg_size);
         site = opsp->bond(nindex%leg_size);
         fl = 0;
       }else{
