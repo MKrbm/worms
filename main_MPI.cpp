@@ -75,6 +75,9 @@ int main(int argc, char **argv) {
               "bool that determines whether to split # sweeps among processes",
               argparse::ArgumentType::StoreTrue
               );
+  parser.addArgument({"--z"}, "bool : introduce zero worm",
+                argparse::ArgumentType::StoreTrue
+                );
 
   parser.addArgument({"-T"}, "set temperature");
   parser.addArgument({"-m"}, "model name");
@@ -210,6 +213,8 @@ int main(int argc, char **argv) {
   catch(...) {}
 
   if (args.has("split-sweeps")) sweeps = sweeps / size;
+  if (args.has("z")) zero_worm = true;
+
   sweeps = (sweeps / 2) * 2; // make sure sweeps is even number
   if (rank == 0){
     cout << "zero_wom : " << (zero_worm ? "YES" : "NO") << endl;
@@ -243,20 +248,19 @@ int main(int argc, char **argv) {
 
   batch_res as = res[0]; // average sign 
   batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
-  batch_res sglt = res[2];
-  batch_res n_neg_ele = res[3];
-  batch_res n_ops = res[4];
-  batch_res N2 = res[5];
-  batch_res N = res[6];
-  batch_res dH = res[7]; // $\frac{\frac{\partial}{\partial h}Z}{Z}$ 
-  batch_res dH2 = res[8]; // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
-  batch_res worm_obs = res[9];
-  batch_res phys_conf = res[10];
+  batch_res n_neg_ele = res[2];
+  batch_res n_ops = res[3];
+  batch_res N2 = res[4];
+  batch_res N = res[5];
+  batch_res dH = res[6]; // $\frac{\frac{\partial}{\partial h}Z}{Z}$ 
+  batch_res dH2 = res[7]; // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
+  batch_res worm_obs = res[8];
+  batch_res phys_conf = res[9];
+  batch_res m2_diag = res[10];
 
 
   as.reduce(red_);
   ene.reduce(red_);
-  sglt.reduce(red_);
   n_neg_ele.reduce(red_);
   n_ops.reduce(red_);
   N2.reduce(red_);
@@ -286,6 +290,9 @@ int main(int argc, char **argv) {
 
     // calculate worm_observable 
     pair<double, double> worm_obs_mean = jackknife_reweight_div(worm_obs, phys_conf);  // calculate <WoS> / <S>
+
+    // calculate m2_diag
+    pair<double, double> m2_diag_mean = jackknife_reweight_div(m2_diag, as);  // calculate <WoS> / <S>
 
 
     // calculat heat capacity
@@ -329,6 +336,8 @@ int main(int argc, char **argv) {
          << chi_mean.first  * T / n_sites << " +- " << chi_mean.second  * T / n_sites << endl
          << "G                    = "
          << worm_obs_mean.first << " +- " << worm_obs_mean.second << endl
+         << "m2_diag              = "
+         << m2_diag_mean.first << " +- " << m2_diag_mean.second << endl
          << "# of operators       = "
          << nop_mean.first << " +- " << nop_mean.second << endl
          << "# of neg sign op     = "
