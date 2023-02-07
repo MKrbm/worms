@@ -32,10 +32,11 @@ Worm<MC> run_worm(
   double T, size_t sweeps, size_t therms,
   std::vector<batch_res> &res, 
   model::observable &obs,
-  model::base_lattice &lat
+  model::base_lattice &lat,
+  model::WormObs wobs = model::WormObs(2)
   ){
     //dont fix worm density. Not printout density information.
-  Worm<MC> solver = exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, obs);
+  Worm<MC> solver = exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, obs, wobs);
 
   batch_res as = res[0];  // average sign
   batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
@@ -46,6 +47,8 @@ Worm<MC> run_worm(
   batch_res N = res[6];
   batch_res dH = res[7];  // $\frac{\frac{\partial}{\partial h}Z}{Z}$
   batch_res dH2 = res[8]; // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
+  batch_res worm_obs = res[9]; // depends on the definition of worm observable
+  batch_res phys_conf = res[10]; // number of physical configurations
 
   std::function<double(double, double, double)> f;
 
@@ -56,6 +59,10 @@ Worm<MC> run_worm(
   // calculate energy
   pair<double, double> ene_mean = jackknife_reweight_div(ene, as); // calculate <SH> / <S>
 
+  // calculate worm_observable 
+  if (phys_conf.mean()[0] == 0) {throw std::runtime_error("No physical configuration");}
+  pair<double, double> worm_obs_mean = jackknife_reweight_div(worm_obs, phys_conf);  // calculate <WoS> / <S>
+  
   // calculat heat capacity
   f = [](double x1, double x2, double y)
   { return (x2 - x1) / y - (x1 / y) * (x1 / y); };
@@ -89,7 +96,9 @@ Worm<MC> run_worm(
        << m_mean.first * T / lat.L << " +- " << m_mean.second * T / lat.L
        << endl
        << "susceptibility       = "
-       << chi_mean.first  * T / lat.L << " +- " << chi_mean.second  * T / lat.L << endl;
+       << chi_mean.first  * T / lat.L << " +- " << chi_mean.second  * T / lat.L << endl
+       << "G                    = "
+       << worm_obs_mean.first << " +- " << worm_obs_mean.second << endl;
   return solver;
 }
 
@@ -102,22 +111,26 @@ TEST(WormTest, HXXX1D) {
   std::vector<int> types = {0};
   double shift = 0.25;
   bool zw = false;
+
+  std::string ham_path, obs_path, wobs_path;
+  ham_path = "../gtest/model_array/Heisenberg/1D/original/Jz_-1_Jx_-1_Jy_-1_h_0/H";
+  obs_path = "../gtest/model_array/Heisenberg/1D/original/Jz_-1_Jx_-1_Jy_-1_h_0/Sz";
+  wobs_path = "../gtest/model_array/Heisenberg/1D/original/Jz_-1_Jx_-1_Jy_-1_h_0/g";
   model::base_model<MC> spin(lat, dofs, 
-  "../gtest/model_array/Heisenberg/1D/original/Jz_-1_Jx_-1_Jy_-1_h_0/H", params, types, shift, zw, false, false);
+  ham_path, params, types, shift, zw, false, false);
   // cerr << heisenberg1D_hams << endl;
 
-  model::observable obs(spin, "../gtest/model_array/Heisenberg/1D/original/Jz_-1_Jx_-1_Jy_-1_h_0/Sz", false);
+  model::observable obs(spin,obs_path , false);
+  model::WormObs wobs(spin.sps_sites(0), wobs_path);
   vector<batch_res> res;
-
   double T;
   size_t sweeps, therms;
 
-  sweeps = 5000000;
+  sweeps = 1000000;
   T = 1;
   therms = 100000;
 
-  auto solver = run_worm(spin, T, sweeps, therms, res, obs, lat);
-  cout << solver.obs_sum / solver.phys_cnt * lat.L / 2 << endl;
+  auto solver = run_worm(spin, T, sweeps, therms, res, obs, lat, wobs);
 
   /*
   expect the following res 
@@ -286,103 +299,6 @@ TEST(WormTest, HXYZ2D) {
   */
 }
 
-
-TEST(WormTest, Heisenberg2DNS) { // with negative sign
-
-  std::vector<size_t> shapes = {5, 3};
-  model::base_lattice lat("square lattice", "simple2d", shapes, "../config/lattices.xml", false);
-
-
-  vector<size_t> dofs = {2};
-  std::vector<double> params = {1.0};
-  std::vector<int> types = {0};
-  double shift = 0.25;
-  bool zw = false;
-  model::base_model<MC> spin(lat, dofs, 
-        "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_1_h_1/H", 
-        params, types, shift, zw, false, false); //heisenberg with J = 1, h =0 (H = J \sum S\cdot S - h)
-
-
-
-  model::observable obs(spin, "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_1_h_1/Sz", false);
-  vector<batch_res> res;
-
-  double T;
-  size_t sweeps, therms;
-
-  T = 1;
-  sweeps = 1000000;
-  therms = 100000;
-
-
-  //dont fix worm density. Not printout density information.
-  exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, obs);
-
-  batch_res as = res[0];  
-  batch_res ene = res[1]; 
-  batch_res sglt = res[2];
-  batch_res n_neg_ele = res[3];
-  batch_res n_ops = res[4];
-  batch_res N2 = res[5];
-  batch_res N = res[6];
-  batch_res dH = res[7];  
-  batch_res dH2 = res[8]; 
-
-  std::function<double(double, double, double)> f;
-
-  pair<double, double> as_mean = jackknife_reweight_single(as);          // calculate <S>
-  pair<double, double> nop_mean = jackknife_reweight_single(n_ops);      // calculate <S>
-  pair<double, double> nnop_mean = jackknife_reweight_single(n_neg_ele); // calculate <S>
-
-  // calculate energy
-  pair<double, double> ene_mean = jackknife_reweight_div(ene, as); // calculate <SH> / <S>
-
-  // calculat heat capacity
-  f = [](double x1, double x2, double y)
-  { return (x2 - x1) / y - (x1 / y) * (x1 / y); };
-  pair<double, double> c_mean = jackknife_reweight_any(N, N2, as, f);
-
-  // calculate magnetization
-  pair<double, double> m_mean = jackknife_reweight_div(dH, as);
-
-  // calculate susceptibility
-  f = [](double x1, double x2, double y)
-  { return x2 / y - (x1 / y) * (x1 / y); };
-  pair<double, double> chi_mean = jackknife_reweight_any(dH, dH2, as, f);
-
-
-  cout << lat.L << endl;
-  cout << "temperature          = " << T
-       << endl
-       << "Average sign         = "
-       << as_mean.first << " +- " 
-       << as_mean.second   
-       << endl
-       << "Energy per site      = "
-       << ene_mean.first / lat.L << " +- "
-       << ene_mean.second / lat.L
-       << endl
-       << "Specific heat        = "
-       << c_mean.first / lat.L << " +- " 
-       << c_mean.second / lat.L
-       << endl
-       << "magnetization        = "
-       << m_mean.first * T / lat.L << " +- " << m_mean.second * T / lat.L
-       << endl
-       << "susceptibility       = "
-       << chi_mean.first  * T / lat.L << " +- " << chi_mean.second  * T / lat.L << endl;
-
-   /*
-   should be
-   temperature            = 1.000000000000001
-   energy(per site)      =  -0.36435048892860666 += 0.00273718093728829
-   specific heat         =  0.17724811597506396 += 0.018925580787546897
-   magnetization(FTLM)   =  0.10177510995282293 += 0.0015859477475889897
-   magnetization(LTLM)   =  0.10177510995282289 += 0.0016238244565489892
-   suceptibility(FTLM)   =  0.19129067493962343 += -0.00047779199410538534
-   suceptibility(LTLM)   =  0.19129067493962346 += -0.00047780518430885023
-   */
-}
 
 
 
