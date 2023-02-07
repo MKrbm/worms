@@ -124,6 +124,10 @@ namespace model{
               bool print)
   :base_lattice(lat)
   {
+    //only accept single dof
+    bool all_same = true;
+    for (int i = 1; i < dofs.size(); ++i) if (dofs[i] != dofs[0]) {std::cerr << "dofs must be single valued\n"; exit(1);}
+
     //* prepare _sps_sites
     if (num_type(site_type) != dofs.size()) {std::cerr << "# of dofs doesn't match to # of site types\n"; exit(1);}
     for (int t : site_type) {_sps_sites.push_back(dofs[t]);}
