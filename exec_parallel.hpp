@@ -59,13 +59,16 @@ Worm<MC> exe_worm_parallel(
 
   batch_obs ave_sign(1); // average sign 
   batch_obs ene(1); // signed energy i.e. $\sum_i E_i S_i / N_MC$
-  batch_obs sglt(1); 
   batch_obs n_neg_ele(1); 
   batch_obs n_ops(1); 
   batch_obs N2(1); // average of square of number of operators (required for specific heat)
   batch_obs N(1); // average of number of operators (required for specific heat)
   batch_obs dH2(1); // second derivative by magnetic field
   batch_obs dH(1); // first derivative by magnetic field
+  batch_obs m_diag(1); // magnetization (assume standard basis)
+  batch_obs m2_diag(1); // magnetization^2 (assume standard basis)
+
+
   
   
   // ; // magnetization
@@ -103,12 +106,11 @@ Worm<MC> exe_worm_parallel(
       // double w_rate = 1;
       double n_neg = 0;
       double n_op = 0;
-      double sglt_ = 0;
-
+      double mu = 0;
       double sum_ot = 0; // \sum_{tau} O_{tau} : sum of observables 
       double sum_2_ot = 0; // \sum_{tau} (O_{tau})^2 : sum of square of observables 
       for (const auto&  s : solver.state) {
-        if (s==0) sglt_++;
+        mu += 0.5 - s;
       }
       for (const auto& op : solver.ops_main){
         int sign_ = spin_model.loperators[op.op_type()].signs[op.state()];
@@ -130,11 +132,13 @@ Worm<MC> exe_worm_parallel(
       N << m * sign;
       ene << ene_tmp * sign;
       ave_sign << sign;
-      sglt << sglt_ / spin_model.L;
       n_neg_ele << n_neg;
       n_ops << n_op;
       dH << sum_ot * sign;
       dH2 << (sum_ot*sum_ot - sum_2_ot) * sign;
+      mu /= spin_model.L;
+      m_diag << (mu * sign);
+      m2_diag << (mu * mu * sign);
     }
     if (i <= therms / 2) {
       if (!fix_wdensity){
@@ -162,10 +166,8 @@ Worm<MC> exe_worm_parallel(
 
 
 
-  cout << ave_sign.size() << endl;
   res.push_back(ave_sign.finalize());
   res.push_back(ene.finalize());
-  res.push_back(sglt.finalize());
   res.push_back(n_neg_ele.finalize());
   res.push_back(n_ops.finalize());
   res.push_back(N2.finalize());
@@ -174,6 +176,8 @@ Worm<MC> exe_worm_parallel(
   res.push_back(dH2.finalize());
   res.push_back(solver.get_worm_obs().finalize());
   res.push_back(solver.get_phys_cnt().finalize());
+  res.push_back(m2_diag.finalize());
+
   return solver;
 }
 
