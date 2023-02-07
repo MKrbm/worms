@@ -6,21 +6,32 @@
 #include <string>
 #include <numeric>
 #include <random>
-#include <math.h>
-#include <bcl.hpp>
-#include <algorithm>
-#include <assert.h> 
-#include <fstream>
 #include <tuple>
+#include <memory>
 #include <fstream>
+
+#include <bcl.hpp>
+#include <alps/alea/core.hpp>
+#include <alps/alea/computed.hpp>
+#include <alps/alea/util.hpp>
+#include <alps/alea/internal/galois.hpp>
+#include <alps/alea/var_strategy.hpp>
+#include <alps/alea/batch.hpp>
+
 #include "load_npy.hpp"
 #include "automodel.hpp"
 
 
+// batch_obs type is used to store results of observables
+typedef alps::alea::batch_acc<double> batch_obs;
+typedef alps::alea::batch_result<double> batch_res;
+
+
 namespace model{
   class observable;
-  class WormObservable;
-  class NpyWormObs;
+  class BaseWormObs;
+  class ArrWormObs;
+  class WormObs;
 }
 
 /*
@@ -94,18 +105,22 @@ class model::observable
 
 
 
-class model::WormObservable
+class model::BaseWormObs
 {
   protected:
     size_t _spin_dof; // spin degree of freedom.
-    size_t _leg_size; // leg size of WormObservable either 1 or 2. 1 for one-site operator and 2 for bond operators.
+    size_t _leg_size; // leg size of BaseWormObs either 1 or 2. 1 for one-site operator and 2 for bond operators.
+    bool _has_operator = false;
   public:
-    WormObservable(size_t spin_dof, size_t legs): _spin_dof(spin_dof), _leg_size(legs) {
-      if (legs != 1 && legs != 2) {std::cerr << "leg size of WormObservable must be 1 or 2" << std::endl; exit(1);}
-    }
+    BaseWormObs(size_t spin_dof, size_t legs);
     size_t spin_dof() const {return _spin_dof;}
     size_t leg_size() const {return _leg_size;}
     bool is_one_site() const {return _leg_size == 1;}
+    bool has_operator() const {return _has_operator;}
+    bool check_is_symm() const;
+    bool check_no_single() const; // check if there is no element that flip only single spin.
+    bool check_no_diagonal() const; // check if there is no diagonal elements
+
 
 
 
@@ -128,50 +143,78 @@ class model::WormObservable
     x_t : spin state at lower portion of worm tail.
     x_t_p : spin state at upper portion of worm tail.
     */
-    int get_state(std::array<size_t, 4> spins) const  {
-      if (spins[0] >= _spin_dof || spins[1] >= _spin_dof || spins[2] >= _spin_dof || spins[3] >= _spin_dof) {
-        std::cerr << "spin state is out of range" << std::endl; exit(1);
-      }
-      if (is_one_site()){
-        // If heads are different, one_site_operator will return zero.
-        if (spins[1] != spins[3]) return -1; 
-        return spins[0] + spins[2] * _spin_dof;
-      }
-      size_t s = 0;
-      std::array<size_t, 4>::iterator si = spins.end();
-      do {
-        si--;
-        s *= _spin_dof;
-        s += *si;
-      } while (si != spins.begin());
-      return s;
-    }
+    int GetState(std::array<size_t, 4> spins) const;
 
-    double operator() (std::array<size_t, 4> spins) const {
-      int s = get_state(spins);
-      if (s == -1) return 0;
-      return _operator(s);
-    }
+    /*
+    params
+    ------  
+    r : distance between head and tail.
+    tau : time difference between head and tail.
+    */
+    double operator() (std::array<size_t, 4> spins, double r, double tau) const;
+    double operator() (std::array<size_t, 4> spins) const;
 
-    virtual double _operator(size_t state) const {
-      std::cerr << "WormObservable::operator is virtual function" << std::endl;
-      exit(1);
-    }
+    virtual double _operator(size_t state) const ;
 };
 
 
-class model::NpyWormObs : public WormObservable
+//Worm Obs where operator is calculated from matrix elements.
+class model::ArrWormObs : public BaseWormObs
 {
   private: 
     std::vector<double> _worm_obs;
   public:
-    NpyWormObs(size_t sdof, size_t legs);
+    ArrWormObs(size_t sdof, size_t legs);
     void _SetWormObs(std::vector<double> _obs);
     void ReadNpy(std::string path);
     double _operator(size_t state) const;
-    
     std::vector<double> worm_obs() const {return _worm_obs;}
 };
 
+class model::WormObs : public batch_obs
+{
+  public:
+    typedef std::shared_ptr<BaseWormObs> BaseWormObsPtr;
+  private:
+    BaseWormObsPtr _first, _second;
+    size_t _spin_dof;
+  public:
+    WormObs(size_t spin_dof, std::string folder_path = "");
+    WormObs(size_t spin_dof, std::pair<BaseWormObsPtr, BaseWormObsPtr> obspt_pair); // obs1 : one site worm operator, obs2 : bond worm operator.
+    void add(std::array<size_t, 4> spins, size_t L, int sign, double r, double tau);
+    static std::pair<BaseWormObsPtr, BaseWormObsPtr> ReadNpy(size_t spin_dof, std::string folder_path);
+    const BaseWormObsPtr first() const {return _first;}
+    const BaseWormObsPtr second() const {return _second;}
+    // std::pair<BaseWormObsPtr, BaseWormObsPtr> worm_obs_ptr() const {return _worm_obs_ptr;}
+
+    batch_obs& get_batch_obs() {return *this;}
+    WormObs& operator<< (double x) {static_cast<batch_obs&>(*this) << x; return *this;}
+
+};
 
 
+// namespace alps {
+//   namespace alea{
+//     class foo : public batch_acc<double>
+//     {
+//       typedef batch_acc<double> base;
+//     public:
+//       base b;
+//       foo() : base(1), b(1){}
+//       foo& operator<< (double x) {
+//         static_cast<base&>(*this) << x;
+//         // base::operator<<(src); return *this;
+//       }
+//       void add(double x){
+//         // base::operator<<(x);
+//         b << x;
+//       }
+//     };
+//   }
+// }
+
+// template<typename AccType>
+// typename std::enable_if<alps::alea::is_alea_acc<AccType>::value, AccType&>::type
+// operator<<(AccType& acc, const typename AccType::value_type& v){
+//   return acc << alps::alea::value_adapter<typename AccType::value_type>(v);
+// }
