@@ -27,9 +27,7 @@ namespace model
       std::cerr << "spin state is out of range" << std::endl; exit(1);
     }
     if (is_one_site()){
-      // If heads are different, one_site_operator will return zero.
-      if (spins[1] != spins[3]) return -1; 
-      return spins[0] + spins[2] * _spin_dof;
+      std::cerr << "This is one site operator, but trying to call bond operator." << std::endl; exit(1);
     }
     size_t s = 0;
     std::array<size_t, 4>::iterator si = spins.end();
@@ -41,6 +39,16 @@ namespace model
     return s;
   }
 
+  int BaseWormObs::GetState(std::array<size_t, 2> spins) const  {
+    if (spins[0] >= _spin_dof || spins[1] >= _spin_dof) {
+      std::cerr << "spin state is out of range" << std::endl; exit(1);
+    }
+    if (!is_one_site()){
+      std::cerr << "This is bond operator, but trying to call one site operator." << std::endl; exit(1);
+    }
+    return spins[0] + spins[1] * _spin_dof;
+  }
+
   double BaseWormObs::operator() (std::array<size_t, 4> spins, double r, double tau) const {
     cerr << "This method is not implemented" << endl;
     if (!has_operator()) { std::runtime_error("operator is not set yet"); }
@@ -48,8 +56,15 @@ namespace model
 
   double BaseWormObs::operator() (std::array<size_t, 4> spins) const {
     if (!has_operator()) { std::runtime_error("operator is not set yet"); }
+    if (is_one_site()) {std::runtime_error("This is one site operator, but tring to call bond operator."); }
     int s = GetState(spins);
-    if (s == -1) return 0;
+    return _operator(s);
+  }
+
+  double BaseWormObs::operator() (std::array<size_t, 2> spins) const {
+    if (!has_operator()) { std::runtime_error("operator is not set yet"); }
+    if (!is_one_site()) {std::runtime_error("This is bond operator, but tring to call one site operator."); }
+    int s = GetState(spins);
     return _operator(s);
   }
 
@@ -213,7 +228,8 @@ namespace model
     BaseWormObs& obs_2site = *(_second); //two site worm observable
 
     // if (obs_2site(spins))
-     *this << (obs_1site(spins) + obs_2site(spins) / 2) * L * sign;
+    *this << (obs_1site(spins) + obs_2site(spins) / 2) * L * sign;
+
     dout << "spins : " << spins[0] << " " << spins[1] << " " << spins[2] << " " << spins[3] <<"\t";
     dout << "add : " << obs_1site(spins)* L * sign << " " << obs_2site(spins)* L * sign/2 << endl;
     dout << " obs sum : " << this->store().batch().rowwise().sum() << endl;

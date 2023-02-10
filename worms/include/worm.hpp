@@ -238,7 +238,8 @@ class Worm{
 
           if (r < accept[u]){
             // dout << "append r " << r << endl;
-            appendOps(ops_main, spacetime_dots, &bond, &pows_vec[lop_label] ,u * pows_vec[lop_label][bond.size()] + u, lop_label, tau);
+            appendOps(ops_main, spacetime_dots, can_warp_ops,
+                    &bond, &pows_vec[lop_label] ,u * pows_vec[lop_label][bond.size()] + u, lop_label, tau);
           }
         }
         tau += expdist(rand_src);
@@ -247,7 +248,8 @@ class Worm{
 
           
           update_state(opi, cstate);
-          appendOps(ops_main, spacetime_dots, opi->bond_ptr(), opi->pows_ptr(), opi->state(), opi->op_type(),opi->tau());
+          appendOps(ops_main, spacetime_dots, can_warp_ops,
+                  opi->bond_ptr(), opi->pows_ptr(), opi->state(), opi->op_type(),opi->tau());
           // printStateAtTime(cstate, tau);
         }
         ++opi;
@@ -287,6 +289,8 @@ class Worm{
       size_t wt_dot, site, wt_site, _t_spin, n_dot_label;
       double wt_tau, tau; // tau_prime is the time of the next operator.
       std::tie(wt_site, wt_dot , wt_tau) = *wsi; //contains site, dot label, tau
+      size_t last_state; //n* the last spin state encountered when worm cross the same legel as tail.
+      size_t last_site; //n* the last site encountered when worm cross the same legel as tail.
       tau = wt_tau;
       site = wt_site;
       Dotv2* dot = &spacetime_dots[wt_dot];
@@ -310,7 +314,7 @@ class Worm{
       do{
         n_dot_label = dot->move_next(dir); //next label of dot.
 
-        size_t status = wormOpUpdate(n_dot_label, dir, site, wlength_prime, fl, tau, wt_dot, wt_site, wt_tau);
+        size_t status = wormOpUpdate(n_dot_label, dir, site, wlength_prime, fl, tau, wt_dot, wt_site, wt_tau, last_state, last_site);
         if (status != 0){
           if (status == 1){
             wlength_prime = 0;
@@ -349,11 +353,17 @@ class Worm{
   
 
   void calcHorizontalGreen( double tau, size_t h_site, size_t t_site, 
-                            size_t h_x, size_t h_x_prime, size_t t_x, size_t t_x_prime){
-    int sign = 1;
+                            size_t h_x, size_t h_x_prime, size_t t_x, size_t t_x_prime,
+                            double factor = 1/2.0
+                            ){
     double r = -1;
 
-    _worm_obs.add({t_x, h_x, t_x_prime, h_x_prime}, L, sign, h_site - t_site, 0);
+    if (h_site != t_site){
+      _worm_obs << _worm_obs.second()->operator()({t_x, h_x, t_x_prime, h_x_prime}) * factor * L * sign;
+    } else {
+      _worm_obs << _worm_obs.first()->operator()(std::array<size_t, 2>({h_x, h_x_prime})) * L * sign;
+    }
+    // _worm_obs.add({t_x, h_x, t_x_prime, h_x_prime}, L, sign, h_site - t_site, 0);
     if (h_x == h_x_prime && t_x == t_x_prime) _phys_cnt << (double) sign;
     else _phys_cnt << 0;
     
@@ -389,6 +399,7 @@ class Worm{
   void appendOps(
     OPS& ops, 
     DOTS& sp, 
+    std::unordered_set<size_t>& warp_sp,
     const BOND * const bp, 
     const BOND * const pp, 
     int state, 
@@ -401,7 +412,7 @@ class Worm{
     size_t n = ops.size();
     size_t label = sp.size();
     int site;
-    if (loperators[op_type].has_warp(state)) can_warp_ops.insert(sp.size()); // if the operator has warp, add the label of the leftmost dot to the set.
+    if (loperators[op_type].has_warp(state)) warp_sp.insert(sp.size()); // if the operator has warp, add the label of the leftmost dot to the set.
     for (int i=0; i<s; i++){
       // set_dots(bond[i], 0, i);
       site = bp->operator[](i);
@@ -454,7 +465,8 @@ class Worm{
   */
   int wormOpUpdate(size_t& next_dot, size_t& dir, 
                    size_t& site, double& wlength, int& fl, double& tau,
-                   const size_t wt_dot, const size_t wt_site, const double wt_tau
+                   const size_t wt_dot, const size_t wt_site, const double wt_tau,
+                   size_t& last_state, size_t& last_site
                   ){
     
     OP_type* opsp;
@@ -477,35 +489,24 @@ class Worm{
       int x = 3;
     }
 
-    if (detectWormCross(tau, tau_prime, wt_tau, dir) && fl != 0){
-
-
-      if (site != wt_site) {
-        obs_sum++;
-        // cout << "add obs_sum" << endl;
-        }
-      if (site == wt_site) {
-        phys_cnt++;
-        // cout << "add phys_cnt" << endl;
-        }
-      // cout << obs_sum / phys_cnt << endl;
-
-      size_t h_x, h_x_prime, t_x, t_x_prime;
-      Dotv2* wtdot = &spacetime_dots[wt_dot];
+    size_t h_x, h_x_prime, t_x, t_x_prime;
+    Dotv2* wtdot = &spacetime_dots[wt_dot];
+    t_x = getDotState(wtdot->move_next(1), 1); t_x_prime = getDotState(wtdot->move_next(0), 0);
+    if (detectWormCross(tau, tau_prime, wt_tau, dir)){
 
       // get spin over and under the worm head.
-      t_x = getDotState(wtdot->move_next(1), 1); t_x_prime = getDotState(wtdot->move_next(0), 0);
       if (dir == 1){ 
         h_x = getDotState(next_dot, 1); h_x_prime = getDotState(dotp->move_next(0), 0);
       } else if (dir == 0){ 
         h_x = getDotState(dotp->move_next(1), 1); h_x_prime = getDotState(next_dot, 0); 
       } else { throw std::runtime_error("dir should be either 1 or 0"); }
-
       
       dout << "site : [" << wt_site << " " << site << "] " << " spin : " << t_x << " " << h_x << " " << t_x_prime << " " << h_x_prime << endl;
 
       // if head is on tail, this case is not regarded as 2point correlation.
-      calcHorizontalGreen(tau, site, wt_site, h_x, h_x_prime, t_x, t_x_prime);
+      calcHorizontalGreen(tau, site, wt_site, h_x, h_x_prime, t_x, t_x_prime, 1/2.0);
+      last_site = site;
+      last_state = dir == 1 ? h_x : h_x_prime;
     }
 
     size_t cur_dot = next_dot;
@@ -580,6 +581,11 @@ class Worm{
         if(!_lop.has_warp(_state_num)) can_warp_ops.erase(_cur_dot-_dotp->index());
         else can_warp_ops.insert(_cur_dot-_dotp->index());
         tau_prime = opsp->tau();
+
+        //n* contribute to worm operator which flip single spin.
+        // calcHorizontalGreen(tau, last_site, wt_site, last_state, last_state, t_x, t_x_prime);
+        calcHorizontalGreen(tau, last_site, wt_site, last_state, last_state, 
+                t_x, t_x_prime, (L - 1) / (double)can_warp_ops.size());
       }else{
         tmp--;
         nindex = tmp/(sps_sites[0] - 1);
