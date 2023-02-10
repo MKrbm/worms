@@ -86,15 +86,23 @@ template <class MC>
 class local_operator{
 private:
   std::vector<double> _ham_vector;
+  std::vector<bool> _has_warp; //check if the state has warphole
 public:
+  typedef MC MCT;
   double ham_vector(int i) {return _ham_vector[i];}
   const std::vector<double> & ham_vector() {return _ham_vector;}
   const std::vector<std::vector<double>> & ham() const {return _ham;}
+  const bool has_warp(int i) const {return _has_warp[i];}
   using VECD = std::vector<double>;
   using TPROB = std::vector<VECD>; //type for transition probability. typically, this is 2D matrix with 4 x 4 elements( check notebook for detail definition of this type).
   std::vector<std::vector<double>> ham_prime;
   std::vector<std::vector<double>> _ham; // virtual hamiltonian (or maybe absolute of original hamiltonian)
-  typedef MC MCT;
+  std::vector<int> signs; //list of sign defined via the sign of ham_prime;
+  
+  std::vector<TPROB> trans_prob; //num_configuration x 4 x 4 matrix.
+  std::array<int, 2> num2index(int num);
+  markov_v markov;
+  std::vector<size_t> sps_base;
   outgoing_weight ogwt;
 
   const size_t sps;
@@ -104,11 +112,7 @@ public:
   double max_diagonal_weight_;
   double total_weights; //sum of diagonal elemtns of _ham
 
-  std::vector<int> signs; //list of sign defined via the sign of ham_prime;
-  std::vector<TPROB> trans_prob; //num_configuration x 4 x 4 matrix.
-  std::array<int, 2> num2index(int num);
-  markov_v markov;
-  std::vector<size_t> sps_base;
+
 
   local_operator(int leg, size_t sps = 2);
 
@@ -166,10 +170,10 @@ this function should be called after manually define local hamiltonian.
 
 *params
 ------
-boolean zw : 1 = have a chance to delete a worm while updating.
+boolean warp : 1 = have a chance for worm to warp.
 */
 template <class MC>
-void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
+void local_operator<MC>::set_ham(double off_set, double thres, bool warp){
   // std::cout << "Hi" << std::endl;
   int N = size*size;
   ene_shift=0;
@@ -209,10 +213,13 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
   std::vector<markov_t> markov_tmp;
   std::vector<long long> state2index;
 
+  _has_warp.resize(_ham_vector.size(), false);
   state2index.resize(_ham_vector.size(), -1);
   if (leg > 2 && _ham_vector.size() > 1E5){
     std::cout << "too big size of _ham_vector for non-bond operator : In the case, only virtually one site operator at center is accepted" << std::endl;
     if (leg != 3) throw std::invalid_argument("leg more than 3 is not implemented yet");
+    std::cerr << "sparse matrix may have a bug" << std::endl;
+    exit(1);
     spin_state::Operator state(nullptr, &ogwt.pows, 0, 0, 0);
     for (size_t s=0; s < _ham_vector.size(); s++){
       state.set_state(s);
@@ -220,7 +227,7 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
       if (state.get_local_state(0) != state.get_local_state(3) && state.get_local_state(2) != state.get_local_state(5)) continue;
 
       state2index[s] = markov_tmp.size();
-      std::vector<double> ogw = ogwt.init_table(_ham_vector, s, zw);
+      std::vector<double> ogw = ogwt.init_table(_ham_vector, s, warp);
       markov_tmp.push_back(markov_t(MC(), ogw));
     }
      markov = markov_v(markov_tmp, state2index);
@@ -228,7 +235,10 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool zw){
     for (size_t s=0; s < _ham_vector.size(); s++){
       // if (_ham_vector[s] == 0 ) continue;
       state2index[s] = markov_tmp.size();
-      std::vector<double> ogw = ogwt.init_table(_ham_vector, s, zw);
+      std::vector<double> ogw = ogwt.init_table(_ham_vector, s, warp);
+      if (warp) {
+        for (int x=1; x<ogw.size(); x++) {_has_warp[s] = _has_warp[s] || ((ogw[x] != 0) & (ogw[0] != 0));}
+      }
       markov_tmp.push_back(markov_t(MC(), ogw));
     }
     markov = markov_v(markov_tmp, state2index);

@@ -126,6 +126,11 @@ Worm<MC> exe_worm_parallel(
         sum_ot += _op_tmp;
         sum_2_ot += _op_tmp*_op_tmp;
       }
+      // cout << solver.sign << sign << endl;
+      if (solver.sign != sign) {
+        cout << "sign is not consistent" << endl;
+        exit(1);
+      }
       double m = (double)solver.ops_main.size();
       double ene_tmp = - m / beta + spin_model.shift();
       N2 << (m * m) * sign;
