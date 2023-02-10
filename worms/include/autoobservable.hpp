@@ -144,6 +144,8 @@ class model::BaseWormObs
     x_t_p : spin state at upper portion of worm tail.
     */
     int GetState(std::array<size_t, 4> spins) const;
+    int GetState(std::array<size_t, 2> spins) const;
+
 
     /*
     params
@@ -153,6 +155,8 @@ class model::BaseWormObs
     */
     double operator() (std::array<size_t, 4> spins, double r, double tau) const;
     double operator() (std::array<size_t, 4> spins) const;
+    double operator() (std::array<size_t, 2> spins) const;
+
 
     virtual double _operator(size_t state) const ;
 };
