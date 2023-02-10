@@ -9,6 +9,7 @@
 #include <sstream>
 #include <algorithm>
 #include <utility>
+#include <unordered_set>
 #include <bcl.hpp>
 #include <stdlib.h>
 
@@ -57,74 +58,73 @@ using size_t = std::size_t;
 template <class MCT>
 class Worm{
 
+  public:
+  using MODEL = model::base_model<MCT>;
+  using LOPt = model::local_operator<MCT>;
+
   private:
   model::WormObs _worm_obs;
   alps::alea::batch_acc<double> _phys_cnt;
-  public:
 
-  // define observables 
-  double phys_cnt = 0; // number of physically meaningful configurations;
-  double obs_sum = 0; // sum of observables encountered while worm update. (observable must be non-diagonal operator)
-  // end of define observables
-  double obs_sum2 = 0;
+  public:
 
   typedef spin_state::Operator OP_type;
   typedef std::vector<OP_type> OPS;
   typedef spin_state::StateFunc state_func;
-  using MODEL = model::base_model<MCT>;
-  using LOPt = model::local_operator<MCT>;
-
-  MODEL spin_model;
-  // typedef typename base_spin_model::MCT MCT;
-  OPS ops_main; //contains operators.
-  OPS ops_sub; // for sub.
-  STATE state;
-  STATE cstate;
-  DOTS spacetime_dots; //contain dots in space-time.
-  WORMS worms_list;
-
-  std::vector<BOND> bonds;
-  std::vector<size_t> bond_type;
-  VVS pows_vec;
-  VS sps_sites;
-  vector<state_func> state_funcs;
-  
-  std::vector<size_t> pres = std::vector<size_t>(0);
-  std::vector<size_t> psop = std::vector<size_t>(0);
-  // std::vector<size_t> st_cnt = std::vector<size_t>(0);
-  double beta;
-  size_t d_cnt=0;
-  int L; //number of sites
-  size_t bocnt = 0;
-  size_t cutoff_length; //cut_off length
-  size_t u_cnt=0;
-
-  //declaration for random number generator
-  // typedef model::local_operator::engine_type engine_type;
   typedef std::mt19937 engine_type;
+  typedef std::uniform_real_distribution<> uniform_t;
+  typedef std::exponential_distribution<> expdist_t;
+  typedef bcl::markov<engine_type> markov_t;
+
+  uniform_t uniform;
+
+  
 
   engine_type rand_src;
   engine_type test_src;
 
-  // random distribution from 0 to 1
-  typedef std::uniform_real_distribution<> uniform_t;
-  typedef std::exponential_distribution<> expdist_t;
-  uniform_t uniform;
-  // reference of member variables from model class
+  MODEL spin_model;
+  OPS ops_main; //n* contains operators.
+  OPS ops_sub; //n*  for sub.
+  STATE state;
+  STATE cstate;
+  DOTS spacetime_dots; //n*  contain dots in space-time.
+  WORMS worms_list;
 
-  const int N_op;
-  // std::array<model::local_operator<MODEL::MCT>, N_op>& loperators; //holds multiple local operators
+  VVS pows_vec;
+  VS sps_sites;
+  std::vector<BOND> bonds;
+  std::vector<size_t> bond_type;
+  std::vector<state_func> state_funcs;
+  std::unordered_set<size_t> can_warp_ops;
+  std::vector<size_t> pres = std::vector<size_t>(0);
+  std::vector<size_t> psop = std::vector<size_t>(0);
+
+  //n* reference of member variables from model class
   std::vector<model::local_operator<typename MODEL::MCT>>& loperators;
-  std::vector<std::vector<double>> accepts; //normalized diagonal elements;
-  double rho;
+  std::vector<std::vector<double>> accepts; //n* normalized diagonal elements;
+
+  // define observables 
+  //n*  number of physically meaningful configurations;
+  double phys_cnt = 0; 
+  //n*  sum of observables encountered while worm update. (observable must be non-diagonal operator)
+  double obs_sum = 0;
+  double obs_sum2 = 0;
+  // end of define observables
+
+  int sign = 1;
   int cnt=0;
-
+  const int L; //n* number of sites
+  const int N_op;
+  size_t d_cnt=0;
+  size_t bocnt = 0;
+  const size_t cutoff_length; //n* cut_off length
+  size_t u_cnt=0;
+  double rho;
+  const double beta;
   
-
-  typedef bcl::markov<engine_type> markov_t;
   model::WormObs& get_worm_obs() { return _worm_obs; }
   alps::alea::batch_acc<double>& get_phys_cnt() { return _phys_cnt; }
-
 
   Worm(double beta, MODEL model_, size_t cl = SIZE_MAX, int rank = 0)
   :Worm(beta, model_,model::WormObs(model_.sps_sites(0)), cl, rank){}
@@ -204,6 +204,7 @@ class Worm{
 
 
     ops_main.resize(0); //* init_ops_main()
+    can_warp_ops.clear(); // forget previous record
     
     initDots(); //*init spacetime_dots
 
@@ -385,7 +386,7 @@ class Worm{
   }
   
   // //*append to ops
-  static void appendOps(
+  void appendOps(
     OPS& ops, 
     DOTS& sp, 
     const BOND * const bp, 
@@ -396,9 +397,11 @@ class Worm{
 
     int s = bp->size();
     ops.push_back(OP_type(bp, pp, state, op_type, tau));
+
     size_t n = ops.size();
     size_t label = sp.size();
     int site;
+    if (loperators[op_type].has_warp(state)) can_warp_ops.insert(sp.size()); // if the operator has warp, add the label of the leftmost dot to the set.
     for (int i=0; i<s; i++){
       // set_dots(bond[i], 0, i);
       site = bp->operator[](i);
@@ -525,56 +528,81 @@ class Worm{
         return 1;
       }
       
-      size_t num;
-      int tmp;
-      int nindex;
+      size_t state_num, tmp, nindex;
       size_t dir_in = !dir; //n* direction the Worm comes in from the view of operator.
       size_t leg_size = opsp->size();
       size_t cindex = dotp->leg(dir_in, leg_size);
       size_t index = dotp->leg(0, leg_size);
+      size_t op_type = opsp->op_type();
+
+      auto& lop = loperators[op_type];
       
-      // if (u_cnt==9 || u_cnt == 2826) {
-      if (fl!=0){
-        opsp->update_state(cindex, fl);
-        num = opsp->state();
-        tmp = loperators[opsp->op_type()].markov[num](cindex*(sps_sites[site] - 1) + sps_sites[site]-fl, rand_src);
-      }else{
-        num = opsp->state();
-        tmp = loperators[opsp->op_type()].markov[num](0, rand_src);
-      }
+      sign *= lop.signs[opsp->state()];
+      state_num = opsp->update_state(cindex, fl);
+      tmp = lop.markov[state_num](cindex*(sps_sites[site] - 1) + sps_sites[site]-fl, rand_src);
 
       int tmp_wlength = opsp->tau() - tau;
       if (!(dir^(tmp_wlength>0)) & (tmp_wlength!=0)) wlength += std::abs(tmp_wlength);
       else wlength += (1 - std::abs(tmp_wlength));
 
       //* if Worm stop at this operator
-      if (tmp == 0){        
-        nindex = static_cast<size_t>((2*leg_size)*uniform(rand_src));
+      if (tmp == 0){   // if head will warp.
+        sign *= lop.signs[state_num]; // include an effect by start point
+
+        //n* head wapred
+        size_t _cur_dot, _state_num, _optype;
+        Dotv2* _dotp;
+        do{
+          size_t n = static_cast<size_t>(can_warp_ops.size() * uniform(rand_src));
+          auto it = std::begin(can_warp_ops);
+          std::advance(it, n);
+          _cur_dot = *it;
+          _dotp = &spacetime_dots[_cur_dot];
+          opsp = &ops_main[_dotp -> label()];
+          _state_num = opsp->state();
+          _optype = opsp->op_type();
+          tmp = loperators[_optype].markov[_state_num](0, rand_src);
+          leg_size = opsp->size();
+        } while (tmp == 0);
+        if (tmp == 0){
+          std::cerr << "cannot handle warp reject" << endl;
+          exit(1);
+        }
+        tmp--;
+        auto& _lop = loperators[_optype];
+        sign *= _lop.signs[_state_num]; // warped point
+        nindex = tmp/(sps_sites[0] - 1); // sps_sites are filled with same value.
+        fl = tmp % (sps_sites[0] - 1) + 1;
+        sign *= _lop.signs[opsp->update_state(nindex, fl)]; // after procceeding
         dir = nindex/(leg_size);
-        // dir = dir;
-        // leg_i = !(cindex % leg_size);
         site = opsp->bond(nindex%leg_size);
-        fl = 0;
+        next_dot = opsp->next_dot(0, nindex, _cur_dot);
+        if(!_lop.has_warp(_state_num)) can_warp_ops.erase(_cur_dot-_dotp->index());
+        else can_warp_ops.insert(_cur_dot-_dotp->index());
+        tau_prime = opsp->tau();
       }else{
         tmp--;
-        nindex = tmp/(sps_sites[site] - 1);
-        fl = tmp % (sps_sites[site] - 1) + 1;
-        opsp->update_state(nindex, fl);
+        nindex = tmp/(sps_sites[0] - 1);
+        fl = tmp % (sps_sites[0] - 1) + 1;
+        state_num = opsp->update_state(nindex, fl);
+        sign *= lop.signs[state_num];
         //n* assigin for next step
         dir = nindex/(leg_size);
         site = opsp->bond(nindex%leg_size);
+        next_dot = opsp->next_dot(cindex, nindex, cur_dot);
       }
+      if(!lop.has_warp(state_num)) can_warp_ops.erase(cur_dot-dotp->index());
+      else can_warp_ops.insert(cur_dot-dotp->index());
 
       #ifndef NDEBUG
       int niter = 0;
       for (int i=0; i<niter; i++){
-        int tmp_ = loperators[opsp->op_type()].markov[num](cindex*(sps_sites[site] - 1) + sps_sites[site]-fl-1, test_src);
+        int tmp_ = loperators[opsp->op_type()].markov[state_num](cindex*(sps_sites[site] - 1) + sps_sites[site]-fl-1, test_src);
         int nindex_ = tmp_/sps_sites[site] - 1;
         int fl_ = tmp_ % sps_sites[site] - 1 + 1;
         // printf("test tmp : %d, state : %d\n", tmp_, num ^ (fl_ << (nls*nindex_)));
       }
       #endif 
-      next_dot = opsp->next_dot(cindex, nindex, cur_dot);
     }
 
     tau = tau_prime;

@@ -57,11 +57,12 @@ namespace spin_state{
     ====
     0  1.
     */
-    void update_state(size_t leg, size_t fl)
+    size_t update_state(size_t leg, size_t fl)
       {
       size_t a = (*pows_ptr_)[leg];
       size_t t = (*pows_ptr_)[leg+1];
       state_ = (state_/t)*t + (state_%t+fl*a) % t;
+      return state_;
       }
     US get_local_state(size_t leg) const { return (state_%(*pows_ptr_)[leg+1])/(*pows_ptr_)[leg];}
     bool is_off_diagonal() const{ return (state_ ? (state(0) != state(1)) : false);}
