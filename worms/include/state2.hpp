@@ -86,6 +86,7 @@ public:
     if (at_operator()) return dot_type_;
     else return index_;
   }
+  size_t index() const { return index_; }
   bool at_operator() const { return dot_type_ >= 0; }
   bool at_origin() const { return dot_type_ == -1; }
   bool at_worm() const { return dot_type_ == -2; }
