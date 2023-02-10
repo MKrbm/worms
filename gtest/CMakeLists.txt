@@ -3,6 +3,7 @@ set (test_src
      lattice
      model
      example
+     lops
     )
 
 
