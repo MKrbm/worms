@@ -147,7 +147,7 @@ Worm<MC> exe_worm_parallel(
     }
     if (i <= therms / 2) {
       if (!fix_wdensity){
-        if (wcount > 0) wdensity = std::max(spin_model.Nb/ (wlength / wcount), (double)2);
+        if (wcount > 0) wdensity = spin_model.Nb/ (wlength / wcount); //Actually at least one worm is secured.
         if (i % (therms / 8 + 1) == 0) {
           wcount /= 2;
           wlength /= 2;
@@ -156,8 +156,8 @@ Worm<MC> exe_worm_parallel(
     }
     if (i == therms / 2){
       if (!fix_wdensity && (rank == 0)) std::cout << "Info: average number worms per MCS is reset from " << spin_model.L
-                << " to " << wdensity << "(rank=" << rank << ")" <<"\n\n";
-      else if (rank == 0) std::cout << "Info: average number worms per MCS is " << wdensity << "(rank=" << rank << ")" <<"\n\n";
+                << " to " << wdensity + 1<< "(rank=" << rank << ")" <<"\n\n";
+      else if (rank == 0) std::cout << "Info: average number worms per MCS is " << wdensity + 1<< "(rank=" << rank << ")" <<"\n\n";
     }
     cnt++;
   }
