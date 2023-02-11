@@ -38,17 +38,17 @@ Worm<MC> run_worm(
     //dont fix worm density. Not printout density information.
   Worm<MC> solver = exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, obs, wobs);
 
-  batch_res as = res[0];  // average sign
+  batch_res as = res[0]; // average sign 
   batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
-  batch_res sglt = res[2];
-  batch_res n_neg_ele = res[3];
-  batch_res n_ops = res[4];
-  batch_res N2 = res[5];
-  batch_res N = res[6];
-  batch_res dH = res[7];  // $\frac{\frac{\partial}{\partial h}Z}{Z}$
-  batch_res dH2 = res[8]; // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
-  batch_res worm_obs = res[9]; // depends on the definition of worm observable
-  batch_res phys_conf = res[10]; // number of physical configurations
+  batch_res n_neg_ele = res[2];
+  batch_res n_ops = res[3];
+  batch_res N2 = res[4];
+  batch_res N = res[5];
+  batch_res dH = res[6]; // $\frac{\frac{\partial}{\partial h}Z}{Z}$ 
+  batch_res dH2 = res[7]; // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
+  batch_res worm_obs = res[8];
+  batch_res phys_conf = res[9];
+  batch_res m2_diag = res[10];
 
   std::function<double(double, double, double)> f;
 
@@ -119,8 +119,8 @@ TEST(WormSimuObs, HXXX1D_1) {
   std::string ham_path, obs_path, wobs_path;
 
   // This hamiltonian requires zero worm.
-  ham_path = "../gtest/model_array/Heisenberg/1D/original/Jz_-1_Jx_-0.5_Jy_-0.3_hz_0_hx_0.5/H";
-  obs_path = "../gtest/model_array/Heisenberg/1D/original/Jz_-1_Jx_-0.5_Jy_-0.3_hz_0_hx_0.5/Sz";
+  ham_path = "../gtest/model_array/Heisenberg/1D/original/Jz_-1_Jx_0.5_Jy_0.3_hz_0_hx_0.5/H";
+  obs_path = "../gtest/model_array/Heisenberg/1D/original/Jz_-1_Jx_0.5_Jy_0.3_hz_0_hx_0.5/Sz";
   wobs_path = "../gtest/model_array/worm_obs/g_test";
   model::base_model<MC> spin(lat, dofs, 
   ham_path, params, types, shift, zw, false, false);
@@ -132,8 +132,8 @@ TEST(WormSimuObs, HXXX1D_1) {
   double T;
   size_t sweeps, therms;
 
-  sweeps = 1000000;
-  T = 0.7;
+  sweeps = 5000000;
+  T = 0.5;
   therms = 100000;
 
   auto solver = run_worm(spin, T, sweeps, therms, res, obs, lat, wobs);
@@ -141,12 +141,13 @@ TEST(WormSimuObs, HXXX1D_1) {
   /*
   expect the following res 
 
-  L = 12 {'Jz': -1, 'Jx': -1, 'Jy': -1, 'hz': 0, 'hx': 0.5}
-  T               = 1
-  E               = -0.23352996007313429
-  C               = 0.2035279550911102
-  M               = -4.109549554032586e-18
-  M^2             = 0.02965416649361732
+  L = 10 {'Jz': -1, 'Jx': 0.5, 'Jy': 0.3, 'hz': 0, 'hx': 0.5}
+  T               = 0.5
+  E               = -0.17920077733642997
+  C               = 0.1904521933525169
+  M               = 2.2011215518437648e-17
+  chi             = 1.1863488077976516
+  G_test          = 0.7632810332661033
   */
 }
 
