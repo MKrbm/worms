@@ -107,7 +107,7 @@ Worm<MC> run_worm(
 }
 
 
-TEST(WormSimuObs, HXXX1D_1) {
+TEST(WormSimuObs, HXXX1D_NS) {
 
   model::base_lattice lat = chain(10);
   vector<size_t> dofs = {2};
@@ -147,7 +147,20 @@ TEST(WormSimuObs, HXXX1D_1) {
   C               = 0.1904521933525169
   M               = 2.2011215518437648e-17
   chi             = 1.1863488077976516
-  G_test          = 0.7632810332661033
+  G_test          = 3.596437044468386
+
+
+  N = 10,000,000
+  Elapsed time         = 36.042(36.042) sec
+  Speed                = 280229 MCS/sec
+  beta                 = 2
+  Total Energy         = -1.78755 +- 0.00228759
+  Average sign         = 0.443955 +- 0.000488459
+  Energy per site      = -0.178755 +- 0.000228759
+  Specific heat        = 0.188752 +- 0.00233521
+  magnetization        = 0.000185805 +- 0.000285441
+  susceptibility       = 1.18723 +- 0.0016151
+  G                    = 3.59446 +- 0.00903887
   */
 }
 
