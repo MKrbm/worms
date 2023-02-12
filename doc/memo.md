@@ -32,10 +32,7 @@ $\langle x_{\tau} | \hat{o}_i \hat{o}_j |x^\prime_{\tau} \rangle$
 
 
 - # 聞くこと
-  - gccのversionの不一致
-  - amd64でinstallできな(22.04)
-  - hdf5 libraryのバージョンが1.10で良いのか？
-  - Eigen のバージョンもこれで良い？ (my version is 3.4.0-2ubuntu2 / required 3.3.4)
-  - 他の手法で(pipなど)でboostがインストールされているときに、勝手にそっちを参照してしまう現象について。
-  - ALPS core の最新の二つについてエラーが起きる
+  - MPIをGtestでやる
+  - worm obs の reduce の方法。 (サイズが会わないからできないといわれる)
+  
 
