@@ -66,6 +66,7 @@ class Worm{
   model::WormObs _worm_obs;
   alps::alea::batch_acc<double> _phys_cnt;
 
+  size_t warp_label_cnt1=0, warp_label_cnt2=0;
   public:
 
   typedef spin_state::Operator OP_type;
@@ -385,6 +386,7 @@ class Worm{
       if (t_x == t_x_prime) { //n* assuming no diagonal element in the worm observables.
         _phys_cnt << (double) sign;
         _worm_obs << 0;
+        phys_cnt++;
       } else { //n* This case could contribute to single flip operator but not implemented yet.
         ;
       }
@@ -396,17 +398,22 @@ class Worm{
   /*
   This function will be called ever time worm head warps.
   */
-  void calcWarpGreen(double tau, size_t t_site, size_t t_x, size_t t_x_prime, double factor = 1/2.0 )
+  void calcWarpGreen(double tau, size_t t_site, size_t t_x, size_t t_x_prime)
   {
-    if (t_x == t_x_prime) {std::runtime_error("t_x == t_x_prime while wapr should never happen");}
+    if (t_x == t_x_prime) {throw std::runtime_error("t_x == t_x_prime while wapr should never happen");}
     double _add = 0;
     for (int i=0; i<L; i++){
       size_t h_x = cstate[i];
-      if (i == t_site) _add += _worm_obs.first()->operator()(std::array<size_t, 2>({t_x, t_x_prime})) *  L * sign / can_warp_ops.size();
-      else _add += _worm_obs.second()->operator()({t_x, h_x, t_x_prime, h_x}) * L * sign / can_warp_ops.size();
+      if (i == t_site) _add += _worm_obs.first()->operator()(std::array<size_t, 2>({t_x, t_x_prime}));
+      else {
+        _add += _worm_obs.second()->operator()({t_x, h_x, t_x_prime, h_x});
+        }
     }
-    _worm_obs << _add;
+    _worm_obs << (double) _add * L * sign * 2;
     _phys_cnt << 0;
+    // if (t_x != t_x_prime) obs_sum += (double) 1 / can_warp_ops.size();
+    // if (t_x != t_x_prime) obs_sum += 1;
+    // if (phys_cnt != 0) cout << obs_sum / phys_cnt << endl;
   }
   
   // //*append to ops
@@ -501,8 +508,8 @@ class Worm{
 
     size_t h_x, h_x_prime, t_x, t_x_prime;
     Dotv2* wtdot = &spacetime_dots[wt_dot];
-    t_x = getDotState(wtdot->move_next(1), 1); t_x_prime = getDotState(wtdot->move_next(0), 0);
     if (detectWormCross(tau, tau_prime, wt_tau, dir)){
+      t_x_prime = getDotState(wtdot->move_next(1), 1); t_x = getDotState(wtdot->move_next(0), 0);
 
       // get spin over and under the worm head.
       if (dir == 1){ 
@@ -513,14 +520,12 @@ class Worm{
       
       dout << "site : [" << wt_site << " " << site << "] " << " spin : " << t_x << " " << h_x << " " << t_x_prime << " " << h_x_prime << endl;
 
-      // if head is on tail, this case is not regarded as 2point correlation.
+      // if head is on tail, the case is not regarded as 2point correlation.
       calcHorizontalGreen(tau, site, wt_site, h_x, h_x_prime, t_x, t_x_prime);
 
       //n* update csate accordingly 
-      // cout << t_x << "\t" << t_x_prime << endl;
       cstate[wt_site] = t_x; //n* or perhaps you can choose t_x_prime instead (actually it doesn't matter)
       if (wt_site != site) cstate[site] = dir == 1 ? h_x : h_x_prime;
-      // cstate[site] = h_x_prime;
     }
 
     size_t cur_dot = next_dot;
@@ -562,15 +567,21 @@ class Worm{
 
       //* if Worm stop at this operator
       if (tmp == 0){   // if head will warp.
+        if(!lop.has_warp(state_num)) can_warp_ops.erase(cur_dot-dotp->index());
+        else can_warp_ops.insert(cur_dot-dotp->index());
         sign *= lop.signs[state_num]; // include an effect by start point
+
 
         //n* head wapred
         size_t _cur_dot, _state_num, _optype;
         Dotv2* _dotp;
+        std::unordered_set<size_t>::iterator it;
         do{
+          t_x_prime = getDotState(wtdot->move_next(1), 1); t_x = getDotState(wtdot->move_next(0), 0);
           size_t n = static_cast<size_t>(can_warp_ops.size() * uniform(rand_src));
-          auto it = std::begin(can_warp_ops);
+          it = std::begin(can_warp_ops);
           std::advance(it, n);
+          if (it == can_warp_ops.begin()) calcWarpGreen(tau, wt_site, t_x, t_x_prime);
           _cur_dot = *it;
           _dotp = &spacetime_dots[_cur_dot];
           opsp = &ops_main[_dotp -> label()];
@@ -583,6 +594,21 @@ class Worm{
           std::cerr << "cannot handle warp reject" << endl;
           exit(1);
         }
+
+
+
+        if (ops_main.size()-1 != can_warp_ops.size()){
+          throw std::runtime_error("all operators are warped");
+        }
+
+        // if (can_warp_ops.size() > 10){
+        //   if (it == can_warp_ops.begin())  warp_label_cnt1++;
+        //   if (it == std::next(can_warp_ops.begin(), 5))  {
+        //     warp_label_cnt2++;
+        //     cout << warp_label_cnt1 / (double) warp_label_cnt2 << endl;
+        //     }
+        // }
+
         tmp--;
         auto& _lop = loperators[_optype];
         sign *= _lop.signs[_state_num]; // warped point
@@ -610,9 +636,10 @@ class Worm{
         dir = nindex/(leg_size);
         site = opsp->bond(nindex%leg_size);
         next_dot = opsp->next_dot(cindex, nindex, cur_dot);
+        if(!lop.has_warp(state_num)) can_warp_ops.erase(cur_dot-dotp->index());
+        else can_warp_ops.insert(cur_dot-dotp->index());
       }
-      if(!lop.has_warp(state_num)) can_warp_ops.erase(cur_dot-dotp->index());
-      else can_warp_ops.insert(cur_dot-dotp->index());
+
 
       #ifndef NDEBUG
       int dsign = 1;
