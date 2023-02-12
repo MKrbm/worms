@@ -183,10 +183,10 @@ class model::WormObs : public batch_obs
     BaseWormObsPtr _first, _second;
     size_t _spin_dof;
   public:
-    WormObs(size_t spin_dof, std::string folder_path = "");
+    WormObs(size_t spin_dof, std::string folder_path = "", bool print = false);
     WormObs(size_t spin_dof, std::pair<BaseWormObsPtr, BaseWormObsPtr> obspt_pair); // obs1 : one site worm operator, obs2 : bond worm operator.
     void add(std::array<size_t, 4> spins, size_t L, int sign, double r, double tau);
-    static std::pair<BaseWormObsPtr, BaseWormObsPtr> ReadNpy(size_t spin_dof, std::string folder_path);
+    static std::pair<BaseWormObsPtr, BaseWormObsPtr> ReadNpy(size_t spin_dof, std::string folder_path, bool print = false);
     const BaseWormObsPtr first() const {return _first;}
     const BaseWormObsPtr second() const {return _second;}
     // std::pair<BaseWormObsPtr, BaseWormObsPtr> worm_obs_ptr() const {return _worm_obs_ptr;}
