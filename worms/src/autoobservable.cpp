@@ -30,12 +30,16 @@ namespace model
       std::cerr << "This is one site operator, but trying to call bond operator." << std::endl; exit(1);
     }
     size_t s = 0;
-    std::array<size_t, 4>::iterator si = spins.end();
-    do {
-      si--;
+    for (auto& spin : spins) {
       s *= _spin_dof;
-      s += *si;
-    } while (si != spins.begin());
+      s += spin;
+    }
+    // std::array<size_t, 4>::iterator si = spins.end();
+    // do {
+    //   si--;
+    //   s *= _spin_dof;
+    //   s += *si;
+    // } while (si != spins.begin());
     return s;
   }
 
@@ -191,7 +195,7 @@ namespace model
     return _worm_obs[state];
   }
 
-  WormObs::WormObs(size_t spin_dof, std::string folder_path): WormObs(spin_dof, move(ReadNpy(spin_dof, folder_path))) {
+  WormObs::WormObs(size_t spin_dof, std::string folder_path, bool print ): WormObs(spin_dof, move(ReadNpy(spin_dof, folder_path, print))) {
     // cout <<(*obs1)({1,0,0,1}) << endl;
     // cerr << "WormObs is not implemented yet" << endl;
     // _worm_obs_ptr.first = make_unique<BaseWormObs>(spin_dof, 1);
@@ -241,7 +245,7 @@ namespace model
 
 
   typedef shared_ptr<BaseWormObs> BaseWormObsPtr;
-  pair<BaseWormObsPtr, BaseWormObsPtr> WormObs::ReadNpy(size_t spin_dof , std::string folder_path){
+  pair<BaseWormObsPtr, BaseWormObsPtr> WormObs::ReadNpy(size_t spin_dof, std::string folder_path, bool print){
     ArrWormObs awo1 = ArrWormObs(spin_dof, 1);
     ArrWormObs awo2 = ArrWormObs(spin_dof, 2);
 
@@ -268,12 +272,15 @@ namespace model
       try{
         awo1.ReadNpy(paths[0]);
         awo2.ReadNpy(paths[1]);
+        if (print) cout << "wobs is read from files : " << paths[0] << " and " << paths[1] << endl;
       } catch (const std::exception& e) {
         // cerr << "Warning! : " << e.what() << '\n';
         try{
           awo1.ReadNpy(paths[1]);
           awo2.ReadNpy(paths[0]);
           cout << "Warning! : Paths might be in reverse order " << endl;
+          if (print) cout << "wobs is read from files : " << paths[1] << " and " << paths[0] << endl;
+          
         } catch (const std::exception& e) {
           cerr <<  e.what() << '\n';
           cerr << "Fail to read numpy files." << endl;
@@ -285,11 +292,15 @@ namespace model
         awo1.ReadNpy(paths[0]);
         awo2._SetWormObs(vector<double>(powl(spin_dof, 4)));
         cout << "Warning! : Only one numpy file is found. The path is set for 1 points operator " << endl;
+        if (print) cout << "wobs is read from files : " << paths[0] << endl;
+        
       } catch (const std::exception& e) {
         try {
           awo1._SetWormObs(vector<double>(powl(spin_dof, 2)));
           awo2.ReadNpy(paths[0]);
           cout << "Warning! : Only one numpy file is found. The path is set for 2 points operator " << endl;
+          if (print) cout << "wobs is read from files : " << paths[1] << endl;
+          
         } catch (const std::exception& e) {
           cout <<  e.what() << '\n';
           exit(1);
