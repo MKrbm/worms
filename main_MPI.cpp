@@ -227,8 +227,8 @@ int main(int argc, char **argv) {
 
   model::base_lattice lat(basis, cell, shapes, file, !rank);
   model::base_model<bcl::st2013> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat, !rank);
-  model::WormObs wobs(spin.sps_sites(0), wobs_path); // all elements of sps_sites are the same.
   model::observable obs(spin, obs_path, !rank);
+  model::WormObs wobs(spin.sps_sites(0), wobs_path, !rank); // all elements of sps_sites are the same.
 
   size_t n_sites = lat.L * ns_unit;
 
