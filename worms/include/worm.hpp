@@ -384,8 +384,15 @@ class Worm{
       _phys_cnt << 0;
     } else {
       if (t_x == t_x_prime) { //n* assuming no diagonal element in the worm observables.
+        // _worm_obs << 0;
+        double _add = 0;
+        for (int i=0; i<L; i++){
+          size_t h_x = cstate[i];
+          if (i == t_site) _add += _worm_obs.first()->operator()(std::array<size_t, 2>({t_x, t_x})) * L ;
+          else _add += _worm_obs.second()->operator()({t_x, h_x, t_x, h_x}) * L / 2.0;
+        }
+        _worm_obs << _add * sign;
         _phys_cnt << (double) sign;
-        _worm_obs << 0;
         phys_cnt++;
       } else { //n* This case could contribute to single flip operator but not implemented yet.
         ;
