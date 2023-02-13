@@ -147,20 +147,20 @@ TEST(WormSimuObs, HXXX1D_NS) {
   C               = 0.1904521933525169
   M               = 2.2011215518437648e-17
   chi             = 1.1863488077976516
-  G_test          = 3.596437044468386
+  G_test          = 5.013504505157471
 
 
   N = 10,000,000
-  Elapsed time         = 36.042(36.042) sec
-  Speed                = 280229 MCS/sec
+  Elapsed time         = 62.037(62.037) sec
+  Speed                = 162806 MCS/sec
   beta                 = 2
-  Total Energy         = -1.78755 +- 0.00228759
-  Average sign         = 0.443955 +- 0.000488459
-  Energy per site      = -0.178755 +- 0.000228759
-  Specific heat        = 0.188752 +- 0.00233521
-  magnetization        = 0.000185805 +- 0.000285441
-  susceptibility       = 1.18723 +- 0.0016151
-  G                    = 3.59446 +- 0.00903887
+  Total Energy         = -1.79425 +- 0.00276793
+  Average sign         = 0.44562 +- 0.000427331
+  Energy per site      = -0.179425 +- 0.000276793
+  Specific heat        = 0.192348 +- 0.00399936
+  magnetization        = -0.000267411 +- 0.000328735
+  susceptibility       = 1.18581 +- 0.0015155
+  G                    = 5.00911 +- 0.00418627
   */
 }
 
