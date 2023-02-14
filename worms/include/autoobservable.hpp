@@ -9,6 +9,7 @@
 #include <tuple>
 #include <memory>
 #include <fstream>
+#include <unordered_map>
 
 #include <bcl.hpp>
 #include <alps/alea/core.hpp>
@@ -31,6 +32,9 @@ namespace model
   class BaseWormObs;
   class ArrWormObs;
   class WormObs;
+  class MapWormObs;
+  using worm_pair_t = std::pair<std::string, model::WormObs>;
+
 }
 
 /*
@@ -209,6 +213,7 @@ private:
   size_t _spin_dof;
 
 public:
+  WormObs(){};
   WormObs(size_t spin_dof, std::string folder_path = "", bool print = false);
   WormObs(size_t spin_dof, std::pair<BaseWormObsPtr, BaseWormObsPtr> obspt_pair); // obs1 : one site worm operator, obs2 : bond worm operator.
   void add(std::array<size_t, 4> spins, size_t L, int sign, double r, double tau);
@@ -225,28 +230,22 @@ public:
   }
 };
 
-// namespace alps {
-//   namespace alea{
-//     class foo : public batch_acc<double>
-//     {
-//       typedef batch_acc<double> base;
-//     public:
-//       base b;
-//       foo() : base(1), b(1){}
-//       foo& operator<< (double x) {
-//         static_cast<base&>(*this) << x;
-//         // base::operator<<(src); return *this;
-//       }
-//       void add(double x){
-//         // base::operator<<(x);
-//         b << x;
-//       }
-//     };
-//   }
-// }
 
-// template<typename AccType>
-// typename std::enable_if<alps::alea::is_alea_acc<AccType>::value, AccType&>::type
-// operator<<(AccType& acc, const typename AccType::value_type& v){
-//   return acc << alps::alea::value_adapter<typename AccType::value_type>(v);
-// }
+class model::MapWormObs
+{
+private:
+  std::unordered_map<std::string, WormObs> _worm_obs_map;
+public:
+
+  WormObs& operator[](std::string key) { return _worm_obs_map[key]; }
+  // const WormObs& operator[](std::string key) const { return _worm_obs_map[key]; }
+
+  //n* recursive template approach
+  template<typename... Args>
+  MapWormObs(worm_pair_t arg, Args... args );
+  MapWormObs(worm_pair_t arg);
+  MapWormObs() {}
+};
+
+// template model::MapWormObs::MapWormObs<worm_pair_t>(worm_pair_t);
+

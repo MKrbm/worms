@@ -46,13 +46,13 @@ namespace model
       exit(1);
     }
     size_t s = 0;
-    s += x1;
-    s *= _spin_dof;
-    s += x2;
+    s += x4;
     s *= _spin_dof;
     s += x3;
     s *= _spin_dof;
-    s += x4;
+    s += x2;
+    s *= _spin_dof;
+    s += x1;
     // size_t s = 0;
     // for (auto& spin : spins) {
     //   s *= _spin_dof;
@@ -439,4 +439,20 @@ namespace model
     return make_pair(make_shared<ArrWormObs>(awo1), make_shared<ArrWormObs>(awo2));
     // return make_pair(sp1, sp2);
   }
+
+  template<typename... Args>
+  MapWormObs::MapWormObs(std::pair<std::string, WormObs> arg, Args... args )
+  :MapWormObs(args...)
+  {
+    _worm_obs_map[arg.first] = arg.second;
+  }
+  MapWormObs::MapWormObs(std::pair<std::string, WormObs> arg)
+  {
+    _worm_obs_map[arg.first] = arg.second;
+  }
+
+  template MapWormObs::MapWormObs(worm_pair_t, worm_pair_t);
+  template MapWormObs::MapWormObs(worm_pair_t, worm_pair_t,worm_pair_t);
+  template MapWormObs::MapWormObs(worm_pair_t, worm_pair_t,worm_pair_t,worm_pair_t);
+
 }
