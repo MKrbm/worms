@@ -93,7 +93,7 @@ class Worm{
   WORMS worms_list;
 
   VVS pows_vec;
-  VS sps_sites;
+  size_t sps;
   std::vector<BOND> bonds;
   std::vector<size_t> bond_type;
   std::vector<state_func> state_funcs;
@@ -133,7 +133,7 @@ class Worm{
   Worm(double beta, MODEL model_, model::WormObs worm_obs_, size_t cl = SIZE_MAX, int rank = 0)
   :spin_model(model_), L(spin_model.L), beta(beta), rho(-1), N_op(spin_model.N_op), 
   bonds(spin_model.bonds),bond_type(spin_model.bond_type) ,state(spin_model.L),cstate(spin_model.L), cutoff_length(cl), _worm_obs(worm_obs_),_phys_cnt(1),
-  loperators(spin_model.loperators), sps_sites(spin_model._sps_sites)
+  loperators(spin_model.loperators), sps(spin_model.sps_sites(0))
   {
 
     srand(rank);
@@ -167,7 +167,7 @@ class Worm{
   for (int i=0; i<state.size(); i++){
     #ifdef RANDOM_SEED
     double r = uniform(rand_src);
-    state[i] = static_cast<SPIN>(sps_sites[i] * r);
+    state[i] = static_cast<SPIN>(sps * r);
     #else
     state[i] = 0;
     #endif
@@ -314,7 +314,7 @@ class Worm{
         double r = uniform(rand_src);
         size_t dir = (size_t)2 * r, ini_dir = dir;
         // size_t fl = 1;
-        int fl = static_cast<int>((sps_sites[site]-1)*uniform(rand_src)) + 1, ini_fl = fl;
+        int fl = static_cast<int>((sps-1)*uniform(rand_src)) + 1, ini_fl = fl;
         int wl = wlength;
         int br = 0;
         bool wh = true; //* Worm head still exists.
@@ -341,7 +341,7 @@ class Worm{
              }
             }
           dot = &spacetime_dots[n_dot_label];
-        }while((n_dot_label!=wt_dot||((ini_dir==dir?-1:1)*ini_fl+fl+sps_sites[site])%sps_sites[site]!=0)); 
+        }while((n_dot_label!=wt_dot||((ini_dir==dir?-1:1)*ini_fl+fl+sps)%sps!=0)); 
         
         if(br==1){ bocnt++; break;}
         
@@ -380,7 +380,7 @@ class Worm{
                             size_t h_x, size_t h_x_prime, size_t t_x, size_t t_x_prime
                             ){
     if (h_site != t_site){
-      _worm_obs << _worm_obs.second()->operator()({t_x, h_x, t_x_prime, h_x_prime}) * L * sign / 2.0;
+      _worm_obs << _worm_obs.second()->operator()(t_x, h_x, t_x_prime, h_x_prime) * L * sign / 2.0;
       _phys_cnt << 0;
     } else {
       if (t_x == t_x_prime) { //n* assuming no diagonal element in the worm observables.
@@ -388,11 +388,11 @@ class Worm{
         double _add = 0;
         for (int i=0; i<L; i++){
           size_t h_x = cstate[i];
-          if (i == t_site) _add += _worm_obs.first()->operator()(std::array<size_t, 2>({t_x, t_x})) * L ;
-          else _add += _worm_obs.second()->operator()({t_x, h_x, t_x, h_x}) * L / 2.0;
+          if (i == t_site) _add += _worm_obs.first()->operator()(t_x, t_x) * L ;
+          else _add += _worm_obs.second()->operator()(t_x, h_x, t_x, h_x) * L / 2.0;
         }
         _worm_obs << _add * sign;
-        _phys_cnt << (double) sign;
+        _phys_cnt << (double) sign / (sps - 1);
         phys_cnt++;
       } else { //n* This case could contribute to single flip operator but not implemented yet.
         ;
@@ -411,9 +411,9 @@ class Worm{
     double _add = 0;
     for (int i=0; i<L; i++){
       size_t h_x = cstate[i];
-      if (i == t_site) _add += _worm_obs.first()->operator()(std::array<size_t, 2>({t_x, t_x_prime}));
+      if (i == t_site) _add += _worm_obs.first()->operator()(t_x, t_x_prime);
       else {
-        _add += _worm_obs.second()->operator()({t_x, h_x, t_x_prime, h_x});
+        _add += _worm_obs.second()->operator()(t_x, h_x, t_x_prime, h_x);
         }
     }
     _worm_obs << (double) _add * L * sign * 2;
@@ -538,7 +538,7 @@ class Worm{
     size_t cur_dot = next_dot;
     // ASSERT(site == dotp->site(), "site is not consistent");
     if (dotp->at_origin()){  
-      state[dotp->label()] = (state[dotp->label()] + fl) % sps_sites[site]; 
+      state[dotp->label()] = (state[dotp->label()] + fl) % sps; 
       if (dir||tau==0) wlength += 1 - tau; else wlength += tau;
     } 
     else if (dotp->at_operator()){
@@ -566,7 +566,7 @@ class Worm{
       
       sign *= lop.signs[opsp->state()];
       state_num = opsp->update_state(cindex, fl);
-      tmp = lop.markov[state_num](cindex*(sps_sites[site] - 1) + sps_sites[site]-fl, rand_src);
+      tmp = lop.markov[state_num](cindex*(sps - 1) + sps-fl, rand_src);
 
       int tmp_wlength = opsp->tau() - tau;
       if (!(dir^(tmp_wlength>0)) & (tmp_wlength!=0)) wlength += std::abs(tmp_wlength);
@@ -619,8 +619,8 @@ class Worm{
         tmp--;
         auto& _lop = loperators[_optype];
         sign *= _lop.signs[_state_num]; // warped point
-        nindex = tmp/(sps_sites[0] - 1); // sps_sites are filled with same value.
-        fl = tmp % (sps_sites[0] - 1) + 1;
+        nindex = tmp/(sps - 1); // sps_sites are filled with same value.
+        fl = tmp % (sps - 1) + 1;
         sign *= _lop.signs[opsp->update_state(nindex, fl)]; // after procceeding
         dir = nindex/(leg_size);
         site = opsp->bond(nindex%leg_size);
@@ -635,8 +635,8 @@ class Worm{
         //         t_x, t_x_prime, (L - 1) / (double)can_warp_ops.size());
       }else{
         tmp--;
-        nindex = tmp/(sps_sites[0] - 1);
-        fl = tmp % (sps_sites[0] - 1) + 1;
+        nindex = tmp/(sps - 1);
+        fl = tmp % (sps - 1) + 1;
         state_num = opsp->update_state(nindex, fl);
         sign *= lop.signs[state_num];
         //n* assigin for next step
@@ -659,9 +659,9 @@ class Worm{
       }
       // int niter = 0;
       // for (int i=0; i<niter; i++){
-      //   int tmp_ = loperators[opsp->op_type()].markov[state_num](cindex*(sps_sites[site] - 1) + sps_sites[site]-fl-1, test_src);
-      //   int nindex_ = tmp_/sps_sites[site] - 1;
-      //   int fl_ = tmp_ % sps_sites[site] - 1 + 1;
+      //   int tmp_ = loperators[opsp->op_type()].markov[state_num](cindex*(sps - 1) + sps-fl-1, test_src);
+      //   int nindex_ = tmp_/sps - 1;
+      //   int fl_ = tmp_ % sps - 1 + 1;
       //   // printf("test tmp : %d, state : %d\n", tmp_, num ^ (fl_ << (nls*nindex_)));
       // }
       #endif 
