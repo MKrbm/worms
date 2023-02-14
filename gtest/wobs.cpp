@@ -20,33 +20,27 @@ TEST(BaseWormObs, GetState)
   EXPECT_EQ(wo3.GetState(1, 0, 1, 0), 10);
   EXPECT_EQ(wo3.GetState(1, 1, 1, 0), 13);
   model::BaseWormObs wo4(2, 1);
-  EXPECT_EQ(wo4.GetState(1, 1, 0, 0), -1);
-  EXPECT_EQ(wo4.GetState(1, 0, 1, 0), 3);
+  EXPECT_EQ(wo4.GetState(1, 1), 3);
+  EXPECT_EQ(wo4.GetState(1, 0), 1);
   model::BaseWormObs wo5(4, 1);
-  EXPECT_EQ(wo5.GetState(1, 1, 3, 0), -1);
-  EXPECT_EQ(wo5.GetState(1, 0, 3, 0), 13);
-  EXPECT_EQ(wo5.GetState(1, 2, 3, 2), 13);
+  EXPECT_EQ(wo5.GetState(1, 1), 5);
+  EXPECT_EQ(wo5.GetState(1, 0), 1);
+  EXPECT_EQ(wo5.GetState(1, 2), 9);
 }
 
-TEST(BaseWormObs, Call)
-{
-  model::BaseWormObs wo(4, 1);
-  EXPECT_EQ(wo(1, 2, 3, 1), 0);
-  EXPECT_EQ(wo(1, 2, 1, 1), 0);
-}
 
 TEST(BaseWormObs, CallError)
 {
   model::BaseWormObs wo(4, 1);
   // wo(1, 2, 3, 2);
-  EXPECT_DEATH(double x = wo(1, 2, 1, 2),
+  EXPECT_DEATH(double x = wo(1, 2),
                "BaseWormObs::operator is virtual function");
 }
 
 TEST(BaseWormObs, ErrorCase)
 {
   model::BaseWormObs wo(2, 1);
-  EXPECT_DEATH(wo.GetState(1, 2, 0, 0), "spin state is out of range");
+  EXPECT_DEATH(wo.GetState(1, 2), "spin state is out of range");
   EXPECT_DEATH(model::BaseWormObs(1, 3), "leg size of BaseWormObs must be 1 or 2");
 }
 
@@ -63,12 +57,12 @@ TEST(ArrWormObs, GetState)
   EXPECT_EQ(wo3.GetState(1, 0, 1, 0), 10);
   EXPECT_EQ(wo3.GetState(1, 1, 1, 0), 13);
   model::ArrWormObs wo4(2, 1);
-  EXPECT_EQ(wo4.GetState(1, 1, 0, 0), -1);
-  EXPECT_EQ(wo4.GetState(1, 0, 1, 0), 3);
+  EXPECT_EQ(wo4.GetState(1, 1), 3);
+  EXPECT_EQ(wo4.GetState(1, 0), 1);
   model::ArrWormObs wo5(4, 1);
-  EXPECT_EQ(wo5.GetState(1, 1, 3, 0), -1);
-  EXPECT_EQ(wo5.GetState(1, 0, 3, 0), 13);
-  EXPECT_EQ(wo5.GetState(1, 2, 3, 2), 13);
+  EXPECT_EQ(wo5.GetState(1, 1), 5);
+  EXPECT_EQ(wo5.GetState(1, 3), 13);
+  EXPECT_EQ(wo5.GetState(1, 2), 9);
 }
 
 TEST(ArrWormObs, SetVector)
@@ -150,11 +144,11 @@ TEST(WormObs, CheckRead)
   testing::internal::CaptureStdout();
   model::WormObs wo3(2, "../gtest/model_array/worm_obs/g3");
   output = testing::internal::GetCapturedStdout();
-  EXPECT_STREQ("Warning! : Only one numpy file is found. The path is set for 2 points operator \n", output.c_str());
+  EXPECT_STREQ("Warning!! Given array has non-zero single site operator (Cannot handle yet)\nWarning! : Only one numpy file is found. The path is set for 2 points operator \n", output.c_str());
 
   model::WormObs wo(2, "../gtest/model_array/worm_obs/g");
-  EXPECT_EQ((*wo.first())(1, 0, 0, 1), 0);
-  EXPECT_EQ((*wo.first())(1, 0, 0, 0), 1);
+  EXPECT_EQ((*wo.first())(1, 0), 1);
+  EXPECT_EQ((*wo.first())(0, 0), 0);
   EXPECT_EQ((*wo.second())(1, 0, 0, 1), 1);
   EXPECT_EQ((*wo.second())(0, 1, 1, 0), 1);
 
@@ -163,11 +157,11 @@ TEST(WormObs, CheckRead)
   wo.add({0, 1, 1, 1}, 10, 1, -1, -1);
 
   batch_res res = wo.finalize();
-  EXPECT_FLOAT_EQ((double)res.mean()[0], 15 / 3.0); // (5 + 0 + 10) / 3
+  EXPECT_FLOAT_EQ((double)res.mean()[0], 11.666667); // (5 + 0 + 10) / 3
 
   model::WormObs wo_2site(2, "../gtest/model_array/Heisenberg/1D/original/Jz_-1_Jx_-1_Jy_-1_h_0/g");
-  EXPECT_EQ((*wo_2site.first())(1, 0, 0, 1), 0);
-  EXPECT_EQ((*wo_2site.first())(1, 0, 0, 0), 0);
+  EXPECT_EQ((*wo_2site.first())(0, 0), 0);
+  EXPECT_EQ((*wo_2site.first())(1, 0), 0);
   EXPECT_EQ((*wo_2site.second())(1, 0, 0, 1), 1);
   EXPECT_EQ((*wo_2site.second())(0, 1, 1, 0), 1);
 
@@ -178,3 +172,21 @@ TEST(WormObs, CheckRead)
   batch_res res2 = wo_2site.finalize();
   EXPECT_FLOAT_EQ((double)res2.mean()[0], 10 / 3.0); // (5 + 0 + 5) / 3
 }
+
+TEST(WormObs, MapWobs)
+{
+  using namespace model;
+  model::WormObs wo(2, "../gtest/model_array/worm_obs/g");
+  model::WormObs wo_2site(2, "../gtest/model_array/Heisenberg/1D/original/Jz_-1_Jx_-1_Jy_-1_h_0/g");
+
+  // auto a = make_pair(wo, wo);
+
+  model::MapWormObs mwobs(std::make_pair("g", wo));
+  // cout << ((*mwobs["g"].first())(0, 0)) << endl;
+  EXPECT_EQ((*mwobs["g"].first())(1, 0), 1);
+  model::MapWormObs mwobs2(make_pair("g", wo), make_pair("g2", wo_2site));
+  EXPECT_EQ((*mwobs2["g"].first())(1, 0), 1);
+  EXPECT_EQ((*mwobs2["g2"].second())(1, 0, 0, 1), 1);
+
+}
+
