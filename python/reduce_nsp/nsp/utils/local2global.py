@@ -85,11 +85,14 @@ def sum_ham_sparse(h, bonds, L, sps, stoquastic_=False):
 
 
 def sum_ham(h, bonds, L, sps, stoquastic_=False):
+    local_size = h.shape[0]
     h = np.kron(h, np.eye(int((sps**L)/h.shape[0])))
     ori_shape = h.shape
     H = np.zeros_like(h)
     h = h.reshape(L*2*(sps,))
     for bond in bonds:
+        if sps**len(bond) != local_size:
+            raise ValueError("local size is not consistent with bond")
         trans = np.arange(L)
         _trans = [i for i in range(L)]
         for i, b in enumerate(bond):
