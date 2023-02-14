@@ -452,7 +452,6 @@ namespace model
   }
 
   template MapWormObs::MapWormObs(worm_pair_t, worm_pair_t);
-  template MapWormObs::MapWormObs(worm_pair_t, worm_pair_t,worm_pair_t);
-  template MapWormObs::MapWormObs(worm_pair_t, worm_pair_t,worm_pair_t,worm_pair_t);
-
+  template MapWormObs::MapWormObs(worm_pair_t, worm_pair_t, worm_pair_t);
+  template MapWormObs::MapWormObs(worm_pair_t, worm_pair_t,worm_pair_t, worm_pair_t);
 }

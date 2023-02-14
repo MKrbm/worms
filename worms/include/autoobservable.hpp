@@ -247,5 +247,9 @@ public:
   MapWormObs() {}
 };
 
+extern template model::MapWormObs::MapWormObs(worm_pair_t, worm_pair_t);
+extern template model::MapWormObs::MapWormObs(worm_pair_t, worm_pair_t, worm_pair_t);
+extern template model::MapWormObs::MapWormObs(worm_pair_t, worm_pair_t,worm_pair_t, worm_pair_t);
+
 // template model::MapWormObs::MapWormObs<worm_pair_t>(worm_pair_t);
 
