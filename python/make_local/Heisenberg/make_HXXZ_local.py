@@ -118,10 +118,9 @@ if __name__ == "__main__":
             H = sum_ham(LH, [[1,2]], 4, 2)
             H += sum_ham(LH/2, [[0,1],[2,3]], 4, 2)
             save_npy(path+"/H", [H])
-
             oz = np.kron(oz, I4) + np.kron(I4, oz)
             save_npy(path+"/Sz", [oz/2])
-            save_npy(path+"/g", [np.zeros((4,4)),g])
+            # save_npy(path+"/g", [np.zeros((4,4)),g])
     if lat == "2D":
         H = lh - hz * oz / 4 - hx * ox / 4
         H *= -1
