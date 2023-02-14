@@ -143,8 +143,11 @@ class model::BaseWormObs
     x_t : spin state at lower portion of worm tail.
     x_t_p : spin state at upper portion of worm tail.
     */
-    int GetState(std::array<size_t, 4> spins) const;
-    int GetState(std::array<size_t, 2> spins) const;
+    int GetState(size_t x1,
+                 size_t x2,
+                 size_t x3,
+                 size_t x4) const;
+    int GetState(size_t x1, size_t x2) const;
 
 
     /*
@@ -154,8 +157,11 @@ class model::BaseWormObs
     tau : time difference between head and tail.
     */
     double operator() (std::array<size_t, 4> spins, double r, double tau) const;
-    double operator() (std::array<size_t, 4> spins) const;
-    double operator() (std::array<size_t, 2> spins) const;
+    // double operator() (std::array<size_t, 4> spins) const;
+    // double operator() (std::array<size_t, 2> spins) const;
+
+    double operator() (size_t x1, size_t x2, size_t x3, size_t x4) const;
+    double operator() (size_t x1, size_t x2) const;
 
 
     virtual double _operator(size_t state) const ;
