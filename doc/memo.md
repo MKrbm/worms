@@ -34,5 +34,6 @@ $\langle x_{\tau} | \hat{o}_i \hat{o}_j |x^\prime_{\tau} \rangle$
 - # 聞くこと
   - MPIをGtestでやる
   - worm obs の reduce の方法。 (サイズが会わないからできないといわれる)
+  - 低く見積もっている可能性がある？
   
 
