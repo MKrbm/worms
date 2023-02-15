@@ -26,19 +26,19 @@ model::base_lattice chain(size_t N)
 std::vector<std::vector<std::vector<double>>> heisenberg1D_hams = {heisenberg1D_ham};
 
 typedef bcl::st2013 MC;
-Worm<MC> run_worm(
+void run_worm(
     model::base_model<MC> &spin,
     double T, size_t sweeps, size_t therms,
     std::vector<batch_res> &res,
     model::observable &obs,
     model::base_lattice &lat,
-    model::WormObs wobs = model::WormObs(2),
+    model::MapWormObs wobs = model::WormObs(2),
     size_t n_sites = 1
     )
 {
   size_t ns = lat.L * n_sites;
   // dont fix worm density. Not printout density information.
-  Worm<MC> solver = exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, obs, wobs);
+  auto solver = exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, obs, wobs);
 
   batch_res as = res[0];  // average sign
   batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
@@ -108,7 +108,7 @@ Worm<MC> run_worm(
        << worm_obs.mean()[0] << " +- " << worm_obs.mean()[1] << endl
        << "Physical configurations = "
        << phys_conf.mean()[0] << " +- " << phys_conf.mean()[1] << endl;
-  return solver;
+  return ;
 }
 
 TEST(WormSimuObs, HXXX1D_NS)
@@ -141,7 +141,7 @@ TEST(WormSimuObs, HXXX1D_NS)
   T = 0.5;
   therms = 100000;
 
-  auto solver = run_worm(spin, T, sweeps, therms, res, obs, lat, wobs);
+  run_worm(spin, T, sweeps, therms, res, obs, lat, wobs);
 
   /*
   expect the following res
@@ -200,7 +200,7 @@ TEST(WormSimuObs, HXXX1D_2S_NS)
   T = 0.5;
   therms = 100000;
 
-  auto solver = run_worm(spin, T, sweeps, therms, res, obs, lat, wobs,2);
+  run_worm(spin, T, sweeps, therms, res, obs, lat, wobs,2);
 
   /*
   expect the following res
@@ -240,15 +240,22 @@ TEST(WormSimuObs, HXXX2D_0)
   double shift = 0.1;
   bool zw = true;
 
-  std::string ham_path, obs_path, wobs_path;
+  std::string ham_path, obs_path, wobs_path, wobs_path2;
   ham_path = "../gtest/model_array/Heisenberg/2D/original/Jz_-1_Jx_0.5_Jy_0.3_hz_0_hx_0.5/H";
   obs_path = "../gtest/model_array/Heisenberg/2D/original/Jz_-1_Jx_0.5_Jy_0.3_hz_0_hx_0.5/Sz";
   wobs_path = "../gtest/model_array/worm_obs/g_test5";
+  // wobs_path2 = "../gtest/model_array/worm_obs/g_test_2site_2";
+  
   model::base_model<MC> spin(lat, dofs,
                              ham_path, params, types, shift, zw, false, false);
 
   model::observable obs(spin, obs_path, false);
   model::WormObs wobs(spin.sps_sites(0), wobs_path);
+  // model::WormObs wobs2(spin.sps_sites(0), wobs_path2);
+  // model::MapWormObs map_wobs(make_pair("G",wobs), make_pair("G2",wobs2));
+  model::MapWormObs map_wobs(make_pair("G",wobs));
+
+
   vector<batch_res> res;
   double T;
   size_t sweeps, therms;
@@ -257,7 +264,7 @@ TEST(WormSimuObs, HXXX2D_0)
   T = 0.5;
   therms = 100000;
 
-  auto solver = run_worm(spin, T, sweeps, therms, res, obs, lat, wobs);
+  run_worm(spin, T, sweeps, therms, res, obs, lat, map_wobs);
 
   /*
   expect the following res

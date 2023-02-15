@@ -27,7 +27,7 @@ model::base_lattice chain(size_t N)
 std::vector<std::vector<std::vector<double>>> heisenberg1D_hams = {heisenberg1D_ham};
 
 typedef bcl::heatbath MC;
-Worm<MC> run_worm(
+void run_worm(
   model::base_model<MC>& spin, 
   double T, size_t sweeps, size_t therms,
   std::vector<batch_res> &res, 
@@ -36,7 +36,7 @@ Worm<MC> run_worm(
   model::WormObs wobs = model::WormObs(2)
   ){
     //dont fix worm density. Not printout density information.
-  Worm<MC> solver = exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, obs, wobs);
+  exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, obs, wobs);
 
   batch_res as = res[0];  // average sign
   batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
@@ -99,7 +99,7 @@ Worm<MC> run_worm(
        << chi_mean.first  * T / lat.L << " +- " << chi_mean.second  * T / lat.L << endl
        << "G                    = "
        << worm_obs_mean.first << " +- " << worm_obs_mean.second << endl;
-  return solver;
+  return;
 }
 
 
@@ -130,7 +130,7 @@ TEST(WormTest, HXXX1D) {
   T = 1;
   therms = 100000;
 
-  auto solver = run_worm(spin, T, sweeps, therms, res, obs, lat, wobs);
+  run_worm(spin, T, sweeps, therms, res, obs, lat, wobs);
 
   /*
   expect the following res 
