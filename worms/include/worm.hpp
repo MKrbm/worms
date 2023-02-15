@@ -121,7 +121,7 @@ public:
   double rho;
   const double beta;
 
-  model::MapWormObs &get_worm_obs() { return _mp_worm_obs; }
+  std::unordered_map<std::string, WormObs>& get_worm_obs() { return _mp_worm_obs(); }
   alps::alea::batch_acc<double> &get_phys_cnt() { return _phys_cnt; }
 
   Worm(double beta, MODEL model_, size_t cl = SIZE_MAX, int rank = 0)
@@ -409,35 +409,39 @@ public:
   void calcHorizontalGreen(double tau, size_t h_site, size_t t_site,
                            size_t h_x, size_t h_x_prime, size_t t_x, size_t t_x_prime)
   {
-    model::WormObs& _worm_obs = _mp_worm_obs().begin()->second;
-    if (h_site != t_site)
+    // model::WormObs& _worm_obs = _mp_worm_obs().begin()->second;
+    bool _add_phys_flag = true;
+    double _add_phys = 0;
+    // if (t_x == t_x_prime) cout << "h_x : " << h_x << " h_x_prime : " << h_x_prime << " t_x : " << t_x << " t_x_prime : " << t_x_prime << endl;
+    for (auto& obs : _mp_worm_obs())
     {
-      _worm_obs << _worm_obs.second()->operator()(t_x, h_x, t_x_prime, h_x_prime) * L * sign / 2.0;
-      _phys_cnt << 0;
-    }
-    else
-    {
-      if (t_x == t_x_prime)
-      { // n* assuming no diagonal element in the worm observables.
-        // _mp_worm_obs << 0;
-        double _add = 0;
-        for (int i = 0; i < L; i++)
-        {
-          size_t h_x = cstate[i];
-          if (i == t_site)
-            _add += _worm_obs.first()->operator()(t_x, t_x) * L;
-          else
-            _add += _worm_obs.second()->operator()(t_x, h_x, t_x, h_x) * L / 2.0;
-        }
-        _worm_obs << _add * sign;
-        _phys_cnt << (double)sign / (sps - 1);
-        phys_cnt++;
+      auto& _worm_obs = obs.second;
+      double _add_obs = 0;
+      _add_phys = 0;
+      if (h_site != t_site)
+      {
+        _add_obs += _worm_obs.second()->operator()(t_x, h_x, t_x_prime, h_x_prime) * L * sign / 2.0;
       }
       else
-      { // n* This case could contribute to single flip operator but not implemented yet.
-        ;
+      {
+        if (t_x == t_x_prime)
+        { 
+          int i = uniform(rand_src) * L;
+          size_t h_x = cstate[i];
+          if (i == t_site)
+            _add_obs += _worm_obs.first()->operator()(t_x, t_x) * L * L * sign  / (double) (sps - 1) ;
+          else
+            _add_obs += _worm_obs.second()->operator()(t_x, h_x, t_x, h_x) * L  * L / 2.0 * sign  / (double) (sps - 1);
+          _add_phys = (double)sign / (sps - 1);
+        }
+        else
+        { // n* This case could contribute to single flip operator but not implemented yet.
+          ;
+        }
       }
+      _worm_obs << _add_obs;
     }
+    _phys_cnt << _add_phys;
   }
 
   /*
@@ -445,14 +449,15 @@ public:
   */
   void calcWarpGreen(double tau, size_t t_site, size_t t_x, size_t t_x_prime)
   {
-    model::WormObs& _worm_obs = _mp_worm_obs().begin()->second;
-    if (t_x == t_x_prime)
+    for (auto& obs : _mp_worm_obs())
     {
-      throw std::runtime_error("t_x == t_x_prime while wapr should never happen");
-    }
-    double _add = 0;
-    for (int i = 0; i < L; i++)
-    {
+      auto& _worm_obs = obs.second;
+      if (t_x == t_x_prime)
+      {
+        throw std::runtime_error("t_x == t_x_prime while wapr should never happen");
+      }
+      double _add = 0;
+      int i = uniform(rand_src) * L;
       size_t h_x = cstate[i];
       if (i == t_site)
         _add += _worm_obs.first()->operator()(t_x, t_x_prime);
@@ -460,12 +465,10 @@ public:
       {
         _add += _worm_obs.second()->operator()(t_x, h_x, t_x_prime, h_x);
       }
+    _worm_obs << (double)_add * L * L * sign * 2;
+      // _worm_obs << 0;
     }
-    _worm_obs << (double)_add * L * sign * 2;
     _phys_cnt << 0;
-    // if (t_x != t_x_prime) obs_sum += (double) 1 / can_warp_ops.size();
-    // if (t_x != t_x_prime) obs_sum += 1;
-    // if (phys_cnt != 0) cout << obs_sum / phys_cnt << endl;
   }
 
   // //*append to ops

@@ -39,7 +39,7 @@ extern double elapsed;
 
 // parallel version of exe_worm
 template <typename MC>
-Worm<MC> exe_worm_parallel(
+std::unordered_map<std::string, model::WormObs> exe_worm_parallel(
   model::base_model<MC> spin_model, 
   double T, 
   size_t sweeps, 
@@ -96,11 +96,8 @@ Worm<MC> exe_worm_parallel(
   double wlength = 0;
   double wdensity = spin_model.Nb;
   for (int i=0; i < therms + sweeps; i++){
-    // solver.diagonalUpdate(); 
     solver.diagonalUpdate(wdensity); //n* need to be comment out 
-    // printf("%dth iteration\n", i);
     solver.wormUpdate(wcount, wlength);
-    // printf("complete Worm update\n");
     if (cnt >= therms){
       int sign = 1;
       // double w_rate = 1;
@@ -179,10 +176,11 @@ Worm<MC> exe_worm_parallel(
   res.push_back(N.finalize());
   res.push_back(dH.finalize());
   res.push_back(dH2.finalize());
-  res.push_back((solver.get_worm_obs())().begin()->second.finalize());
   res.push_back(solver.get_phys_cnt().finalize());
-  res.push_back(m2_diag.finalize());
+  for (auto& obs : solver.get_worm_obs()){
+    res.push_back(obs.second.finalize());
+  }
 
-  return solver;
+  return solver.get_worm_obs();
 }
 
