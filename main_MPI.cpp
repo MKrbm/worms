@@ -243,7 +243,7 @@ int main(int argc, char **argv) {
 
   // simulate with worm algorithm (parallel computing is enable)
   vector<batch_res> res;
-  exe_worm_parallel(spin, T, sweeps, therms, cutoff_l, fix_wdensity, rank, res, obs, wobs);  
+  auto map_worm_obs = exe_worm_parallel(spin, T, sweeps, therms, cutoff_l, fix_wdensity, rank, res, obs, wobs);  
 
 
   batch_res as = res[0]; // average sign 
@@ -254,9 +254,14 @@ int main(int argc, char **argv) {
   batch_res N = res[5];
   batch_res dH = res[6]; // $\frac{\frac{\partial}{\partial h}Z}{Z}$ 
   batch_res dH2 = res[7]; // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
-  batch_res worm_obs = res[8];
-  batch_res phys_conf = res[9];
-  batch_res m2_diag = res[10];
+  batch_res phys_conf = res[8];
+
+  vector<pair<string,batch_res>> worm_obs;
+  int i = 0;
+  for (auto& obs : map_worm_obs){
+    worm_obs.push_back(make_pair(obs.first, res[9+i]));
+    i++;
+  }
 
 
   as.reduce(red_);
@@ -267,8 +272,11 @@ int main(int argc, char **argv) {
   N.reduce(red_);
   dH.reduce(red_);
   dH2.reduce(red_);
-  worm_obs.reduce(red_);
   phys_conf.reduce(red_);
+
+  for (auto& obs : worm_obs){
+    get<1>(obs).reduce(red_);
+  }
 
   double elapsed_max, elapsed_min;
   MPI_Allreduce(&elapsed, &elapsed_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
@@ -285,14 +293,16 @@ int main(int argc, char **argv) {
 
 
 
-    // calculate energy
+    //n* install 
     pair<double, double> ene_mean = jackknife_reweight_div(ene, as);  // calculate <SH> / <S>
 
     // calculate worm_observable 
-    pair<double, double> worm_obs_mean = jackknife_reweight_div(worm_obs, phys_conf);  // calculate <WoS> / <S>
+    vector<pair<string, pair<double, double>>> worm_obs_mean;
+    for (auto& obs : worm_obs){
+      auto mean = jackknife_reweight_div(get<1>(obs), phys_conf);  // calculate <WoS> / <S>
+      worm_obs_mean.push_back(make_pair(obs.first, mean));
+    }
 
-    // calculate m2_diag
-    pair<double, double> m2_diag_mean = jackknife_reweight_div(m2_diag, as);  // calculate <WoS> / <S>
 
 
     // calculat heat capacity
@@ -333,12 +343,12 @@ int main(int argc, char **argv) {
          << m_mean.first * T / n_sites << " +- " << m_mean.second * T / n_sites
          << endl
          << "susceptibility       = "
-         << chi_mean.first  * T / n_sites << " +- " << chi_mean.second  * T / n_sites << endl
-         << "G                    = "
-         << worm_obs_mean.first << " +- " << worm_obs_mean.second << endl
-         << "m2_diag              = "
-         << m2_diag_mean.first << " +- " << m2_diag_mean.second << endl
-         << "# of operators       = "
+         << chi_mean.first  * T / n_sites << " +- " << chi_mean.second  * T / n_sites << endl;
+
+    for (auto& obs : worm_obs_mean){
+      cout << obs.first << "          = " << obs.second.first << " +- " << obs.second.second << endl;
+    }
+    cout << "# of operators       = "
          << nop_mean.first << " +- " << nop_mean.second << endl
          << "# of neg sign op     = "
          << nnop_mean.first << " +- " << nnop_mean.second << endl;
