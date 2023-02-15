@@ -34,7 +34,6 @@ namespace model
   class WormObs;
   class MapWormObs;
   using worm_pair_t = std::pair<std::string, model::WormObs>;
-
 }
 
 /*
@@ -236,16 +235,38 @@ class model::MapWormObs
 private:
   std::unordered_map<std::string, WormObs> _worm_obs_map;
 public:
+  std::unordered_map<std::string, WormObs>& operator()(){return _worm_obs_map;}
+  WormObs& operator[](std::string key) { 
+    if (_worm_obs_map.count(key) == 0){throw std::runtime_error("Given key doesn't exist");}
+    return _worm_obs_map[key]; 
+  }
+  // WormObs& operator[](std::string key) { return _worm_obs_map[key]; }
 
-  WormObs& operator[](std::string key) { return _worm_obs_map[key]; }
-  // const WormObs& operator[](std::string key) const { return _worm_obs_map[key]; }
+  MapWormObs(WormObs obs){
+    _worm_obs_map["G"] = obs;
+  }
 
   //n* recursive template approach
   template<typename... Args>
   MapWormObs(worm_pair_t arg, Args... args );
   MapWormObs(worm_pair_t arg);
+  //n* if char* is given, convert it to string.
+  template<typename Arg, typename... Args>
+  MapWormObs(Arg arg, Args... args )
+  :MapWormObs(args...)
+  {
+    _worm_obs_map[arg.first] = arg.second;
+  }
+
+  template<typename Arg>
+  MapWormObs(Arg arg)
+  {
+    cout << "Warning! Encountered Implicit type conversion. pair<string, T> to pair<const char*, T>" << endl;
+    _worm_obs_map[arg.first] = arg.second;
+  }
   MapWormObs() {}
 };
+
 
 extern template model::MapWormObs::MapWormObs(worm_pair_t, worm_pair_t);
 extern template model::MapWormObs::MapWormObs(worm_pair_t, worm_pair_t, worm_pair_t);

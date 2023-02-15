@@ -49,7 +49,7 @@ Worm<MC> exe_worm_parallel(
   int rank,
   std::vector<batch_res>& res, // contains results such as energy, average_sign,, etc
   model::observable obs,
-  model::WormObs wobs
+  model::MapWormObs wobs
 ){
 
   // cout << "Hi" << endl;
@@ -179,7 +179,7 @@ Worm<MC> exe_worm_parallel(
   res.push_back(N.finalize());
   res.push_back(dH.finalize());
   res.push_back(dH2.finalize());
-  res.push_back(solver.get_worm_obs().finalize());
+  res.push_back((solver.get_worm_obs())().begin()->second.finalize());
   res.push_back(solver.get_phys_cnt().finalize());
   res.push_back(m2_diag.finalize());
 

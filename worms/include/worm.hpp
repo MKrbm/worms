@@ -62,7 +62,7 @@ public:
   using LOPt = model::local_operator<MCT>;
 
 private:
-  model::WormObs _worm_obs;
+  model::MapWormObs _mp_worm_obs;
   alps::alea::batch_acc<double> _phys_cnt;
 
   size_t warp_label_cnt1 = 0, warp_label_cnt2 = 0;
@@ -121,15 +121,15 @@ public:
   double rho;
   const double beta;
 
-  model::WormObs &get_worm_obs() { return _worm_obs; }
+  model::MapWormObs &get_worm_obs() { return _mp_worm_obs; }
   alps::alea::batch_acc<double> &get_phys_cnt() { return _phys_cnt; }
 
   Worm(double beta, MODEL model_, size_t cl = SIZE_MAX, int rank = 0)
       : Worm(beta, model_, model::WormObs(model_.sps_sites(0)), cl, rank) {}
 
-  Worm(double beta, MODEL model_, model::WormObs worm_obs_, size_t cl = SIZE_MAX, int rank = 0)
+  Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_, size_t cl = SIZE_MAX, int rank = 0)
       : spin_model(model_), L(spin_model.L), beta(beta), rho(-1), N_op(spin_model.N_op),
-        bonds(spin_model.bonds), bond_type(spin_model.bond_type), state(spin_model.L), cstate(spin_model.L), cutoff_length(cl), _worm_obs(worm_obs_), _phys_cnt(1),
+        bonds(spin_model.bonds), bond_type(spin_model.bond_type), state(spin_model.L), cstate(spin_model.L), cutoff_length(cl), _mp_worm_obs(mp_worm_obs_), _phys_cnt(1),
         loperators(spin_model.loperators), sps(spin_model.sps_sites(0))
   {
 
@@ -409,6 +409,7 @@ public:
   void calcHorizontalGreen(double tau, size_t h_site, size_t t_site,
                            size_t h_x, size_t h_x_prime, size_t t_x, size_t t_x_prime)
   {
+    model::WormObs& _worm_obs = _mp_worm_obs().begin()->second;
     if (h_site != t_site)
     {
       _worm_obs << _worm_obs.second()->operator()(t_x, h_x, t_x_prime, h_x_prime) * L * sign / 2.0;
@@ -418,7 +419,7 @@ public:
     {
       if (t_x == t_x_prime)
       { // n* assuming no diagonal element in the worm observables.
-        // _worm_obs << 0;
+        // _mp_worm_obs << 0;
         double _add = 0;
         for (int i = 0; i < L; i++)
         {
@@ -437,8 +438,6 @@ public:
         ;
       }
     }
-    // _worm_obs << _worm_obs.first()->operator()(std::array<size_t, 2>({h_x, h_x_prime})) * L * sign;
-    // if (h_x == h_x_prime && t_x == t_x_prime) _phys_cnt << (double) sign;
   }
 
   /*
@@ -446,6 +445,7 @@ public:
   */
   void calcWarpGreen(double tau, size_t t_site, size_t t_x, size_t t_x_prime)
   {
+    model::WormObs& _worm_obs = _mp_worm_obs().begin()->second;
     if (t_x == t_x_prime)
     {
       throw std::runtime_error("t_x == t_x_prime while wapr should never happen");
