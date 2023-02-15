@@ -32,8 +32,11 @@ Worm<MC> run_worm(
     std::vector<batch_res> &res,
     model::observable &obs,
     model::base_lattice &lat,
-    model::WormObs wobs = model::WormObs(2))
+    model::WormObs wobs = model::WormObs(2),
+    size_t n_sites = 1
+    )
 {
+  size_t ns = lat.L * n_sites;
   // dont fix worm density. Not printout density information.
   Worm<MC> solver = exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, obs, wobs);
 
@@ -78,7 +81,7 @@ Worm<MC> run_worm(
   { return x2 / y - (x1 / y) * (x1 / y); };
   pair<double, double> chi_mean = jackknife_reweight_any(dH, dH2, as, f);
 
-  cout << lat.L << endl;
+  cout << ns << endl;
   cout << "temperature          = " << T
        << endl
        << "Average sign         = "
@@ -87,18 +90,18 @@ Worm<MC> run_worm(
        << endl;
   cout << "-------------------------------------------------" << endl;
   cout << "Energy per site      = "
-       << ene_mean.first / lat.L << " +- "
-       << ene_mean.second / lat.L
+       << ene_mean.first / ns << " +- "
+       << ene_mean.second / ns
        << endl
        << "Specific heat        = "
-       << c_mean.first / lat.L << " +- "
-       << c_mean.second / lat.L
+       << c_mean.first / ns << " +- "
+       << c_mean.second / ns
        << endl
        << "magnetization        = "
-       << m_mean.first * T / lat.L << " +- " << m_mean.second * T / lat.L
+       << m_mean.first * T / ns << " +- " << m_mean.second * T / ns
        << endl
        << "susceptibility       = "
-       << chi_mean.first * T / lat.L << " +- " << chi_mean.second * T / lat.L << endl
+       << chi_mean.first * T / ns << " +- " << chi_mean.second * T / ns << endl
        << "G                    = "
        << worm_obs_mean.first << " +- " << worm_obs_mean.second << endl
        << "worm obs mean        = "
@@ -115,7 +118,7 @@ TEST(WormSimuObs, HXXX1D_NS)
   vector<size_t> dofs = {2};
   std::vector<double> params = {1.0};
   std::vector<int> types = {0};
-  double shift = 5;
+  double shift = 0.1;
   bool zw = true;
 
   std::string ham_path, obs_path, wobs_path;
@@ -165,6 +168,66 @@ TEST(WormSimuObs, HXXX1D_NS)
   G                    = 5.00911 +- 0.00418627
   */
 }
+
+
+TEST(WormSimuObs, HXXX1D_2S_NS)
+{
+
+  model::base_lattice lat = chain(5);
+  vector<size_t> dofs = {4};
+  std::vector<double> params = {1.0};
+  std::vector<int> types = {0};
+  double shift = 0.1;
+  bool zw = true;
+
+  std::string ham_path, obs_path, wobs_path;
+
+  // This hamiltonian requires zero worm.
+  ham_path = "../gtest/model_array/Heisenberg/1D/2sites/Jz_-1_Jx_0.5_Jy_0.3_hz_0_hx_0.5/H";
+  obs_path = "../gtest/model_array/Heisenberg/1D/2sites/Jz_-1_Jx_0.5_Jy_0.3_hz_0_hx_0.5/Sz";
+  wobs_path = "../gtest/model_array/worm_obs/g_test_2site";
+  model::base_model<MC> spin(lat, dofs,
+                             ham_path, params, types, shift, zw, false, false);
+  // cerr << heisenberg1D_hams << endl;
+
+  model::observable obs(spin, obs_path, false);
+  model::WormObs wobs(spin.sps_sites(0), wobs_path);
+  vector<batch_res> res;
+  double T;
+  size_t sweeps, therms;
+
+  sweeps = 5000000;
+  T = 0.5;
+  therms = 100000;
+
+  auto solver = run_worm(spin, T, sweeps, therms, res, obs, lat, wobs,2);
+
+  /*
+  expect the following res
+
+  LL = 5 {'Jz': -1, 'Jx': 0.5, 'Jy': 0.3, 'hz': 0, 'hx': 0.5}
+  T               = 0.5
+  E               = -0.17920078337192535
+  C               = 0.1904521882534027
+  M               = 3.671157742246578e-07
+  M^2             = 6.03879976272583
+  G               = 1.1070225238800049
+  chi             = 1.1863488077976516
+
+
+  N = 5,000,000
+  temperature          = 0.5
+  Average sign         = 0.444791 +- 0.000659766
+  -------------------------------------------------
+  Energy per site      = -0.179419 +- 0.000279616
+  Specific heat        = 0.190624 +- 0.00291661
+  magnetization        = 0.000211262 +- 0.000411468
+  susceptibility       = 1.18732 +- 0.00216208
+  G                    = 1.10602 +- 0.0093439
+  Physical configurations = 0.0324196 +- 0
+  */
+}
+
 
 TEST(WormSimuObs, HXXX2D_0)
 {
