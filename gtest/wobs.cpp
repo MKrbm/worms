@@ -139,7 +139,7 @@ TEST(WormObs, CheckRead)
   testing::internal::CaptureStdout();
   model::WormObs wo2(2, "../gtest/model_array/worm_obs/g2");
   std::string output = testing::internal::GetCapturedStdout();
-  EXPECT_STREQ("Warning! : Paths might be in reverse order \n", output.c_str());
+  EXPECT_STREQ("Warning! : Wobs paths might be in reverse order \n", output.c_str());
 
   testing::internal::CaptureStdout();
   model::WormObs wo3(2, "../gtest/model_array/worm_obs/g3");
@@ -184,9 +184,14 @@ TEST(WormObs, MapWobs)
   model::MapWormObs mwobs(std::make_pair("g", wo));
   // cout << ((*mwobs["g"].first())(0, 0)) << endl;
   EXPECT_EQ((*mwobs["g"].first())(1, 0), 1);
-  model::MapWormObs mwobs2(make_pair("g", wo), make_pair("g2", wo_2site));
-  EXPECT_EQ((*mwobs2["g"].first())(1, 0), 1);
+  model::MapWormObs mwobs2(make_pair("g1", wo), make_pair("g2", wo_2site));
+  EXPECT_EQ((*mwobs2["g1"].first())(1, 0), 1);
   EXPECT_EQ((*mwobs2["g2"].second())(1, 0, 0, 1), 1);
+
+  model::MapWormObs mwobs3(wo);
+  auto it = mwobs3().begin();
+  EXPECT_EQ(it->first, "G");
+  EXPECT_EQ((*it->second.first())(1, 0), 1);
 
 }
 
