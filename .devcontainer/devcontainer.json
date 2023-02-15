@@ -30,11 +30,9 @@
     "aaron-bond.better-comments",
     "GitHub.copilot",
     "julialang.language-julia",
-    "ms-python.isort",
     "ms-python.python",
     "usernamehw.indent-one-space",
-    "lesgrieve.paste-indent",
-    
+    "lesgrieve.paste-indent"
 	],
 	
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
