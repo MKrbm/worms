@@ -117,7 +117,16 @@
       "csignal": "cpp",
       "hash_set": "cpp",
       "fft": "cpp",
-      "cholmodsupport": "cpp"
+      "cholmodsupport": "cpp",
+      "core": "cpp",
+      "superlusupport": "cpp",
+      "adolcforward": "cpp",
+      "autodiff": "cpp",
+      "kroneckerproduct": "cpp",
+      "numericaldiff": "cpp",
+      "openglsupport": "cpp",
+      "specialfunctions": "cpp",
+      "splines": "cpp"
     },
     // "python.defaultInterpreterPath": "/home/keisuke/miniconda3/envs/quspin/bin/python",
     "python.analysis.extraPaths": [
