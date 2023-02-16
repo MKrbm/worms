@@ -18,6 +18,8 @@
 #include <alps/alea/internal/galois.hpp>
 #include <alps/alea/var_strategy.hpp>
 #include <alps/alea/batch.hpp>
+#include <alps/alea/autocorr.hpp>
+
 
 #include "load_npy.hpp"
 #include "automodel.hpp"

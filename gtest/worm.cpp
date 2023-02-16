@@ -17,7 +17,6 @@ double elapsed;
 
 using namespace std;
 
-
 model::base_lattice chain(size_t N)
 {
   std::vector<size_t> shapes = {N};
@@ -28,15 +27,16 @@ std::vector<std::vector<std::vector<double>>> heisenberg1D_hams = {heisenberg1D_
 
 typedef bcl::heatbath MC;
 void run_worm(
-  model::base_model<MC>& spin, 
-  double T, size_t sweeps, size_t therms,
-  std::vector<batch_res> &res, 
-  model::observable &obs,
-  model::base_lattice &lat,
-  model::WormObs wobs = model::WormObs(2)
-  ){
-    //dont fix worm density. Not printout density information.
-  exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, obs, wobs);
+    model::base_model<MC> &spin,
+    double T, size_t sweeps, size_t therms,
+    std::vector<batch_res> &res,
+    model::observable &obs,
+    model::base_lattice &lat,
+    model::WormObs wobs = model::WormObs(2))
+{
+  // dont fix worm density. Not printout density information.
+  alps::alea::autocorr_result<double> ac_res;
+  exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, ac_res, obs, wobs);
 
   batch_res as = res[0];  // average sign
   batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
@@ -45,9 +45,9 @@ void run_worm(
   batch_res n_ops = res[4];
   batch_res N2 = res[5];
   batch_res N = res[6];
-  batch_res dH = res[7];  // $\frac{\frac{\partial}{\partial h}Z}{Z}$
-  batch_res dH2 = res[8]; // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
-  batch_res worm_obs = res[9]; // depends on the definition of worm observable
+  batch_res dH = res[7];         // $\frac{\frac{\partial}{\partial h}Z}{Z}$
+  batch_res dH2 = res[8];        // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
+  batch_res worm_obs = res[9];   // depends on the definition of worm observable
   batch_res phys_conf = res[10]; // number of physical configurations
 
   std::function<double(double, double, double)> f;
@@ -59,10 +59,13 @@ void run_worm(
   // calculate energy
   pair<double, double> ene_mean = jackknife_reweight_div(ene, as); // calculate <SH> / <S>
 
-  // calculate worm_observable 
-  if (phys_conf.mean()[0] == 0) {throw std::runtime_error("No physical configuration");}
-  pair<double, double> worm_obs_mean = jackknife_reweight_div(worm_obs, phys_conf);  // calculate <WoS> / <S>
-  
+  // calculate worm_observable
+  if (phys_conf.mean()[0] == 0)
+  {
+    throw std::runtime_error("No physical configuration");
+  }
+  pair<double, double> worm_obs_mean = jackknife_reweight_div(worm_obs, phys_conf); // calculate <WoS> / <S>
+
   // calculat heat capacity
   f = [](double x1, double x2, double y)
   { return (x2 - x1) / y - (x1 / y) * (x1 / y); };
@@ -80,8 +83,8 @@ void run_worm(
   cout << "temperature          = " << T
        << endl
        << "Average sign         = "
-       << as_mean.first << " +- " 
-       << as_mean.second   
+       << as_mean.first << " +- "
+       << as_mean.second
        << endl;
   cout << "-------------------------------------------------" << endl;
   cout << "Energy per site      = "
@@ -89,21 +92,21 @@ void run_worm(
        << ene_mean.second / lat.L
        << endl
        << "Specific heat        = "
-       << c_mean.first / lat.L << " +- " 
+       << c_mean.first / lat.L << " +- "
        << c_mean.second / lat.L
        << endl
        << "magnetization        = "
        << m_mean.first * T / lat.L << " +- " << m_mean.second * T / lat.L
        << endl
        << "susceptibility       = "
-       << chi_mean.first  * T / lat.L << " +- " << chi_mean.second  * T / lat.L << endl
+       << chi_mean.first * T / lat.L << " +- " << chi_mean.second * T / lat.L << endl
        << "G                    = "
        << worm_obs_mean.first << " +- " << worm_obs_mean.second << endl;
   return;
 }
 
-
-TEST(WormTest, HXXX1D) {
+TEST(WormTest, HXXX1D)
+{
 
   model::base_lattice lat = chain(12);
   vector<size_t> dofs = {2};
@@ -116,11 +119,11 @@ TEST(WormTest, HXXX1D) {
   ham_path = "../gtest/model_array/Heisenberg/1D/original/Jz_-1_Jx_-1_Jy_-1_h_0/H";
   obs_path = "../gtest/model_array/Heisenberg/1D/original/Jz_-1_Jx_-1_Jy_-1_h_0/Sz";
   wobs_path = "../gtest/model_array/Heisenberg/1D/original/Jz_-1_Jx_-1_Jy_-1_h_0/g";
-  model::base_model<MC> spin(lat, dofs, 
-  ham_path, params, types, shift, zw, false, false);
+  model::base_model<MC> spin(lat, dofs,
+                             ham_path, params, types, shift, zw, false, false);
   // cerr << heisenberg1D_hams << endl;
 
-  model::observable obs(spin,obs_path , false);
+  model::observable obs(spin, obs_path, false);
   model::WormObs wobs(spin.sps_sites(0), wobs_path);
   vector<batch_res> res;
   double T;
@@ -133,7 +136,7 @@ TEST(WormTest, HXXX1D) {
   run_worm(spin, T, sweeps, therms, res, obs, lat, wobs);
 
   /*
-  expect the following res 
+  expect the following res
 
   L = 12 {'Jz': -1, 'Jx': -1, 'Jy': -1, 'h': 0}
   T               = 1
@@ -146,7 +149,8 @@ TEST(WormTest, HXXX1D) {
   */
 }
 
-TEST(WormTest, HXXZ1D) {
+TEST(WormTest, HXXZ1D)
+{
 
   model::base_lattice lat = chain(9);
   vector<size_t> dofs = {2};
@@ -181,7 +185,8 @@ TEST(WormTest, HXXZ1D) {
   */
 }
 
-TEST(WormTest, HXYZ1D) {
+TEST(WormTest, HXYZ1D)
+{
 
   model::base_lattice lat = chain(9);
   vector<size_t> dofs = {2};
@@ -216,29 +221,25 @@ TEST(WormTest, HXYZ1D) {
   */
 }
 
-
-TEST(WormTest, HXXZ2D) {
+TEST(WormTest, HXXZ2D)
+{
 
   std::vector<size_t> shapes = {3, 4};
   model::base_lattice lat("square lattice", "simple2d", shapes, "../config/lattices.xml", false);
-
 
   vector<size_t> dofs = {2};
   std::vector<double> params = {1.0};
   std::vector<int> types = {0};
   double shift = 0.25;
   bool zw = false;
-  model::base_model<MC> spin(lat, dofs, "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_-0.3_h_1/H", 
-        params, types, shift, zw, false, false); //heisenberg with J = 1, h =0 (H = J \sum S\cdot S - h)
-
-
+  model::base_model<MC> spin(lat, dofs, "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_-0.3_h_1/H",
+                             params, types, shift, zw, false, false); // heisenberg with J = 1, h =0 (H = J \sum S\cdot S - h)
 
   model::observable obs(spin, "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_-0.3_h_1/Sz", false);
   vector<batch_res> res;
 
   double T;
   size_t sweeps, therms;
-
 
   T = 0.5;
   sweeps = 1000000;
@@ -258,28 +259,25 @@ TEST(WormTest, HXXZ2D) {
   */
 }
 
-TEST(WormTest, HXYZ2D) {
+TEST(WormTest, HXYZ2D)
+{
 
   std::vector<size_t> shapes = {3, 4};
   model::base_lattice lat("square lattice", "simple2d", shapes, "../config/lattices.xml", false);
-
 
   vector<size_t> dofs = {2};
   std::vector<double> params = {1.0};
   std::vector<int> types = {0};
   double shift = 0.25;
   bool zw = false;
-  model::base_model<MC> spin(lat, dofs, "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_0.5_h_1/H", 
-        params, types, shift, zw, false, false); //heisenberg with J = 1, h =0 (H = J \sum S\cdot S - h)
-
-
+  model::base_model<MC> spin(lat, dofs, "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_0.5_h_1/H",
+                             params, types, shift, zw, false, false); // heisenberg with J = 1, h =0 (H = J \sum S\cdot S - h)
 
   model::observable obs(spin, "../gtest/model_array/Heisenberg/2D/original/Jz_1_Jx_-0.3_Jy_0.5_h_1/Sz", false);
   vector<batch_res> res;
 
   double T;
   size_t sweeps, therms;
-
 
   T = 0.4;
   sweeps = 1000000;
@@ -298,9 +296,3 @@ TEST(WormTest, HXYZ2D) {
   Chi             = 0.13907915083508915
   */
 }
-
-
-
-
-
-

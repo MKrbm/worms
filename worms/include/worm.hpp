@@ -711,10 +711,10 @@ public:
           exit(1);
         }
 
-        if (ops_main.size() - 1 != can_warp_ops.size())
-        {
-          throw std::runtime_error("all operators are warped");
-        }
+        // if (ops_main.size() - 1 != can_warp_ops.size())
+        // {
+        //   throw std::runtime_error("all operators are warped");
+        // }
 
         // if (can_warp_ops.size() > 10){
         //   if (it == can_warp_ops.begin())  warp_label_cnt1++;

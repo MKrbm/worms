@@ -33,12 +33,12 @@ void run_worm(
     model::observable &obs,
     model::base_lattice &lat,
     model::MapWormObs wobs = model::WormObs(2),
-    size_t n_sites = 1
-    )
+    size_t n_sites = 1)
 {
   size_t ns = lat.L * n_sites;
+  alps::alea::autocorr_result<double> ac_res;
   // dont fix worm density. Not printout density information.
-  auto solver = exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, obs, wobs);
+  auto solver = exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, ac_res, obs, wobs);
 
   batch_res as = res[0];  // average sign
   batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
@@ -108,7 +108,7 @@ void run_worm(
        << worm_obs.mean()[0] << " +- " << worm_obs.mean()[1] << endl
        << "Physical configurations = "
        << phys_conf.mean()[0] << " +- " << phys_conf.mean()[1] << endl;
-  return ;
+  return;
 }
 
 TEST(WormSimuObs, HXXX1D_NS)
@@ -169,7 +169,6 @@ TEST(WormSimuObs, HXXX1D_NS)
   */
 }
 
-
 TEST(WormSimuObs, HXXX1D_2S_NS)
 {
 
@@ -200,7 +199,7 @@ TEST(WormSimuObs, HXXX1D_2S_NS)
   T = 0.5;
   therms = 100000;
 
-  run_worm(spin, T, sweeps, therms, res, obs, lat, wobs,2);
+  run_worm(spin, T, sweeps, therms, res, obs, lat, wobs, 2);
 
   /*
   expect the following res
@@ -228,7 +227,6 @@ TEST(WormSimuObs, HXXX1D_2S_NS)
   */
 }
 
-
 TEST(WormSimuObs, HXXX2D_0)
 {
 
@@ -245,7 +243,7 @@ TEST(WormSimuObs, HXXX2D_0)
   obs_path = "../gtest/model_array/Heisenberg/2D/original/Jz_-1_Jx_0.5_Jy_0.3_hz_0_hx_0.5/Sz";
   wobs_path = "../gtest/model_array/worm_obs/g_test5";
   // wobs_path2 = "../gtest/model_array/worm_obs/g_test_2site_2";
-  
+
   model::base_model<MC> spin(lat, dofs,
                              ham_path, params, types, shift, zw, false, false);
 
@@ -253,8 +251,7 @@ TEST(WormSimuObs, HXXX2D_0)
   model::WormObs wobs(spin.sps_sites(0), wobs_path);
   // model::WormObs wobs2(spin.sps_sites(0), wobs_path2);
   // model::MapWormObs map_wobs(make_pair("G",wobs), make_pair("G2",wobs2));
-  model::MapWormObs map_wobs(make_pair("G",wobs));
-
+  model::MapWormObs map_wobs(make_pair("G", wobs));
 
   vector<batch_res> res;
   double T;
