@@ -1,3 +1,5 @@
+#include "MainConfig.h"
+
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -257,11 +259,12 @@ int main(int argc, char **argv) {
 
   if (rank == 0) {for (int i=0; i<40; i++) cout << "-"; cout << endl;}
 
-
+  alps::alea::autocorr_result<double> ac_res;
 
   // simulate with worm algorithm (parallel computing is enable)
   vector<batch_res> res;
-  auto map_worm_obs = exe_worm_parallel(spin, T, sweeps, therms, cutoff_l, fix_wdensity, rank, res, obs, mapwobs);  
+  auto map_worm_obs = exe_worm_parallel(spin, T, sweeps, therms, cutoff_l, 
+  fix_wdensity, rank, res, ac_res, obs, mapwobs);  
 
 
   batch_res as = res[0]; // average sign 
@@ -291,6 +294,7 @@ int main(int argc, char **argv) {
   dH.reduce(red_);
   dH2.reduce(red_);
   phys_conf.reduce(red_);
+  ac_res.reduce(red_);
 
   for (auto& obs : worm_obs){
     get<1>(obs).reduce(red_);
@@ -362,11 +366,18 @@ int main(int argc, char **argv) {
          << endl
          << "susceptibility       = "
          << chi_mean.first  * T / n_sites << " +- " << chi_mean.second  * T / n_sites << endl;
-
+    
     for (auto& obs : worm_obs_mean){
       fillStringWithSpaces(obs.first, 11);
       cout << obs.first << "          = " << obs.second.first << " +- " << obs.second.second << endl;
     }
+
+    cout << "----------------------------------------" << endl;
+    cout << "Integrated correlation time " << endl
+         << "H                    = " << ac_res.tau()[0] << endl
+         << "M^2                  = " << ac_res.tau()[1] << endl
+         << "S                    = " << ac_res.tau()[2] << endl;
+    cout << "----------------------------------------" << endl;
     cout << "# of operators       = "
          << nop_mean.first << " +- " << nop_mean.second << endl
          << "# of neg sign op     = "
