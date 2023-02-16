@@ -65,7 +65,12 @@ private:
   model::MapWormObs _mp_worm_obs;
   alps::alea::batch_acc<double> _phys_cnt;
 
-  size_t warp_label_cnt1 = 0, warp_label_cnt2 = 0;
+
+  // define observables
+  // n*  number of physically meaningful configurations;
+  double phys_cnt;
+  // n*  sum of observables encountered while worm update. (observable must be non-diagonal operator)
+  vector<double> obs_sum;
 
 public:
   typedef spin_state::Operator OP_type;
@@ -88,6 +93,7 @@ public:
   STATE cstate;
   DOTS spacetime_dots; // n*  contain dots in space-time.
   WORMS worms_list;
+  
 
   VVS pows_vec;
   size_t sps;
@@ -102,12 +108,7 @@ public:
   std::vector<model::local_operator<typename MODEL::MCT>> &loperators;
   std::vector<std::vector<double>> accepts; // n* normalized diagonal elements;
 
-  // define observables
-  // n*  number of physically meaningful configurations;
-  double phys_cnt = 0;
-  // n*  sum of observables encountered while worm update. (observable must be non-diagonal operator)
-  double obs_sum = 0;
-  double obs_sum2 = 0;
+
   // end of define observables
 
   int sign = 1;
@@ -130,7 +131,7 @@ public:
   Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_, size_t cl = SIZE_MAX, int rank = 0)
       : spin_model(model_), L(spin_model.L), beta(beta), rho(-1), N_op(spin_model.N_op),
         bonds(spin_model.bonds), bond_type(spin_model.bond_type), state(spin_model.L), cstate(spin_model.L), cutoff_length(cl), _mp_worm_obs(mp_worm_obs_), _phys_cnt(1),
-        loperators(spin_model.loperators), sps(spin_model.sps_sites(0))
+        loperators(spin_model.loperators), sps(spin_model.sps_sites(0)), obs_sum(mp_worm_obs_().size())
   {
 
     srand(rank);
@@ -343,7 +344,11 @@ public:
         double wlength_prime = 0;
         wcount += 1;
 
-        if (d_cnt == 54)
+        //n* initialize wobs variables
+        phys_cnt = 0;
+        obs_sum.assign(obs_sum.size(), 0);
+
+        if (d_cnt == 385)
         {
           int x;
           cout << d_cnt << endl;
@@ -368,6 +373,13 @@ public:
           }
           dot = &spacetime_dots[n_dot_label];
         } while ((n_dot_label != wt_dot || ((ini_dir == dir ? -1 : 1) * ini_fl + fl + sps) % sps != 0));
+        _phys_cnt << phys_cnt;
+        int obs_i = 0;
+        for (auto& obs : _mp_worm_obs())
+        {
+          obs.second << obs_sum[obs_i];
+          obs_i++;
+        }
 
         if (br == 1)
         {
@@ -410,17 +422,15 @@ public:
                            size_t h_x, size_t h_x_prime, size_t t_x, size_t t_x_prime)
   {
     // model::WormObs& _worm_obs = _mp_worm_obs().begin()->second;
-    bool _add_phys_flag = true;
-    double _add_phys = 0;
+    // double _add_phys = 0;
     // if (t_x == t_x_prime) cout << "h_x : " << h_x << " h_x_prime : " << h_x_prime << " t_x : " << t_x << " t_x_prime : " << t_x_prime << endl;
+    int j=0;
     for (auto& obs : _mp_worm_obs())
     {
       auto& _worm_obs = obs.second;
-      double _add_obs = 0;
-      _add_phys = 0;
       if (h_site != t_site)
       {
-        _add_obs += _worm_obs.second()->operator()(t_x, h_x, t_x_prime, h_x_prime) * L * sign / 2.0;
+        obs_sum[j] += _worm_obs.second()->operator()(t_x, h_x, t_x_prime, h_x_prime) * L * sign / 2.0;
       }
       else
       {
@@ -429,19 +439,18 @@ public:
           int i = uniform(rand_src) * L;
           size_t h_x = cstate[i];
           if (i == t_site)
-            _add_obs += _worm_obs.first()->operator()(t_x, t_x) * L * L * sign  / (double) (sps - 1) ;
+            obs_sum[j] += _worm_obs.first()->operator()(t_x, t_x) * L * L * sign  / (double) (sps - 1) ;
           else
-            _add_obs += _worm_obs.second()->operator()(t_x, h_x, t_x, h_x) * L  * L / 2.0 * sign  / (double) (sps - 1);
-          _add_phys = (double)sign / (sps - 1);
+            obs_sum[j] += _worm_obs.second()->operator()(t_x, h_x, t_x, h_x) * L  * L / 2.0 * sign  / (double) (sps - 1);
+          phys_cnt = (double)sign / (sps - 1);
         }
         else
         { // n* This case could contribute to single flip operator but not implemented yet.
           ;
         }
       }
-      _worm_obs << _add_obs;
+      j++;
     }
-    _phys_cnt << _add_phys;
   }
 
   /*
@@ -449,6 +458,7 @@ public:
   */
   void calcWarpGreen(double tau, size_t t_site, size_t t_x, size_t t_x_prime)
   {
+    int j=0;
     for (auto& obs : _mp_worm_obs())
     {
       auto& _worm_obs = obs.second;
@@ -456,19 +466,16 @@ public:
       {
         throw std::runtime_error("t_x == t_x_prime while wapr should never happen");
       }
-      double _add = 0;
       int i = uniform(rand_src) * L;
       size_t h_x = cstate[i];
       if (i == t_site)
-        _add += _worm_obs.first()->operator()(t_x, t_x_prime);
+        obs_sum[j] += _worm_obs.first()->operator()(t_x, t_x_prime)* L * L * sign * 2;
       else
       {
-        _add += _worm_obs.second()->operator()(t_x, h_x, t_x_prime, h_x);
+        obs_sum[j] += _worm_obs.second()->operator()(t_x, h_x, t_x_prime, h_x)* L * L * sign * 2;
       }
-    _worm_obs << (double)_add * L * L * sign * 2;
-      // _worm_obs << 0;
+      j++;
     }
-    _phys_cnt << 0;
   }
 
   // //*append to ops
