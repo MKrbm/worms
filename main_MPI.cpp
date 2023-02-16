@@ -127,7 +127,8 @@ int main(int argc, char **argv) {
 
 
   double shift;
-  string file, basis, cell, ham_path, obs_path, wobs_path;
+  string file, basis, cell, ham_path, obs_path;
+  vector<string> wobs_paths;
   bool repeat; // true if repeat params and types.
   bool zero_worm;
   size_t ns_unit;
@@ -148,12 +149,20 @@ int main(int argc, char **argv) {
   ham_path = (string) mcfg->lookup("ham_path").c_str();
   try { obs_path = (string) mcfg->lookup("obs_path").c_str();}
   catch(const SettingNotFoundException &nfex) { obs_path = "";}
-  try { wobs_path = (string) mcfg->lookup("worm_obs_path").c_str();}
-  catch(const SettingNotFoundException &nfex) { wobs_path = "";}
   repeat = (bool) mcfg->lookup("repeat");
   shift = (double) mcfg->lookup("shift");
   zero_worm = (bool) mcfg->lookup("zero_worm");
   try {ns_unit = (size_t) mcfg->lookup("ns_unit");} catch(...) {ns_unit = 1;}
+  try { 
+    const Setting& wobs_path_list = mcfg->lookup("worm_obs_path");
+    for (int i=0; i<wobs_path_list.getLength(); i++) {
+      string tmp = wobs_path_list[i]; 
+      wobs_paths.push_back(tmp);
+    }
+  }
+  catch(const SettingNotFoundException &nfex) {
+    cout << "no worm observables" << endl;
+  }
 
   // cout << file << endl;
 
@@ -204,10 +213,9 @@ int main(int argc, char **argv) {
       if (rank == 0) cout << "obs_path is not given. Elements of observables are set to zero" << endl;
       obs_path = "";
     }
-    try { wobs_path = args.get<string>("wobs");}
+    try { wobs_paths = vector<string>(1,args.get<string>("wobs"));}
     catch(...) { 
       if (rank == 0) cout << "wobs_path is not given. Elements of worm observables will set to zero" << endl;
-      wobs_path = "";
     }
   }
   catch(...) {}
@@ -228,7 +236,17 @@ int main(int argc, char **argv) {
   model::base_lattice lat(basis, cell, shapes, file, !rank);
   model::base_model<bcl::st2013> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat, !rank);
   model::observable obs(spin, obs_path, !rank);
-  model::WormObs wobs(spin.sps_sites(0), wobs_path, !rank); // all elements of sps_sites are the same.
+
+  //n* set wobs
+  if (wobs_paths.size() == 0) wobs_paths.push_back("");
+  model::MapWormObs mapwobs;
+  for (int i=0; i<wobs_paths.size(); i++) {
+    string name = "G";
+    name += to_string(i);
+    mapwobs.push_back(name ,model::WormObs(spin.sps_sites(0), wobs_paths[i], !rank));
+  }
+
+  // model::WormObs wobs(spin.sps_sites(0), wobs_path, !rank); // all elements of sps_sites are the same.
 
   size_t n_sites = lat.L * ns_unit;
 
@@ -243,7 +261,7 @@ int main(int argc, char **argv) {
 
   // simulate with worm algorithm (parallel computing is enable)
   vector<batch_res> res;
-  auto map_worm_obs = exe_worm_parallel(spin, T, sweeps, therms, cutoff_l, fix_wdensity, rank, res, obs, wobs);  
+  auto map_worm_obs = exe_worm_parallel(spin, T, sweeps, therms, cutoff_l, fix_wdensity, rank, res, obs, mapwobs);  
 
 
   batch_res as = res[0]; // average sign 
@@ -346,6 +364,7 @@ int main(int argc, char **argv) {
          << chi_mean.first  * T / n_sites << " +- " << chi_mean.second  * T / n_sites << endl;
 
     for (auto& obs : worm_obs_mean){
+      fillStringWithSpaces(obs.first, 11);
       cout << obs.first << "          = " << obs.second.first << " +- " << obs.second.second << endl;
     }
     cout << "# of operators       = "
