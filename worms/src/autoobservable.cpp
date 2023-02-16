@@ -231,10 +231,10 @@ namespace model
       cout << "Warning!! Given array is not symmetric under the swap" << endl;
     }
 
-    if (!check_no_single())
-    {
-      cout << "Warning!! Given array has non-zero single site operator (Cannot handle yet)" << endl;
-    }
+    // if (!check_no_single())
+    // {
+    //   cout << "Warning!! Given array has non-zero single site operator (Cannot handle yet)" << endl;
+    // }
 
     // if(!check_no_diagonal()){
     //   cout << "Warning!! Given array has non-zero diagonal operator (Cannot handle yet)" << endl;
@@ -395,7 +395,7 @@ namespace model
         {
           awo1.ReadNpy(paths[1]);
           awo2.ReadNpy(paths[0]);
-          cout << "Warning! : Paths might be in reverse order " << endl;
+          if(print) cout << "Warning! : Paths might be in reverse order " << endl;
           if (print)
             cout << "wobs is read from files : " << paths[1] << " and " << paths[0] << endl;
         }
@@ -413,9 +413,10 @@ namespace model
       {
         awo1.ReadNpy(paths[0]);
         awo2._SetWormObs(vector<double>(powl(spin_dof, 4)));
-        cout << "Warning! : Only one numpy file is found. The path is set for 1 points operator " << endl;
-        if (print)
+        if (print){
+          cout << "Warning! : Only one numpy file is found. The path is set for 1 points operator " << endl;
           cout << "wobs is read from files : " << paths[0] << endl;
+        }
       }
       catch (const std::exception &e)
       {
@@ -423,9 +424,11 @@ namespace model
         {
           awo1._SetWormObs(vector<double>(powl(spin_dof, 2)));
           awo2.ReadNpy(paths[0]);
-          cout << "Warning! : Only one numpy file is found. The path is set for 2 points operator " << endl;
           if (print)
+          {
+            cout << "Warning! : Only one numpy file is found. The path is set for 2 points operator " << endl;
             cout << "wobs is read from files : " << paths[1] << endl;
+          }
         }
         catch (const std::exception &e)
         {

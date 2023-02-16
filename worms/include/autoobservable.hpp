@@ -246,6 +246,10 @@ public:
     _worm_obs_map["G"] = obs;
   }
 
+  void push_back(std::string key, WormObs obs){
+    _worm_obs_map[key] = obs;
+  }
+
   //n* recursive template approach
   template<typename... Args>
   MapWormObs(worm_pair_t arg, Args... args );
