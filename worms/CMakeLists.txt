@@ -44,6 +44,7 @@ add_library(worm STATIC
     ./src/state_func.cpp
     ./src/worm.cpp
     ./src/autoobservable.cpp
+    ./src/funcs.cpp
     )
 
 add_subdirectory(./lib/bcl) #call /lib/bcl/CMakeLists.txst
