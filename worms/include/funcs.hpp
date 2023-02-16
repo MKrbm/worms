@@ -16,10 +16,13 @@
 #define dout 0 && cout
 #endif
 
-
+#include <iostream>
+#include <vector>
 template<class T> std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec) {
     os << "[ ";
     for ( const T& item : vec )
         os << item << ", ";
     os << "]"; return os;
 }
+
+void fillStringWithSpaces(std::string& str, int targetLength);
