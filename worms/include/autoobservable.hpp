@@ -198,8 +198,8 @@ private:
 
 public:
   ArrWormObs(size_t sdof, size_t legs);
-  void _SetWormObs(std::vector<double> _obs);
-  void ReadNpy(std::string path);
+  void _SetWormObs(std::vector<double> _obs, bool print = true);
+  void ReadNpy(std::string path, bool print=false);
   double _operator(size_t state) const;
   std::vector<double> worm_obs() const { return _worm_obs; }
 };

@@ -46,7 +46,7 @@ inline int positive_modulo(int i, int n)
 using spin_state::Dotv2;
 
 // using MODEL = model::heisenberg1D;
-using STATE = spin_state::VUS;
+using state_t = spin_state::VUS;
 using SPIN = spin_state::US;
 using BOND = model::VS;
 using WORMS = spin_state::WORM_ARR;
@@ -89,10 +89,11 @@ public:
   MODEL spin_model;
   OPS ops_main; // n* contains operators.
   OPS ops_sub;  // n*  for sub.
-  STATE state;
-  STATE cstate;
+  state_t state;
+  state_t cstate;
   DOTS spacetime_dots; // n*  contain dots in space-time.
   WORMS worms_list;
+
   
 
   VVS pows_vec;
@@ -103,6 +104,8 @@ public:
   std::unordered_set<size_t> can_warp_ops;
   std::vector<size_t> pres = std::vector<size_t>(0);
   std::vector<size_t> psop = std::vector<size_t>(0);
+  std::vector<state_t> worm_state;
+  std::vector<double> worm_taus;
 
   // n* reference of member variables from model class
   std::vector<model::local_operator<typename MODEL::MCT>> &loperators;
@@ -137,7 +140,7 @@ public:
     srand(rank);
 #ifdef NDEBUG
     unsigned rseed = static_cast<unsigned>(time(0)) + rand() * (rank + 1);
-    rand_src = engine_type(rseed);
+    rand_src = engine_type(SEED);
 #else
     rand_src = engine_type(SEED);
     test_src = engine_type(SEED);
@@ -216,8 +219,11 @@ public:
 
     initDots(); //*init spacetime_dots
 
-    //*init worms
+    //n*init worms
     worms_list.resize(0);
+    worm_state.resize(0);
+    worm_taus.resize(0);
+
     ops_sub.push_back(OP_type::sentinel(1)); //*sentinels
     double tau0 = uniform(rand_src);
     double tau = expdist(rand_src);
@@ -243,6 +249,8 @@ public:
           size_t s = static_cast<int>(L * uniform(rand_src));
           appendWorms(worms_list, s, spacetime_dots.size(), tau);
           set_dots(s, -2, 0); //*index is always 0
+          worm_state.push_back(cstate);
+          worm_taus.push_back(tau);
         }
         else
         {
@@ -335,11 +343,12 @@ public:
         Dotv2 *dot = &spacetime_dots[wt_dot];
         Dotv2 *_dot;
         double r = uniform(rand_src);
-        size_t dir = (size_t)2 * r, ini_dir = dir;
+        size_t dir = (size_t)2 * r, t_dir = !dir;
         // size_t fl = 1;
-        int fl = static_cast<int>((sps - 1) * uniform(rand_src)) + 1, ini_fl = fl;
+        int fl = static_cast<int>((sps - 1) * uniform(rand_src)) + 1, t_fl = fl;
         int wl = wlength;
         int br = 0;
+        size_t w_x = (cstate[wt_site] + fl) % sps; //n* spin state at worm head
         bool wh = true; //* Worm head still exists.
         double wlength_prime = 0;
         wcount += 1;
@@ -358,7 +367,8 @@ public:
         {
           n_dot_label = dot->move_next(dir); // next label of dot.
 
-          size_t status = wormOpUpdate(n_dot_label, dir, site, wlength_prime, fl, tau, wt_dot, wt_site, wt_tau, cstate);
+          size_t status = wormOpUpdate(n_dot_label, dir, site, wlength_prime, 
+                                fl, tau, wt_dot, wt_site, wt_tau, cstate, w_x, t_fl, t_dir);
           if (status != 0)
           {
             if (status == 1)
@@ -372,7 +382,7 @@ public:
             }
           }
           dot = &spacetime_dots[n_dot_label];
-        } while ((n_dot_label != wt_dot || ((ini_dir == dir ? -1 : 1) * ini_fl + fl + sps) % sps != 0));
+        } while ((n_dot_label != wt_dot || ((t_dir == dir ? 1 : -1) * t_fl + fl + sps) % sps != 0));
         _phys_cnt << phys_cnt;
         int obs_i = 0;
         for (auto& obs : _mp_worm_obs())
@@ -388,7 +398,7 @@ public:
         }
 
         wlength += wlength_prime;
-        checkOpsInUpdate(wt_dot, dir ? n_dot_label : dot->prev(), ini_dir, ini_fl, fl, dir);
+        checkOpsInUpdate(wt_dot, dir ? n_dot_label : dot->prev(), t_dir, t_fl, fl, dir);
         ++wsi;
       }
       if (wsi == worms_list.end())
@@ -568,7 +578,7 @@ public:
   int wormOpUpdate(size_t &next_dot, size_t &dir,
                    size_t &site, double &wlength, int &fl, double &tau,
                    const size_t wt_dot, const size_t wt_site, const double wt_tau,
-                   STATE &cstate)
+                   state_t &cstate, size_t& w_x, int t_fl, int t_dir)
   {
 
     OP_type *opsp;
@@ -603,39 +613,67 @@ public:
 
     size_t h_x, h_x_prime, t_x, t_x_prime;
     Dotv2 *wtdot = &spacetime_dots[wt_dot];
+    // getSpinsDot(next_dot, dotp, dir, h_x, h_x_prime);
+    for (size_t i = 0; i < worm_taus.size(); i++)
+    {
+      if (detectWormCross(tau, tau_prime, worm_taus[i], dir)){
+        worm_state[i][site] = w_x;
+      }
+    }
+    
     if (detectWormCross(tau, tau_prime, wt_tau, dir))
     {
       t_x_prime = getDotState(wtdot->move_next(1), 1);
       t_x = getDotState(wtdot->move_next(0), 0);
 
+
       // get spin over and under the worm head.
+
+      // if head is on tail, the case is not regarded as 2point correlation.
+      if (wt_site == site)
+      {
+        int _fl = (dir == t_dir ? fl + t_fl : fl - t_fl) % sps;
+        h_x = dir == 1 ? w_x : (w_x - _fl) % sps;
+        h_x_prime = dir == 0 ? w_x : (w_x - _fl) % sps;
+      } else {
+        h_x = dir == 1 ? w_x : (w_x - fl) % sps;
+        h_x_prime = dir == 0 ? w_x : (w_x - fl) % sps;
+      }
+
+#ifndef NDEBUG 
+      size_t _h_x, _h_x_prime;
       if (dir == 1)
       {
-        h_x_prime = getDotState(next_dot, 1);
-        h_x = getDotState(dotp->move_next(0), 0);
+        _h_x_prime = getDotState(next_dot, 1);
+        _h_x = getDotState(dotp->move_next(0), 0);
       }
       else if (dir == 0)
       {
-        h_x_prime = getDotState(dotp->move_next(1), 1);
-        h_x = getDotState(next_dot, 0);
+        _h_x_prime = getDotState(dotp->move_next(1), 1);
+        _h_x = getDotState(next_dot, 0);
       }
       else
       {
         throw std::runtime_error("dir should be either 1 or 0");
       }
 
-      dout << "site : [" << wt_site << " " << site << "] "
-           << " spin : " << t_x << " " << h_x << " " << t_x_prime << " " << h_x_prime << endl;
+      if (h_x != _h_x || h_x_prime != _h_x_prime)
+      {
+        dout << "t_fl : " << t_fl << " fl : " << fl << " dir : " << dir << " t_dir : " << t_dir << endl;
+        dout << "h_x : " << h_x << " " << _h_x << endl;
+        dout << "h_x_prime : " << h_x_prime << " " << _h_x_prime << endl;
+        throw std::runtime_error("spin is not consistent");
+      }
+#endif
 
-      // if head is on tail, the case is not regarded as 2point correlation.
       calcHorizontalGreen(tau, site, wt_site, h_x, h_x_prime, t_x, t_x_prime);
 
       // n* update csate accordingly
-      cstate[wt_site] = t_x; // n* or perhaps you can choose t_x_prime instead (actually it doesn't matter)
-      if (wt_site != site)
-        cstate[site] = dir == 1 ? h_x : h_x_prime;
-    }
+      // cstate[wt_site] = t_x; // n* or perhaps you can choose t_x_prime instead (actually it doesn't matter)
+        // cstate[site] = dir == 1 ? h_x : h_x_prime;
+      cstate[site] = w_x;
 
+    }
     size_t cur_dot = next_dot;
     // ASSERT(site == dotp->site(), "site is not consistent");
     if (dotp->at_origin())
@@ -756,6 +794,8 @@ public:
           can_warp_ops.insert(cur_dot - dotp->index());
       }
 
+      w_x = opsp->get_local_state(nindex);
+
 #ifndef NDEBUG
       int dsign = 1;
       for (auto &op : ops_main)
@@ -809,6 +849,20 @@ public:
     }
   }
 
+  void getSpinsDot(size_t next_dot, Dotv2 * dotp, int dir, size_t & h_x, size_t & h_x_prime)
+  {
+    if (dir == 1)
+    {
+      h_x_prime = getDotState(next_dot, 1);
+      h_x = getDotState(dotp->move_next(0), 0);
+    }
+    else if (dir == 0)
+    {
+      h_x_prime = getDotState(dotp->move_next(1), 1);
+      h_x = getDotState(next_dot, 0);
+    }
+  }
+
   // /*
   // *this function will be called after assigining op_main
   // */
@@ -825,11 +879,11 @@ public:
   /*
    *update given state by given operator ptr;
    */
-  void update_state(typename OPS::iterator opi, STATE &state)
+  void update_state(typename OPS::iterator opi, state_t &state)
   {
 #ifndef NDEBUG
-    STATE local_state = opi->get_state_vec();
-    STATE state_(opi->size());
+    state_t local_state = opi->get_state_vec();
+    state_t state_(opi->size());
     int i = 0;
     for (auto x : *(opi->bond_ptr()))
     {
@@ -845,7 +899,7 @@ public:
   /*
    *update given state by given offdiagonal operator ptr;
    */
-  void update_state_OD(typename OPS::iterator opi, STATE &state)
+  void update_state_OD(typename OPS::iterator opi, state_t &state)
   {
     int index = 0;
     auto const &bond = *(opi->bond_ptr());
@@ -864,7 +918,7 @@ public:
   p_label : label of dot before reaching at the current position of Worm.
 
   */
-  void checkOpsInUpdate(int worm_label, int p_label, int ini_dir, int ini_fl, int fl, int dir)
+  void checkOpsInUpdate(int worm_label, int p_label, int t_dir, int t_fl, int fl, int dir)
   {
 
 #ifndef NDEBUG
@@ -896,16 +950,14 @@ public:
   {
     if (dir == 1)
     {
-      double _tau = tau_prime == 0 ? 1 : tau_prime;
-      if (_tau >= wt_tau && wt_tau > tau)
+      if ((tau_prime == 0 ? 1 : tau_prime) >= wt_tau && wt_tau > tau)
         return true;
       else
         return false;
     }
     else
     { // if dir == 0
-      double _tau = tau == 0 ? 1 : tau;
-      if (tau_prime <= wt_tau && wt_tau < _tau)
+      if (tau_prime <= wt_tau && wt_tau < (tau == 0 ? 1 : tau))
         return true;
       else
         return false;
@@ -925,19 +977,19 @@ public:
     return n == m;
   }
 
-  bool is_same_state(int n, STATE state, size_t lopt)
+  bool is_same_state(int n, state_t state, size_t lopt)
   {
     int m = state_funcs[lopt].state2num(state, state.size());
     return n == m;
   }
 
-  bool is_same_state(STATE state_, STATE state, size_t lopt)
+  bool is_same_state(state_t state_, state_t state, size_t lopt)
   {
     int m = state_funcs[lopt].state2num(state, state.size());
     int n = state_funcs[lopt].state2num(state_, state.size());
     return n == m;
   }
-  static void printStateAtTime(const STATE &state, double time)
+  static void printStateAtTime(const state_t &state, double time)
   {
 #ifndef NDEBUG
     std::cout << "current spin at time :" << time << " is : ";
