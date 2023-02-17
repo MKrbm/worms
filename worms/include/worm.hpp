@@ -436,13 +436,17 @@ public:
       {
         if (t_x == t_x_prime)
         { 
-          int i = uniform(rand_src) * L;
-          size_t h_x = cstate[i];
-          if (i == t_site)
-            obs_sum[j] += _worm_obs.first()->operator()(t_x, t_x) * L * L * sign  / (double) (sps - 1) ;
-          else
-            obs_sum[j] += _worm_obs.second()->operator()(t_x, h_x, t_x, h_x) * L  * L / 2.0 * sign  / (double) (sps - 1);
+          // int i = uniform(rand_src) * L;
+          for (size_t i = 0; i < L; i++)
+          {
+            size_t h_x = cstate[i];
+            if (i == t_site)
+              obs_sum[j] += _worm_obs.first()->operator()(t_x, t_x) * L  * sign  / (double) (sps - 1) ;
+            else
+              obs_sum[j] += _worm_obs.second()->operator()(t_x, h_x, t_x, h_x) * L   / 2.0 * sign  / (double) (sps - 1);
+          }
           phys_cnt = (double)sign / (sps - 1);
+          
         }
         else
         { // n* This case could contribute to single flip operator but not implemented yet.
@@ -466,13 +470,16 @@ public:
       {
         throw std::runtime_error("t_x == t_x_prime while wapr should never happen");
       }
-      int i = uniform(rand_src) * L;
-      size_t h_x = cstate[i];
-      if (i == t_site)
-        obs_sum[j] += _worm_obs.first()->operator()(t_x, t_x_prime)* L * L * sign * 2;
-      else
+      // int i = uniform(rand_src) * L;
+      for (size_t i = 0; i < L; i++)
       {
-        obs_sum[j] += _worm_obs.second()->operator()(t_x, h_x, t_x_prime, h_x)* L * L * sign * 2;
+        size_t h_x = cstate[i];
+        if (i == t_site)
+          obs_sum[j] += _worm_obs.first()->operator()(t_x, t_x_prime) *  L * sign * 2;
+        else
+        {
+          obs_sum[j] += _worm_obs.second()->operator()(t_x, h_x, t_x_prime, h_x) * L  * sign * 2;
+        }
       }
       j++;
     }
@@ -711,18 +718,6 @@ public:
           exit(1);
         }
 
-        // if (ops_main.size() - 1 != can_warp_ops.size())
-        // {
-        //   throw std::runtime_error("all operators are warped");
-        // }
-
-        // if (can_warp_ops.size() > 10){
-        //   if (it == can_warp_ops.begin())  warp_label_cnt1++;
-        //   if (it == std::next(can_warp_ops.begin(), 5))  {
-        //     warp_label_cnt2++;
-        //     cout << warp_label_cnt1 / (double) warp_label_cnt2 << endl;
-        //     }
-        // }
 
         tmp--;
         auto &_lop = loperators[_optype];
