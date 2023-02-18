@@ -1,8 +1,12 @@
-#include "header.h"
-#include "header2.h"
+#include <iostream>
 
 
+int main()
+{
+    size_t a = 4, b = 0;
+    int c = 3;
+    std::cout << ((b - c) % a) << std::endl;
+    std::cout << (b - c) << std::endl;
 
-// void print_int(int x){
-//   std::cout << x << std::endl;
-// }
+    return 0;
+}

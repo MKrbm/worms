@@ -319,16 +319,25 @@ public:
     size_t w_index = 0;
     for (typename OPS::iterator opi = ops_main.begin(); opi != ops_main.end();)
     {
-      if (d_cnt == 132)
+      if (d_cnt == 212)
       {
-        cout << "debug" << endl;
+        int x;
+        cout << d_cnt << endl;
       }
       if (opi->tau() < std::get<2>(*wsi))
       { // n* if operator is behind the worm tail.
+        if (opi->is_off_diagonal())
+          update_state(opi, cstate);
         ++opi;
       }
       else
       {
+        if (cstate != worm_states[w_index])
+        {
+          cout << "cstate != worm_states 1" << endl;
+          exit(1);
+        }
+
         // t : tail, h : head. direction of tails is opposite to the direction of the initial head.
         // prime means the spin state in front of the worm.
         size_t wt_dot, site, wt_site, _t_spin, n_dot_label;
@@ -350,11 +359,11 @@ public:
         double wlength_prime = 0;
         wcount += 1;
 
-        // if (cstate != worm_states[w_index])
-        // {
-        //   cout << "cstate != worm_states" << endl;
-        //   exit(1);
-        // }
+        if (cstate != worm_states[w_index])
+        {
+          cout << "cstate != worm_states 2" << endl;
+          exit(1);
+        }
 
         // n* initialize wobs variables
         phys_cnt = 0;
@@ -369,7 +378,12 @@ public:
         do
         {
           n_dot_label = dot->move_next(dir); // next label of dot.
-
+          
+          if (d_cnt == 211)
+          {
+            int x;
+            cout << d_cnt << endl;
+          }
           size_t status = wormOpUpdate(n_dot_label, dir, site, wlength_prime,
                                        fl, tau, wt_dot, wt_site, wt_tau, w_x, wt_x, t_fl, t_dir, w_index);
           if (status != 0)
@@ -393,7 +407,11 @@ public:
           obs.second << obs_sum[obs_i];
           obs_i++;
         }
-
+        if (d_cnt == 211)
+        {
+          int x;
+          cout << d_cnt << endl;
+        }
         if (br == 1)
         {
           bocnt++;
@@ -671,18 +689,20 @@ public:
           }
 #endif
           calcHorizontalGreen(tau, site, wt_site, h_x, h_x_prime, t_x, t_x_prime, worm_states[w_index]);
-          if (wt_site == site)
-            wt_x = (wt_x + fl) % sps; // n* fliped by worm head.
         }
-        worm_states[i][site] = w_x; // n* assign new spin.
+        worm_states[i][site] = (worm_states[i][site] + fl) % sps; // n* assign new spin.
+        if (i == w_index)
+        {
+          cstate[site] = w_x;
+          if (wt_site == site){
+            wt_x = (wt_x + fl) % sps; // n* fliped by worm head.
+            w_x = ((dir == 1 ? h_x_prime : h_x ) + fl) % sps ;
+          }
+        }
       }
     }
 
-    if (detectWormCross(tau, tau_prime, wt_tau, dir))
-    {
-      // get spin over and under the worm head.
-      // if head is on tail, the case is not regarded as 2point correlation.
-    }
+
     size_t cur_dot = next_dot;
     // ASSERT(site == dotp->site(), "site is not consistent");
     if (dotp->at_origin())
