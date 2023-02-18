@@ -332,11 +332,7 @@ public:
       }
       else
       {
-        if (cstate != worm_states[w_index])
-        {
-          cout << "cstate != worm_states 1" << endl;
-          exit(1);
-        }
+        if (cstate != worm_states[w_index]) throw std::runtime_error("wormUpdate : state is not updated correctly");
 
         // t : tail, h : head. direction of tails is opposite to the direction of the initial head.
         // prime means the spin state in front of the worm.
@@ -349,21 +345,18 @@ public:
         Dotv2 *_dot;
         double r = uniform(rand_src);
         size_t dir = (size_t)2 * r, t_dir = !dir;
-        // size_t fl = 1;
         int fl = static_cast<int>((sps - 1) * uniform(rand_src)) + 1, t_fl = fl;
         int wl = wlength;
         int br = 0;
-        size_t w_x = (worm_states[w_index][wt_site] + fl) % sps; // n* spin state at worm head
+        // n* spin state at worm head
+        worm_states[w_index][wt_site] = (worm_states[w_index][wt_site] + fl) % sps;
+        cout << "worm_states at beginning of wormUpdate : " << worm_states[w_index] << endl;
+        size_t w_x = worm_states[w_index][wt_site]; 
         size_t wt_x = w_x;
         bool wh = true; //* Worm head still exists.
         double wlength_prime = 0;
         wcount += 1;
 
-        if (cstate != worm_states[w_index])
-        {
-          cout << "cstate != worm_states 2" << endl;
-          exit(1);
-        }
 
         // n* initialize wobs variables
         phys_cnt = 0;
@@ -400,24 +393,26 @@ public:
           }
           dot = &spacetime_dots[n_dot_label];
         } while ((n_dot_label != wt_dot || ((t_dir == dir ? 1 : -1) * t_fl + fl + sps) % sps != 0));
+
+        //n* undo unnecessary flippling.
+        if (dir != t_dir) {
+          worm_states[w_index][site] = (worm_states[w_index][site] + sps - fl)%sps;
+        }
+
+        //n* debug
+        if (cstate != worm_states[w_index]) 
+          throw std::runtime_error("wormUpdate : state is not updated correctly");
+
+        //n* caluclation contribution to wobs
         _phys_cnt << phys_cnt;
         int obs_i = 0;
         for (auto &obs : _mp_worm_obs())
-        {
-          obs.second << obs_sum[obs_i];
-          obs_i++;
-        }
-        if (d_cnt == 211)
-        {
-          int x;
-          cout << d_cnt << endl;
-        }
-        if (br == 1)
-        {
-          bocnt++;
-          break;
-        }
+          obs.second << obs_sum[obs_i]; obs_i++;
 
+        //n* break the loop (contains bugs)
+        // if (br == 1)
+        //   bocnt++; break;
+        
         wlength += wlength_prime;
         checkOpsInUpdate(wt_dot, dir ? n_dot_label : dot->prev(), t_dir, t_fl, fl, dir);
         ++wsi;
@@ -631,8 +626,9 @@ public:
     }
 
     // dout << tau << " " << tau_prime << " " << wt_tau << " " << dir << " passed ? " << detectWormCross(tau, tau_prime, wt_tau, dir) << endl;
-    dout << "fl :" << fl << " tau : " << tau << " tau_prime : " << tau_prime << " wt_tau : " << wt_tau << " dir : " << dir << " // passed ? " << detectWormCross(tau, tau_prime, wt_tau, dir);
-    dout << "  site : [" << site << " " << wt_site << "] " << endl;
+    dout << "fl :" << fl << " tau : " << tau << " tau_prime : " << tau_prime << " wt_tau : " << wt_tau << " dir : " << dir;
+    dout << " w_x : " << w_x << " wt_x : " << wt_x << " t_fl : " << t_fl << " t_dir : " << t_dir << " w_index : " << w_index;
+    dout << "  site : [" << site << " " << wt_site << "] "  << " // passed ? " << detectWormCross(tau, tau_prime, wt_tau, dir) << endl;
 
     size_t h_x, h_x_prime, t_x, t_x_prime;
     Dotv2 *wtdot = &spacetime_dots[wt_dot];
@@ -647,18 +643,18 @@ public:
             throw std::runtime_error("worms are crossing each other");
           if (wt_site == site)
           {
-            int _fl = (dir == t_dir ? fl + t_fl : fl - t_fl) % sps;
-            h_x = dir == 1 ? w_x : (w_x - _fl) % sps;
-            h_x_prime = dir == 0 ? w_x : (w_x - _fl) % sps;
+            int _fl = (dir == t_dir ? fl + t_fl : sps + fl - t_fl) % sps;
+            h_x = dir == 1 ? w_x : (sps + w_x - _fl) % sps;
+            h_x_prime = dir == 0 ? w_x : (sps + w_x - _fl) % sps;
             t_x = h_x;
             t_x_prime = h_x_prime;
           }
           else
           {
-            h_x = dir == 1 ? w_x : (w_x - fl) % sps;
-            h_x_prime = dir == 0 ? w_x : (w_x - fl) % sps;
-            t_x = t_dir == 1 ? wt_x : (wt_x - t_fl) % sps;
-            t_x_prime = t_dir == 0 ? wt_x : (wt_x - t_fl) % sps;
+            h_x = dir == 1 ? w_x : (sps + w_x - fl) % sps;
+            h_x_prime = dir == 0 ? w_x : (sps + w_x - fl) % sps;
+            t_x = t_dir == 1 ? wt_x : (sps + wt_x - t_fl) % sps;
+            t_x_prime = t_dir == 0 ? wt_x : (sps + wt_x - t_fl) % sps;
           }
 
 #ifndef NDEBUG
@@ -690,13 +686,26 @@ public:
 #endif
           calcHorizontalGreen(tau, site, wt_site, h_x, h_x_prime, t_x, t_x_prime, worm_states[w_index]);
         }
-        worm_states[i][site] = (worm_states[i][site] + fl) % sps; // n* assign new spin.
+        if (i == w_index)
+        {
+          if (wt_site != site && (worm_states[i][site] + fl) % sps != w_x) 
+            throw std::runtime_error("spin is not consistent");
+          if (wt_site == site && (worm_states[i][site] + (t_dir != dir ? sps + fl - t_fl : fl)) % sps != w_x)
+            throw std::runtime_error("spin is not consistent");
+        }
+        // worm_states[i][site] = ( i == w_index) ? w_x : (worm_states[i][site] + fl) % sps; // n* assign new spin.
+        worm_states[i][site] = (worm_states[i][site] + fl) % sps;
+
+        // if (i == w_index && (worm_states[i][site] + fl) % sps != w_x)  throw std::runtime_error("spin is not consistent");
         if (i == w_index)
         {
           cstate[site] = w_x;
           if (wt_site == site){
             wt_x = (wt_x + fl) % sps; // n* fliped by worm head.
-            w_x = ((dir == 1 ? h_x_prime : h_x ) + fl) % sps ;
+            w_x = (t_dir == dir) ? (w_x+sps-t_fl)%sps : (w_x+t_fl)%sps;
+            if (w_x != ((dir == 1 ? h_x_prime : h_x ) + fl) % sps) throw std::runtime_error("w_x is not consistent");
+          } else {
+
           }
         }
       }
