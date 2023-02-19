@@ -202,7 +202,7 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength)
 
       do
       {
-        n_dot_label = dot->move_next(dir); // next label of dot.
+        if (fl!=0) n_dot_label = dot->move_next(dir); // next label of dot.
         size_t status = wormOpUpdate(n_dot_label, dir, site, wlength_prime,
                                      fl, tau, wt_dot, wt_site, wt_tau, w_x, wt_x, t_fl, t_dir, w_index);
         if (status != 0)
@@ -213,7 +213,7 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength)
             exit(1);
           }
         }
-        dot = &spacetime_dots[n_dot_label];
+        if (fl!=0) dot = &spacetime_dots[n_dot_label];
       } while ((n_dot_label != wt_dot || ((t_dir == dir ? 1 : -1) * t_fl + fl + sps) % sps != 0));
 
       // n* undo unnecessary flippling.
@@ -428,13 +428,15 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir,
 {
   OP_type *opsp;
   double tau_prime;
+  size_t h_x, h_x_prime, t_x, t_x_prime;
   Dotv2 *dotp = &spacetime_dots[next_dot];
+  Dotv2 *wtdot= &spacetime_dots[wt_dot];
   // get imaginary temperature at the next dot.
   if (fl == 0)
   {
     if (w_x != -1 || site != -1 || dir != -1) 
       {throw std::runtime_error("warm is in warp state but some variables are not ready for that");}
-    // goto warp_label;
+    goto warp_label;
   }
   else if (dotp->at_origin())
   {
@@ -462,14 +464,13 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir,
   dout << "  site : [" << site << " " << wt_site << "] "
        << " // passed ? " << detectWormCross(tau, tau_prime, wt_tau, dir) << endl;
 
-  double wlength_tmp = getWormDistTravel(tau, tau_prime, dir);
+  double wlength_tmp;
+  wlength_tmp = getWormDistTravel(tau, tau_prime, dir);
   if (wlength_tmp < 0) 
     {throw std::runtime_error("worm length is negative");}
   wlength += wlength_tmp;
 
-  size_t h_x, h_x_prime, t_x, t_x_prime;
-  Dotv2 *wtdot;
-  wtdot = &spacetime_dots[wt_dot];
+
   // getSpinsDot(next_dot, dotp, dir, h_x, h_x_prime);
   for (size_t i = 0; i < worm_taus.size(); i++)
   {
@@ -601,29 +602,29 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir,
 
       // n* head wapred
 
-      // warp_label: //* goto this label if fl == 0
+      warp_label: //* goto this label if fl == 0
+      if (wtdot->dot_type() == -10)
+        throw std::runtime_error("wtdot is not initialized properly");
       size_t _cur_dot, _state_num, _optype;
       Dotv2 *_dotp;
       std::unordered_set<size_t>::iterator it;
 
       //n* start warp
-      do
-      {
-        t_x_prime = getDotState(wtdot->move_next(1), 1);
-        t_x = getDotState(wtdot->move_next(0), 0);
-        size_t n = static_cast<size_t>(can_warp_ops.size() * uniform(rand_src));
-        it = std::begin(can_warp_ops);
-        std::advance(it, n);
-        if (it == can_warp_ops.begin()) {calcWarpGreen(tau, wt_site, t_x, t_x_prime, worm_states[w_index]);}
-        _cur_dot = *it;
-        _dotp = &spacetime_dots[_cur_dot];
-        opsp = &ops_main[_dotp->label()];
-        _state_num = opsp->state();
-        _optype = opsp->op_type();
-        tmp = loperators[_optype].markov[_state_num](0, rand_src);
-        leg_size = opsp->size();
-      } while (tmp == 0);
-      if (tmp == 0)
+      t_x_prime = getDotState(wtdot->move_next(1), 1);
+      t_x = getDotState(wtdot->move_next(0), 0);
+      size_t n = static_cast<size_t>(can_warp_ops.size() * uniform(rand_src));
+      it = std::begin(can_warp_ops);
+      std::advance(it, n);
+      if (it == can_warp_ops.begin()) {calcWarpGreen(tau, wt_site, t_x, t_x_prime, worm_states[w_index]);}
+      _cur_dot = *it;
+      _dotp = &spacetime_dots[_cur_dot];
+      opsp = &ops_main[_dotp->label()];
+      _state_num = opsp->state();
+      _optype = opsp->op_type();
+      tmp = loperators[_optype].markov[_state_num](0, rand_src);
+      leg_size = opsp->size();
+
+      if (tmp == 0) //n* if tmp == 0
       {
         fl = 0; //redo selection of warping point.
         w_x = -1; //w_x is ready to warp.
@@ -631,10 +632,8 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir,
         dir = -1;
         tau = opsp->tau();
         return 0;
-        std::cerr << "cannot handle warp reject" << endl;
-        exit(1);
       }
-      tmp--;
+      tmp--; //n* otherwise
       auto &_lop = loperators[_optype];
       sign *= _lop.signs[_state_num]; // warped point
       nindex = tmp / (sps - 1);       // sps_sites are filled with same value.

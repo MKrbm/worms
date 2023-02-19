@@ -68,7 +68,9 @@ class spin_state::Dotv2
   size_t index_; 
   size_t site_;
 public:
-  Dotv2(){}
+  Dotv2()
+  :dot_type_(-10){}
+  
   Dotv2(size_t p, size_t n, int o, size_t i, size_t s)
   :prev_(p), next_(n), dot_type_(o), index_(i), site_(s)
   {}
@@ -90,6 +92,7 @@ public:
   bool at_operator() const { return dot_type_ >= 0; }
   bool at_origin() const { return dot_type_ == -1; }
   bool at_worm() const { return dot_type_ == -2; }
+  int dot_type() const { return dot_type_; }
   void set_prev(size_t p) { prev_ = p; }
   void set_next(size_t n) { next_ = n; }
   size_t move_next(size_t dir) const {
