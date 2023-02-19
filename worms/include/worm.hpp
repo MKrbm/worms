@@ -227,11 +227,11 @@ public:
   params(member variables)
   ------
   */
-  int wormOpUpdate(size_t &next_dot, size_t &dir,
-                   size_t &site, double &wlength, int &fl, double &tau,
-                   const size_t wt_dot, const size_t wt_site, const double wt_tau,
-                   size_t &w_x, size_t &wt_x, const int t_fl, const int t_dir,
-                   const size_t w_index);
+  int wormOpUpdate(int &next_dot, int &dir,
+                   int &site, double &wlength, int &fl, double &tau,
+                   const int wt_dot, const int wt_site, const double wt_tau,
+                   int &w_x, int &wt_x, const int t_fl, const int t_dir,
+                   const int w_index);
   /*
    *this function will be called after assigining op_main
    */
