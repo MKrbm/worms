@@ -126,7 +126,9 @@
       "numericaldiff": "cpp",
       "openglsupport": "cpp",
       "specialfunctions": "cpp",
-      "splines": "cpp"
+      "splines": "cpp",
+      "regex": "cpp",
+      "shared_mutex": "cpp"
     },
     // "python.defaultInterpreterPath": "/home/keisuke/miniconda3/envs/quspin/bin/python",
     "python.analysis.extraPaths": [
