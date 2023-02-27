@@ -217,7 +217,7 @@ namespace model
   {
     if (_worm_obs.size() != 0 )
     {
-      if (print) cout << "Worm_obs is already set" << endl;
+      if (print) cerr << "Worm_obs is already set" << endl;
       return;
     }
     if (pow(_spin_dof, _leg_size * 2) != _obs.size())
@@ -228,13 +228,13 @@ namespace model
     _has_operator = true;
     if (!check_is_symm())
     {
-      if (print) cout << "Warning!! Given array is not symmetric under the swap" << endl;
+      if (print) cerr << "Warning!! Given array is not symmetric under the swap" << endl;
     }
 
     if (!check_no_single())
     {
-      if (print) cout << "Warning!! Given array has non-zero single site operator (Cannot handle yet)" << endl;
-      if (print) cout << "If you hamiltonian doesn't have single site operator, this cause problem." << endl;
+      if (print) cerr << "Warning!! Given array has non-zero single site operator (Cannot handle yet)" << endl;
+      if (print) cout << "If your hamiltonian doesn't have single site operator, this cause problem." << endl;
     }
 
     // if(!check_no_diagonal()){
@@ -396,7 +396,7 @@ namespace model
         {
           awo1.ReadNpy(paths[1], print);
           awo2.ReadNpy(paths[0], print);
-          if(print) cout << "Warning! : Paths might be in reverse order " << endl;
+          if(print) cerr << "Warning! : Paths might be in reverse order " << endl;
           if (print)
             cout << "wobs is read from files : " << paths[1] << " and " << paths[0] << endl;
         }
@@ -415,7 +415,7 @@ namespace model
         awo1.ReadNpy(paths[0], print);
         awo2._SetWormObs(vector<double>(powl(spin_dof, 4)), print);
         if (print){
-          cout << "Warning! : Only one numpy file is found. The path is set for 1 points operator " << endl;
+          cerr << "Warning! : Only one numpy file is found. The path is set for 1 points operator " << endl;
           cout << "wobs is read from files : " << paths[0] << endl;
         }
       }
@@ -427,8 +427,8 @@ namespace model
           awo2.ReadNpy(paths[0], print);
           if (print)
           {
-            cout << "Warning! : Only one numpy file is found. The path is set for 2 points operator " << endl;
-            cout << "wobs is read from files : " << paths[1] << endl;
+            cerr << "Warning! : Only one numpy file is found. The path is set for 2 points operator " << endl;
+            cout << "wobs is read from files : " << paths[0] << endl;
           }
         }
         catch (const std::exception &e)
