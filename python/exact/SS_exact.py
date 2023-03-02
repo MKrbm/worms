@@ -6,7 +6,7 @@ from quspin.operators import hamiltonian,quantum_operator
 from quspin.tools.lanczos import lanczos_full,lanczos_iter,FTLM_static_iteration,LTLM_static_iteration
 
 import argparse
-from core import lancoz_estimate
+from python.exact._core import lancoz_estimate
 
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True' # uncomment this line if omp error occurs on OSX for python 3
