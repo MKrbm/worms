@@ -1,7 +1,7 @@
 #include <autoobservable.hpp>
 #include <vector>
 #include <funcs.hpp>
-
+#include <regex>
 #include "dataset.hpp"
 #include "gtest/gtest.h"
 
@@ -76,9 +76,9 @@ TEST(ArrWormObs, SetVector)
   }
   wo._SetWormObs(v);
   EXPECT_EQ(wo(1, 2, 3, 1), 121);
-  testing::internal::CaptureStdout();
+  testing::internal::CaptureStderr();
   wo._SetWormObs(v);
-  std::string output = testing::internal::GetCapturedStdout();
+  std::string output = testing::internal::GetCapturedStderr();
   EXPECT_STREQ("Worm_obs is already set\n", output.c_str());
 }
 
@@ -99,14 +99,15 @@ TEST(ArrWormObs, CheckReadSymm)
 {
   model::ArrWormObs wo(2, 2);
 
-  testing::internal::CaptureStdout();
-  wo.ReadNpy("../gtest/model_array/worm_obs/1D_nsymm.npy");
-  std::string output = testing::internal::GetCapturedStdout();
-  EXPECT_STREQ("Warning!! Given array is not symmetric under the swap\nWarning!! Given array has non-zero single site operator (Cannot handle yet)\n", output.c_str()); // single site operator is not implemented yet.
-
+  testing::internal::CaptureStderr();
+  wo.ReadNpy("../gtest/model_array/worm_obs/1D_nsymm.npy", true);
+  std::string output = testing::internal::GetCapturedStderr();
+  std::regex pattern("Warning.*not symmetric(.|\n)*");
+  EXPECT_TRUE(std::regex_match(output.c_str(), pattern));
+  
   model::ArrWormObs wo2(2, 2);
   testing::internal::CaptureStdout();
-  wo2.ReadNpy("../gtest/model_array/worm_obs/1D_no_onesite.npy");
+  wo2.ReadNpy("../gtest/model_array/worm_obs/1D_no_onesite.npy", true);
   output = testing::internal::GetCapturedStdout();
   EXPECT_STREQ("", output.c_str()); // single site operator is not implemented yet.
 }
@@ -119,32 +120,34 @@ TEST(ArrWormObs, CheckRead)
   EXPECT_FLOAT_EQ(wo(1, 1, 0, 0), 7.95);  // matrix element < 0, 0| O | 1, 1>
   EXPECT_FLOAT_EQ(wo(1, 0, 0, 1), 84.88); // matrix element < 0, 1| O | 1, 0> (left spin denote tail spin)
 
-  testing::internal::CaptureStdout();
-  wo.ReadNpy("../gtest/model_array/worm_obs/test3.npy");
-  std::string output = testing::internal::GetCapturedStdout();
+  testing::internal::CaptureStderr();
+  wo.ReadNpy("../gtest/model_array/worm_obs/test3.npy", true);
+  std::string output = testing::internal::GetCapturedStderr();
   EXPECT_STREQ("Worm_obs is already set\n", output.c_str());
 
   model::ArrWormObs wo2(4, 2);
-  wo2.ReadNpy("../gtest/model_array/worm_obs/test4.npy");
+  wo2.ReadNpy("../gtest/model_array/worm_obs/test4.npy"), true;
   EXPECT_FLOAT_EQ(wo2(1, 0, 3, 1), 3.67); // matrix element < 3, 1 | O | 1, 0>
 
   model::ArrWormObs wo3(2, 2);
-  wo3.ReadNpy("../gtest/model_array/worm_obs/1D_symm.npy");
+  wo3.ReadNpy("../gtest/model_array/worm_obs/1D_symm.npy", true);
   EXPECT_FLOAT_EQ(wo3(1, 0, 1, 1), 0.6307609338099869); // matrix element < 3, 1 | O | 1, 0>
 }
 
 TEST(WormObs, CheckRead)
 {
   // model::WormObs wo(2, "../gtest/model_array/worm_obs/g");
-  testing::internal::CaptureStdout();
-  model::WormObs wo2(2, "../gtest/model_array/worm_obs/g2");
-  std::string output = testing::internal::GetCapturedStdout();
-  EXPECT_STREQ("Warning! : Wobs paths might be in reverse order \n", output.c_str());
+  testing::internal::CaptureStderr();
+  model::WormObs wo2(2, "../gtest/model_array/worm_obs/g2", true); //n*order of paths is not important
+  std::string output = testing::internal::GetCapturedStderr();
+  std::regex pattern("^Warning.*in reverse.*\n");
+  EXPECT_TRUE(std::regex_match(output.c_str(), pattern));
 
-  testing::internal::CaptureStdout();
-  model::WormObs wo3(2, "../gtest/model_array/worm_obs/g3");
-  output = testing::internal::GetCapturedStdout();
-  EXPECT_STREQ("Warning!! Given array has non-zero single site operator (Cannot handle yet)\nWarning! : Only one numpy file is found. The path is set for 2 points operator \n", output.c_str());
+  testing::internal::CaptureStderr();
+  model::WormObs wo3(2, "../gtest/model_array/worm_obs/g3", true); //n* provide only bond operator.
+  output = testing::internal::GetCapturedStderr();
+
+  EXPECT_TRUE(std::regex_match(output.c_str(), regex("^Warning.*single(.|\n)*")));
 
   model::WormObs wo(2, "../gtest/model_array/worm_obs/g");
   EXPECT_EQ((*wo.first())(1, 0), 1);

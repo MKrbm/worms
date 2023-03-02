@@ -252,10 +252,12 @@ int main(int argc, char **argv) {
 
   size_t n_sites = lat.L * ns_unit;
 
+
   // output MC step info 
-  if (rank == 0 ) cout << "therms(each process)    : " << therms << endl
-                       << "sweeps(each process)    : " << sweeps << endl 
-                       << "sweeps(in total)        : " << sweeps * size << endl;
+  if (rank == 0 ) cout << "----------------------------------------" << endl
+                        << "therms(each process)    : " << therms << endl
+                        << "sweeps(each process)    : " << sweeps << endl 
+                        << "sweeps(in total)        : " << sweeps * size << endl;
 
   if (rank == 0) {for (int i=0; i<40; i++) cout << "-"; cout << endl;}
 

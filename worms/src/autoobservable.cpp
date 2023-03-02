@@ -213,11 +213,11 @@ namespace model
 
   ArrWormObs::ArrWormObs(size_t sdof, size_t legs) : BaseWormObs(sdof, legs) {}
 
-  void ArrWormObs::_SetWormObs(vector<double> _obs)
+  void ArrWormObs::_SetWormObs(vector<double> _obs, bool print)
   {
-    if (_worm_obs.size() != 0)
+    if (_worm_obs.size() != 0 )
     {
-      cout << "Worm_obs is already set" << endl;
+      if (print) cerr << "Worm_obs is already set" << endl;
       return;
     }
     if (pow(_spin_dof, _leg_size * 2) != _obs.size())
@@ -228,13 +228,14 @@ namespace model
     _has_operator = true;
     if (!check_is_symm())
     {
-      cout << "Warning!! Given array is not symmetric under the swap" << endl;
+      if (print) cerr << "Warning!! Given array is not symmetric under the swap" << endl;
     }
 
-    // if (!check_no_single())
-    // {
-    //   cout << "Warning!! Given array has non-zero single site operator (Cannot handle yet)" << endl;
-    // }
+    if (!check_no_single())
+    {
+      if (print) cerr << "Warning!! Given array has non-zero single site operator (Cannot handle yet)" << endl;
+      if (print) cout << "If your hamiltonian doesn't have single site operator, this cause problem." << endl;
+    }
 
     // if(!check_no_diagonal()){
     //   cout << "Warning!! Given array has non-zero diagonal operator (Cannot handle yet)" << endl;
@@ -251,7 +252,7 @@ namespace model
   {x', x} -> x' * S^2  + x
 
   */
-  void ArrWormObs::ReadNpy(string file_path)
+  void ArrWormObs::ReadNpy(string file_path, bool print)
   {
     if (!endsWith(file_path, ".npy"))
     {
@@ -284,7 +285,7 @@ namespace model
       exit(1);
     }
 
-    _SetWormObs(data);
+    _SetWormObs(data, print);
     // cerr << "Array loaded from : " << file_path << endl;
 
     return;
@@ -356,8 +357,8 @@ namespace model
     if (folder_path == "")
     {
       // set zero operator to all.
-      awo1._SetWormObs(vector<double>(powl(spin_dof, 2)));
-      awo2._SetWormObs(vector<double>(powl(spin_dof, 4)));
+      awo1._SetWormObs(vector<double>(powl(spin_dof, 2)), print);
+      awo2._SetWormObs(vector<double>(powl(spin_dof, 4)), print);
       return make_pair(make_shared<ArrWormObs>(awo1), make_shared<ArrWormObs>(awo2));
     }
 
@@ -383,8 +384,8 @@ namespace model
     {
       try
       {
-        awo1.ReadNpy(paths[0]);
-        awo2.ReadNpy(paths[1]);
+        awo1.ReadNpy(paths[0], print);
+        awo2.ReadNpy(paths[1], print);
         if (print)
           cout << "wobs is read from files : " << paths[0] << " and " << paths[1] << endl;
       }
@@ -393,9 +394,9 @@ namespace model
         // cerr << "Warning! : " << e.what() << '\n';
         try
         {
-          awo1.ReadNpy(paths[1]);
-          awo2.ReadNpy(paths[0]);
-          if(print) cout << "Warning! : Paths might be in reverse order " << endl;
+          awo1.ReadNpy(paths[1], print);
+          awo2.ReadNpy(paths[0], print);
+          if(print) cerr << "Warning! : Paths might be in reverse order " << endl;
           if (print)
             cout << "wobs is read from files : " << paths[1] << " and " << paths[0] << endl;
         }
@@ -411,10 +412,10 @@ namespace model
     {
       try
       {
-        awo1.ReadNpy(paths[0]);
-        awo2._SetWormObs(vector<double>(powl(spin_dof, 4)));
+        awo1.ReadNpy(paths[0], print);
+        awo2._SetWormObs(vector<double>(powl(spin_dof, 4)), print);
         if (print){
-          cout << "Warning! : Only one numpy file is found. The path is set for 1 points operator " << endl;
+          cerr << "Warning! : Only one numpy file is found. The path is set for 1 points operator " << endl;
           cout << "wobs is read from files : " << paths[0] << endl;
         }
       }
@@ -422,12 +423,12 @@ namespace model
       {
         try
         {
-          awo1._SetWormObs(vector<double>(powl(spin_dof, 2)));
-          awo2.ReadNpy(paths[0]);
+          awo1._SetWormObs(vector<double>(powl(spin_dof, 2)), print);
+          awo2.ReadNpy(paths[0], print);
           if (print)
           {
-            cout << "Warning! : Only one numpy file is found. The path is set for 2 points operator " << endl;
-            cout << "wobs is read from files : " << paths[1] << endl;
+            cerr << "Warning! : Only one numpy file is found. The path is set for 2 points operator " << endl;
+            cout << "wobs is read from files : " << paths[0] << endl;
           }
         }
         catch (const std::exception &e)
