@@ -24,3 +24,9 @@ TEST(LatticeTest, Simple2D) {
   EXPECT_DEATH(model::base_lattice("square lattice", "simple2d", shapes2, "../config/lattices.xml", false),
     "Wrong number of shapes for 2D lattice");
 }
+
+TEST(LatticeTest, Kagome) {
+  std::vector<size_t> shapes = {10, 5};
+}
+
+
