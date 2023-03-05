@@ -1,5 +1,6 @@
 from jax_exact import KH
 import jax
+# from jax import numpy as jnp
 import argparse
 
 models = [
@@ -29,9 +30,30 @@ if __name__ == '__main__':
         h = args.magnetic,
     )
     if (args.model == "KH"):
+        N = L1 * L2 * 3
         H = KH([L1, L2], p)
         print("defined Hamiltonian")
         E, V = jax.scipy.linalg.eigh(H)
         # print(E[])
+        print("E0-E10 = ", E[:10])
         print("E0/NJ = ", E[0]/(p["Jz"] * L1 * L2 * 3))
         print("Gap = ", E[1] - E[0])
+        
+        # calculate the energy
+        # T = jax.numpy.arange(0.1, 1, 0.1).reshape(1,-1)
+
+        beta = jax.numpy.linspace(0, 10, 100).reshape(1,-1)
+        B = jax.numpy.exp(-beta*E[:,None])
+        Z = B.sum(axis=0)
+        E_mean = (E[:,None]*B).sum(axis=0) / Z
+        E_square_mean = ((E*E)[:,None]*B).sum(axis=0) / Z
+        beta = beta.reshape(-1)
+        for b, e, c, in zip(beta, E_mean, (E_square_mean - E_mean**2)*(beta**2)):
+            print(f"{b} : {e} {c}")
+
+        # print(f"beta            = {beta}")
+        # print(f"E               = {E_mean}")
+        # print(f"C               = {(E_square_mean - E_mean**2)*(beta**2)}")
+
+
+      
