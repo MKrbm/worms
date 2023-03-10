@@ -35,5 +35,8 @@ $\langle x_{\tau} | \hat{o}_i \hat{o}_j |x^\prime_{\tau} \rangle$
   - MPIをGtestでやる
   - worm obs の reduce の方法。 (サイズが会わないからできないといわれる)
   - 低く見積もっている可能性がある？
-  
+
+
+- offset の値を増やしてみる
+- 三角形の体格かの規定
 
