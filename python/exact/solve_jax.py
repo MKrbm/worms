@@ -1,4 +1,5 @@
 from jax_exact import KH
+import numpy as np
 import jax
 # from jax import numpy as jnp
 import argparse
@@ -42,14 +43,23 @@ if __name__ == '__main__':
         # calculate the energy
         # T = jax.numpy.arange(0.1, 1, 0.1).reshape(1,-1)
 
-        beta = jax.numpy.linspace(0, 10, 100).reshape(1,-1)
+        beta = jax.numpy.linspace(0, 100, 1000).reshape(1,-1)
         B = jax.numpy.exp(-beta*E[:,None])
         Z = B.sum(axis=0)
         E_mean = (E[:,None]*B).sum(axis=0) / Z
         E_square_mean = ((E*E)[:,None]*B).sum(axis=0) / Z
         beta = beta.reshape(-1)
-        for b, e, c, in zip(beta, E_mean, (E_square_mean - E_mean**2)*(beta**2)):
-            print(f"{b} : {e} {c}")
+        C = (E_square_mean - E_mean**2)*(beta**2)
+        # for b, e, c, in zip(beta, E_mean, (E_square_mean - E_mean**2)*(beta**2)):
+        for i in range(len(beta)):
+            b = beta[-i-1]
+            if b == 0:
+                b = np.inf
+            else :
+                b = 1/b
+            e = E_mean[-i-1]
+            c = C[-i-1]
+            print(f"{b} : {e} {c} {e / N} {c / N}")
 
         # print(f"beta            = {beta}")
         # print(f"E               = {E_mean}")
