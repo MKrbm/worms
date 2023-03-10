@@ -154,7 +154,13 @@ int main(int argc, char **argv) {
   repeat = (bool) mcfg->lookup("repeat");
   shift = (double) mcfg->lookup("shift");
   zero_worm = (bool) mcfg->lookup("zero_worm");
-  try {ns_unit = (size_t) mcfg->lookup("ns_unit");} catch(...) {ns_unit = 1;}
+  try {ns_unit = (size_t) mcfg->lookup("ns_unit");} catch(...) {
+    if (rank == 0) {
+      cout << "Warning!!: please set ns_unit in model.cfg" << endl;
+      cout << "ns_unit is automatically set to 1" << endl;
+    }
+    ns_unit = 1;
+    }
   try { 
     const Setting& wobs_path_list = mcfg->lookup("worm_obs_path");
     for (int i=0; i<wobs_path_list.getLength(); i++) {
