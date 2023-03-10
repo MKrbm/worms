@@ -208,7 +208,7 @@ class UnitaryNonTransTs:
         self.ML = torch.kron(I_not, torch.eye(D)) + MI/2
         self.MR = torch.kron(torch.eye(D), I_not) + MI/2
 
-    def run(self, n_iter, disable_message=False):
+    def run(self, n_iter, disable_message=False, cut_off_cnt = 10):
         
         optim = self.optim
 
@@ -224,11 +224,11 @@ class UnitaryNonTransTs:
         ret = {}
         loss_old = 1E9
         loss_same_cnt = 0
-        max_cnt = 15
+        max_cnt = cut_off_cnt
         with tqdm(range(n_iter), disable=disable_message) as pbar:
             for t, ch in enumerate(pbar):
                 loss_ = self.optim.loss_val(af=self.af, ML = self.ML, MR = self.MR, I = self.I)
-                if (abs(loss_.item() - loss_old)<1E-9):
+                if (abs(loss_.item() - loss_old)<1E-6):
                     loss_same_cnt += 1
                     if loss_same_cnt > max_cnt:
                         if not disable_message:

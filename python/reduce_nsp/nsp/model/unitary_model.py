@@ -189,7 +189,7 @@ class UnitaryRiemanGenerator(BaseMatrixGenerator):
     parameter space is the same as D by D square matrix. No constrants but inital matrix is unitary.
     """
 
-    def __init__(self, D, dtype = np.float64, seed = None):
+    def __init__(self, D : int, dtype = np.float64, seed = None):
         super().__init__(D, dtype, seed)
         self.reset_params(seed=seed)
 
