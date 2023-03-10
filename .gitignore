@@ -1,3 +1,5 @@
+# folders 
+HPhi
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -24,7 +26,6 @@ Release/
 **/dataframe
 **/array
 **/out
-
 # julia
 julia_practice/
 julia_test/
