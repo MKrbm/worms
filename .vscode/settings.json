@@ -3,7 +3,6 @@
   "cmake.sourceDirectory": "${workspaceFolder}",
   "python.terminal.activateEnvironment": true,
   "python.pythonPath": "/home/keisuke/miniconda3/envs/research/bin/python3",
-  "editor.tabSize": 2,
   "cmake.debugConfig": {
     "cwd": "${workspaceFolder}/execute",
     "externalConsole": false,

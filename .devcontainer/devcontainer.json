@@ -1,234 +1,53 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.209.6/containers/cpp
 {
-	"name": "worms_gpu",
-	"dockerComposeFile": [
-		"docker-compose.yml"
-	],
-	"service": "main",
-	"workspaceFolder": "/home/user/project",
+  "name": "worms_gpu",
+  "dockerComposeFile": ["docker-compose.yml"],
+  "service": "main",
+  "workspaceFolder": "/home/user/project",
   "remoteUser": "user",
-	"extensions": [
-    "eamodio.gitlens",
-		"ms-vscode.cpptools",
-		"ms-vscode.cmake-tools",
-		"twxs.cmake",
-		"ms-vscode.cpptools-extension-pack",
-		"ms-vscode.cpptools-themes",
-		"alefragnani.bookmarks",
-		"ms-vscode-remote.remote-containers",
-		"ms-vscode-remote.remote-ssh",
-		"ms-vscode-remote.remote-ssh-edit",
-		"ms-vscode-remote.remote-wsl",
-    "ms-vscode.remote-explorer",
-		"austin.code-gnu-global",
-		"aaron-bond.better-comments",
-    "xshrim.txt-syntax",
-    "mhutchie.git-graph",
-    "bierner.markdown-preview-github-styles",
-    "GitHub.vscode-pull-request-github",
-    "aaron-bond.better-comments",
-    "GitHub.copilot",
-    "julialang.language-julia",
-    "ms-python.python",
-    "usernamehw.indent-one-space",
-    "lesgrieve.paste-indent"
-	],
-	
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-	
-	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "gcc -v",
-	
-	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-	// "remoteUser": "vscode",
-	"features": {
-		// "github-cli": "latest"
-	},
-	"settings": {
-    "editor.bracketPairColorization.enabled": true,
-    "editor.guides.bracketPairs": true,
-    "editor.guides.bracketPairsHorizontal": false,
-    "editor.guides.highlightActiveBracketPair": true,
-    "editor.tokenColorCustomizations": {
-      "comments": "#25af43"
-      // "#25af43"
-    },
-    "workbench.colorCustomizations": {
-      "editor.findMatchBackground": "#5d8841",
-      "editor.findMatchBorder": "#bdbd32",
-      "editor.selectionBackground": "#684c75",
-      "editor.findMatchHighlightBackground": "#8d0707",
-      "tab.activeBackground": "#5c4091",
-      "editor.hoverHighlightBackground": "#4e5f5a",
-      "editor.selectionHighlightBackground": "#907f4c",
-      "editorCursor.foreground": "#c291b4",
-      "terminalCursor.foreground": "#72b9fb",
-  
-    },
-    "better-comments.tags": [
-  
-  
-      {
-        "tag": "*",
-        "color": "#ff52b7",
-        "strikethrough": false,
-        "underline": false,
-        "backgroundColor": "transparent",
-        "bold": true,
-        "italic": false
-      },    
-      {
-        "tag": "n*",
-        "color": "#c370a1",
-        "strikethrough": false,
-        "underline": true,
-        "backgroundColor": "transparent",
-        "bold": false,
-        "italic": false
-      },
-      {
-        "tag": "!",
-        "color": "#ff0000",
-        "strikethrough": false,
-        "underline": true,
-        "backgroundColor": "transparent",
-        "bold": false,
-        "italic": false
-      }
-    ],
-    "liveshare.presence": true,
-    "workbench.settings.editor": "ui",
-    "python.defaultInterpreterPath": "/usr/bin/python3",
-    "python.autoComplete.extraPaths": [
-        "${workspaceFolder}/customModule"
-      ],
-    "explorer.autoReveal": false,
-    "terminal.integrated.inheritEnv": false,
-    "workbench.editorAssociations": {
-      "*.ipynb": "jupyter-notebook"
-    },
-    "editor.fontLigatures": false,
-    "editor.renderControlCharacters": true,
-    "editor.minimap.enabled": false,
-    "editor.wordWrap": "on",
-    "python.analysis.extraPaths": [
-      "${workspaceFolder}/customModule"
-    ],
-    "notebook.cellToolbarLocation": {
-      "default": "right",
-      "jupyter-notebook": "left"
-    },
-    "latex-workshop.view.pdf.viewer": "tab",
-    "files.autoGuessEncoding": true,
-      "debug.inlineValues": true,
-      "settingsSync.ignoredExtensions": [
-        "ms-vscode.cpptools"
-      ],
-    "C_Cpp.addNodeAddonIncludePaths": true,
-    "sync.gist": "340be208f14956e966828474d2fa37fc",
-    "launch" :{
-          
-      // Use IntelliSense to learn about possible attributes.
-      // Hover to view descriptions of existing attributes.
-      // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-      "version": "0.2.0",
-      "configurations": [
-        {
-          "name": "g++(linux)",
-          "type": "cppdbg",
-          "request": "launch",
-          "program": "${fileDirname}/${fileBasenameNoExtension}",
-          "args": [],
-          "stopAtEntry": false,
-          "cwd": "${fileDirname}",
-          "environment": [],
-          "externalConsole": false,
-          "MIMode": "gdb",
-          "setupCommands": [
-            {
-              "description": "Enable pretty-printing for gdb",
-              "text": "-enable-pretty-printing",
-              "ignoreFailures": true
-            }
-          ],
-          "preLaunchTask": "debug_cpp",
-          "miDebuggerPath": "/usr/bin/gdb",
-          "miDebuggerArgs": "-q -ex quit; wait() { fg >/dev/null; }; /bin/gdb -q --interpreter=mi"
-        },
-        {
-          "name": "(lldb) Launch",
-          "type": "cppdbg",
-          "request": "launch",
-          "program": "${fileDirname}/${fileBasenameNoExtension}",
-          "args": [],
-          "cwd": "${fileDirname}",
-          "preLaunchTask": "debug_cpp",
-          "MIMode": "lldb",
-          "logging": {
-              "trace": true,
-              "traceResponse": true,
-              "engineLogging": true
-          }
-          }
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "eamodio.gitlens",
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "twxs.cmake",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.cpptools-themes",
+        "alefragnani.bookmarks",
+        "ms-vscode-remote.remote-containers",
+        "ms-vscode-remote.remote-ssh",
+        "ms-vscode-remote.remote-ssh-edit",
+        "ms-vscode-remote.remote-wsl",
+        "ms-vscode.remote-explorer",
+        "austin.code-gnu-global",
+        "aaron-bond.better-comments",
+        "xshrim.txt-syntax",
+        "mhutchie.git-graph",
+        "bierner.markdown-preview-github-styles",
+        "GitHub.vscode-pull-request-github",
+        "aaron-bond.better-comments",
+        "GitHub.copilot",
+        "julialang.language-julia",
+        "ms-python.python",
+        "usernamehw.indent-one-space",
+        "lesgrieve.paste-indent",
+        "Percy.vscode-numpy-viewer",
+        "esbenp.prettier-vscode",
       ]
-    
-    },
-    "cmake.buildDirectory": "${workspaceFolder}/${buildType}",
-    "cmake.sourceDirectory": "${workspaceFolder}",
-    "extensions.ignoreRecommendations": true,
-    "cmake.loggingLevel": "debug",
-    "cmake.debugConfig": {
-      "cwd": "${workspaceFolder}/Release",
-      "externalConsole": false,
-      "console" : "integratedTerminal"
-      },
-    "git.autofetch": true,
-    "workbench.editor.splitInGroupLayout": "vertical",
-    "terminal.integrated.defaultProfile.windows": "Command Prompt",
-    "C_Cpp.updateChannel": "Insiders",
-    "cmake.configureOnOpen": false,
-    "C_Cpp.enhancedColorization": "Disabled",
-  "editor.occurrencesHighlight": false,
-    "search.useIgnoreFiles": false,
-    "cmake.configureOnEdit": false,
-  "workbench.tree.indent": 16,
-    "workbench.editor.openPositioning": "first",
-  "explorer.confirmDelete": false,
-    "editor.detectIndentation": false,
-    "[python]": {
-      "editor.tabSize": 4
-      },
-    "[cpp]": {
-    "editor.tabSize": 2
-    },
-    "[txt]": {
-    "editor.tabSize": 4
-    },
-    "[markdown]": {
-      "editor.tabSize": 2
-  },
-  "python.terminal.activateEnvInCurrentTerminal": true,
-  "githubIssues.queries": [
-  
-    {
-      "label": "My Issues",
-      "query": "default"
-    },
-    {
-      "label": "Created Issues",
-      "query": "author:${user} state:open repo:${owner}/${repository} sort:created-desc"
-    },
-    {
-      "label": "Recent Issues",
-      "query": "state:open repo:${owner}/${repository} sort:updated-desc"
     }
-  ],
-  "diffEditor.ignoreTrimWhitespace": false,
-  "window.zoomLevel": 1,
-  "files.autoSaveDelay": 500,
-  "git.confirmSync": false,
-  "cmake.saveBeforeBuild": false
+  },
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  // "forwardPorts": [],
+
+  // Use 'postCreateCommand' to run commands after the container is created.
+  // "postCreateCommand": "gcc -v",
+
+  // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+  // "remoteUser": "vscode",
+  "features": {
+    // "github-cli": "latest"
   }
 }
