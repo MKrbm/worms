@@ -35,6 +35,8 @@
         "lesgrieve.paste-indent",
         "Percy.vscode-numpy-viewer",
         "esbenp.prettier-vscode",
+        "ms-python.python",
+        
       ]
     }
   },
