@@ -4,7 +4,7 @@ python_dir := /home/user/project/python
 local_ham_dir := ${python_dir}/make_local
 file_dir := $(shell pwd)
 LOGPATH := $(file_dir)/logs
-LOGFILE := $(LOGPATH)/$(shell date --iso=seconds)
+LOGFILE := $(LOGPATH)/$(shell date --iso=seconds).txt
 
 # Define default values for optional variables
 N ?= 100000
@@ -32,12 +32,12 @@ Res3site := ${file_dir}/out/KH/3site/none/${res_folder}/${array_name}/T_${T}_N_$
 Array3siteMes := ${local_ham_dir}/array/KH/3site/mes/${array_name}/M_${M}
 Res3siteMes := ${file_dir}/out/KH/3site/mes/${res_folder}/${array_name}/T_${T}_N_${N}.txt
 # Define phony targets
-.PHONY: all threeSite threeSiteMes threeSiteDiag
+.PHONY: all 3Site 3SiteMes 3SiteDiag Array3siteMes
 
 # # * define targets
 ${Array3site}: 
 	cd ${local_ham_dir};\
-	python main.py -m KH -u 3site -Jz ${Jz} -Jx ${Jx} -Jy ${Jy} -Hx ${Hx} -Hz ${Hz} >> ${LOGFILE};\
+	python optimize.py -m KH -u 3site -Jz ${Jz} -Jx ${Jx} -Jy ${Jy} -Hx ${Hx} -Hz ${Hz} >> ${LOGFILE};\
 
 ${Res3site}: ${Array3site}
 	cd ${execute_dir}; \
@@ -46,7 +46,7 @@ ${Res3site}: ${Array3site}
 
 ${Array3siteMes}: 
 	cd ${local_ham_dir};\
-	python main.py -m KH -u 3site -Jz ${Jz} -Jx ${Jx} -Jy ${Jy} -Hx ${Hx} -Hz ${Hz} -M ${M} -P ${P} -l mes  >> ${LOGFILE}
+	python optimize.py -m KH -u 3site -Jz ${Jz} -Jx ${Jx} -Jy ${Jy} -Hx ${Hx} -Hz ${Hz} -M ${M} -P ${P} -l mes  >> ${LOGFILE}
 
 
 ${Res3siteMes}: ${Array3siteMes}
@@ -57,36 +57,37 @@ ${Res3siteMes}: ${Array3siteMes}
 
 ${Array3siteDiag}:
 	cd ${local_ham_dir};\
-	python main.py -m KH -u 3siteDiag -Jz ${Jz} -Jx ${Jx} -Jy ${Jy} -Hx ${Hx} -Hz ${Hz} >> ${LOGFILE}
+	python optimize.py -m KH -u 3siteDiag -Jz ${Jz} -Jx ${Jx} -Jy ${Jy} -Hx ${Hx} -Hz ${Hz} >> ${LOGFILE}
 
 ${Res3siteDiag}: ${Array3siteDiag}
 	cd ${execute_dir}; \
 	mkdir -p $(shell dirname ${Res3siteDiag}); \
 	./main_MPI -m Kagome3 -ham ${Array3siteDiag}/H -N ${N} -T ${T} -L1 ${L2} -L2 ${L2} > ${Res3siteDiag}
 
-threeSite: ${Res3site}
-threeSiteMes: ${Res3siteMes}
-threeSiteDiag: ${Res3siteDiag}
-all: threeSite threeSiteMes threeSiteDiag
+3Site: ${Res3site}
+3SiteMes: ${Res3siteMes}
+3SiteDiag: ${Res3siteDiag}
+Array3siteMes : ${Array3siteMes}
+all: 3Site 3SiteMes 3SiteDiag
 
 # Define all target
 
 # # Define rule to create array files
 # ${Array3site} ${Array3siteMes} ${Array3siteDiag}:
-# 	cd ${local_ham_dir}; python main.py -m KH -u 3site${@F:5} -Jz ${Jz} -Jx ${Jx} -Jy ${Jy} -Hx ${Hx} -Hz ${Hz} ${@F:0:3} > ${LOGFILE}
+# 	cd ${local_ham_dir}; python optimize.py -m KH -u 3site${@F:5} -Jz ${Jz} -Jx ${Jx} -Jy ${Jy} -Hx ${Hx} -Hz ${Hz} ${@F:0:3} > ${LOGFILE}
 
 # # Define rule to create result files
 # ${Res3site} ${Res3siteMes} ${Res3siteDiag}: ${Array3site}${@F:9}
 # 	mkdir -p $(shell dirname $@); cd ${execute_dir}; ./main_MPI -m Kagome3 -ham $</H -N ${N} -T ${T} -L1 ${L2} -L2 ${L2} > $@
 
-# # Define threeSite target
-# threeSite: ${Res3site}
+# # Define 3Site target
+# 3Site: ${Res3site}
 
-# # Define threeSiteMes target
-# threeSiteMes: ${Res3siteMes}
+# # Define 3SiteMes target
+# 3SiteMes: ${Res3siteMes}
 
-# # Define threeSiteDiag target
-# threeSiteDiag: ${Res3siteDiag}
+# # Define 3SiteDiag target
+# 3SiteDiag: ${Res3siteDiag}
 
 
 
@@ -160,16 +161,16 @@ all: threeSite threeSiteMes threeSiteDiag
 # # * define targets
 # ${Array3site}: 
 # 	cd ${local_ham_dir};\
-# 	python main.py -m KH -u 3site -Jz ${Jz} -Jx ${Jx} -Jy ${Jy} -Hx ${Hx} -Hz ${Hz} > ${LOGFILE};\
+# 	python optimize.py -m KH -u 3site -Jz ${Jz} -Jx ${Jx} -Jy ${Jy} -Hx ${Hx} -Hz ${Hz} > ${LOGFILE};\
 
 
 # ${Array3siteMes}: 
 # 	cd ${local_ham_dir};\
-# 	python main.py -m KH -u 3site -Jz ${Jz} -Jx ${Jx} -Jy ${Jy} -Hx ${Hx} -Hz ${Hz} -M ${M} -P ${P} -l mes  > ${LOGFILE};\
+# 	python optimize.py -m KH -u 3site -Jz ${Jz} -Jx ${Jx} -Jy ${Jy} -Hx ${Hx} -Hz ${Hz} -M ${M} -P ${P} -l mes  > ${LOGFILE};\
 
 # ${Array3siteDiag}:
 # 	cd ${local_ham_dir};\
-# 	python main.py -m KH -u 3siteDiag -Jz ${Jz} -Jx ${Jx} -Jy ${Jy} -Hx ${Hx} -Hz ${Hz} > ${LOGFILE};\
+# 	python optimize.py -m KH -u 3siteDiag -Jz ${Jz} -Jx ${Jx} -Jy ${Jy} -Hx ${Hx} -Hz ${Hz} > ${LOGFILE};\
 
 
 # ${Res3site}: ${Array3site}
@@ -187,10 +188,10 @@ all: threeSite threeSiteMes threeSiteDiag
 # 	mkdir -p $(shell dirname ${Res3siteDiag}); \
 # 	./main_MPI -m Kagome3 -ham ${Array3siteDiag}/H -N ${N} -T ${T} -L1 ${L2} -L2 ${L2} > ${Res3siteDiag}
 
-# PHONY:. threeSite
-# PHONY:. threeSiteMes
-# PHONY:. threeSiteDiag
+# PHONY:. 3Site
+# PHONY:. 3SiteMes
+# PHONY:. 3SiteDiag
 
-# threeSite: ${Res3site}
-# threeSiteMes: ${Res3siteMes}
-# threeSiteDiag: ${Res3siteDiag}
+# 3Site: ${Res3site}
+# 3SiteMes: ${Res3siteMes}
+# 3SiteDiag: ${Res3siteDiag}
