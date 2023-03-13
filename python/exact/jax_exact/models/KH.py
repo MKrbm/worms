@@ -7,7 +7,7 @@ import jax
 # from ..core import *
 from ..core.constants import *
 from ..core.utils import *
-sys.path.append('../reduce_nsp')
+sys.path.append('/home/user/project/python/reduce_nsp')
 from nsp.utils import l2nl, sum_ham, cast_local_jax
 
 
