@@ -11,7 +11,7 @@ from nsp.utils.func import *
 from nsp.utils.local2global import *
 from nsp.utils.print import beauty_array
 
-unitary_algorithms = ["original", "3site", "3site_diag"]
+unitary_algorithms = ["original", "3site", "3siteDiag"]
 
 # return minus of local hamiltonian
 def KH(ua : str, params : dict):
@@ -44,7 +44,7 @@ def KH(ua : str, params : dict):
         return [-_h for _h in h], 8
         # rewrite this with forloop 
 
-    if ua == "3site_diag":
+    if ua == "3siteDiag":
         _h0 = sum_ham(h_bond , [
             [0,1],[1,2],[2,0]
         ], 3, 2) 
@@ -55,21 +55,16 @@ def KH(ua : str, params : dict):
         ], 6, 2) 
         _h += sum_ham(h_single / 6, [[i] for i in range(6)], 6, 2) #n* there is 6 bond per site
         
-        # h = [
-        #     _h + sum_ham(h_bond, [[0, 5]], 6, 2),
-        #     _h + sum_ham(h_bond, [[0, 4]], 6, 2),
-        #     _h + sum_ham(h_bond, [[2, 4]], 6, 2),
-        # ]
         h = [
-            _h, 
-            _h, 
-            _h, 
+            _h + sum_ham(h_bond, [[0, 5]], 6, 2),
+            _h + sum_ham(h_bond, [[0, 4]], 6, 2),
+            _h + sum_ham(h_bond, [[2, 4]], 6, 2),
         ]
-        # h = [-U.T @ _h @ U for _h in h]
+        h = [U.T @ _h @ U for _h in h]
 
         #n* symmetrize
-        h = [(_h + _h.T) / 2 for _h in h]
-        return [-_h for _h in h], 8
+        h = [-(_h + _h.T) / 2 for _h in h]
+        return h, 8
         # rewrite this with forloop 
 
     if ua == "6site":
@@ -80,8 +75,8 @@ def KH(ua : str, params : dict):
         # -h2 = sum_ham(_h, [[0], [1]], 2, 8)
 
         # h = h_bond + (np.kron(h_single, I2) +  np.kron(I2, h_single)) / 4.0
-    
-    print("Other unitary_algorithms mode not implemented")
+    error_message = f"Other unitary_algorithms mode not implemented yet u = {ua}"
+    raise NotImplementedError(error_message)
     return None, None
         # if loss is not "none":
         #     raise ValueError("loss not supported")
