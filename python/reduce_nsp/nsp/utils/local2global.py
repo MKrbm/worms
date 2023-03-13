@@ -84,7 +84,7 @@ def sum_ham_sparse(h, bonds, L, sps, stoquastic_=False):
     return H
 
 
-def sum_ham(h, bonds, L, sps, stoquastic_=False):
+def sum_ham(h, bonds, L, sps, stoquastic_=False, out = None):
     local_size = h.shape[0]
     h = np.kron(h, np.eye(int((sps**L)/h.shape[0])))
     ori_shape = h.shape
