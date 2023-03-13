@@ -89,5 +89,5 @@ ENDFOREACH(name)
 # add_test(NAME test COMMAND  worm-gtest)
 
 add_subdirectory(./gtest)
-# add_subdirectory(examples)
+add_subdirectory(examples)
 configure_file(MainConfig.h.in MainConfig.h)
