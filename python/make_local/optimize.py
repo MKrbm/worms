@@ -50,21 +50,25 @@ parser.add_argument('-loss','--loss', help='loss_methods', choices=loss, nargs='
 
 
 def mpi_symm_optim( sps, loss_list, M, queue, i, seed):
+    # lr = 0.002
+    # momentum = 0.1
     best_fun = 1E10
     torch.set_num_threads(2)
     message = True
     best_res = None
+    torch.manual_seed(seed)
+    np.random.seed(seed)
     for _ in range(M):
-        torch.manual_seed(seed)
-        np.random.seed(seed)
-        momentum = np.random.uniform(0.01, 1)
+        momentum = np.random.lognormal(np.log(0.05), 0.5)
+        lr = np.random.lognormal(np.log(0.003), 2)
+        print(seed, lr, momentum)
         print(momentum)
     #     models = [nsp.model.UnitaryRiemanGenerator(D, dtype=torch.float64) for _ in range(2)]
         try:
             model = nsp.model.UnitaryRiemanGenerator(sps, dtype=torch.float64)
-            cg = RiemanNonTransUnitarySGD([(model, model)]*len(loss_list), loss_list, lr = 0.001, momentum=momentum)
+            cg = RiemanNonTransUnitarySGD([(model, model)]*len(loss_list), loss_list, lr = lr, momentum = momentum)
             solver = UnitaryNonTransTs(cg, af=False)
-            ret = solver.run(10000,  i != 0, cut_off_cnt = 100)
+            ret = solver.run(10000,  i != 0, cut_off_cnt = 500)
             if message:
                 print(f"res = {ret.fun} / seed = {seed}")
             if ret.fun < best_fun:
@@ -72,7 +76,9 @@ def mpi_symm_optim( sps, loss_list, M, queue, i, seed):
                     print("-"*20)
                     print(f"best_fun updated : {ret.fun} / process : {i}")
                     print("-"*20)
+                    print("start optimization with settings : ", f"lr = {lr} / momentum = {momentum} ")
                 best_res = copy.copy(ret)
+                best_fun = ret.fun
         except Exception as e:
             print(f"Failed to optimize : {str(e)}")
             pass
@@ -98,7 +104,6 @@ if __name__ == "__main__":
     params_str = a[:-1]
     ua = args.unitary_algorithm
     path = f"array/{args.model}/{ua}/{args.loss}/{params_str}"
-    print(path)
 
     h_list = []
     sps = 2
@@ -107,7 +112,6 @@ if __name__ == "__main__":
         pass
 
     if args.loss != "none" and h_list:
-        print("Not implemented yet")
         loss_name = args.loss
         if (loss_name == "mes"):
             loss_f = nsp.loss.MES
@@ -149,8 +153,8 @@ if __name__ == "__main__":
             l._transform_kron([u, u], original=True).detach().numpy() for l in loss_list
         ]
         u = u.detach().numpy()
-        save_npy(f"{path}/H", [h for h in h_list])
-        save_npy(f"{path}/u", [u])
+        save_npy(f"{path}/M_{M}/H", [h for h in h_list])
+        save_npy(f"{path}/M_{M}/u", [u])
         
         # for _ in range(args.num_iter):
         #     seed = randint(0, 2<<32 - 1)
