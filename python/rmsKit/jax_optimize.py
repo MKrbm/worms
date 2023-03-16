@@ -119,31 +119,36 @@ if __name__ == "__main__":
         if args.loss != "none" and "3site" not in ua:
             raise ValueError("optimizer is supported only for 3site unitary algorithm")
 
+    def scheduler(lr):
+        def wrapper(step):
+            r = step / 10
+            return 1 / (1 + r) * lr
+
+        return wrapper
+
     path = f"array/{args.model}/{ua}/{args.loss}/{params_str}"
     seed = randint(0, 100000)
+    np.random.seed(seed)
     print("seed: ", seed)
     ur = rms.unitary.UnitaryRiemanGenerator(8, jax.random.PRNGKey(seed), np.float64)
+
     if args.loss == "mes" and h_list:
 
-        mesLoss_list = [
-            rms.loss.MinimumEnergy(jnp.array(h), 8, np.float64) for h in h_list
-        ]
-        mesLoss = rms.loss.MeanMultiLoss(mesLoss_list)
-        lion_solver = rms.solver.lionSolver(mesLoss)
-        momentum_solver = rms.solver.momentumSolver(mesLoss)
-        cg_solver = rms.solver.cgSolver(mesLoss)
+        state_list = [rms.loss.init_loss(h, 8, np.float64, "mes") for h in h_list]
+        mesLoss = rms.loss.mes_multi
+        lion_solver = rms.solver.lionSolver(mesLoss, state_list)
+        momentum_solver = rms.solver.momentumSolver(mesLoss, state_list)
+        cg_solver = rms.solver.cgSolver(mesLoss, state_list)
+        print("D           : ", momentum_solver.D)
+        print("upper_bound : ", momentum_solver.upper_bound)
         best_lv = 1e10
         best_u = None
-
-        def scheduler(step):
-            r = step / 10
-            return 1 / math.sqrt(1 + int(r)) * 0.01
 
         for _ in range(M):
             u = ur.reset_matrix()
             # u = U
             u, lv = lion_solver(
-                u, 5000, scheduler, cout=True, cutoff_cnt=100, mass1=0.9, mass2=0.98
+                u, 5000, scheduler(0.01), cout=True, cutoff_cnt=100, mass1=0.9, mass2=0.98
             )
             u, lv = cg_solver(u, 500, 0.001, cutoff_cnt=50, cout=True, mass=0.1)
             # u, lv = momentum_solver(u, 1000, 0.1, 0.3, cout=True, cutoff_cnt=10)
@@ -154,7 +159,7 @@ if __name__ == "__main__":
         print("loss value: ", best_lv)
         save_npy(f"{path}/M_{M}/u", [np.array(best_u)])
 
-    if args.loss == "qes" and h_list:
+    elif args.loss == "qes" and h_list:
         if groundstate_path:
             x = np.load(groundstate_path)
         else:
@@ -171,38 +176,41 @@ if __name__ == "__main__":
         x2 = jnp.array(x2)
         x_list = [x0, x1, x2]
 
-        qesLoss_list = [
-            rms.loss.QuasiEnergy(jnp.array(h), _x, 8, np.float64)
+        state_list = [
+            rms.loss.init_loss(h, 8, np.float64, "qes", X=jnp.array(_x))
             for h, _x in zip(h_list, x_list)
         ]
-        qesLoss = rms.loss.MeanMultiLoss(qesLoss_list)
-        lion_solver = rms.solver.lionSolver(qesLoss)
-        momentum_solver = rms.solver.momentumSolver(qesLoss)
-        cg_solver = rms.solver.cgSolver(qesLoss)
+        qesLoss = rms.loss.qes_multi
+        lion_solver = rms.solver.lionSolver(qesLoss, state_list)
+        momentum_solver = rms.solver.momentumSolver(qesLoss, state_list)
+        cg_solver = rms.solver.cgSolver(qesLoss, state_list)
         best_lv = 1e10
         best_u = None
 
-        def scheduler(step):
-            r = step / 10
-            return 1 / math.sqrt(1 + int(r)) * 0.01
+        print("D           : ", momentum_solver.D)
+        print("upper_bound : ", momentum_solver.upper_bound)
 
-        def scheduler2(step):
-            r = step / 10
-            return 1 / (1 + int(r)) * 0.1
+        # def scheduler(step):
+        #     r = step / 10
+        #     return 1 / math.sqrt(1 + r) * 0.01
 
         for _ in range(M):
             u = ur.reset_matrix()
             # u = jnp.eye(8, dtype=np.float64)
             # u = U
+            mass1 = np.random.lognormal(np.log(0.6), 0.5)
+            mass2 = np.random.lognormal(np.log(0.5), 0.5)
+            lr = np.random.lognormal(np.log(0.01), 2)
+            print(f"mass1: {mass1}, mass2: {mass2}, lr: {lr}")
             u, lv = lion_solver(
                 u,
                 5000,
-                scheduler,
+                scheduler(lr),
                 cout=True,
                 cutoff_cnt=100,
                 mass1=0.9,
                 mass2=0.6,
-                offset=0.001,
+                offset=0.0001,
             )
             # u, lv = momentum_solver(
             #     u, 1000, scheduler2, mass=0.5, cout=True, cutoff_cnt=10

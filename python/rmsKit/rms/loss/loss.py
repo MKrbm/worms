@@ -1,20 +1,93 @@
 import jax
 import jax.numpy as jnp
 import abc
-from typing import Union, Tuple
+from typing import Union, Tuple, NamedTuple, Any
 import numpy as np
 from jax._src.basearray import Array
 from jax._src.config import config
 import abc
 from ..unitary import UnitaryRiemanGenerator
 from ..functions import stoquastic
+from functools import partial
 
 config.update("jax_enable_x64", True)  # * enable 64bit float
 
 TYPES = [np.float32, np.float64, np.complex64, np.complex128]
 
 
-class BaseLoss(abc.ABC):
+class MES(NamedTuple):
+    H: Array
+
+
+class QES(NamedTuple):
+    H: Array
+    X: Array
+
+
+def init_loss(H: Array, D: int, dtype, model: str, **kwargs: Any) -> Union[MES, QES]:
+    if model == "mes":
+        return MES(H.astype(dtype))
+    elif model == "qes":
+        X = kwargs["X"]
+        if not (isinstance(X, Array)):
+            raise ValueError("X must be jax.numpy.ndarray")
+        if X.ndim != 1:
+            raise ValueError("X must be 1D array")
+        X = X
+        X = X.reshape(H.shape[0], -1)
+        X = X.astype(dtype)
+        D_local = X.shape[0]
+        if D_local != D**2:
+            raise ValueError("Dimension of H must be D^2")
+        D_sytem = X.size
+        exp = np.emath.logn(D, D_sytem)
+        if abs(exp - round(exp)) > 1e-5:
+            raise ValueError("size of X must be the power of D")
+        exp = np.emath.logn(D, D_local)
+        return QES(H, X)
+    else:
+        raise ValueError("model must be either mes or qes")
+
+
+@jax.jit
+def mes(H, u: Array) -> Array:
+    U = jnp.kron(u, u)
+    E = jnp.linalg.eigvalsh(stoquastic(U.T @ H @ U))
+    return -E[0]
+
+
+@jax.jit
+def mes_target(H, u: Array) -> Array:
+    U = jnp.kron(u, u)
+    E = jnp.linalg.eigvalsh(U.T @ H @ U)
+    return -E[0]
+
+
+@jax.jit
+def qes(H: Array, X: Array, u: Array) -> Array:
+    """
+    loss function
+    """
+    n = 2
+    m = round(np.log(len(X)) / np.log(len(u)))
+    U1 = jnp.kron(u, u)
+    U2 = global_unitary(u, m)
+    X = jnp.abs(U1 @ X @ U2.T)
+    return -jnp.trace(X @ X.T @ stoquastic(U1 @ H @ U1.T))
+
+
+@partial(jax.jit, static_argnames=["n"])
+def global_unitary(M: Array, n: int) -> Array:
+    """
+    loss function
+    """
+    U = M
+    for _ in range(n - 1):
+        U = jnp.kron(U, M)
+    return U
+
+
+class BaseLoss(abc.ABC, object):
     """
     Base class for loss function
     """
@@ -104,10 +177,6 @@ class QuasiEnergy(BaseLoss):
         U = M
         for _ in range(n - 1):
             U = jnp.kron(U, M)
-
-        # def kron(i, U):
-        #     return jnp.kron(U, M)
-        # jax.lax.fori_loop(0, n - 1, kron, U)
         return U
 
     def _loss(self, M: Array, stq: bool) -> Array:

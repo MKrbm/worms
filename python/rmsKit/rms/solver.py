@@ -2,13 +2,15 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax._src.basearray import Array
-from typing import Union, Tuple, NamedTuple, Callable, Type
+from typing import Union, Tuple, NamedTuple, Callable, Type, List
 from .loss import BaseLoss, BaseMultiLoss
 from .unitary import UnitaryRiemanGenerator
 from .optimizer import cg, momentum, LION
 from .functions import check_is_unitary, riemannian_grad
 from tqdm.auto import tqdm
 import abc
+from .loss import MES, QES, mes_multi, qes_multi
+import math
 from jax.example_libraries.optimizers import (
     OptimizerState,
     UpdateFn,
@@ -23,12 +25,23 @@ def default_schedule(step: int) -> float:
     return 1.0 / (1.0 + step)
 
 
+STATELIST = List[Union[MES, QES]]
+
+
 class BaseSolver(abc.ABC):
     def __init__(
         self,
-        loss: Union[BaseMultiLoss, BaseLoss],
+        loss: Callable[[STATELIST, Array], Array],
+        state: STATELIST,
     ):
-        self.loss = loss
+        def _loss_wrapper(u: Array) -> Array:
+            return loss(state, u)
+
+        self.loss = _loss_wrapper
+        self.state = state
+        self.D = round(math.sqrt(state[0].H.shape[0]))
+
+        self.upper_bound = _loss_wrapper(jnp.eye(self.D))
 
     def _iter(
         self,

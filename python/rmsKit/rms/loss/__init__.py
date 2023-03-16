@@ -1,2 +1,3 @@
-from .loss import QuasiEnergy, MinimumEnergy, BaseLoss
-from .multi_loss import MeanMultiLoss, BaseMultiLoss
+# from .loss import QuasiEnergy, MinimumEnergy, BaseLoss
+from .loss import *
+from .multi_loss import *
