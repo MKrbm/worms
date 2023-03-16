@@ -3,8 +3,7 @@
 ## How to use this?
 - this python package is used with main worm algorithm code written in C++.
 
-##
-- Install jax with 
+## Install jax with 
   - For gpu (currently only available for cuda gpu)
     ```Python
     pip install --upgrade pip
