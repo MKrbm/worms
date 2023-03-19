@@ -2,15 +2,10 @@
 
 import sys,os
 import numpy as np
-# from ..core import *
 from ..core.constants import *
 from ..core.utils import *
-from jax import numpy as jnp
-import jax
 import rms
-from jax._src.basearray import Array
-from jax._src.config import config
-config.update('jax_enable_x64', True)
+import logging
 unitary_algorithms = ["original", "3site", "3siteDiag"]
 
 
@@ -70,19 +65,13 @@ def local(ua : str, params : dict):
 
     if ua == "6site":
         print("impossible")
-        # _h = rms.sum_ham(h_bond, [
-        #     [0,1],[1,2],[2,0], [3,4], [4,5], [5,3]
-        # ], 6, 2) 
-        # -h2 = rms.sum_ham(_h, [[0], [1]], 2, 8)
-
-        # h = h_bond + (np.kron(h_single, I2) +  np.kron(I2, h_single)) / 4.0
     error_message = f"Other unitary_algorithms mode not implemented yet u = {ua}"
     raise NotImplementedError(error_message)
     return None, None
 
 
 
-def system(_L : list[int], ua : str, params : dict) -> Array:
+def system(_L : list[int], ua : str, params : dict) -> np.ndarray:
 
     if ua not in unitary_algorithms:
         raise ValueError("unitary_algorithms not supported")
@@ -90,9 +79,12 @@ def system(_L : list[int], ua : str, params : dict) -> Array:
     L = np.array(_L)
     [L1, L2] = _L
     N = L1 * L2 * 3
-    print(f"L      : {L} (3 site per unit cell)")
-    print(f"params : {params}")
-    print(f"Kagome Heisenberg model ({N} sites)")
+    # print(f"L      : {L} (3 site per unit cell)")
+    # print(f"params : {params}")
+    # print(f"Kagome Heisenberg model ({N} sites)")
+    logging.info(f"L      : {L} (3 site per unit cell)")
+    logging.info(f"params : {params}")
+    logging.info(f"Kagome Heisenberg model ({N} sites)")
     if (len(L) != 2):
         raise ValueError(f"Only 2D model is supported")
     if (N > 12):
@@ -103,9 +95,15 @@ def system(_L : list[int], ua : str, params : dict) -> Array:
     if ua == "original":
         bonds = None
         if (L[0] == L[1] == 2):
-            bonds = [ [ 0, 1, ], [ 0, 2, ], [ 1, 2, ], [ 0, 4, ], [ 1, 11, ], [ 0, 8, ], [ 3, 4, ], [ 3, 5, ], [ 4, 5, ], [ 3, 1, ], [ 4, 8, ], [ 3, 11, ], [ 6, 7, ], [ 6, 8, ], [ 7, 8, ], [ 6, 10, ], [ 7, 5, ], [ 6, 2, ], [ 9, 10, ], [ 9, 11, ], [ 10, 11, ], [ 9, 7, ], [ 10, 2, ], [ 9, 5, ], ]
+            bonds = [ [ 0, 1, ], [ 0, 2, ], [ 1, 2, ], [ 0, 4, ], [ 1, 11, ], 
+                     [ 0, 8, ], [ 3, 4, ], [ 3, 5, ], [ 4, 5, ], [ 3, 1, ], [ 4, 8, ], 
+                     [ 3, 11, ], [ 6, 7, ], [ 6, 8, ], [ 7, 8, ], [ 6, 10, ], [ 7, 5, ], 
+                     [ 6, 2, ], [ 9, 10, ], [ 9, 11, ], [ 10, 11, ], [ 9, 7, ], [ 10, 2, ], 
+                     [ 9, 5, ], ]
         elif (L[0] == 3 and L[1] == 1):
-            bonds = [ [ 0, 1, ], [ 0, 2, ], [ 1, 2, ], [ 0, 7, ], [ 1, 5, ], [ 0, 2, ], [ 3, 4, ], [ 3, 5, ], [ 4, 5, ], [ 3, 1, ], [ 4, 8, ], [ 3, 5, ], [ 6, 7, ], [ 6, 8, ], [ 7, 8, ], [ 6, 4, ], [ 7, 2, ], [ 6, 8, ], ]
+            bonds = [ [ 0, 1, ], [ 0, 2, ], [ 1, 2, ], [ 0, 7, ], [ 1, 5, ], [ 0, 2, ], 
+                     [ 3, 4, ], [ 3, 5, ], [ 4, 5, ], [ 3, 1, ], [ 4, 8, ], [ 3, 5, ], 
+                     [ 6, 7, ], [ 6, 8, ], [ 7, 8, ], [ 6, 4, ], [ 7, 2, ], [ 6, 8, ], ]
         else:
             print("Not implemented")
         if (len(H_list) != 1):
@@ -113,10 +111,11 @@ def system(_L : list[int], ua : str, params : dict) -> Array:
 
         H_bond = H_list[0] 
         _H = rms.sum_ham(H_bond, bonds, N, 2)
-        return jnp.array(_H)
+        return _H
 
     if ua == "3site" or ua == "3siteDiag":
-        _bonds = [[0,0,2], [1,0,1], [2,0,3], [0,1,3], [1,1,0], [2,1,2], [0,2,0], [1,2,3], [2,2,1], [0,3,1], [1,3,2], [2,3,0]]
+        _bonds = [[0,0,2], [1,0,1], [2,0,3], [0,1,3], [1,1,0], [2,1,2], [0,2,0], [1,2,3], 
+                  [2,2,1], [0,3,1], [1,3,2], [2,3,0]]
         bonds = [[], [], []]
         for bond in _bonds:
             bonds[bond[0]].append(bond[1:])
@@ -126,7 +125,7 @@ def system(_L : list[int], ua : str, params : dict) -> Array:
         _H = rms.sum_ham(H_list[0], bonds[0], 4, 8)
         _H += rms.sum_ham(H_list[1], bonds[1], 4, 8)
         _H += rms.sum_ham(H_list[2], bonds[2], 4, 8)
-        return jnp.array(_H)
+        return _H
     
     else:
         raise ValueError(f"ua = {ua} not supported")

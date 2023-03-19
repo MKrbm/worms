@@ -24,16 +24,32 @@ class QES(NamedTuple):
     X: Array
 
 
-def init_loss(H: Array, D: int, dtype, model: str, **kwargs: Any) -> Union[MES, QES]:
+class SEL(NamedTuple):
+    H: Array
+    beta: float
+
+
+class SMEL(NamedTuple):
+    H: Array
+
+
+def init_loss(
+    H: Array, D: int, dtype, model: str, **kwargs: Any
+) -> Union[MES, QES, SEL, SMEL]:
+    H = H.astype(dtype)
+    if (not isinstance(H, Array)):
+        raise ValueError("H must be jax.numpy.ndarray")
+    
+    if ((not isinstance(D, int))):
+        raise ValueError("D must be int")
     if model == "mes":
-        return MES(H.astype(dtype))
+        return MES(H)
     elif model == "qes":
         X = kwargs["X"]
         if not (isinstance(X, Array)):
             raise ValueError("X must be jax.numpy.ndarray")
         if X.ndim != 1:
             raise ValueError("X must be 1D array")
-        X = X
         X = X.reshape(H.shape[0], -1)
         X = X.astype(dtype)
         D_local = X.shape[0]
@@ -45,6 +61,16 @@ def init_loss(H: Array, D: int, dtype, model: str, **kwargs: Any) -> Union[MES, 
             raise ValueError("size of X must be the power of D")
         exp = np.emath.logn(D, D_local)
         return QES(H, X)
+
+    elif model == "sel":
+        beta = kwargs["beta"]
+        if not (isinstance(beta, float)):
+            raise ValueError("beta must be jax.numpy.ndarray")
+        return SEL(H, beta)
+
+    elif model == "smel":
+        return SMEL(H)
+
     else:
         raise ValueError("model must be either mes or qes")
 
@@ -52,14 +78,14 @@ def init_loss(H: Array, D: int, dtype, model: str, **kwargs: Any) -> Union[MES, 
 @jax.jit
 def mes(H, u: Array) -> Array:
     U = jnp.kron(u, u)
-    E = jnp.linalg.eigvalsh(stoquastic(U.T @ H @ U))
+    E = jnp.linalg.eigvalsh(stoquastic(U @ H @ U.T))
     return -E[0]
 
 
 @jax.jit
 def mes_target(H, u: Array) -> Array:
     U = jnp.kron(u, u)
-    E = jnp.linalg.eigvalsh(U.T @ H @ U)
+    E = jnp.linalg.eigvalsh(U @ H @ U.T)
     return -E[0]
 
 
@@ -74,6 +100,24 @@ def qes(H: Array, X: Array, u: Array) -> Array:
     U2 = global_unitary(u, m)
     X = jnp.abs(U1 @ X @ U2.T)
     return -jnp.trace(X @ X.T @ stoquastic(U1 @ H @ U1.T))
+
+
+@jax.jit
+def system_el(H: Array, beta: Array, u: Array) -> Array:
+    m = round(np.log(len(H)) / np.log(len(u)))
+    U = global_unitary(u, m)
+    E = jnp.linalg.eigvalsh(stoquastic(U @ H @ U.T))
+    # E_prime = E - E[0]
+    z = jnp.exp(-E * beta)
+    return jnp.log(jnp.sum(z))
+
+
+@jax.jit
+def system_mel(H: Array, u: Array) -> Array:
+    m = round(np.log(len(H)) / np.log(len(u)))
+    U = global_unitary(u, m)
+    E = jnp.linalg.eigvalsh(stoquastic(U @ H @ U.T))
+    return -E[0]
 
 
 @partial(jax.jit, static_argnames=["n"])

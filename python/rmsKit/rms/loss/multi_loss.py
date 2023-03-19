@@ -8,7 +8,7 @@ from jax._src.config import config
 import abc
 from ..unitary import UnitaryRiemanGenerator
 from ..functions import stoquastic
-from .loss import BaseLoss, MES, QES, mes, qes
+from .loss import BaseLoss, MES, QES, SEL, SMEL, mes, qes, system_el, system_mel
 
 config.update("jax_enable_x64", True)  # * enable 64bit float
 
@@ -17,6 +17,8 @@ TYPES = [np.float32, np.float64, np.complex64, np.complex128]
 
 QESMulti = List[QES]
 MESMulti = List[MES]
+SELMulti = List[SEL]
+SMELMulti = List[SMEL]
 
 
 @jax.jit
@@ -32,6 +34,22 @@ def mes_multi(state: MESMulti, u: Array) -> Array:
     loss = jnp.array(0)
     for i in range(len(state)):
         loss += mes(state[i].H, u)
+    return loss
+
+
+@jax.jit
+def system_el_multi(state: SELMulti, u: Array) -> Array:
+    loss = jnp.array(0)
+    for i in range(len(state)):
+        loss += system_el(state[i].H, state[i].beta, u)
+    return loss
+
+
+@jax.jit
+def system_mel_multi(state: SMELMulti, u: Array) -> Array:
+    loss = jnp.array(0)
+    for i in range(len(state)):
+        loss += system_mel(state[i].H, u)
     return loss
 
 

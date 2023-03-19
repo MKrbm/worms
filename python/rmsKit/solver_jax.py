@@ -74,14 +74,6 @@ if __name__ == '__main__':
         if args.gs:
             exit()
             
-        # print("defined Hamiltonian")
-        # print(E[])
-        # print("E0-E10 = ", E[:10])
-        # print("E0/NJ = ", E[0]/(p["Jz"] * L1 * L2 * 3))
-        # print("Gap = ", E[1] - E[0])
-        
-        # calculate the energy
-        # T = jax.numpy.arange(0.1, 1, 0.1).reshape(1,-1)
 
         beta = jax.numpy.linspace(0, 10, 1001).reshape(1,-1)
         B = jax.numpy.exp(-beta*E[:,None])
