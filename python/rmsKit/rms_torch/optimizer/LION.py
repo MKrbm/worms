@@ -59,7 +59,7 @@ class LION(Optimizer):
         loss = None
         if exists(closure):
             with torch.enable_grad():
-                loss = closure()
+                loss = closure() if callable(closure) else closure
 
         for group in self.param_groups:
             for p in filter(lambda p: exists(p.grad), group['params']):

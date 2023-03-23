@@ -1,5 +1,5 @@
-from jax_lattice import KH
-from jax_lattice import save_npy
+from lattice import KH
+from lattice import save_npy
 import argparse
 from random import randint
 import numpy as np

@@ -1,5 +1,5 @@
-from jax_lattice import KH
-from jax_lattice.core.utils import *
+from lattice import KH
+from lattice.core.utils import *
 import numpy as np
 import jax
 import jax.numpy as jnp
