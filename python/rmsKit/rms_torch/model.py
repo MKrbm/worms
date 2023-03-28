@@ -2,6 +2,8 @@ import torch
 from torch import nn
 import numpy as np
 import math
+from typing import Union, Tuple
+
 
 
 def random_unitary_matrix(size: int, device: torch.device) -> torch.Tensor:
@@ -32,12 +34,14 @@ class UnitaryRieman(nn.Module):
         else:
             self.u = nn.ParameterList([nn.Parameter(torch.tensor(self.u0, dtype=torch.float64, device=self.device), requires_grad=True)])
 
-    def reset_params(self):
+    def reset_params(self, u0 : Union[torch.Tensor, None]= None):
+        if u0 is not None and u0.shape != (self.unitary_size, self.unitary_size):
+            raise ValueError("The shape of u0 is not correct.")
         for p in self.parameters():
             if p.grad is not None:
                 p.grad.detach_()
                 p.grad.zero_()
-            p.data = random_unitary_matrix(self.unitary_size, self.device)
+            p.data = random_unitary_matrix(self.unitary_size, self.device) if u0 is None else torch.tensor(u0, dtype=torch.float64, device=self.device)
 
     def forward(self) -> torch.Tensor:
         U = self.u[0]

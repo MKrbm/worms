@@ -1,10 +1,11 @@
 import torch
 from torch import Tensor
 from lattice import KH
-from lattice import save_npy
+from lattice import save_npy, list_unitaries
 
 import argparse
 from random import randint
+import random
 import numpy as np
 import rms
 import subprocess
@@ -30,7 +31,7 @@ models = [
     "KH",
     "HXYZ",
 ]
-loss_val = ["sel", "sqel"]  # minimum energy solver, quasi energy solver
+loss_val = ["sel", "sqel", "smel"]  # minimum energy solver, quasi energy solver
 
 parser = argparse.ArgumentParser(
     description="exact diagonalization of shastry_surtherland"
@@ -50,6 +51,7 @@ parser.add_argument("-M", "--num_iter", help="# of iterations", type=int, defaul
 parser.add_argument("-r", "--seed", help="random seed", type=int, default=None)
 parser.add_argument("-lr", "--learning_rate", help="learning rate", type=float, default=0.01)
 parser.add_argument("-schedule", help = "Use scheduler if given", action = "store_true")
+parser.add_argument("-f_path", help = "Path to fine tuning unitaries", type=str, default="")
 parser.add_argument("-e", "--epoch", help="epoch", type=int, default=100)
 parser.add_argument(
     "-u",
@@ -67,6 +69,15 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "-o",
+    "--optimizer",
+    help="optimizer",
+    choices=["LION", "Adam"],
+    nargs="?",
+    const="all",
+)
+
+parser.add_argument(
     "-p",
     "--platform",
     help="cput / gpu",
@@ -76,6 +87,28 @@ parser.add_argument(
     default="cpu",
 )
 
+def lr_lambda(epoch : int) -> float:
+    f = lambda x : np.exp(-4.5*np.tanh(x*0.02))
+    epoch = (epoch // 10) * 10
+    return f(epoch)
+
+# def lr_lambda(epoch : int) -> float:
+#     lr = 1
+#     if epoch < 5:
+#         return lr
+#     elif epoch < 10:
+#         return 0.8 * lr
+#     elif epoch < 15:
+#         return 0.5 * lr
+#     elif epoch < 20:
+#         return 0.1 * lr
+#     elif epoch < 30:
+#         return 0.07 * lr
+#     elif epoch < 80:
+#         return 0.05 * lr
+#     else:
+#         return 0.01 * lr
+    
 args = parser.parse_args()
 device = torch.device("cuda") if args.platform == "gpu" else torch.device("cpu")
 u0 = np.load("array/torch/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_200/u/0.npy")
@@ -85,19 +118,27 @@ u3 = np.load("array/torch/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_200/u/3.npy")
 u_list = [u0, u1, u2, u3]
 u0 = np.load("array/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_1/u/0.npy")
 
+logging.info("args: {}".format(args))
+M = args.num_iter
 
 #d* set seed
-seed = args.seed if args.seed is not None else randint(0, 1000000)
+seed = args.seed if args.seed else randint(0, 1000000)
+logging.info("seed: {}".format(args.seed))
+random.seed(seed)
 
+#d* set fine tuning unitaries
+f_path = args.f_path
+ft_unitaries = []
+if f_path != "":
+    folders = list_unitaries(f_path, n_top = 10)
+    print(folders)
+    ft_unitaries = [np.load(folder + "/u/0.npy") for folder in folders]
+    logging.info(f"fine tuning unitaries are loaded from {f_path}")
+    M = len(ft_unitaries)
 
-# logging.info(f"seed: {seed}")
-# torch.manual_seed(seed)
-# np.random.seed(seed)
+seed_list = [randint(0, 1000000) for i in range(M)]
 
 if __name__ == "__main__":
-    logging.info("args: {}".format(args))
-    M = args.num_iter
-    seed_list = [args.seed if args.seed else randint(0, 1000000) for i in range(M)]
     p = dict(
         Jx=args.coupling_x if args.coupling_x is not None else args.coupling_z,
         Jy=args.coupling_y if args.coupling_y is not None else args.coupling_z,
@@ -121,51 +162,47 @@ if __name__ == "__main__":
             raise ValueError("not implemented")
 
     if args.loss == "sel" and H is not None: #* system energy loss
-        loss_ = rms_torch.SystemEnergyLoss(H, device=device)
+        loss = rms_torch.SystemEnergyLoss(H, device=device)
     elif args.loss == "sqel" and H is not None:
-        loss_ = rms_torch.SystemQuasiEnergyLoss(H, N = 3, device=device)
+        loss = rms_torch.SystemQuasiEnergyLoss(H, N = 5, device=device)
         logging.info("Pre-calculated ground state and energy")
+    elif args.loss == "smel" and H is not None:
+        loss = rms_torch.SystemMinimumEnergyLoss(H, device=device).to(device)
     else :
         raise ValueError("not implemented")
     model_ = rms_torch.UnitaryRieman(H.shape[0], 8, device=device).to(device)
     model = torch.compile(model_, dynamic = False, fullgraph=True)
-    loss = torch.compile(loss_, dynamic = False, fullgraph=True)
 
     best_loss = 1e10
     best_us = None
+    good_seeds = []
+    unitaries = []
     for i, seed in enumerate(seed_list):
         logging.info(f"iteration: {i+1}/{M}, seed: {seed}")
+        if ft_unitaries:
+            logging.info("fine tuning unitaries are used")
         torch.manual_seed(seed)
         np.random.seed(seed)
         local_best_loss = 1e10
         local_best_us = []
-        # model.reset_params() if i > 0 else None
+        model.reset_params(ft_unitaries[i]) if ft_unitaries else model.reset_params()
 
-        model.reset_params()
-        optimizer = rms_torch.Adam(model.parameters(), lr=args.learning_rate, amsgrad=True)
-        def lr_lambda(epoch : int) -> float:
-            lr = args.learning_rate
-            if epoch < 5:
-                return lr
-            elif epoch < 10:
-                return 0.8 * lr
-            elif epoch < 15:
-                return 0.5 * lr
-            elif epoch < 20:
-                return 0.1 * lr
-            elif epoch < 30:
-                return 0.07 * lr
-            elif epoch < 80:
-                return 0.05 * lr
-            else:
-                return 0.01 * lr
+        if args.optimizer == "LION":
+            optimizer = rms_torch.LION(model.parameters(), lr=args.learning_rate)
+        elif args.optimizer == "Adam":
+            optimizer = rms_torch.Adam(model.parameters(), lr=args.learning_rate, amsgrad=True)
+        else:
+            raise ValueError("not implemented")
+        
+
         scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda = lr_lambda) if args.schedule else None
-        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.5) if args.schedule else None
         epochs = args.epoch
+        if args.loss == "smel":
+            loss.initializer(model())
         for t in range(epochs):
             optimizer.zero_grad()
             output = model()
-            loss_val = loss(output, 100)
+            loss_val = loss(output, 100) if args.loss == "sqel" else loss(output)
             if loss_val.item() < local_best_loss:
                 with torch.no_grad():
                     local_best_loss = loss_val.item()
@@ -181,11 +218,13 @@ if __name__ == "__main__":
             scheduler.step() if scheduler is not None else None
             logging.info(f"Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}")
 
-        logging.info(f"best local loss: {local_best_loss} quasiEnergy = {loss(model())}", )
         if local_best_loss < best_loss:
             best_loss = local_best_loss
             best_us = [np.copy(u) for u in local_best_us]
+        good_seeds.append([seed, local_best_loss])
+        logging.info(f"best local loss: {local_best_loss} quasiEnergy = {loss(model())}", )
+        save_npy(f"{path}/e_{args.epoch}_lr_{args.learning_rate}/loss_{local_best_loss:5f}/u", local_best_us)
     
 
     logging.info("loss value: %s", best_loss)
-    save_npy(f"{path}/M_{M}_e_{args.epoch}_lr_{args.learning_rate}/u", best_us)
+    logging.info("good seeds: %s", good_seeds)

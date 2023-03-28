@@ -34,6 +34,7 @@ class LION(Optimizer):
         lr: float = 1e-4,
         betas: Tuple[float, float] = (0.9, 0.99),
         weight_decay: float = 0.0,
+        amsgrad = False,
     ):
         assert lr > 0.
         assert all([0. <= beta <= 1. for beta in betas])
