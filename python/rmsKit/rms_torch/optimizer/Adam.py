@@ -5,6 +5,7 @@ from torch import Tensor
 from torch.optim.optimizer import (Optimizer, _use_grad_for_differentiable, _get_value, _stack_if_compiling,
                         _dispatch_sqrt, _default_to_fused_or_foreach, _capturable_doc,
                         _differentiable_doc, _foreach_doc, _fused_doc, _maximize_doc)
+from torch.optim import Adam as _Adam
 from torch.utils._foreach_utils import _group_tensors_by_device_and_dtype
 
 __all__ = ['Adam']
@@ -117,6 +118,8 @@ def custom_adam(params: List[Tensor],
         fused = False
     if foreach is None:
         foreach = False
+
+    foreach = True
 
     if not all(isinstance(t, torch.Tensor) for t in state_steps):
         raise RuntimeError("API has changed, `state_steps` argument must contain a list of singleton tensors")

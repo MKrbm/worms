@@ -47,18 +47,18 @@ parser.add_argument("-hx", "--mag_x", help="magnetic field", type=float, default
 parser.add_argument("-hz", "--mag_z", help="magnetic field", type=float, default=0)
 parser.add_argument("-T", "--temperature", help="temperature", type=float)
 parser.add_argument("-M", "--num_iter", help="# of iterations", type=int, default=10)
-parser.add_argument("-r", "--seed", help="random seed", type=int, default=None)
+parser.add_argument("-s", "--seed", help="random seed", type=int, default=None)
 parser.add_argument("-lr", "--learning_rate", help="learning rate", type=float, default=0.01)
 parser.add_argument("-schedule", help = "Use scheduler if given", action = "store_true")
 parser.add_argument("-e", "--epoch", help="epoch", type=int, default=100)
 parser.add_argument(
-    "-u",
+    "-ua",
     "--unitary_algorithm",
     help="algorithm determine local unitary matrix",
     default="original",
 )
 parser.add_argument(
-    "-loss",
+    "-l",
     "--loss",
     help="loss_methods",
     choices=loss_val,
@@ -78,12 +78,12 @@ parser.add_argument(
 
 args = parser.parse_args()
 device = torch.device("cuda") if args.platform == "gpu" else torch.device("cpu")
-u0 = np.load("array/torch/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_200/u/0.npy")
-u1 = np.load("array/torch/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_200/u/1.npy")
-u2 = np.load("array/torch/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_200/u/2.npy")
-u3 = np.load("array/torch/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_200/u/3.npy")
-u_list = [u0, u1, u2, u3]
-u0 = np.load("array/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_1/u/0.npy")
+# u0 = np.load("array/torch/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_200/u/0.npy")
+# u1 = np.load("array/torch/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_200/u/1.npy")
+# u2 = np.load("array/torch/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_200/u/2.npy")
+# u3 = np.load("array/torch/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_200/u/3.npy")
+# u_list = [u0, u1, u2, u3]
+# u0 = np.load("array/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_1/u/0.npy")
 
 
 #d* set seed
@@ -121,15 +121,15 @@ if __name__ == "__main__":
             raise ValueError("not implemented")
 
     if args.loss == "sel" and H is not None: #* system energy loss
-        loss_ = rms_torch.SystemEnergyLoss(H, device=device)
+        loss = rms_torch.SystemEnergyLoss(H, device=device)
     elif args.loss == "sqel" and H is not None:
-        loss_ = rms_torch.SystemQuasiEnergyLoss(H, N = 3, device=device)
+        loss = rms_torch.SystemQuasiEnergyLoss(H, N = 3, device=device)
         logging.info("Pre-calculated ground state and energy")
     else :
         raise ValueError("not implemented")
     model_ = rms_torch.UnitaryRieman(H.shape[0], 8, device=device).to(device)
     model = torch.compile(model_, dynamic = False, fullgraph=True)
-    loss = torch.compile(loss_, dynamic = False, fullgraph=True)
+    # loss = torch.compile(loss_, dynamic = False, fullgraph=True)
 
     best_loss = 1e10
     best_us = None
@@ -165,7 +165,7 @@ if __name__ == "__main__":
         for t in range(epochs):
             optimizer.zero_grad()
             output = model()
-            loss_val = loss(output, 100)
+            loss_val = loss(output, 100) if args.loss == "sqel" else loss(output)
             if loss_val.item() < local_best_loss:
                 with torch.no_grad():
                     local_best_loss = loss_val.item()
