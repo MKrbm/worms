@@ -37,7 +37,6 @@ include(googletest)
 # endif()
 
 add_library(worm STATIC
-    ./src/state.cpp
     ./src/operator.cpp
     ./src/load_npy.cpp
     ./src/automodel.cpp

@@ -28,7 +28,7 @@
 #include <ctime>
 #include <math.h>
 
-#include "state2.hpp"
+#include "state.hpp"
 #include "operator.hpp"
 #include "automodel.hpp"
 #include "funcs.hpp"

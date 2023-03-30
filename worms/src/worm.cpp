@@ -27,6 +27,7 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_, size_
 #ifdef NDEBUG
   unsigned rseed = static_cast<unsigned>(time(0)) + rand() * (rank + 1);
   rand_src = engine_type(rseed);
+  rand_src = engine_type(SEED);
 #else
   rand_src = engine_type(SEED);
   test_src = engine_type(SEED);
@@ -40,7 +41,7 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_, size_
   {
     LOPt const &lop = loperators[i];
     pows_vec.push_back(lop.ogwt.pows);
-    state_funcs.push_back({lop.ogwt.pows, lop.ogwt.L});
+    state_funcs.push_back({sps, lop.ogwt.L});
     auto accept = std::vector<double>(lop.size, 0);
 
     auto const &ham = lop.ham_prime;
@@ -49,8 +50,8 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_, size_
       accept[j] = ham[j][j] / max_diagonal_weight;
     }
     accepts.push_back(accept);
-    rho = max_diagonal_weight * spin_model.Nb;
   }
+  rho = max_diagonal_weight * spin_model.Nb;
 }
 template <class MCT>
 void Worm<MCT>::diagonalUpdate(double wdensity)
