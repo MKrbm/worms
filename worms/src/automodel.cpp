@@ -194,7 +194,7 @@ namespace model{
       for (int i=0; i<shape[0]; i++) for (int j=0; j<shape[1]; j++)
       {
         auto x = data[i * shape[1] + j] * params[p_i];
-        loperator._ham[j][i] += x;
+        loperator._ham[i][j] += x;
       }
     }
 
