@@ -10,7 +10,7 @@ import numpy as np
 import rms_torch
 import logging
 import datetime
-
+import os
 
 
 
@@ -19,7 +19,6 @@ models = [
     "KH",
     "HXYZ",
 ]
-loss_val = ["sel", "sqel", "smel"]  # minimum energy solver, quasi energy solver
 
 parser = argparse.ArgumentParser(
     description="exact diagonalization of shastry_surtherland"
@@ -34,68 +33,8 @@ parser.add_argument("-Jx", "--coupling_x", help="coupling constant (Jx)", type=f
 parser.add_argument("-Jy", "--coupling_y", help="coupling constant (Jy)", type=float)
 parser.add_argument("-hx", "--mag_x", help="magnetic field", type=float, default=0)
 parser.add_argument("-hz", "--mag_z", help="magnetic field", type=float, default=0)
-parser.add_argument("-T", "--temperature", help="temperature", type=float)
-parser.add_argument("-M", "--num_iter", help="# of iterations", type=int, default=10)
-parser.add_argument("-r", "--seed", help="random seed", type=int, default=None)
-parser.add_argument("-lr", "--learning_rate", help="learning rate", type=float, default=0.01)
-parser.add_argument("-schedule", help = "Use scheduler if given", action = "store_true")
 parser.add_argument("-f_path", help = "Path to fine tuning unitaries", type=str, default="")
-parser.add_argument("-e", "--epoch", help="epoch", type=int, default=100)
-parser.add_argument(
-    "-u",
-    "--unitary_algorithm",
-    help="algorithm determine local unitary matrix",
-    default="original",
-)
-parser.add_argument(
-    "-loss",
-    "--loss",
-    help="loss_methods",
-    choices=loss_val,
-    nargs="?",
-    const="all",
-)
 
-parser.add_argument(
-    "-o",
-    "--optimizer",
-    help="optimizer",
-    choices=["LION", "Adam"],
-    nargs="?",
-    const="all",
-)
-
-parser.add_argument(
-    "-p",
-    "--platform",
-    help="cput / gpu",
-    choices=["cpu", "gpu"],
-    nargs="?",
-    const="all",
-    default="cpu",
-)
-
-def lr_lambda(epoch : int) -> float:
-    f = lambda x : np.exp(-4.5*np.tanh(x*0.02))
-    epoch = (epoch // 10) * 10
-    return f(epoch)
-
-# def lr_lambda(epoch : int) -> float:
-#     lr = 1
-#     if epoch < 5:
-#         return lr
-#     elif epoch < 10:
-#         return 0.8 * lr
-#     elif epoch < 15:
-#         return 0.5 * lr
-#     elif epoch < 20:
-#         return 0.1 * lr
-#     elif epoch < 30:
-#         return 0.07 * lr
-#     elif epoch < 80:
-#         return 0.05 * lr
-#     else:
-#         return 0.01 * lr
     
 args = parser.parse_args()
 
@@ -113,33 +52,16 @@ print(f"logging to file: {log_filename}")
 
 
 
-device = torch.device("cuda") if args.platform == "gpu" else torch.device("cpu")
-# u0 = np.load("array/torch/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_200/u/0.npy")
-# u1 = np.load("array/torch/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_200/u/1.npy")
-# u2 = np.load("array/torch/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_200/u/2.npy")
-# u3 = np.load("array/torch/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_200/u/3.npy")
-# u_list = [u0, u1, u2, u3]
-# u0 = np.load("array/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_1/u/0.npy")
 
 logging.info("args: {}".format(args))
-M = args.num_iter
 
-#d* set seed
-seed = args.seed if args.seed else randint(0, 1000000)
-logging.info("seed: {}".format(args.seed))
-random.seed(seed)
 
 #d* set fine tuning unitaries
-f_path = args.f_path
-ft_unitaries = []
-if f_path != "":
-    folders = list_unitaries(f_path)
-    logging.info(folders)
-    ft_unitaries = [np.load(folder + "/u/0.npy") for folder in folders]
-    logging.info(f"fine tuning unitaries are loaded from {f_path}")
-    M = len(ft_unitaries)
+f_path = args.f_path + "/u"
+loss_folders = [
+    entry.path for entry in os.scandir(f_path) if entry.name.endswith(".npy")
+]
 
-seed_list = [randint(0, 1000000) for i in range(M)]
 
 if __name__ == "__main__":
     p = dict(
@@ -154,7 +76,6 @@ if __name__ == "__main__":
         v = float(v)
         a += f"{k}_{v:.4g}_"
     params_str = a[:-1]
-    ua = args.unitary_algorithm
     path = f"array/torch/{args.model}/{ua}/{args.loss}/{params_str}"
 
     H = None

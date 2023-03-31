@@ -71,6 +71,12 @@ class SystemQuasiEnergyLoss(SystemEnergyLoss):
         return
 
 class SystemMinimumEnergyLoss(nn.Module):
+    """
+    Calculate the minimum energy of a system using the reverse iteration method.
+    The first ground state is calculated using the eigendecomposition of the Hamiltonian.
+    The next ground states will be calculated using the reverse iteration method.
+    You need to use small learning rates for this loss function in order to converge.
+    """
     def __init__(self, H: Union[np.ndarray, torch.Tensor], device: torch.device = torch.device("cpu")):
         super(SystemMinimumEnergyLoss, self).__init__()
 
