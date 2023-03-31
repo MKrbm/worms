@@ -4,6 +4,7 @@ set (test_src
      model
      example
      lops
+     local_hams
     )
 
 
