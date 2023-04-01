@@ -22,20 +22,6 @@ namespace spin_state{
   using WORM_ARR = std::vector<WORM>; // site, spin, dot_label, tau (dot label is needed for reverse lookup)
   using DOT_ARR = std::vector<std::tuple<int,int,int,int>>; //prev, next, dot_type, index, (index refers to the legs of the dot with respect to the class of dots)
 
-  struct StateFunc{
-  public:
-    const size_t sps;
-    const size_t leg_size;
-    StateFunc(size_t, size_t);
-    size_t state2num(VUS const&, int = -1);
-    size_t state2num(VUS const&, VS const&);
-    VUS num2state(int, int);
-  };
-
-  // STATE num2state(int num, int L);
-  // std::string return_name(int dot_type, int op_type);
-
-
   static std::string op_type_name[2] = {
       "diagonal",
       "off-diagonal"

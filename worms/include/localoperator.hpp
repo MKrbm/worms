@@ -13,6 +13,7 @@
 #include "outgoing_weight.hpp"
 #include "funcs.hpp"
 #include "operator.hpp"
+#include "state_func.hpp"
 
 
 namespace model{
@@ -92,10 +93,16 @@ public:
   double ham_vector(int i) {return _ham_vector[i];}
   const std::vector<double> & ham_vector() {return _ham_vector;}
   const std::vector<std::vector<double>> & ham() const {return _ham;}
+  std::vector<std::vector<double>> & single_flip(bool start, int spin) {
+    //* i represents if the target site is start or the end of bond
+    //* spin represents the spin of the site
+    return _single_flip[spin + start*sps];
+    }
   const bool has_warp(int i) const {return _has_warp[i];}
   using VECD = std::vector<double>;
   using TPROB = std::vector<VECD>; //type for transition probability. typically, this is 2D matrix with 4 x 4 elements( check notebook for detail definition of this type).
   std::vector<std::vector<double>> ham_prime;
+  std::vector<std::vector<std::vector<double>>> _single_flip;
   std::vector<std::vector<double>> _ham; // virtual hamiltonian (or maybe absolute of original hamiltonian)
   std::vector<int> signs; //list of sign defined via the sign of ham_prime;
   
@@ -116,7 +123,7 @@ public:
 
   local_operator(int leg, size_t sps = 2);
 
-  void set_ham(double off_set = 0, double thres = 1E-6, bool dw = false);
+  void set_ham(double off_set = 0, double thres = 1E-6, bool dw = false, double alpha = 1 / 6.0);
   void set_trans_weights();
   void check_trans_prob();
   int index2num(std::array<int, 2> index);
@@ -162,6 +169,10 @@ local_operator<MC>::local_operator(int leg, size_t sps)
   :leg(leg), size(pow(sps, leg)), ogwt(leg, sps), sps(sps)
   {
     _ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
+    _single_flip.resize(2 * sps);
+    for (int i = 0; i < 2 * sps; ++i){
+      _single_flip[i] = std::vector<std::vector<double>>(sps, std::vector<double>(sps, std::numeric_limits<double>::max()));
+    }
   }
 
 /*
@@ -171,10 +182,14 @@ this function should be called after manually define local hamiltonian.
 *params
 ------
 boolean warp : 1 = have a chance for worm to warp.
+double alpha : parameter which determines how much the diagonal elements of single flip will be allocated.
+alpha may be 1 / (1 + Nb) where Nb is the number of NN bonds.
 */
 template <class MC>
-void local_operator<MC>::set_ham(double off_set, double thres, bool warp){
+void local_operator<MC>::set_ham(double off_set, double thres, bool warp, double alpha){
   // std::cout << "Hi" << std::endl;
+  if (0 > alpha || alpha >= 1) throw std::invalid_argument("alpha should be between 0 and 1");
+  spin_state::StateFunc state_func(sps, 2);
   int N = size*size;
   ene_shift=0;
   ham_prime = _ham;
@@ -189,18 +204,38 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp){
     ham_prime[i][i] += ene_shift;
   }
 
+  //d* set single_flip operator and bond operator
+  max_diagonal_weight_ = 0;
   for (int i=0; i<N; i++){
-    auto index = num2index(i);
-    _ham_vector[i] = ham_prime[index[0]][index[1]];
+    auto index = state_func.num2state(i, 4);
+    auto mat_index = num2index(i);
+    _ham_vector[i] = ham_prime[mat_index[0]][mat_index[1]];
+    if (index[1] == index[3]) {
+      if (index[0] == index[2]){
+        single_flip(0, index[1])[index[0]][index[0]] = _ham_vector[i] / 2 * alpha;
+      } else {
+        single_flip(0, index[1])[index[0]][index[2]] = _ham_vector[i];
+      }
+    }
+    // if (index[0] == index[2]) single_flip(1, index[0])[index[1]][index[3]] = _ham_vector[i];
+    if (index[0] == index[2]){
+      if (index[1] == index[3]){
+        single_flip(1, index[0])[index[1]][index[1]] = _ham_vector[i] / 2 * alpha;
+      } else {
+        single_flip(1, index[0])[index[1]][index[3]] = _ham_vector[i];
+      }
+    }
+    if (_ham_vector[i] != ham_prime[mat_index[0]][mat_index[1]]) throw std::runtime_error("error in set_ham");
+    
+    if (mat_index[0] == mat_index[1]) {
+      _ham_vector[i] *= (1 - alpha);
+      max_diagonal_weight_ = std::max(max_diagonal_weight_, _ham_vector[i]);
+    }
   }
 
 
   total_weights = 0;
-  double tmp=0;
-  max_diagonal_weight_ = 0;
   for (int i=0; i<size; i++) {
-    tmp += ham_prime[i][i];
-    max_diagonal_weight_ = std::max(max_diagonal_weight_, ham_prime[i][i]);
   }
 
   for (int i=0; i<_ham_vector.size(); i++){

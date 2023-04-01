@@ -27,7 +27,15 @@ namespace model{
       if (type2bonds[i].size() > 0 && type2bonds[i].back().size() != bonds[j].size()) throw std::invalid_argument("legsize should be consistent among the operator with the same type");
       type2bonds[i].push_back(bonds[j]);
       }
+
+    nn_sites.resize(L);
+    for (int i=0; i < bonds.size(); i++){
+      vector<size_t> bond = bonds[i];
+      size_t bt = bond_type[i];
+      nn_sites[bond[0]].push_back({bt, false, bond[1]});
+      nn_sites[bond[1]].push_back({bt, true, bond[0]});
     }
+  }
 
   base_lattice::base_lattice(std::tuple<size_t, VVS, VS, VS> tp)
   :base_lattice(get<0>(tp), get<1>(tp), get<2>(tp), get<3>(tp)){}
@@ -132,6 +140,13 @@ namespace model{
     if (num_type(site_type) != dofs.size()) {std::cerr << "# of dofs doesn't match to # of site types\n"; exit(1);}
     for (int t : site_type) {_sps_sites.push_back(dofs[t]);}
     if (_sps_sites.size() != L) {std::cerr << "Something wrong with sps_sites\n"; exit(1);}
+    int num_site_type = num_type(site_type);
+    for (int i=0; i<site_type.size(); i++) {
+      if (site_type[i] != i % num_site_type) {
+        std::cerr << "site_type is " << site_type << std::endl;
+        throw std::runtime_error("site_type must be 0, 1, 2, ..., num_types-1, 0, 1, 2...");
+      }
+    }
 
 
     // cout << "hi" << endl;
@@ -207,8 +222,36 @@ namespace model{
     for (int e=0; e< N_op; e++){
       origin_shift +=  shifts[e] *  bond_t_size[e];
     }
-  }
 
+    //d* calculate max_diagonal_weights for each site types
+    s_flip_max_weights.resize(num_site_type);
+    size_t sps = _sps_sites[0];
+    for (int i=0; i<num_site_type; i++) {
+      s_flip_max_weights[i] = 0;
+      vector<double> sum_max_weights(sps, 0);
+      for (auto btype : nn_sites[i]){
+        vector<double> max_weights(sps, std::numeric_limits<double>::lowest());
+        double max_tmp = 0;
+        for (size_t xs=0; xs<sps; xs++) {
+          // cerr << "bt " << btype.bt << " start " << btype.start << " xs " << xs << endl;
+          for (size_t xt=0; xt<sps; xt++){
+            max_weights[xs] = std::max(
+              max_weights[xs], 
+              loperators[btype.bt].single_flip(btype.start, xt)[xs][xs]
+              );
+            // cout << loperators[btype.bt].single_flip(btype.start, xt)[xs][xs] << " ";
+          }
+          // cout << endl;
+          // cerr << max_weights[xs] << endl;
+          sum_max_weights[xs] += max_weights[xs];
+        }
+      }
+
+      for (size_t xs=0; xs<sps; xs++) {
+        s_flip_max_weights[i] = std::max(s_flip_max_weights[i], sum_max_weights[xs]);
+      }
+    }
+  }
 
   //* simple constructor
   template <class MC>
@@ -219,6 +262,10 @@ namespace model{
               bool zero_worm)
   :base_lattice(lat)
   {
+
+    //! Currently not available 
+    throw std::runtime_error("This constructor is not available yet");
+
     if (N_op != hams.size()) {std::cerr << "size of hams does not match to N_op\n"; exit(1);}
     for (int t : site_type) {_sps_sites.push_back(dofs[t]);}
     VVS dofs_list(N_op);
@@ -239,6 +286,8 @@ namespace model{
     for (int e=0; e< N_op; e++){
       origin_shift +=  shifts[e] *  bond_t_size[e];
     }
+
+
   }
 
   template <class MC>

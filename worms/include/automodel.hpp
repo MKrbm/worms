@@ -15,6 +15,21 @@ namespace model{
   class base_lattice;
   template <class MC=bcl::heatbath>
   class base_model;
+
+  struct BondTargetType{
+    size_t bt;
+    bool start; //* true if the target site is start of the bond.
+    size_t target; //* target site.
+    BondTargetType (size_t bt, bool start, size_t target)
+    : bt(bt), start(start), target(target) {}
+
+    friend std::ostream& operator<<(std::ostream& os, const BondTargetType& bondTarget) {
+        os << "{ bt: " << bondTarget.bt
+           << ", start: " << (bondTarget.start ? "true" : "false")
+           << ", target: " << bondTarget.target << " }";
+        return os;
+    }
+  };
 }
 
 
@@ -32,7 +47,10 @@ public:
   const VVS bonds;
   const VS bond_type;
   const VS site_type;
+  vector<vector<BondTargetType>> nn_sites;
+
   double rho = 0;
+
 
 
   base_lattice(int L, VVS bonds);
@@ -67,9 +85,8 @@ public:
   using MCT = MC;
   const size_t leg_size = 2; //accepts only bond operators 
   std::vector<local_operator<MCT>> loperators;
-  size_t sps_sites(size_t i){return _sps_sites[i];}
-  double shift() const {return origin_shift;}
-  const std::vector<local_operator<MCT>> get_local_operators() const {return loperators;}
+  std::vector<double> s_flip_max_weights;
+
   //* default constructor
   base_model( model::base_lattice lat, 
               VS dofs, 
@@ -97,6 +114,14 @@ public:
   thres : value lower than thres reduce to 0. usually 1E-8;
   */
   void initial_setting(VD off_sets, double thres, bool zw);
+
+  size_t sps_sites(size_t i){return _sps_sites[i];}
+
+  double shift() const {return origin_shift;}
+
+  const std::vector<local_operator<MCT>> get_local_operators() const {return loperators;}
+
+  const size_t num_types() { return num_type(site_type); }
 };
 
 

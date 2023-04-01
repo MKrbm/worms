@@ -1,4 +1,4 @@
-#include "../include/state.hpp"
+#include "../include/state_func.hpp"
 
 namespace spin_state{
 
@@ -8,9 +8,9 @@ namespace spin_state{
     
     size_t StateFunc::state2num(VUS const& state, int L){
       size_t num = 0;
-      size_t x = 1;
+      size_t x = 0;
       if (L < 0) L = state.size(); if (L == 0) return 0;
-      for (int i = L-1; i >= 0; i--) { x*=sps; num += x*state[i]; }
+      for (int i = L-1; i >= 0; i--) { x*=sps; num += state[i]; }
       return num;
     }
 
