@@ -33,7 +33,7 @@ bool operator==(const local_operator<MC>& lhs, const local_operator<MC>& rhs)
   bool cmp = true;
   cmp &= (lhs._ham == rhs._ham);
   cmp &= lhs._ham_vector == rhs._ham_vector;
-  cmp &= lhs.ham_prime == rhs.ham_prime;
+  cmp &= lhs._ham_prime == rhs._ham_prime;
   cmp &= lhs.leg == rhs.leg;
   cmp &= lhs.size == rhs.size;
   cmp &= lhs.ene_shift == rhs.ene_shift;
@@ -88,20 +88,26 @@ class local_operator{
 private:
   std::vector<double> _ham_vector;
   std::vector<bool> _has_warp; //check if the state has warphole
+  std::vector<std::vector<double>> _ham_prime;
 public:
   typedef MC MCT;
   double ham_vector(int i) {return _ham_vector[i];}
-  const std::vector<double> & ham_vector() {return _ham_vector;}
+  const std::vector<double> & ham_vector() const {return _ham_vector;}
   const std::vector<std::vector<double>> & ham() const {return _ham;}
+  const std::vector<std::vector<double>> & ham_prime() const {return _ham_prime;}
+
   std::vector<std::vector<double>> & single_flip(bool start, int spin) {
     //* i represents if the target site is start or the end of bond
     //* spin represents the spin of the site
     return _single_flip[spin + start*sps];
     }
+
+  const double & single_flip(bool start, int spin, int x, int y) const {
+    return _single_flip[spin + start*sps][x][y];
+  }
   const bool has_warp(int i) const {return _has_warp[i];}
   using VECD = std::vector<double>;
   using TPROB = std::vector<VECD>; //type for transition probability. typically, this is 2D matrix with 4 x 4 elements( check notebook for detail definition of this type).
-  std::vector<std::vector<double>> ham_prime;
   std::vector<std::vector<std::vector<double>>> _single_flip;
   std::vector<std::vector<double>> _ham; // virtual hamiltonian (or maybe absolute of original hamiltonian)
   std::vector<int> signs; //list of sign defined via the sign of ham_prime;
@@ -192,16 +198,16 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp, double
   spin_state::StateFunc state_func(sps, 2);
   int N = size*size;
   ene_shift=0;
-  ham_prime = _ham;
+  _ham_prime = _ham;
   _ham_vector = std::vector<double>(N, 0);
 
-  for (int i=0; i<ham_prime.size();i++){
+  for (int i=0; i<_ham_prime.size();i++){
     ene_shift = std::min(ene_shift, _ham[i][i]);
   }
   ene_shift *= -1;
   ene_shift += off_set;
-  for (int i=0; i<ham_prime.size();i++){
-    ham_prime[i][i] += ene_shift;
+  for (int i=0; i<_ham_prime.size();i++){
+    _ham_prime[i][i] += ene_shift;
   }
 
   //d* set single_flip operator and bond operator
@@ -209,7 +215,7 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp, double
   for (int i=0; i<N; i++){
     auto index = state_func.num2state(i, 4);
     auto mat_index = num2index(i);
-    _ham_vector[i] = ham_prime[mat_index[0]][mat_index[1]];
+    _ham_vector[i] = _ham_prime[mat_index[0]][mat_index[1]];
     if (index[1] == index[3]) {
       if (index[0] == index[2]){
         single_flip(0, index[1])[index[0]][index[0]] = _ham_vector[i] / 2 * alpha;
@@ -225,7 +231,7 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp, double
         single_flip(1, index[0])[index[1]][index[3]] = _ham_vector[i];
       }
     }
-    if (_ham_vector[i] != ham_prime[mat_index[0]][mat_index[1]]) throw std::runtime_error("error in set_ham");
+    if (_ham_vector[i] != _ham_prime[mat_index[0]][mat_index[1]]) throw std::runtime_error("error in set_ham");
     
     if (mat_index[0] == mat_index[1]) {
       _ham_vector[i] *= (1 - alpha);

@@ -294,6 +294,8 @@ namespace model{
   void base_model<MC>::initial_setting(VD off_sets, double thres, bool zw){
     int i = 0;
     double tmp=0;
+    //! zero worm is disabled for now
+    if (zw) throw std::runtime_error("zero worm is not supported currently");
     for (local_operator<MCT> & h : loperators){
       h.set_ham(off_sets[i], thres, zw);
       shifts.push_back(h.ene_shift);

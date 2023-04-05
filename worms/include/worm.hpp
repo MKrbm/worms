@@ -69,6 +69,9 @@ private:
   double phys_cnt;
   // n*  sum of observables encountered while worm update. (observable must be non-diagonal operator)
   vector<double> obs_sum;
+  
+  //n* maximum diagonal value of local operator.
+  double max_diagonal_weight = -1;
 
 public:
   typedef spin_state::Operator OP_type;
@@ -95,6 +98,7 @@ public:
   VVS pows_vec;
   size_t sps;
   std::vector<BOND> bonds;
+  std::vector<BOND> sites;
   std::vector<size_t> bond_type;
   std::vector<state_func> state_funcs;
   std::unordered_set<size_t> can_warp_ops;
@@ -124,7 +128,7 @@ public:
   alps::alea::batch_acc<double> &get_phys_cnt() { return _phys_cnt; }
 
   Worm(double beta, MODEL model_, size_t cl = SIZE_MAX, int rank = 0)
-      : Worm(beta, model_, model::WormObs(model_.sps_sites(0)), cl, rank) {}
+    : Worm(beta, model_, model::WormObs(model_.sps_sites(0)), cl, rank) {}
 
   Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_, size_t cl = SIZE_MAX, int rank = 0);
 
