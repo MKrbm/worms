@@ -46,7 +46,7 @@ inline int positive_modulo(int i, int n)
 using spin_state::Dotv2;
 
 // using MODEL = model::heisenberg1D;
-using state_t = spin_state::VUS;
+using state_t = spin_state::state_t;
 using SPIN = spin_state::US;
 using BOND = model::VS;
 using WORMS = spin_state::WORM_ARR;
@@ -71,7 +71,6 @@ private:
   vector<double> obs_sum;
   
   //n* maximum diagonal value of local operator.
-  double max_diagonal_weight = -1;
 
 public:
   typedef spin_state::Operator OP_type;
@@ -81,6 +80,7 @@ public:
   typedef std::uniform_real_distribution<> uniform_t;
   typedef std::exponential_distribution<> expdist_t;
   typedef bcl::markov<engine_type> markov_t;
+  double max_diagonal_weight = -1;
 
   uniform_t uniform;
 
@@ -98,7 +98,7 @@ public:
   VVS pows_vec;
   size_t sps;
   std::vector<BOND> bonds;
-  std::vector<BOND> sites;
+  std::vector<BOND> nn_sites;
   std::vector<size_t> bond_type;
   std::vector<state_func> state_funcs;
   std::unordered_set<size_t> can_warp_ops;
@@ -106,6 +106,7 @@ public:
   std::vector<size_t> psop = std::vector<size_t>(0);
   std::vector<state_t> worm_states;
   std::vector<double> worm_taus;
+
 
   // n* reference of member variables from model class
   std::vector<model::local_operator<typename MODEL::MCT>> &loperators;
@@ -208,6 +209,20 @@ public:
       int state,
       int op_type,
       double tau);
+
+  // //*append to ops
+  void appendSingleOps(
+      OPS &ops,
+      DOTS &sp,
+      int s_site,
+      const BOND *const bp,
+      const BOND *const pp,
+      int state,
+      const state_t& nn_state,
+      int op_type,
+      double tau);
+
+
   //* get dot state
   /*
   params
@@ -264,7 +279,25 @@ public:
   void checkOpsInUpdate(int worm_label, int p_label, int t_dir, int t_fl, int fl, int dir);
   bool detectWormCross(double tau, double tau_prime, double wt_tau, int dir);
   void reset_ops();
+  double get_single_flip_elem(const OP_type& op);
+  double get_single_flip_elem(int site, int x, int x_prime, state_t _state);
+  double get_single_flip_elem(int site, int x, int x_prime, state_t _state, state_t& nn_state);
 
+
+  /*
+  params
+  ------
+  x : spin state of the site. x // sps is upper spin and x % sps is lower spin.
+  x_flipped : spin state after flipped. x // sps is upper spin and x % sps is lower spin.
+  fl : if fl = 0, then worm doesn't change state.
+
+  comments
+  --------
+  x_flipped wax originally x but it is changed to x_flipped after worm comes to the operator and flip either upper or lower spin. 
+
+  Original spin would be if direction is 1 (worm moves upwards) {x % sps + fl % sps,   x // sps}.
+  */
+  pair<int, int> markov_next_flip(OP_type& op, int dir, int fl);
   static void printStateAtTime(const state_t &state, double time);
 };
 

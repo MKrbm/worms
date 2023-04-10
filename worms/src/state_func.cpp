@@ -6,7 +6,7 @@ namespace spin_state{
     :sps(sps), leg_size(leg_size)
     {}
     
-    size_t StateFunc::state2num(VUS const& state, int L){
+    size_t StateFunc::state2num(state_t const& state, int L){
       size_t num = 0;
       size_t x = 0;
       if (L < 0) L = state.size(); if (L == 0) return 0;
@@ -14,7 +14,7 @@ namespace spin_state{
       return num;
     }
 
-    size_t StateFunc::state2num(VUS const& state, VS const& bond){
+    size_t StateFunc::state2num(state_t const& state, VS const& bond){
       size_t u = 0;
       size_t L = bond.size();
       if (L != 2) throw std::invalid_argument("state2num: bond.size() != 2");
@@ -26,8 +26,8 @@ namespace spin_state{
       return u;
   }
   
-    VUS StateFunc::num2state(int num, int L){
-      VUS state(L, 0); // all spin up
+    state_t StateFunc::num2state(int num, int L){
+      state_t state(L, 0); // all spin up
       for (int i = 0; i<L; i++){ 
         state[i] = num % sps; 
         num /= sps;
