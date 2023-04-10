@@ -5,15 +5,7 @@
 #include <iterator>
 #include <tuple>
 #include <vector>
-
-using namespace std;
-using VS = vector<size_t>;
-using VVS = vector<VS>;
-using VI = vector<int>;
-using VVI = vector<VI>;
-using VD = vector<double>;
-using US = unsigned short;
-using VUS = vector<US>;
+#include "spin_state.hpp"
 
 
 namespace spin_state{
@@ -22,8 +14,8 @@ namespace spin_state{
     const size_t sps;
     const size_t leg_size;
     StateFunc(size_t sps, size_t leg_size);
-    size_t state2num(VUS const&, int = -1);
-    size_t state2num(VUS const&, VS const&);
-    VUS num2state(int, int);
+    size_t state2num(state_t const&, int = -1);
+    size_t state2num(state_t const&, VS const&);
+    state_t num2state(int, int);
   };
 }

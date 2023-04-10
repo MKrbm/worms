@@ -5,85 +5,138 @@
 #include <iterator>
 #include <tuple>
 #include <vector>
+#include "spin_state.hpp"
 
-
-namespace spin_state{
-  using namespace std;
-  using VS = vector<size_t>;
-  using VVS = vector<VS>;
-  using VI = vector<int>;
-  using VVI = vector<VI>;
-  using VD = vector<double>;
-  using US = unsigned short;
-  using VUS = vector<US>;
-  class Operator{
-    const VS* const bond_ptr_;
-    const VS* const pows_ptr_;
-    size_t op_type_; // type of bond operator (basically 1 or 2 types)
+namespace spin_state
+{
+  class Operator
+  {
+    const VS *const bond_ptr_;
+    const VS *const pows_ptr_;
+    int op_type_; // type of bond operator (basically 1 or 2 types)
     size_t state_;
+    state_t nn_state_;
     size_t cnt_;
+    size_t sps;
     double tau_;
+
   public:
-    Operator() :bond_ptr_(nullptr), pows_ptr_(nullptr){}
-    
-    Operator(const VS* const bp, const VS* pp, size_t st,
-            size_t o, double t)
-            :bond_ptr_(bp), pows_ptr_(pp), state_(st), op_type_(o), tau_(t), cnt_(0)
-    {}
+    Operator() : bond_ptr_(nullptr), pows_ptr_(nullptr) {}
 
-    Operator(size_t st, size_t o, double t)
-    :state_(st), op_type_(o), tau_(t), bond_ptr_(nullptr), pows_ptr_(nullptr), cnt_(0)
-    {}
+    Operator(const VS *const bp, const VS *pp, size_t st,
+             int o, double t)
+        : bond_ptr_(bp), pows_ptr_(pp), state_(st), op_type_(o), tau_(t), cnt_(0), sps(pp->at(1))
+    {
+      if (pp->size() != 2 * bp->size() + 1)
+        throw std::invalid_argument("power size is not consistent with bond size");
+    }
 
-    size_t cnt() const {return cnt_;}
-    void set_state(size_t s) { state_ = s; cnt_ = 0;}
-    void add_cnt() {cnt_++;}
-    size_t size() const {return bond_ptr_->size();}
-    size_t op_type()const {return op_type_;}
-    size_t state()const {return state_;}
-    size_t state(size_t dir)const { // dir = 0 lower part, dir = 1 upper pirt
-      if (dir==0) return state_ % (*pows_ptr_)[size()];
-      else if (dir == 1) return state_ / (*pows_ptr_)[size()];
+    Operator(size_t st, int o, double t)
+        : state_(st), op_type_(o), tau_(t), bond_ptr_(nullptr), pows_ptr_(nullptr), cnt_(0)
+    {
+    }
+
+    // d* if nn_state_ is given
+    /*
+    nn_state = [x0, x0_prime, x1, x2, .., x6]
+    Only x0 can take off-diagonal values
+    */
+    Operator(const VS *const bp, const VS *pp, size_t st, state_t ss, int o, double t)
+        : bond_ptr_(bp), op_type_(o), tau_(t), cnt_(0), nn_state_(ss), pows_ptr_(pp), sps(pp->at(1)), state_(st)
+    {
+      if (bond_ptr_->size() != nn_state_.size())
+        throw std::invalid_argument("bond size is not consistent with single state size");
+      if (pp->size() != 3)
+        throw std::invalid_argument("power size should be 3 for single-site state");
+      if (o >= 0)
+        throw std::invalid_argument("op_type must be negative for single-site state");
+    }
+
+    size_t cnt() const { return cnt_; }
+    void set_state(size_t s)
+    {
+      state_ = s;
+      cnt_ = 0;
+    }
+    void add_cnt() { cnt_++; }
+    size_t size() const { return bond_ptr_->size(); }
+    int op_type() const { return op_type_; }
+    size_t state() const
+    {
+      return state_;
+    }
+    size_t state(size_t dir) const
+    { 
+      //* if is_single() is true, size() is 1
+      size_t _size = size(); 
+      if (!_check_is_bond()) _size = 1;
+      if (dir == 0)
+        return state_ % (*pows_ptr_)[_size];
+      else if (dir == 1)
+        return state_ / (*pows_ptr_)[_size];
+      else 
+        throw std::invalid_argument("dir must be 0 or 1");
       return -1;
     }
-    double tau()const {return tau_;}
-    int bond(int i) {return bond_ptr_->operator[](i);}
-    const VS* bond_ptr()const {return bond_ptr_;}
-    const VS* pows_ptr()const {return pows_ptr_;}
+    const state_t &nn_state() const
+    {
+      is_single();
+      return nn_state_;
+    }
+    spin_t nn_state(size_t i) const
+    {
+      is_single();
+      return nn_state_[i];
+    }
+
+    const state_t &update_nn_state(size_t index, int fl)
+    {
+      is_single();
+      nn_state_[index] = (nn_state_[index] + fl) % sps;
+      return nn_state_;
+    }
+    double tau() const { return tau_; }
+    int bond(int i) { return bond_ptr_->operator[](i); }
+    const VS *bond_ptr() const { return bond_ptr_; }
+    const VS *pows_ptr() const { return pows_ptr_; }
 
     /*
-    leg = 0,1,2,3 for bond operator     
+    leg = 0,1,2,3 for bond operator
     2  3
     ====
     0  1.
     */
     size_t update_state(size_t leg, size_t fl)
-      {
+    {
       size_t a = (*pows_ptr_)[leg];
-      size_t t = (*pows_ptr_)[leg+1];
-      state_ = (state_/t)*t + (state_%t+fl*a) % t;
+      size_t t = (*pows_ptr_)[leg + 1];
+      state_ = (state_ / t) * t + (state_ % t + fl * a) % t;
       return state_;
-      }
-    US get_local_state(size_t leg) const { return (state_%(*pows_ptr_)[leg+1])/(*pows_ptr_)[leg];}
-    bool is_off_diagonal() const{ return (state_ ? (state(0) != state(1)) : false);}
-    bool is_diagonal()const{ return !is_off_diagonal();}
-    static Operator sentinel(double tau = 1){ return Operator(0, 0, tau);}
-    void print(std::ostream& os) const {
-      for (size_t i=0; i<size()*2; i++) os << get_local_state(i) << " ";
+    }
+    US get_local_state(size_t leg) const { return (state_ % (*pows_ptr_)[leg + 1]) / (*pows_ptr_)[leg]; }
+    bool is_off_diagonal() const { return (state_ ? (state(0) != state(1)) : false); }
+    bool is_diagonal() const { return !is_off_diagonal(); }
+    static Operator sentinel(double tau = 1) { return Operator(0, 0, tau); }
+    void print(std::ostream &os) const
+    {
+      for (size_t i = 0; i < size() * 2; i++)
+        os << get_local_state(i) << " ";
       os << tau_;
     }
-    friend std::ostream& operator<<(std::ostream& os, Operator const& op) {
+    friend std::ostream &operator<<(std::ostream &os, Operator const &op)
+    {
       op.print(os);
       return os;
     }
-    VUS get_state_vec() const {
-      VUS state_vec(size()*2);
-      for (int i=0; i<size()*2; i++) {
+    state_t get_state_vec() const
+    {
+      state_t state_vec(size() * 2);
+      for (int i = 0; i < size() * 2; i++)
+      {
         state_vec[i] = get_local_state(i);
       }
       return state_vec;
     }
-
 
     /*
     return label worm move to
@@ -94,11 +147,43 @@ namespace spin_state{
     clabel : label of dot. (label doesn't distinguish the direction worm goes out or comes in)
     L : number of site the operator acts, typically 2.
     */
-    int next_dot(int cindex, int nindex, int clabel){
+    int next_dot(int cindex, int nindex, int clabel)
+    {
       // int cindex = GetIndex(ptr, 0);
       cindex %= size();
       nindex %= size();
       return clabel + (nindex - cindex);
+    }
+
+    bool is_bond() const
+    {
+      if (!_check_is_bond())
+        throw std::invalid_argument("Operator::is_bond(): invalid operator");
+    }
+
+    bool is_single() const
+    {
+      if (_check_is_bond())
+        throw std::invalid_argument("Operator::is_single(): invalid operator");
+    }
+
+    /*
+    return true if this operator is bond operator
+    */
+    bool _check_is_bond() const
+    {
+      if (nn_state_.size() == 0 && op_type_ >= 0)
+      {
+        return true;
+      }
+      else if (nn_state_.size() != 0 && op_type_ < 0)
+      {
+        return false;
+      }
+      else
+      {
+        throw std::invalid_argument("Operator::check_is_bond(): invalid operator");
+      }
     }
   };
 }
