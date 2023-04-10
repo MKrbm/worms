@@ -65,10 +65,13 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_, size_
 
   rho = max_diagonal_weight * (spin_model.Nb + spin_model.L);
 
-  // d* define sites in the same manner as bonds
-  for (size_t i = 0; i < spin_model.L; i++)
+  // d* define nn_sites in the same manner as bonds
+  nn_sites.resize(spin_model.L);
+  for (size_t site = 0; site < spin_model.L; site++)
   {
-    sites.push_back({i});
+    for (model::BondTargetType bt : spin_model.nn_sites[site]){
+      nn_sites[site].push_back(bt.target);
+    }
   }
 }
 template <class MCT>
@@ -95,6 +98,8 @@ void Worm<MCT>::diagonalUpdate(double wdensity)
   double tau0 = uniform(rand_src);
   double tau = expdist(rand_src);
   bool set_atleast_one = false;
+
+  state_t nn_state;
   for (typename OPS::iterator opi = ops_sub.begin(); opi != ops_sub.end();)
   {
     if (tau0 < tau && !set_atleast_one)
@@ -140,19 +145,14 @@ void Worm<MCT>::diagonalUpdate(double wdensity)
         {
           int site = b - spin_model.Nb;
           double sop_label = spin_model.site_type[site];
-          double mat_elem = 0;
           size_t spin = cstate[site];
-          for (auto target : spin_model.nn_sites[site])
-          {
-            mat_elem += spin_model.loperators[target.bt]
-                            .single_flip(target.start, cstate[target.target], spin, spin);
-          }
+          double mat_elem = get_single_flip_elem(site, spin, spin, cstate, nn_state);
           mat_elem = std::abs(mat_elem) / max_diagonal_weight;
           if (r < mat_elem)
           {
 
-            appendOps(ops_main, spacetime_dots, can_warp_ops,
-                      &sites[site], &pows_vec[sop_label + loperators.size()], spin + spin * sps, -1, tau);
+            appendSingleOps(ops_main, spacetime_dots, site,
+                      &nn_sites[site], &pows_vec[sop_label + loperators.size()], spin + spin * sps, nn_state ,-1, tau);
           }
         }
       }
@@ -162,10 +162,22 @@ void Worm<MCT>::diagonalUpdate(double wdensity)
     { //*if tau went over the operator time.
       if (opi->is_off_diagonal())
       {
-
         update_state(opi, cstate);
-        appendOps(ops_main, spacetime_dots, can_warp_ops,
-                  opi->bond_ptr(), opi->pows_ptr(), opi->state(), opi->op_type(), opi->tau());
+        if (opi->_check_is_bond()) {
+          appendOps(ops_main, spacetime_dots, can_warp_ops,
+                    opi->bond_ptr(), opi->pows_ptr(), opi->state(), opi->op_type(), opi->tau());
+        } else {
+          //d* opi is a single site operator
+          ptrdiff_t _index = opi->bond_ptr() - &nn_sites[0];
+          size_t index = static_cast<size_t>(_index);
+#ifndef NDEBUG
+          if (*opi->bond_ptr() == nn_sites[index]) {
+            throw std::runtime_error("index is wrong");
+          }
+#endif
+          appendSingleOps(ops_main, spacetime_dots, index,
+                    opi->bond_ptr(), opi->pows_ptr(), opi->state(), opi->nn_state(), opi->op_type(), opi->tau());
+        }
       }
       ++opi;
     }
@@ -410,26 +422,15 @@ void Worm<MCT>::appendOps(
 {
 
   int s = bp->size();
-  if (op_type >= int(loperators.size()) || op_type < -1)
+  if (op_type >= int(loperators.size()) || op_type < 0)
   {
-    //n* output the value op_type >= loperators.size()
+    // n* output the value op_type >= loperators.size()
 
-    std::string msg = "op_type is out of range op_type >= loperators.size() :" 
-    + std::to_string(op_type >= loperators.size());
+    std::string msg = "op_type is out of range op_type >= loperators.size() :" + std::to_string(op_type >= loperators.size());
 
     throw std::runtime_error(msg);
   }
-  else if (op_type == -1)
-  {
-    if (bp->size() != 1)
-      throw std::runtime_error("op_type is -1 but the site is not 1");
-  }
-
-  if (2 * bp->size() != pp->size() - 1)
-  {
-    throw std::runtime_error("bond_ptr and pows_ptr doesn't match");
-  }
-
+  if (2 * bp->size() != pp->size() - 1) throw std::runtime_error("bond_ptr and pows_ptr doesn't match");
   ops.push_back(OP_type(bp, pp, state, op_type, tau));
 
   size_t n = ops.size();
@@ -439,6 +440,61 @@ void Worm<MCT>::appendOps(
   {
     // set_dots(bond[i], 0, i);
     site = bp->operator[](i);
+    sp.push_back(Dotv2(sp[site].prev(), site, n - 1, i, site));
+    sp[sp[site].prev()].set_next(label);
+    sp[site].set_prev(label);
+    label += 1;
+  }
+
+  //! warp is disabled for now
+  // if (loperators[op_type].has_warp(state))
+  // {
+  //   warp_sp.insert(sp.size());
+  // } // if the operator has warp, add the label of the leftmost dot to the set.
+}
+
+
+// //*append single-operator to ops
+template <class MCT>
+void Worm<MCT>::appendSingleOps(
+    OPS &ops,
+    DOTS &sp,
+    int s_site,
+    const BOND *const bp,
+    const BOND *const pp,
+    int state,
+    const state_t &nn_state,
+    int op_type,
+    double tau)
+{
+
+  if (op_type >= 0)
+  {
+    // n* output the value op_type >= loperators.size()
+
+    std::string msg = "op_type must be negative for single-flip operator";
+    throw std::runtime_error(msg);
+  }
+
+#ifndef NDEBUG
+  if (nn_state.size() != bp->size())
+    throw std::runtime_error("nn_state.size() != bp->size()");
+  for (size_t i = 0; i < bp->size(); i++){
+    if (nn_state.at(i) != cstate[bp->at(i)]){
+      throw std::runtime_error("nn_state[site] != state");
+    }
+  }
+#endif
+
+  ops.push_back(OP_type(bp,pp,state,nn_state,op_type,tau));
+
+  size_t n = ops.size();
+  size_t label = sp.size();
+  int site;
+  for (int i = 0; i < bp->size() + 1; i++) // nn_site + center site
+  {
+    if (i == 0) site = s_site;
+    else site = bp->at(i-1);
     sp.push_back(Dotv2(sp[site].prev(), site, n - 1, i, site));
     sp[sp[site].prev()].set_next(label);
     sp[site].set_prev(label);
@@ -671,13 +727,28 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir,
     index = dotp->leg(0, leg_size);
     op_type = opsp->op_type();
 
-    sign *= loperators[op_type].signs[opsp->state()];
+    if (op_type < 0) {
+      int nn_index = dotp->index();
+      if (nn_index == 0) {
+        auto flip = markov_next_flip(*opsp, dir, fl);
+        dir = flip.first;
+        fl = flip.second;
+      } else {
+        opsp->update_nn_state(nn_index - 1, fl);
+      }
+      tau = opsp->tau();
+      //* next_dot doesn't change.
+    }
+
+
+    sign *= loperators[op_type].signs[opsp->state()]; //! sign for single-flip is not included yet.
     state_num = opsp->update_state(cindex, fl);
     tmp = loperators[op_type].markov[state_num](cindex * (sps - 1) + sps - fl, rand_src);
 
     // n* if Worm stop at this operator
     if (tmp == 0)
     { // if head will warp.
+      throw std::runtime_error("Worm warp is not supported this version");
       if (!loperators[op_type].has_warp(state_num))
       {
         can_warp_ops.erase(cur_dot - dotp->index());
@@ -840,7 +911,9 @@ template <class MCT>
 void Worm<MCT>::update_state(typename OPS::iterator opi, state_t &state)
 {
 #ifndef NDEBUG
-  state_t local_state = opi->get_state_vec();
+
+  //* define local_state as nn_state for single site operator, bond_ptr is also list of nn_sites.
+  state_t local_state = opi->_check_is_bond() ? opi->get_state_vec() : opi->nn_state();
   state_t state_(opi->size());
   int i = 0;
   for (auto x : *(opi->bond_ptr()))
@@ -862,12 +935,20 @@ void Worm<MCT>::update_state(typename OPS::iterator opi, state_t &state)
 template <class MCT>
 void Worm<MCT>::update_state_OD(typename OPS::iterator opi, state_t &state)
 {
-  int index = 0;
-  auto const &bond = *(opi->bond_ptr());
-  for (auto x : bond)
-  {
-    state[x] = opi->get_local_state(bond.size() + index);
-    index++;
+  if (opi->_check_is_bond()){
+    int index = 0;
+    auto const &bond = *(opi->bond_ptr());
+    for (auto x : bond)
+    {
+      state[x] = opi->get_local_state(bond.size() + index);
+      index++;
+    }
+  } else {
+    int site = static_cast<int>(opi->bond_ptr() - &nn_sites[0]);
+    state[site] = opi->get_local_state(1);
+#ifndef NDEBUG
+    if (state.at(site) != opi->get_local_state(0)) throw std::runtime_error("state is not consistent");
+#endif
   }
 }
 
@@ -891,7 +972,7 @@ void Worm<MCT>::checkOpsInUpdate(int worm_label, int p_label, int t_dir, int t_f
   std::cout << "debug cnt = " << d_cnt << std::endl;
   for (const auto &dot : spacetime_dots)
   {
-    if (dot.at_operator() && (dot.leg(0, 0) == 0))
+    if (dot.at_operator() && (dot.index() == 0))
     { // if dot_type is operator
       auto opi = ops_main.begin() + dot.label();
       update_state(opi, state_);
@@ -935,6 +1016,165 @@ void Worm<MCT>::reset_ops()
     ops_main[psop[i]].set_state(pres[i]);
   }
 }
+
+
+template <class MCT>
+double Worm<MCT>::get_single_flip_elem(const OP_type& op)
+{
+  if (op._check_is_bond()) throw std::runtime_error("op must be a single site operator");
+  ptrdiff_t _index = op.bond_ptr() - &nn_sites[0];
+  int site = static_cast<int>(_index);
+  int x = op.get_local_state(0);
+  int x_prime = op.get_local_state(1);
+  const state_t& nn_state = op.nn_state();
+  double mat_elem = 0;
+  for (int i = 0; i < nn_sites[site].size(); i++)
+  {
+    auto target = spin_model.nn_sites[site][i];
+    mat_elem += loperators[target.bt]
+                    .single_flip(target.start, nn_state[i], x, x_prime);
+  }
+  return std::abs(mat_elem);
+}
+
+template <class MCT>
+double Worm<MCT>::get_single_flip_elem(int site, int x, int x_prime, state_t _state)
+{
+  double mat_elem = 0;
+  
+  for (auto target : spin_model.nn_sites[site])
+  {
+    mat_elem += loperators[target.bt]
+                    .single_flip(target.start, _state[target.target], x, x_prime);
+  }
+  return std::abs(mat_elem);
+}
+
+template <class MCT>
+double Worm<MCT>::get_single_flip_elem(int site, int x, int x_prime, state_t _state, state_t& nn_state)
+{
+  double mat_elem = 0;
+  nn_state.resize(spin_model.nn_sites[site].size());
+  
+  for (int i = 0; i< spin_model.nn_sites[site].size(); i++)
+  {
+    auto target = spin_model.nn_sites[site][i];
+    nn_state.at(i) = _state[target.target];
+    mat_elem += loperators[target.bt]
+                    .single_flip(target.start, _state[target.target], x, x_prime);
+  }
+  return std::abs(mat_elem);
+}
+
+/*
+params
+------
+dir : 0 or 1, 0 comes from bottom, 1 comes from top (moving direction is reverse)
+
+return 
+------
+dir : 0 or 1, 0 exit from bottom, 1 comes from top (moving direction is same)
+fl : flip site
+*/
+template <class MCT>
+std::pair<int, int> Worm<MCT>::markov_next_flip(OP_type& op, int dir, int fl)
+{
+  //d* error check
+  if (dir != 0 && dir != 1)
+    throw std::runtime_error("dir must be 0 or 1");
+  if (op._check_is_bond()) throw std::runtime_error("op must be a single site operator");
+  if (fl < 0 || fl >= sps)
+    throw std::runtime_error("fl must be in [0, sps)");
+
+    
+  int num = op.state();
+  double mat_elem = get_single_flip_elem(op);
+  op.update_state(dir, fl);
+  double r = uniform(rand_src);
+  int flip_prime = static_cast<int>((2 * sps - 1) * uniform(rand_src)) + 1;
+  int dir_prime = flip_prime / sps;
+  int fl_prime = flip_prime % sps;
+
+  if (dir_prime != 0 && dir_prime != 1) throw std::runtime_error("dir_prime must be 0 or 1");
+  if (fl_prime < 0 || fl_prime >= sps) throw std::runtime_error("fl_prime must be in [0, sps)");
+
+  //n* update op state using dir_prime and fl_prime
+  op.update_state(dir_prime, fl_prime);
+  double mat_elem_prime = get_single_flip_elem(op);
+
+  //* update op state using Metropolis
+  double ratio = mat_elem_prime / mat_elem;
+
+  if (r < ratio)
+    return make_pair(dir_prime, fl_prime);
+  else
+  {
+    op.set_state(num);
+    return make_pair(dir, (sps - fl)%sps);
+  }
+}
+
+// template <class MCT>
+// std::pair<int, int> Worm<MCT>::markov_next_flip(OP_type op, int fl, int dir)
+// {
+//   if (dir != 0 && dir != 1)
+//     throw std::runtime_error("dir must be 0 or 1");
+//   if (op._check_is_bond()) throw std::runtime_error("op must be a single site operator");
+
+//   if (dir != 0 && dir != 1)
+//     throw std::runtime_error("dir must be 0 or 1");
+//   if (fl < 0 || fl >= sps)
+//     throw std::runtime_error("fl must be in [0, sps)");
+
+//   if (x < 0 || x >= sps * sps)
+//   {
+//     throw std::runtime_error("x must be in [0, sps^2)");
+//   }
+//   if (x_flipped < 0 || x_flipped >= sps * sps)
+//     throw std::runtime_error("x_flipped must be in [0, sps^2)");
+
+//   int x1 = x % sps;
+//   int x2 = x / sps;
+//   int xf1 = x_flipped % sps;
+//   int xf2 = x_flipped / sps;
+
+//   int x_ = !dir ? (xf1 + fl) % sps + xf2 * sps : xf1 + (xf2 + fl) % sps * sps;
+//   if (x != x_)
+//     throw std::runtime_error("x is not consistent with x_flipped and flip");
+
+//   double mat_elem = get_single_flip_elem(site, x1, x2, _state);
+//   double r = uniform(rand_src);
+//   int flip_prime = static_cast<int>((2 * sps - 1) * uniform(rand_src)) + 1;
+//   int dir_prime = flip_prime / sps;
+//   int fl_prime = flip_prime % sps;
+
+//   if (dir_prime != 0 && dir_prime != 1)
+//   {
+//     throw std::runtime_error("dir_prime must be 0 or 1");
+//   }
+//   if (fl_prime < 0 || fl_prime >= sps)
+//   {
+//     throw std::runtime_error("fl_prime must be in [0, sps)");
+//   }
+
+//   int x_prime = !dir_prime ? (xf1 + fl_prime) % sps + xf2 * sps : xf1 + (xf2 + fl_prime) % sps * sps;
+
+//   int x1_prime = x_prime % sps;
+//   int x2_prime = x_prime / sps;
+
+//   double mat_elem_prime = get_single_flip_elem(site, x1_prime, x2_prime, _state);
+//   double ratio = mat_elem_prime / mat_elem;
+
+//   if (dir_prime != 0 && dir_prime != 1)
+//   {
+//     throw std::runtime_error("dir_prime must be 0 or 1");
+//   }
+
+//   if (r < ratio)
+//     return make_pair(dir_prime, fl_prime);
+//   else
+//     return make_pair(dir, fl);
+// }
 
 template <class MCT>
 void Worm<MCT>::printStateAtTime(const state_t &state, double time)
