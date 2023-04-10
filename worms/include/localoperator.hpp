@@ -193,7 +193,10 @@ alpha may be 1 / (1 + Nb) where Nb is the number of NN bonds.
 */
 template <class MC>
 void local_operator<MC>::set_ham(double off_set, double thres, bool warp, double alpha){
-  // std::cout << "Hi" << std::endl;
+
+  //! warp is not supported this version
+  if (warp) throw std::invalid_argument("warp is not supported this version");
+
   if (0 > alpha || alpha >= 1) throw std::invalid_argument("alpha should be between 0 and 1");
   spin_state::StateFunc state_func(sps, 2);
   int N = size*size;
@@ -236,9 +239,25 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp, double
     if (mat_index[0] == mat_index[1]) {
       _ham_vector[i] *= (1 - alpha);
       max_diagonal_weight_ = std::max(max_diagonal_weight_, _ham_vector[i]);
+    } else if (index[0] == index[2] || index[1] == index[3])
+    {
+      _ham_vector[i] = 0;
     }
   }
 
+  //d* check single_flip operator is real symmetric
+  for (int s=0; s<sps; s++){
+    for (int i=0; i<2; i++){
+      for (int j=0; j<sps; j++){
+        for (int k=0; k<sps; k++){
+          if (std::abs(single_flip(i, s)[j][k] - single_flip(i, s)[k][j]) > 1e-8) {
+            std::cerr << "difference is " << single_flip(i, s)[j][k] - single_flip(i, s)[k][j] << std::endl;
+            throw std::runtime_error("single_flip is not symmetric");
+            }
+        }
+      }
+    }
+  }
 
   total_weights = 0;
   for (int i=0; i<size; i++) {
@@ -253,6 +272,8 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp, double
 
   std::vector<markov_t> markov_tmp;
   std::vector<long long> state2index;
+
+
 
   _has_warp.resize(_ham_vector.size(), false);
   state2index.resize(_ham_vector.size(), -1);
@@ -274,7 +295,6 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp, double
      markov = markov_v(markov_tmp, state2index);
   }else{
     for (size_t s=0; s < _ham_vector.size(); s++){
-      // if (_ham_vector[s] == 0 ) continue;
       state2index[s] = markov_tmp.size();
       std::vector<double> ogw = ogwt.init_table(_ham_vector, s, warp);
       if (warp) {
