@@ -203,7 +203,6 @@ namespace model{
         std::cerr << "dimenstion of given matrix does not match to dofs ** legsize" << std::endl;
         std::cerr << "matrix size : " << S << std::endl; 
         exit(1); }
-
       if (print) std::cout << "hamiltonian is read from " << path << std::endl;
       local_operator<MCT>& loperator = loperators[types[p_i]];
       for (int i=0; i<shape[0]; i++) for (int j=0; j<shape[1]; j++)
