@@ -5,6 +5,7 @@ set (test_src
      example
      lops
      local_hams
+     optype
     )
 
 
