@@ -33,7 +33,7 @@
 #include "automodel.hpp"
 #include "funcs.hpp"
 #include "autoobservable.hpp"
-#define SEED 1662509963
+#define SEED 16625033
 /* inherit UnionFindTree and add find_and_flip function*/
 
 // template <typename MODEL>
@@ -297,7 +297,7 @@ public:
 
   Original spin would be if direction is 1 (worm moves upwards) {x % sps + fl % sps,   x // sps}.
   */
-  pair<int, int> markov_next_flip(OP_type& op, int dir, int fl);
+  pair<int, int> markov_next_flip(OP_type& op, int dir, int fl, bool zero_fl = false);
   static void printStateAtTime(const state_t &state, double time);
 };
 

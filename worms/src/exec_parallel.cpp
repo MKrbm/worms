@@ -72,7 +72,12 @@ std::unordered_map<std::string, model::WormObs> exe_worm_parallel(
       }
       for (const auto &op : solver.ops_main)
       {
-        int sign_ = spin_model.loperators[op.op_type()].signs[op.state()];
+        int sign_ = 1;
+        if (op._check_is_bond()){
+          sign_ = spin_model.loperators[op.op_type()].signs[op.state()];
+        } else {
+          sign_ = solver.get_single_flip_elem(op)  > 0 ? 1 : -1;
+        }
         sign *= sign_;
         if (sign_ == -1)
           n_neg++;

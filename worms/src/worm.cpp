@@ -24,7 +24,7 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_, size_
   srand(rank);
 #ifdef NDEBUG
   unsigned rseed = static_cast<unsigned>(time(0)) + rand() * (rank + 1);
-  rand_src = engine_type(rseed);
+  rand_src = engine_type(SEED);
   rand_src = engine_type(SEED);
 #else
   rand_src = engine_type(SEED);
@@ -77,6 +77,7 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_, size_
 template <class MCT>
 void Worm<MCT>::diagonalUpdate(double wdensity)
 {
+
   swapOps();
   expdist_t expdist(rho * beta + wdensity);           // initialize exponential distribution
   double pstart = wdensity / (beta * rho + wdensity); // probability of choosing worms
@@ -171,7 +172,7 @@ void Worm<MCT>::diagonalUpdate(double wdensity)
           ptrdiff_t _index = opi->bond_ptr() - &nn_sites[0];
           size_t index = static_cast<size_t>(_index);
 #ifndef NDEBUG
-          if (*opi->bond_ptr() == nn_sites[index]) {
+          if ((*opi->bond_ptr()) != nn_sites[index]) {
             throw std::runtime_error("index is wrong");
           }
 #endif
@@ -227,7 +228,6 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength)
         throw std::runtime_error("wormUpdate : state is not updated correctly");
       }
 #endif
-
       // t : tail, h : head. direction of tails is opposite to the direction of the initial head.
       // prime means the spin state in front of the worm.
       int wt_dot, site, wt_site, _t_spin, n_dot_label;
@@ -246,7 +246,7 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength)
       dout << "worm_states at beginning of wormUpdate : " << worm_states[w_index] << endl;
       int w_x = worm_states[w_index][wt_site];
       int wt_x = w_x;
-      bool wh = true; //* Worm head still exists.
+      bool wh = true; //* Worm head stil exists.
       double wlength_prime = 0;
       wcount += 1;
 
@@ -257,7 +257,7 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength)
       do
       {
         if (fl != 0)
-          n_dot_label = dot->move_next(dir); // next label of dot.
+        n_dot_label = dot->move_next(dir); // next label of dot.
         size_t status = wormOpUpdate(n_dot_label, dir, site, wlength_prime,
                                      fl, tau, wt_dot, wt_site, wt_tau, w_x, wt_x, t_fl, t_dir, w_index);
         if (status != 0)
@@ -525,8 +525,17 @@ size_t Worm<MCT>::getDotState(size_t ndot_label, size_t dir)
   else if (ndot->at_operator())
   {
     OP_type &opstate = ops_main[ndot->label()];
-    size_t cindex = ndot->leg(!dir, opstate.size()); // direction must be reversed here.
-    return opstate.get_local_state(cindex);
+    if (opstate._check_is_bond()){
+      size_t cindex = ndot->leg(!dir, opstate.size()); // direction must be reversed here.
+      return opstate.get_local_state(cindex);
+    }else{
+      //* if the operator is single-flip operator
+      int index = ndot->index();
+      if (index == 0) return opstate.get_local_state(!dir);
+      else {
+        return opstate.nn_state(index-1);
+      }
+    }
   }
   else if (ndot->at_worm())
   {
@@ -559,6 +568,7 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir,
                             int &w_x, int &wt_x, const int t_fl, const int t_dir,
                             const int w_index)
 {
+  dout << "w_x" << w_x << endl;
   OP_type *opsp;
   double tau_prime;
   size_t h_x, h_x_prime, t_x, t_x_prime;
@@ -730,14 +740,18 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir,
     if (op_type < 0) {
       int nn_index = dotp->index();
       if (nn_index == 0) {
-        auto flip = markov_next_flip(*opsp, dir, fl);
+        auto flip = markov_next_flip(*opsp, dir_in, fl, false);
         dir = flip.first;
         fl = flip.second;
+        w_x = opsp->get_local_state(dir);
       } else {
         opsp->update_nn_state(nn_index - 1, fl);
+        if (w_x != opsp->nn_state(nn_index - 1)) throw std::runtime_error("w_x is not consistent");
+        w_x = opsp->nn_state(nn_index - 1);
       }
-      tau = opsp->tau();
       //* next_dot doesn't change.
+      tau = opsp->tau();
+      return 0;
     }
 
 
@@ -761,7 +775,7 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir,
 
       // n* head wapred
 
-    warp_label: //* goto this label if fl == 0
+warp_label: //* goto this label if fl == 0
       if (wtdot->dot_type() == -10)
         throw std::runtime_error("wtdot is not initialized properly");
       size_t _cur_dot, _state_num, _optype;
@@ -843,9 +857,12 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir,
     w_x = opsp->get_local_state(nindex);
 
 #ifndef NDEBUG
+
     int dsign = 1;
     for (auto &op : ops_main)
     {
+      if (op.op_type() == -1) //! op_type == -1 will be ignored currently
+        continue;
       dsign *= loperators[op.op_type()].signs[op.state()];
     }
     if (dsign != sign)
@@ -945,10 +962,10 @@ void Worm<MCT>::update_state_OD(typename OPS::iterator opi, state_t &state)
     }
   } else {
     int site = static_cast<int>(opi->bond_ptr() - &nn_sites[0]);
-    state[site] = opi->get_local_state(1);
 #ifndef NDEBUG
     if (state.at(site) != opi->get_local_state(0)) throw std::runtime_error("state is not consistent");
 #endif
+    state[site] = opi->get_local_state(1);
   }
 }
 
@@ -1077,7 +1094,7 @@ dir : 0 or 1, 0 exit from bottom, 1 comes from top (moving direction is same)
 fl : flip site
 */
 template <class MCT>
-std::pair<int, int> Worm<MCT>::markov_next_flip(OP_type& op, int dir, int fl)
+std::pair<int, int> Worm<MCT>::markov_next_flip(OP_type& op, int dir, int fl, bool zero_fl)
 {
   //d* error check
   if (dir != 0 && dir != 1)
@@ -1091,12 +1108,22 @@ std::pair<int, int> Worm<MCT>::markov_next_flip(OP_type& op, int dir, int fl)
   double mat_elem = get_single_flip_elem(op);
   op.update_state(dir, fl);
   double r = uniform(rand_src);
-  int flip_prime = static_cast<int>((2 * sps - 1) * uniform(rand_src)) + 1;
-  int dir_prime = flip_prime / sps;
-  int fl_prime = flip_prime % sps;
-
+  
+  int fl_prime, dir_prime;
+  if (zero_fl){
+    int flip_prime = static_cast<int>((2 * sps - 1) * uniform(rand_src)) + 1;
+    dir_prime = flip_prime / sps;
+    fl_prime = flip_prime % sps;
+    if (fl_prime < 0 || fl_prime >= sps) throw std::runtime_error("fl_prime must be in [0, sps)");
+  } else {
+    int flip_prime = static_cast<int>((2 * (sps - 1)) * uniform(rand_src));
+    dir_prime = flip_prime / (sps - 1);
+    fl_prime = flip_prime % (sps - 1) + 1;
+    if (fl_prime < 1 || fl_prime >= sps) throw std::runtime_error("fl_prime must be in [0, sps)");
+  }
   if (dir_prime != 0 && dir_prime != 1) throw std::runtime_error("dir_prime must be 0 or 1");
-  if (fl_prime < 0 || fl_prime >= sps) throw std::runtime_error("fl_prime must be in [0, sps)");
+
+
 
   //n* update op state using dir_prime and fl_prime
   op.update_state(dir_prime, fl_prime);
