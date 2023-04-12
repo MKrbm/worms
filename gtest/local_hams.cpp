@@ -36,7 +36,7 @@ typedef spin_state::Operator OP_type;
 
 uniform_t uniform;
 // int seed = static_cast<unsigned>(time(0));
-int seed = 1662533963;
+int seed = 1681255693;
 auto rand_src = engine_type(seed);
 
 std::vector<size_t> shapes = {4, 4};
@@ -44,7 +44,37 @@ model::base_lattice lat("triangular lattice", "anisotropic triangular", shapes, 
 string ham_path = "../gtest/model_array/KH/smel/H1";
 model::base_model<MC> spin(lat, {8}, ham_path, {1, 1, 1}, {0, 1, 2}, 0.1, false, false, true);
 
-TEST(HamsTest, Kagome_4x4_diagonal_update)
+TEST(HamsTest, Kagome4x4WormUpdate)
+{
+  double beta = 0.5;
+  size_t cutoff_l = std::numeric_limits<size_t>::max();
+  model::MapWormObs mapwobs;
+
+  vector<string> wobs_paths;
+  if (wobs_paths.size() == 0)
+    wobs_paths.push_back("");
+  for (int i = 0; i < wobs_paths.size(); i++)
+  {
+    string name = "G";
+    name += to_string(i);
+    mapwobs.push_back(name, model::WormObs(spin.sps_sites(0), wobs_paths[i], 0));
+  }
+
+  Worm<MC> solver(beta, spin, mapwobs, cutoff_l, 0); // template needs for std=14
+  solver.initStates();
+  double wdensity = 5;
+  double wlength = 0;
+  double wcount = 0;
+  for (int i = 0; i < 1E3; i++)
+  {
+    solver.diagonalUpdate(wdensity);
+    solver.wormUpdate(wcount, wlength);
+  }
+  cerr << "finish" << endl;
+}
+
+
+TEST(HamsTest, Kagome4x4DiagonalUpdate)
 {
   double beta = 1;
   size_t cutoff_l = std::numeric_limits<size_t>::max();
@@ -144,17 +174,23 @@ TEST(HamsTest, Kagome_4x4_diagonal_update)
     nn_state.push_back(state0[site]);
   }
   double sum = 0;
+  int fl0 = static_cast<int>(uniform(rand_src) * (sps-1))+1;
+  int dir0 = static_cast<int>(uniform(rand_src));
   for (int j=1; j < 2*sps; j++){
     OP_type op3 = OP_type(&sites[flip_site], &solver.pows_vec[3], state0[flip_site] + sps * state0[flip_site],nn_state, -1, 0);
+    op3.update_state(dir0, (sps - fl0)%sps);
     int dir = j / sps;
     int fl = j % sps;
     int num = op3.update_state(dir, fl);
     markov_mat_elem[j] = solver.get_single_flip_elem(op3);
+    if (fl == 0) {
+      markov_mat_elem[j] = 0;
+    }
     sum += markov_mat_elem[j];
   }
 
-  int fl = 0;
-  int dir = 1;
+  int fl = fl0;
+  int dir = dir0;
   OP_type op2 = OP_type(&sites[flip_site], &solver.pows_vec[3], state0[flip_site] + sps * state0[flip_site],nn_state, -1, 0);
   int num_0 = op2.state();
   int num = num_0;
@@ -164,7 +200,7 @@ TEST(HamsTest, Kagome_4x4_diagonal_update)
   for (int n=0; n < N; n++){
     dir = !dir;
     fl = (sps - fl)%sps;
-    auto flip = solver.markov_next_flip(op2, !dir, fl);
+    auto flip = solver.markov_next_flip(op2, !dir, fl, false);
     dir = flip.first;
     fl = flip.second;
     markov_cnt[fl + (sps) * dir] ++;
@@ -178,7 +214,6 @@ TEST(HamsTest, Kagome_4x4_diagonal_update)
     double var = p * (1-p) / N;
     EXPECT_NEAR(markov_cnt[j] / N, markov_mat_elem[j] / sum , 5 * sqrt(var));
   }
-
 }
 
 TEST(HamsTest, Kagome_4x4_aggr)
@@ -250,93 +285,6 @@ TEST(HamsTest, Kagome_4x4_aggr)
     max_diag = std::max(max_diag, spin.s_flip_max_weights[i]);
   }
   EXPECT_FLOAT_EQ(solver.rho / (spin.Nb + spin.L), max_diag);
-
-
-  // double wdensity = 5;
-  // expdist_t expdist(solver.rho * beta + wdensity);
-  // double pstart = wdensity / (beta * solver.rho + wdensity);
-  // BC::observable p;
-  // std::vector<pair<BC::observable, double>> bops(spin.Nb);
-  // std::vector<pair<BC::observable, double>> sops(spin.L);
-
-  // state_t state(16, 0);
-  // for (auto &s : state)
-  // {
-  //   s = static_cast<unsigned short>(uniform(rand_src) * 8);
-  // }
-  // size_t sweeps = 1E5;
-  // for (int i = 0; i < sweeps; i++)
-  // {
-  //   double tau = expdist(rand_src);
-  //   double _p = 0;
-  //   double _bo = 0;
-  //   double _so = 0;
-  //   while (tau < 1)
-  //   {
-  //     double r = uniform(rand_src);
-
-  //     if (r < pstart)
-  //     {
-  //       // _p++;
-  //       p << 1;
-  //       //* append worm
-  //     }
-  //     else
-  //     {
-  //       size_t b = static_cast<size_t>((spin.Nb + spin.L) * uniform(rand_src));
-  //       r = uniform(rand_src);
-  //       if (b < spin.Nb)
-  //       {
-  //         //* append bond ops
-  //         double bop_label = solver.bond_type[b];
-  //         auto const &accept = solver.accepts[bop_label];
-  //         auto const &bond = solver.bonds[b];
-  //         size_t u = solver.state_funcs[bop_label].state2num(state, bond);
-  //         if (r < accept[u])
-  //         {
-  //           //* append accept
-  //           // _bo += 1.0 / spin.Nb;
-  //           bops[b].first << 1.0;
-  //           bops[b].second = accept[u] * max_diag;
-  //         }
-  //       }
-  //       else
-  //       {
-  //         //* append single-flip
-  //         int site = b - spin.Nb;
-  //         double sop_label = spin.site_type[site];
-  //         double mat_elem = 0;
-  //         for (auto target : spin.nn_sites[site])
-  //         {
-  //           mat_elem += spin.loperators[target.bt]
-  //                           .single_flip(target.start, state[target.target], state[site], state[site]);
-  //         }
-
-  //         mat_elem = std::abs(mat_elem) / max_diag;
-  //         if (mat_elem > 1)
-  //           throw std::runtime_error("mat_elem > 1");
-  //         if (r < mat_elem)
-  //         {
-  //           //* append accept
-  //           sops[site].first << 1.0;
-  //           sops[site].second = mat_elem * max_diag;
-  //         }
-  //       }
-  //     }
-  //     tau += expdist(rand_src);
-  //   }
-  // }
-
-  // EXPECT_NEAR(p.count() / (double)sweeps, wdensity, 1E-2 * wdensity);
-  // for (auto &b : bops)
-  // {
-  //   EXPECT_NEAR(b.first.count() / (double)sweeps, b.second, 1E-2);
-  // }
-
-  // for (auto &s : sops)
-  // {
-  //   EXPECT_NEAR(s.first.count() / (double)sweeps, s.second, 1E-2);
-  // }
 }
 
 TEST(HamsTest, Kagome_2x2_array)
