@@ -41,6 +41,7 @@ echo "execute $executable $args on $num_cores cores"
 # Execute the program with mpiexec and passing arguments
 if [ -n "$output_file" ]; then
   mpiexec -n $num_cores $executable $args > $output_file
+  echo "output written to $output_file"
 else
   mpiexec -n $num_cores $executable $args
 fi

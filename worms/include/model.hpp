@@ -165,11 +165,11 @@ namespace model {
 //   double total_weights; //sum of diagonal elemtns of ham
 
 //   std::vector<std::vector<double>> ham; // virtual hamiltonian (or maybe absolute of original hamiltonian)
-//   std::vector<std::vector<double>> ham_;
+//   std::vector<std::vector<double>> ham_prime;
 //   std::vector<double> ham_vector;
 //   std::vector<double> ham_rate_vector;
 //   std::vector<std::vector<double>> ham_rate; // original hamiltonian
-//   std::vector<int> signs; //list of sign defined via the sign of ham_;
+//   std::vector<int> signs; //list of sign defined via the sign of ham_prime;
 //   std::vector<TPROB> trans_prob; //num_configuration x 4 x 4 matrix.
 //   std::array<int, 2> num2index(int num);
 //   std::vector<markov_t> markov;
@@ -322,22 +322,22 @@ public:
 // void model::local_operator<MC>::set_ham(double off_set, double thres, bool dw){
 //   int N = ham_vector.size();
 //   ene_shift=0;
-//   ham_ = ham;
+//   ham_prime = ham;
 
-//   for (int i=0; i<ham_.size();i++){
+//   for (int i=0; i<ham_prime.size();i++){
 //     ene_shift = std::min(ene_shift, ham[i][i]);
 //     ene_shift = std::min(ene_shift, ham_rate[i][i]);
 //   }
 //   ene_shift *= -1;
 //   ene_shift += off_set;
-//   for (int i=0; i<ham_.size();i++){
-//     ham_[i][i] += ene_shift;
+//   for (int i=0; i<ham_prime.size();i++){
+//     ham_prime[i][i] += ene_shift;
 //     ham_rate[i][i] += ene_shift;
 //   }
 
 //   for (int i=0; i<N; i++){
 //     auto index = num2index(i);
-//     ham_vector[i] = ham_[index[0]][index[1]];
+//     ham_vector[i] = ham_prime[index[0]][index[1]];
 //     ham_rate_vector[i] = ham_rate[index[0]][index[1]];
 //     if (std::abs(ham_vector[i]) < thres) ham_vector[i] = 0;
 //     if (std::abs(ham_rate_vector[i]) < thres) ham_rate_vector[i] = 0;
@@ -348,8 +348,8 @@ public:
 //   double tmp=0;
 //   max_diagonal_weight_ = 0;
 //   for (int i=0; i<size; i++) {
-//     tmp += ham_[i][i];
-//     max_diagonal_weight_ = std::max(max_diagonal_weight_, ham_[i][i]);
+//     tmp += ham_prime[i][i];
+//     max_diagonal_weight_ = std::max(max_diagonal_weight_, ham_prime[i][i]);
 //   }
 
 

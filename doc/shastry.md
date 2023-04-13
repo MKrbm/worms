@@ -448,3 +448,29 @@ Theoritically, average sign goes down from 1 as $T \rightarrow 0$ for small $J_1
 
 
   looks similar. Indeed, both return 0 for $\langle s, d | H1 | d^\prime, s \rangle $ and $\langle s, s | H1 | d, \psi \rangle$ therefore, to have all states flip to singlet, warm needs to flipa  whole vertical line to singlet. (It needs to overcome the very low probability)
+
+
+## Estimation of physical quantity
+
+- J = 0.47
+  - ## energy
+  worm 
+  ![](img/singlet_ene_J_0.47.jpeg)
+
+  Lancoz
+  ![](img/E_0.47.jpeg)
+  - ## specific heat
+  worm
+  ![](img/singlet_cq_J_0.47.jpeg)
+
+  Lancoz
+  ![](img/C_0.47.jpeg)
+
+  - ## susceptibility
+  worm
+  ![](img/singlet_susc_J_0.47.jpeg)
+
+  Lancoz
+  ![](img/kai_0.47.jpeg)
+
+  

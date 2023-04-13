@@ -23,3 +23,24 @@
 
 - kagome lattice model で minus sign problem を見る。
 - 比熱のピークは見れる？
+
+$\frac{\frac{\partial}{\partial h}Z}{Z}$
+$\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
+
+$\langle x_{\tau} | \hat{o}_i \hat{o}_j |x^\prime_{\tau} \rangle$
+
+
+
+- # 聞くこと
+  - MPIをGtestでやる
+  - worm obs の reduce の方法。 (サイズが会わないからできないといわれる)
+  - 低く見積もっている可能性がある？
+
+
+- offset の値を増やしてみる
+- 三角形の体格かの規定
+
+- どのパラメタ領域まで最適化がくまくいくか？
+- 厳密対角化 ワームのやつ
+
+

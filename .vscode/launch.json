@@ -1,15 +1,26 @@
 {
   "version": "0.2.0",
   "configurations": [
+  
+    {
+      "type": "julia",
+      "request": "launch",
+      "name": "Julia",
+      "cwd": "${fileDirname}",
+      "program": "${file}",
+      "stopOnEntry": false
+    },
+
     {
       "name": "Python: Current File",
       "type": "python",
       "request": "launch",
       "program": "${file}",
-      "args": ["-l", "dimer_optim", "-J", "1", "-M", "180", "-P", "1"],
+      "args": ["-m", "KH"],
+      // "args": ["-l", "dimer_optim", "-J", "1", "-M", "180", "-P", "1"],
       "console": "integratedTerminal",
       "justMyCode": true,
-      "cwd": "${fileDirname}",
+      "cwd": "${fileDirname}"
     },
     {
       "name": "cmake(linux)",

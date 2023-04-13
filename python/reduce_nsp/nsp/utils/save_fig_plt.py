@@ -3,6 +3,8 @@ import datetime
 from matplotlib import pyplot as plt
 
 def save_fig(fig, folder, name, dpi=400, overwrite = False):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
     path = folder +"/" + name
     if (not overwrite) and os.path.exists(path+ ".jpeg"):
         print("Failed save figure : given path exsist {}".format(path))

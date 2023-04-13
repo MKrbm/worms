@@ -1,7 +1,10 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.14)
 
 # include(cmake/prefix.cmake)
 project(worms VERSION 1.0.0 LANGUAGES CXX)
+
+# cmake will find modules from this path with include command
+# you don't need to run include if there is no option to download from github
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 # C++ standards
@@ -10,8 +13,26 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # c and c++ compiler
-set(CMAKE_C_COMPILER /usr/bin/aarch64-linux-gnu-gcc CACHE PATH "")
-set(CMAKE_CXX_COMPILER /usr/bin/aarch64-linux-gnu-g++ CACHE PATH "")
+# set(CMAKE_C_COMPILER /usr/bin/aarch64-linux-gnu-gcc CACHE PATH "")
+# set(CMAKE_CXX_COMPILER /usr/bin/aarch64-linux-gnu-g++ CACHE PATH "")
+
+# debug when use find_package
+set(CMAKE_FIND_DEBUG_MODE OFF) #turn on to print out debug info for find_package
+
+# cmake use rpath for linking shared libraries at runtime
+set(CMAKE_SKIP_RPATH OFF)
+set(BUILD_RPATH_USE_ORIGIN ON)
+
+# set working_dir (main_MPI will execute from this directory)
+set(WORKING_DIR "${CMAKE_BINARY_DIR}" CACHE  STRING "The working directory for the project")
+
+# cmake use system path for finding libraries
+# if these variables set to ON (True) and if you installed boost package via miniconda, find_package will look for miniconda path first and result in error
+# set(CMAKE_FIND_USE_CMAKE_SYSTEM_PATH FALSE)
+set(CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH FALSE)
+
+
+message(STATUS "CMAKE_FIND_USE_CMAKE_SYSTEM_PATH = ${CMAKE_FIND_USE_CMAKE_SYSTEM_PATH}")
 
 
 unset(CMAKE_Fortran_COMPILER CACHE)
@@ -23,12 +44,9 @@ include(CheckLanguage)
 check_language(Fortran)
 message(STATUS "${CMAKE_Fortran_COMPILER} is available")
 option(RANDOM_SEED "wether using random seed or not " ON)
-include_directories(${worms_SOURCE_DIR})
 
-#include libraries
-# include(bcl)
-# include(eigen3)
-# include(npy)
+include(CTest)
+enable_testing()
 
 message(STATUS "after include directory: ${CMAKE_Fortran_COMPILER} is available")
 message("None = ${CMAKE_C_FLAGS}")
@@ -42,16 +60,21 @@ set(CMAKE_CXX_FLAGS_GPROF
     FORCE )
 
 MARK_AS_ADVANCED(CMAKE_CXX_FLAGS_GPROF)
+
+include_directories(${worms_SOURCE_DIR})
+
 add_subdirectory(./worms) #call /LoopAlgo/CMakeLists.txst
 
+# search for  
+message(STATUS "CMAKE_MODULE_PATH = ${CMAKE_MODULE_PATH}")
+message(STATUS "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
 
-# add executable
-
-# search for MPI
 find_package(MPI REQUIRED)
+
+
 FIND_PACKAGE(Boost COMPONENTS mpi serialization REQUIRED)
 
-FOREACH(name main debug main_MPI)
+FOREACH(name main_MPI debug)
     add_executable(${name} ${name}.cpp)
     target_link_libraries(${name} worm  ${Boost_LIBRARIES} MPI::MPI_CXX)
     target_include_directories(${name} PUBLIC
@@ -60,7 +83,11 @@ FOREACH(name main debug main_MPI)
         )
 ENDFOREACH(name)
 
+# add_executable(worm-gtest gtest/example.cpp)
+# target_link_libraries(worm-gtest worm)
+# target_include_directories(worm-gtest PUBLIC "${PROJECT_BINARY_DIR}")
+# add_test(NAME test COMMAND  worm-gtest)
 
-add_subdirectory(test)
-
+add_subdirectory(./gtest)
+add_subdirectory(examples)
 configure_file(MainConfig.h.in MainConfig.h)

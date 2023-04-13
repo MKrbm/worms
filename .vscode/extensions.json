@@ -1,0 +1,6 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "percy.vscode-numpy-viewer"
+  ]
+}

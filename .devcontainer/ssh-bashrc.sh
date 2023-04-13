@@ -1,3 +1,4 @@
+# ssh-find-agent
 . ~/ssh-find-agent/ssh-find-agent.sh # for bash 
 ssh_find_agent -a
 if [ -z "$SSH_AUTH_SOCK" ]

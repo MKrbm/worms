@@ -12,3 +12,11 @@
           }
         }
   - restart docker daemon with `sudo systemctl restart docker` 
+
+
+- Tools 
+  - bash-completion
+    - apt-get install bash-completion
+    - echo "source /etc/profile.d/bash_completion.sh" >> ~/.bashrc
+    - Now you can use `tab` to complete command.
+      - You may use tab completion for make targets, docker commands, and more.

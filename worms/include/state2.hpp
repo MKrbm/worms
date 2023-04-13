@@ -18,9 +18,9 @@ namespace spin_state{
   class Wormsv2;
   
 
-  using WORM = std::tuple<int, int, double>;
-  using WORM_ARR = std::vector<WORM>; //  site, spin, dot_label, tau (dot label is needed for reverse lookup)
-  using DOT_ARR = std::vector<std::tuple<int,int,int,int>>;   //prev, next, dot_type, index, (index refers to the legs of the dot with respect to the class of dots)
+  using WORM = std::tuple<size_t, size_t, double>;
+  using WORM_ARR = std::vector<WORM>; // site, spin, dot_label, tau (dot label is needed for reverse lookup)
+  using DOT_ARR = std::vector<std::tuple<int,int,int,int>>; //prev, next, dot_type, index, (index refers to the legs of the dot with respect to the class of dots)
 
   struct StateFunc{
   public:
@@ -68,7 +68,9 @@ class spin_state::Dotv2
   size_t index_; 
   size_t site_;
 public:
-  Dotv2(){}
+  Dotv2()
+  :dot_type_(-10){}
+  
   Dotv2(size_t p, size_t n, int o, size_t i, size_t s)
   :prev_(p), next_(n), dot_type_(o), index_(i), site_(s)
   {}
@@ -86,10 +88,11 @@ public:
     if (at_operator()) return dot_type_;
     else return index_;
   }
-
+  size_t index() const { return index_; }
   bool at_operator() const { return dot_type_ >= 0; }
   bool at_origin() const { return dot_type_ == -1; }
   bool at_worm() const { return dot_type_ == -2; }
+  int dot_type() const { return dot_type_; }
   void set_prev(size_t p) { prev_ = p; }
   void set_next(size_t n) { next_ = n; }
   size_t move_next(size_t dir) const {

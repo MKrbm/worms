@@ -19,7 +19,7 @@ namespace spin_state{
   class Operator{
     const VS* const bond_ptr_;
     const VS* const pows_ptr_;
-    size_t op_type_;
+    size_t op_type_; // type of bond operator (basically 1 or 2 types)
     size_t state_;
     size_t cnt_;
     double tau_;
@@ -57,11 +57,12 @@ namespace spin_state{
     ====
     0  1.
     */
-    void update_state(size_t leg, size_t fl)
+    size_t update_state(size_t leg, size_t fl)
       {
       size_t a = (*pows_ptr_)[leg];
       size_t t = (*pows_ptr_)[leg+1];
       state_ = (state_/t)*t + (state_%t+fl*a) % t;
+      return state_;
       }
     US get_local_state(size_t leg) const { return (state_%(*pows_ptr_)[leg+1])/(*pows_ptr_)[leg];}
     bool is_off_diagonal() const{ return (state_ ? (state(0) != state(1)) : false);}
@@ -75,7 +76,7 @@ namespace spin_state{
       op.print(os);
       return os;
     }
-    VUS const get_state_vec(){
+    VUS get_state_vec() const {
       VUS state_vec(size()*2);
       for (int i=0; i<size()*2; i++) {
         state_vec[i] = get_local_state(i);
@@ -100,17 +101,4 @@ namespace spin_state{
       return clabel + (nindex - cindex);
     }
   };
-
-  // STATE num2state(int num, int L);
-  // std::string return_name(int dot_type, int op_type);
-
-
-  // template <size_t max_L = 4>
-  // std::array<size_t, max_L+1> pows_array(size_t sps = 2){
-  //   std::array<size_t, max_L+1> arr; size_t x = 1;
-  //   for (int i=0; i<max_L+1; i++){ 
-  //     arr[i]=x; x*=sps;
-  //   }
-  //   return arr;
-  // }
 }

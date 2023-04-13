@@ -228,7 +228,7 @@ class RiemanNonTransUnitarySGD(BaseRiemanNonTransUnitaryOptimizer):
     def __init__(self,
                 models_act : List[Tuple[UnitaryRiemanGenerator]], loss_list : List[BaseMatirxLoss], 
                 lr = 0.005,
-                momentum=0.1, 
+                momentum=0.2, 
                 weight_decay=0, 
                 grad_tol = 1e-8, 
                 *, 
@@ -260,7 +260,7 @@ class RiemanNonTransUnitarySGD(BaseRiemanNonTransUnitaryOptimizer):
 class RiemanNonTransUnitaryCG(BaseRiemanNonTransUnitaryOptimizer):
 
     def __init__(self,
-                models_act : List[Tuple[UnitaryRiemanGenerator]], loss_list : List[BaseMatirxLoss],
+                models_act : List[Tuple[UnitaryRiemanGenerator, ...]], loss_list : List[BaseMatirxLoss],
                 *args, **kwargs):
         super().__init__(models_act, loss_list, *args, **kwargs)
 

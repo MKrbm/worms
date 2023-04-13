@@ -1,3 +1,5 @@
+# folders 
+HPhi
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -8,6 +10,7 @@ __pycache__/
 *.pdf
 
 *.jpeg
+!doc/**/*.jpeg
 *.zip
 python_copy
 # Distribution / packaging
@@ -23,16 +26,26 @@ Release/
 **/dataframe
 **/array
 **/out
-# lib/
+# julia
+julia_practice/
+julia_test/
+
+# packages / libraries
+ALPSCore
+
 *.wiki*
 #hidden folder
 #Exclude all dlls
 .*
+
+# python numpy array data
+*.npy
 #Except for .vscode
 !.vscode 
 !.devcontainer
 !.gitignore
 !doc
+!gtest/**/*
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -135,10 +148,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-
-#python
-
-*.npy
 
 # data
 *csv

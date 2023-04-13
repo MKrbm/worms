@@ -1,14 +1,17 @@
-cmake_minimum_required(VERSION 3.1)
 project(worm_lib
     VERSION 1.0
     DESCRIPTION "worm_algorithm library"
     LANGUAGES CXX)
 
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+find_package(ALPSCore REQUIRED alea)
+
 include(libconfig)
 include(eigen3)
 include(npy)
+include(googletest)
 
-
+# link alpscore
 
 #* list all targets
 # function(getAllSubdirs dir dirs)
@@ -40,14 +43,24 @@ add_library(worm STATIC
     ./src/automodel.cpp
     ./src/state_func.cpp
     ./src/worm.cpp
+    ./src/autoobservable.cpp
+    ./src/funcs.cpp
+    ./src/exec_parallel.cpp
     )
 
 add_subdirectory(./lib/bcl) #call /lib/bcl/CMakeLists.txst
 add_subdirectory(./lib/lattice) #call /lib/bcl/CMakeLists.txst
 
 
+message(STATUS "alpscore libs : ${ALPSCore_LIBRARIES}") # only alea is linked
+target_link_libraries( worm
+    bcl 
+    config++ 
+    lattice 
+    ${ALPSCore_LIBRARIES} 
+    gtest_main
+) # link library
 
-target_link_libraries(worm bcl config++ lattice) # link library
 
 
 message(STATUS "include from path : ${FetchContent_includes}")
