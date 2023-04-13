@@ -1,2 +1,2 @@
-from .models import KH 
+from .models import KH, HXYZ
 from .core.utils import *

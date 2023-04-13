@@ -193,7 +193,7 @@ alpha may be 1 / (1 + Nb) where Nb is the number of NN bonds.
 */
 template <class MC>
 void local_operator<MC>::set_ham(double off_set, double thres, bool warp, double alpha){
-  alpha = 0.9;
+  alpha = 0;
 
   //! warp is not supported this version
   if (warp) throw std::invalid_argument("warp is not supported this version");
