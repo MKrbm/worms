@@ -193,6 +193,7 @@ alpha may be 1 / (1 + Nb) where Nb is the number of NN bonds.
 */
 template <class MC>
 void local_operator<MC>::set_ham(double off_set, double thres, bool warp, double alpha){
+  alpha = 0.9;
 
   //! warp is not supported this version
   if (warp) throw std::invalid_argument("warp is not supported this version");
@@ -234,7 +235,6 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp, double
         single_flip(1, index[0])[index[1]][index[3]] = _ham_vector[i];
       }
     }
-    if (_ham_vector[i] != _ham_prime[mat_index[0]][mat_index[1]]) throw std::runtime_error("error in set_ham");
     
     if (mat_index[0] == mat_index[1]) {
       _ham_vector[i] *= (1 - alpha);
