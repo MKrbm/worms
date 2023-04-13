@@ -740,7 +740,11 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir,
     if (op_type < 0) {
       int nn_index = dotp->index();
       if (nn_index == 0) {
+        int num = opsp->state();
         auto flip = markov_next_flip(*opsp, dir_in, fl, false);
+        if (opsp->is_off_diagonal()){
+          throw std::runtime_error("state should be diagonal");
+        }
         dir = flip.first;
         fl = flip.second;
         w_x = opsp->get_local_state(dir);
