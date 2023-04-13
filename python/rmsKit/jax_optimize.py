@@ -78,7 +78,7 @@ if args.platform == "gpu":
     # os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "true"
     os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"] = "0.5"
 
-u0 = np.load("array/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_1/u/0.npy")
+# u0 = np.load("array/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_1/u/0.npy")
 if __name__ == "__main__":
     logging.info("args: {}".format(args))
     M = args.num_iter
@@ -96,7 +96,6 @@ if __name__ == "__main__":
     params_str = a[:-1]
     ua = args.unitary_algorithm
     folder = f"array/{args.model}/{ua}/{args.loss}/{params_str}"
-
     h_list = []
     sps = 2
     x = None
@@ -149,7 +148,11 @@ if __name__ == "__main__":
     ur = rms.unitary.UnitaryRiemanGenerator(8, jax.random.PRNGKey(seed), np.float64)
     best_lv = 1e10
     best_u = None
-    if args.loss == "mes" and h_list:
+    if args.loss == "none":
+        h_list = [-np.array(h) for h in h_list]
+        save_npy(f"{path}/H", h_list)
+
+    elif args.loss == "mes" and h_list:
 
         state_list = [rms.loss.init_loss(jnp.array(h), 8, np.float64, "mes") for h in h_list]
         mesLoss = rms.loss.mes_multi

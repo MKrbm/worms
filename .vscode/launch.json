@@ -26,6 +26,7 @@
       "name": "cmake(linux)",
       "type": "cppdbg",
       "request": "launch",
+      "args": ["-m", "Kagome3"],
       // Resolved by CMake Tools:
       "program": "${command:cmake.launchTargetPath}",
       "stopAtEntry": false,

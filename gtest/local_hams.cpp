@@ -44,6 +44,81 @@ model::base_lattice lat("triangular lattice", "anisotropic triangular", shapes, 
 string ham_path = "../gtest/model_array/KH/smel/H1";
 model::base_model<MC> spin(lat, {8}, ham_path, {1, 1, 1}, {0, 1, 2}, 0.1, false, false, true);
 
+
+model::base_lattice lat2("triangular lattice", "kagome", shapes, "../config/lattices.xml", false);
+string ham_path2 = "/home/user/project/python/rmsKit/array/KH/original/none/Jx_1_Jy_1_Jz_1_hx_0_hz_0/H";
+model::base_model<MC> spin2(lat2, {2}, ham_path2, {1}, {0}, 0.3, false, false, true);
+
+
+TEST(HamsTest, Kagome4x4SplitTest2)
+{
+  auto lops = spin2.loperators;
+  size_t sps = spin2.sps_sites(0);
+  spin_state::StateFunc state_func(sps);
+  spin_state::StateFunc bond_func(sps*sps);
+
+  for (int i=0; i<lops.size(); i++){
+    auto lop = lops[i];
+    int size = lop.size;
+    int N = size*size;
+    for (int j=0; j<N; j++){
+      auto index = state_func.num2state(j, 4);
+      auto bond_index = bond_func.num2state(j, 2);
+      if (bond_index[0] == bond_index[1]){
+        double val = lop.ham_vector(j);
+        val += lop.single_flip(0, index[1])[index[0]][index[0]] + lop.single_flip(1, index[0])[index[1]][index[1]];
+        EXPECT_NEAR(val, lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+      } else {
+        if (index[0] == index[2]){
+          double val = lop.single_flip(true, index[0])[index[1]][index[3]];
+          EXPECT_NEAR(val, lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+          EXPECT_FLOAT_EQ(val, 0);
+        } else if (index[1] == index[3]){
+          double val = lop.single_flip(false, index[1])[index[0]][index[2]];
+          EXPECT_NEAR(val, lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+          EXPECT_FLOAT_EQ(val, 0);
+        } else {
+          EXPECT_NEAR(lop.ham_vector(j) * lop.signs[j], lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+        }
+      }
+    }
+  }
+}
+
+
+TEST(HamsTest, Kagome4x4SplitTest)
+{
+  auto lops = spin.loperators;
+  size_t sps = 8;
+  spin_state::StateFunc state_func(sps);
+  spin_state::StateFunc bond_func(sps*sps);
+
+  for (int i=0; i<lops.size(); i++){
+    auto lop = lops[i];
+    int size = lop.size;
+    int N = size*size;
+    for (int j=0; j<N; j++){
+      auto index = state_func.num2state(j, 4);
+      auto bond_index = bond_func.num2state(j, 2);
+      if (bond_index[0] == bond_index[1]){
+        double val = lop.ham_vector(j);
+        val += lop.single_flip(0, index[1])[index[0]][index[0]] + lop.single_flip(1, index[0])[index[1]][index[1]];
+        EXPECT_NEAR(val, lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+      } else {
+        if (index[0] == index[2]){
+          double val = lop.single_flip(true, index[0])[index[1]][index[3]];
+          EXPECT_NEAR(val, lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+        } else if (index[1] == index[3]){
+          double val = lop.single_flip(false, index[1])[index[0]][index[2]];
+          EXPECT_NEAR(val, lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+        } else {
+          EXPECT_NEAR(lop.ham_vector(j) * lop.signs[j], lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+        }
+      }
+    }
+  }
+}
+
 TEST(HamsTest, Kagome4x4WormUpdate)
 {
   double beta = 0.5;

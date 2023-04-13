@@ -18,6 +18,12 @@
 
 #include <iostream>
 #include <vector>
+#include <execinfo.h>
+#include <cstdlib>
+#include <cxxabi.h>
+#include <memory>
+#include <cstdio>
+
 template<class T> std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec) {
     os << "[ ";
     for ( const T& item : vec )
@@ -26,3 +32,5 @@ template<class T> std::ostream& operator<<(std::ostream& os, const std::vector<T
 }
 
 void fillStringWithSpaces(std::string& str, int targetLength);
+
+void print_call_stack();

@@ -3,7 +3,7 @@
 namespace spin_state{
 
     StateFunc::StateFunc(size_t sps, size_t leg_size)
-    :sps(sps), leg_size(leg_size)
+    :sps(sps)
     {}
     
     size_t StateFunc::state2num(state_t const& state, int L){

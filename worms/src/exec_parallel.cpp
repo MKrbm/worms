@@ -84,7 +84,13 @@ std::unordered_map<std::string, model::WormObs> exe_worm_parallel(
         n_op++;
 
         // calculate kai (susceptibility)
-        double _op_tmp = obs.obs_operators(op.op_type(), op.state());
+        double _op_tmp = 0;
+        if (op._check_is_bond()){
+          _op_tmp = obs.obs_operators(op.op_type(), op.state());
+        } else {
+          // TODO: need to be fixed
+          continue;
+        }
         // if (_op_tmp != 0) {
         //   cout << op.get_state_vec() << " " << _op_tmp << " " << _op_tmp << endl;
         // }

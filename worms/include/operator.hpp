@@ -6,6 +6,7 @@
 #include <tuple>
 #include <vector>
 #include "spin_state.hpp"
+#include "funcs.hpp"
 
 namespace spin_state
 {
@@ -155,16 +156,22 @@ namespace spin_state
       return clabel + (nindex - cindex);
     }
 
-    bool is_bond() const
+    void is_bond() const
     {
       if (!_check_is_bond())
+      {
+        print_call_stack();
         throw std::invalid_argument("Operator::is_bond(): invalid operator");
+      }
     }
 
-    bool is_single() const
+    void is_single() const
     {
-      if (_check_is_bond())
+      if (_check_is_bond()){
+        std::cout << "op_type_ = " << op_type_ << " nn_state" << nn_state_ << std::endl;
+        std::cout << "check_is_bond = " << _check_is_bond() << std::endl;
         throw std::invalid_argument("Operator::is_single(): invalid operator");
+      }
     }
 
     /*

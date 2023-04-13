@@ -25,7 +25,7 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_, size_
 #ifdef NDEBUG
   unsigned rseed = static_cast<unsigned>(time(0)) + rand() * (rank + 1);
   rand_src = engine_type(SEED);
-  rand_src = engine_type(SEED);
+  rand_src = engine_type(rseed);
 #else
   rand_src = engine_type(SEED);
   test_src = engine_type(SEED);

@@ -27,6 +27,7 @@ ENDFOREACH(name)
 set(worm
     worm
     worm_wobs
+    Kagome
     )
 
 FOREACH(name ${worm})
