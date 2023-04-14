@@ -1,4 +1,4 @@
-from lattice import KH
+from lattice import KH, HXYZ
 from lattice import save_npy
 import argparse
 from random import randint
@@ -133,7 +133,8 @@ if __name__ == "__main__":
 
         if args.loss != "none" and "3site" not in ua:
             raise ValueError("optimizer is supported only for 3site unitary algorithm")
-
+    elif args.model == "HXYZ":
+        h_list, sps = HXYZ.local(ua, p)
     def scheduler(lr):
         def wrapper(step):
             r = step / 10

@@ -6,6 +6,7 @@ set (test_src
      lops
      local_hams
      optype
+     HXXX
     )
 
 

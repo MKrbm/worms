@@ -136,6 +136,7 @@ void Worm<MCT>::diagonalUpdate(double wdensity)
           auto const &accept = accepts[bop_label];
           auto const &bond = bonds[b];
           size_t u = state_funcs[bop_label].state2num(cstate, bond);
+          if (accept[u] > 1) throw std::runtime_error("accept[u] > 1");
           if (r < accept[u])
           {
             appendOps(ops_main, spacetime_dots, can_warp_ops,
@@ -149,9 +150,9 @@ void Worm<MCT>::diagonalUpdate(double wdensity)
           size_t spin = cstate[site];
           double mat_elem = get_single_flip_elem(site, spin, spin, cstate, nn_state);
           mat_elem = std::abs(mat_elem) / max_diagonal_weight;
+          if (mat_elem > 1) throw std::runtime_error("mat_elem > 1");
           if (r < mat_elem)
           {
-
             appendSingleOps(ops_main, spacetime_dots, site,
                       &nn_sites[site], &pows_vec[sop_label + loperators.size()], spin + spin * sps, nn_state ,-1, tau);
           }
@@ -740,6 +741,7 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir,
     if (op_type < 0) {
       int nn_index = dotp->index();
       if (nn_index == 0) {
+        /*
         int num = opsp->state();
         auto flip = markov_next_flip(*opsp, dir_in, fl, false);
         if (opsp->is_off_diagonal()){
@@ -747,6 +749,16 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir,
         }
         dir = flip.first;
         fl = flip.second;
+        */
+
+        //! Debug
+        opsp->update_state(0, fl);
+        opsp->update_state(1, fl);
+        if (opsp->is_off_diagonal()){
+          throw std::runtime_error("state should be diagonal");
+        }
+        //* dir and fl doesn't change.
+        //! Finish Debug
         w_x = opsp->get_local_state(dir);
       } else {
         opsp->update_nn_state(nn_index - 1, fl);

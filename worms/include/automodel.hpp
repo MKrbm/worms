@@ -86,8 +86,12 @@ public:
   const size_t leg_size = 2; //accepts only bond operators 
   std::vector<local_operator<MCT>> loperators;
   std::vector<double> s_flip_max_weights;
+  double alpha;
 
   //* default constructor
+  /*
+  constructor
+  */
   base_model( model::base_lattice lat, 
               VS dofs, 
               std::string ham_path, 
@@ -96,7 +100,8 @@ public:
               double shift, 
               bool zero_worm, 
               bool repeat,
-              bool print = true);
+              bool print = true,
+              double alpha = 0.1);
 
   //* simple constructor
   base_model( model::base_lattice lat, 

@@ -153,6 +153,7 @@ int main(int argc, char **argv) {
   catch(const SettingNotFoundException &nfex) { obs_path = "";}
   repeat = (bool) mcfg->lookup("repeat");
   shift = (double) mcfg->lookup("shift");
+  double alpha = (double) mcfg->lookup("alpha");
   zero_worm = (bool) mcfg->lookup("zero_worm");
   try {ns_unit = (size_t) mcfg->lookup("ns_unit");} catch(...) {
     if (rank == 0) {
@@ -240,9 +241,8 @@ int main(int argc, char **argv) {
 
 
   //* finish argparse
-
   model::base_lattice lat(basis, cell, shapes, file, !rank);
-  model::base_model<bcl::st2013> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat, !rank);
+  model::base_model<bcl::heatbath> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat, !rank, alpha);
   model::observable obs(spin, obs_path, !rank);
 
   //n* set wobs

@@ -121,7 +121,8 @@ namespace model{
 
   //* default constructor
   template <class MC>
-  base_model<MC>::base_model( model::base_lattice lat, 
+  base_model<MC>::base_model( 
+              model::base_lattice lat, 
               VS dofs, 
               std::string ham_path, 
               VD params, 
@@ -129,8 +130,9 @@ namespace model{
               double shift, 
               bool zero_worm, 
               bool repeat,
-              bool print)
-  :base_lattice(lat)
+              bool print,
+              double alpha)
+  :base_lattice(lat), alpha(alpha)
   {
     //only accept single dof
     bool all_same = true;
@@ -296,7 +298,7 @@ namespace model{
     //! zero worm is disabled for now
     if (zw) throw std::runtime_error("zero worm is not supported currently");
     for (local_operator<MCT> & h : loperators){
-      h.set_ham(off_sets[i], thres, zw);
+      h.set_ham(off_sets[i], thres, zw, alpha);
       shifts.push_back(h.ene_shift);
       i++;
     }
