@@ -89,6 +89,8 @@ int main(int argc, char **argv) {
   parser.addArgument({"-P1"}, "set params[0]");
   parser.addArgument({"-P2"}, "set params[1]");
 
+  parser.addArgument({"-alpha"}, "set alpha");
+
   auto args = parser.parseArgs(argc, argv);
 
 
@@ -214,6 +216,7 @@ int main(int argc, char **argv) {
   therms = args.safeGet<int>("K", therms);
   params[0] = args.safeGet<float>("P1",  params[0]);
   params[1] = args.safeGet<float>("P2",  params[1]);
+  alpha = args.safeGet<double>("alpha", alpha);
 
   try { 
     ham_path = args.get<string>("ham");
