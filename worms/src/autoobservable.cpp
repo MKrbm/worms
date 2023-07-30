@@ -174,6 +174,8 @@ namespace model
         idx /= _spin_dof;
         size_t k = idx % _spin_dof;
         idx /= _spin_dof;
+        if (k == j)
+          continue; // only off-diagonal is allowed
         if (operator()(i, j, i, k) != 0 || operator()(j, i, k, i) != 0)
           return false;
       }
@@ -233,7 +235,7 @@ namespace model
 
     if (!check_no_single())
     {
-      if (print) cerr << "Warning!! Given array has non-zero single site operator (Cannot handle yet)" << endl;
+      if (print) cerr << "Warning!! Given array has non-zero single site operator" << endl;
       if (print) cout << "If your hamiltonian doesn't have single site operator, this cause problem." << endl;
     }
 
