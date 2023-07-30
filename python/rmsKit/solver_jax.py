@@ -17,7 +17,7 @@ parser.add_argument('-Jx','--coupling_x', help='coupling constant (Jx)', type = 
 parser.add_argument('-Jy','--coupling_y', help='coupling constant (Jy)', type = float) 
 parser.add_argument("-hx", "--mag_x", help="magnetic field", type=float, default=0)
 parser.add_argument("-hz", "--mag_z", help="magnetic field", type=float, default=0)
-parser.add_argument('-T', "--temperature", help = "temperature", type = float)
+# parser.add_argument('-T', "--temperature", help = "temperature", type = float)
 parser.add_argument('-L1', "--length1", help = "length of side", type = int, required = True)
 parser.add_argument('-L2', "--length2", help = "length of side", type = int)
 parser.add_argument(
@@ -55,7 +55,7 @@ if __name__ == '__main__':
         N = L1 * L2 * 3
         H = KH.system([L1, L2], ua, p)
     elif (args.model == "HXYZ"):
-        model_name = "KXYZ" + f"_{L1}"
+        model_name = "HXYZ" + f"_{L1}"
         path = f"out/{model_name}/{ua}/{params_str}"
         N = L1
         H = HXYZ.system([L1], ua, p)
@@ -96,16 +96,14 @@ if __name__ == '__main__':
         for i, e in enumerate(E):
             dat_file.write(f"{i}, {e:.60g}\n")
 
-
-
-    
-
     file = f'{path}/statistics.csv'
     os.makedirs(os.path.dirname(file), exist_ok=True)
     with open(file, 'w') as dat_file:
         dat_file.write("beta, energy_per_site, specific_heat\n")
         for b, e, c, in zip(beta, E_mean, C):
             dat_file.write(f"{b}, {e/N}, {c/N}\n")
+            
+    print(f"output to {path}")
     
 
       
