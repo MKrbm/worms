@@ -240,6 +240,7 @@ int main(int argc, char **argv) {
     cout << "zero_wom : " << (zero_worm ? "YES" : "NO") << endl;
     cout << "repeat : " << (repeat ? "YES" : "NO") << endl;
     cout << "params : " << params << endl;
+    cout << "alpha : " << alpha << endl;
   }
 
 
