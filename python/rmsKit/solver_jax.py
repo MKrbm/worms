@@ -1,4 +1,4 @@
-from lattice import KH, HXYZ
+from lattice import KH, HXYZ, Ising
 from lattice.core.utils import *
 import numpy as np
 import jax
@@ -8,7 +8,9 @@ import argparse
 
 models = [
     "KH",
-    "HXYZ"
+    "HXYZ",
+    "Ising1D",
+    "Ising2D",
 ]
 parser = argparse.ArgumentParser(description='exact diagonalization of shastry_surtherland')
 parser.add_argument('-m','--model', help='model (model) Name', required=True, choices=models)
@@ -54,19 +56,38 @@ if __name__ == '__main__':
         path = f"out/{model_name}/{ua}/{params_str}"
         N = L1 * L2 * 3
         H = KH.system([L1, L2], ua, p)
+
     elif (args.model == "HXYZ"):
         model_name = "HXYZ" + f"_{L1}"
         path = f"out/{model_name}/{ua}/{params_str}"
         N = L1
         H = HXYZ.system([L1], ua, p)
+
+    elif (args.model == "Ising1D"):
+        model_name = "Ising" + f"_{L1}"
+        params_str = f"Jz_{p['Jz']:.4g}_hx_{p['hx']:.4g}" #n* only Jz and hx are used
+        path = f"out/{model_name}/{ua}/{params_str}"
+        N = L1 
+        H = Ising.system([L1], ua, p)
+
+    elif (args.model == "Ising2D"):
+        model_name = "Ising" + f"_{L1}x{L2}"
+        params_str = f"Jz_{p['Jz']:.4g}_hx_{p['hx']:.4g}" #n* only Jz and hx are used
+        path = f"out/{model_name}/{ua}/{params_str}"
+        N = L1 * L2
+        H = Ising.system([L1, L2], ua, p)
+
     else:
         raise ValueError("model not found")
+
     E, V = jnp.linalg.eigh(H)
+
     file = f'{path}/groundstate.npy'
     os.makedirs(os.path.dirname(file), exist_ok=True)
     save_npy(file, V[:,0])
     file = f'{path}/groundstate.csv'
     os.makedirs(os.path.dirname(file), exist_ok=True)
+
     with open(file, 'w') as dat_file:  
         dat_file.write("index, value\n")
         for i, v in enumerate(V[:,0]):
@@ -74,7 +95,7 @@ if __name__ == '__main__':
 
     if args.gs:
         exit()
-        
+
     beta = jax.numpy.linspace(0, 10, 1001).reshape(1,-1)
     B = jax.numpy.exp(-beta*E[:,None])
     Z = B.sum(axis=0)

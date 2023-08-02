@@ -1,4 +1,4 @@
-from lattice import KH, HXYZ
+from lattice import KH, HXYZ, Ising
 from lattice import save_npy
 import argparse
 from random import randint
@@ -27,6 +27,8 @@ logging.basicConfig(
 models = [
     "KH",
     "HXYZ",
+    "Ising1D",
+    "Ising2D",
 ]
 loss = ["none", "mes", "qes", "smel", "sel"]  # minimum energy solver, quasi energy solver
 
@@ -59,6 +61,7 @@ parser.add_argument(
     choices=loss,
     nargs="?",
     const="all",
+    default="none",
 )
 
 parser.add_argument(
@@ -80,7 +83,10 @@ if args.platform == "gpu":
 
 # u0 = np.load("array/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_1/u/0.npy")
 if __name__ == "__main__":
+
+    print("logging file: {}".format(log_filename))
     logging.info("args: {}".format(args))
+
     M = args.num_iter
     p = dict(
         Jx=args.coupling_x if args.coupling_x is not None else args.coupling_z,
@@ -100,6 +106,7 @@ if __name__ == "__main__":
     sps = 2
     x = None
     groundstate_path = None
+
     if args.model == "KH":
         h_list, sps = KH.local(ua, p)
         model_name = "KH" + f"_2x2"
@@ -133,8 +140,14 @@ if __name__ == "__main__":
 
         if args.loss != "none" and "3site" not in ua:
             raise ValueError("optimizer is supported only for 3site unitary algorithm")
+
     elif args.model == "HXYZ":
         h_list, sps = HXYZ.local(ua, p)
+
+    elif "Ising" in args.model:
+        h_list, sps = Ising.local(ua, p)
+        params_str = f"Jz_{p['Jz']:.4g}_hx_{p['hx']}"
+
     def scheduler(lr):
         def wrapper(step):
             r = step / 10
@@ -149,9 +162,11 @@ if __name__ == "__main__":
     ur = rms.unitary.UnitaryRiemanGenerator(8, jax.random.PRNGKey(seed), np.float64)
     best_lv = 1e10
     best_u = None
+
     if args.loss == "none":
         h_list = [-np.array(h) for h in h_list]
         save_npy(f"{path}/H", h_list)
+        exit(0)
 
     elif args.loss == "mes" and h_list:
 
@@ -173,13 +188,14 @@ if __name__ == "__main__":
             # u, lv = momentum_solver(u, 1000, 0.1, 0.3, cout=True, cutoff_cnt=10)
             # u, lv = cg_solver(u, 500, 0.001, 0.1, cutoff_cnt=10, cout=True)
             if lv < best_lv:
-                best_lv = lv
                 best_u = (u).copy()
+
     elif args.loss == "qes" and h_list:
         if groundstate_path:
             x = np.load(groundstate_path)
         else:
             raise RuntimeError("groundstate is not found")
+
         x0 = x.reshape([8] * 4)
         x0 = x0.transpose([0, 2, 1, 3]).reshape(-1)
         x0 = jnp.array(x0)
