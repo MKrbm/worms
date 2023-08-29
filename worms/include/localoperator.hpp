@@ -215,6 +215,7 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp, double
 
   //d* set single_flip operator and bond operator
   max_diagonal_weight_ = 0;
+
   for (int i=0; i<N; i++){
     auto index = state_func.num2state(i, 4);
     auto mat_index = num2index(i);
@@ -226,7 +227,7 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp, double
         single_flip(0, index[1])[index[0]][index[2]] = _ham_vector[i];
       }
     }
-    // if (index[0] == index[2]) single_flip(1, index[0])[index[1]][index[3]] = _ham_vector[i];
+
     if (index[0] == index[2]){
       if (index[1] == index[3]){
         single_flip(1, index[0])[index[1]][index[1]] = _ham_vector[i] / 2 * alpha;
@@ -234,7 +235,7 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp, double
         single_flip(1, index[0])[index[1]][index[3]] = _ham_vector[i];
       }
     }
-    
+
     if (mat_index[0] == mat_index[1]) {
       _ham_vector[i] *= (1 - alpha);
       max_diagonal_weight_ = std::max(max_diagonal_weight_, _ham_vector[i]);

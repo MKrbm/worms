@@ -244,6 +244,10 @@ int main(int argc, char **argv) {
   }
 
 
+
+
+
+
   //* finish argparse
   model::base_lattice lat(basis, cell, shapes, file, !rank);
   model::base_model<bcl::heatbath> spin(lat, dofs, ham_path, params, types, shift, zero_worm, repeat, !rank, alpha);

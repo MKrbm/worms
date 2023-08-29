@@ -48,7 +48,7 @@ void run_worm(
     model::base_lattice &lat,
     model::MapWormObs wobs)
 {
-  // dont fix worm density. Not printout density information.
+
   alps::alea::autocorr_result<double> ac_res;
   exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, ac_res, obs, wobs);
 

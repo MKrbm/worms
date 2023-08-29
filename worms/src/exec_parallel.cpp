@@ -66,10 +66,12 @@ std::unordered_map<std::string, model::WormObs> exe_worm_parallel(
       double mu = 0;
       double sum_ot = 0;   // \sum_{tau} O_{tau} : sum of observables
       double sum_2_ot = 0; // \sum_{tau} (O_{tau})^2 : sum of square of observables
+
       for (const auto &s : solver.state)
       {
         mu += 0.5 - s;
       }
+
       for (const auto &op : solver.ops_main)
       {
         int sign_ = 1;
@@ -149,7 +151,7 @@ std::unordered_map<std::string, model::WormObs> exe_worm_parallel(
 
 #if MESTIME
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / (double)1E3;
+  // elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / (double)1E3;
 #endif
   double r = 1 - solver.bocnt / (double)(therms + sweeps); // # of loops breaked out divded by total number of loops.
   // double r_ = 1-r_;

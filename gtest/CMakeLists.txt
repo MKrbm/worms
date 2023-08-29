@@ -29,6 +29,7 @@ set(worm
     worm
     worm_wobs
     Kagome
+    Ising1D
     )
 
 FOREACH(name ${worm})
