@@ -110,7 +110,7 @@ h(h), MDT(return_lattice(L))
     auto shape = pair.first;
     auto data = pair.second;
     int l = 2;
-    std::cout << "hamiltonian is read from " << path << std::endl;
+    std::cerr << "hamiltonian is read from " << path << std::endl;
     for (int i=0; i<shape[0]; i++){
       for (int j=0; j<shape[1]; j++)
       {

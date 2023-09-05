@@ -111,7 +111,7 @@ namespace model {
       }
       // int l = 2;
       size_t op_type = type_list[op_label];
-      std::cout << "hamiltonian is read from " << path << std::endl;
+      std::cerr << "hamiltonian is read from " << path << std::endl;
       ASSERT(shape[0] == shape[1],"loaded local hamiltonian is not squared matrix");
       ASSERT(loperators[op_type].size == shape[0], "loaded local hamiltonian conflict with loperator in size");
       for (int i=0; i<shape[0]; i++){

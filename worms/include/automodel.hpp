@@ -72,7 +72,15 @@ public:
 /*
 params
 ------
+
+  lat : lattice 
+
+  dofs : degree of freedom
+
+  ham_path : path of hamiltonian files
+
   types : there may possibility that adding different operators on the same bond. 
+  
 */
 template <class MC>
 class model::base_model : public model::base_lattice
