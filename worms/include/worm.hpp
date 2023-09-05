@@ -68,7 +68,7 @@ private:
   // n*  number of physically meaningful configurations;
   double phys_cnt;
   // n*  sum of observables encountered while worm update. (observable must be non-diagonal operator)
-  vector<double> obs_sum;
+  std::vector<double> obs_sum;
   
   //n* maximum diagonal value of local operator.
 
@@ -298,6 +298,7 @@ public:
   Original spin would be if direction is 1 (worm moves upwards) {x % sps + fl % sps,   x // sps}.
   */
   pair<int, int> markov_next_flip(OP_type& op, int dir, int fl, bool zero_fl = false);
+  pair<int, int> markov_diagonal_nn(OP_type& op, int dir, int fl, int nn_index);
   static void printStateAtTime(const state_t &state, double time);
 };
 

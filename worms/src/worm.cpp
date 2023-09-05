@@ -741,7 +741,7 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir,
     if (op_type < 0) {
       int nn_index = dotp->index();
       if (nn_index == 0) {
-        /*
+
         int num = opsp->state();
         auto flip = markov_next_flip(*opsp, dir_in, fl, false);
         if (opsp->is_off_diagonal()){
@@ -749,20 +749,23 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir,
         }
         dir = flip.first;
         fl = flip.second;
-        */
 
         //! Debug
-        opsp->update_state(0, fl);
-        opsp->update_state(1, fl);
-        if (opsp->is_off_diagonal()){
-          throw std::runtime_error("state should be diagonal");
-        }
+        // opsp->update_state(0, fl);
+        // opsp->update_state(1, fl);
+        // if (opsp->is_off_diagonal()){
+        //   throw std::runtime_error("state should be diagonal");
+        // }
         //* dir and fl doesn't change.
         //! Finish Debug
         w_x = opsp->get_local_state(dir);
       } else {
-        opsp->update_nn_state(nn_index - 1, fl);
-        if (w_x != opsp->nn_state(nn_index - 1)) throw std::runtime_error("w_x is not consistent");
+        // opsp->update_nn_state(nn_index - 1, fl);
+        auto flip = markov_diagonal_nn(*opsp, dir_in, fl, nn_index-1);
+        dir = flip.first;
+        fl = flip.second;
+
+        // if (w_x != opsp->nn_state(nn_index - 1)) throw std::runtime_error("w_x is not consistent");
         w_x = opsp->nn_state(nn_index - 1);
       }
       //* next_dot doesn't change.
@@ -1157,67 +1160,36 @@ std::pair<int, int> Worm<MCT>::markov_next_flip(OP_type& op, int dir, int fl, bo
   }
 }
 
-// template <class MCT>
-// std::pair<int, int> Worm<MCT>::markov_next_flip(OP_type op, int fl, int dir)
-// {
-//   if (dir != 0 && dir != 1)
-//     throw std::runtime_error("dir must be 0 or 1");
-//   if (op._check_is_bond()) throw std::runtime_error("op must be a single site operator");
+/*
+dir_in is direction from operator's perspective.
+----------------------------
+pair<dir_out, fl>
+*/
+template <class MCT>
+std::pair<int, int> Worm<MCT>::markov_diagonal_nn(OP_type& op, int dir_in, int fl, int nn_index)
+{
+  if (dir_in != 0 && dir_in != 1)
+    throw std::runtime_error("dir must be 0 or 1");
+  if (op._check_is_bond()) throw std::runtime_error("op must be a single site operator");
+  if (fl < 0 || fl >= sps)
+    throw std::runtime_error("fl must be in [0, sps)");
+    
+  int num = op.state();
+  double mat_elem = get_single_flip_elem(op);
+  op.update_nn_state(nn_index, fl);
 
-//   if (dir != 0 && dir != 1)
-//     throw std::runtime_error("dir must be 0 or 1");
-//   if (fl < 0 || fl >= sps)
-//     throw std::runtime_error("fl must be in [0, sps)");
+  double mat_elem_prime = get_single_flip_elem(op);
+  double ratio = mat_elem_prime / mat_elem;
+  double r = uniform(rand_src);
 
-//   if (x < 0 || x >= sps * sps)
-//   {
-//     throw std::runtime_error("x must be in [0, sps^2)");
-//   }
-//   if (x_flipped < 0 || x_flipped >= sps * sps)
-//     throw std::runtime_error("x_flipped must be in [0, sps^2)");
-
-//   int x1 = x % sps;
-//   int x2 = x / sps;
-//   int xf1 = x_flipped % sps;
-//   int xf2 = x_flipped / sps;
-
-//   int x_ = !dir ? (xf1 + fl) % sps + xf2 * sps : xf1 + (xf2 + fl) % sps * sps;
-//   if (x != x_)
-//     throw std::runtime_error("x is not consistent with x_flipped and flip");
-
-//   double mat_elem = get_single_flip_elem(site, x1, x2, _state);
-//   double r = uniform(rand_src);
-//   int flip_prime = static_cast<int>((2 * sps - 1) * uniform(rand_src)) + 1;
-//   int dir_prime = flip_prime / sps;
-//   int fl_prime = flip_prime % sps;
-
-//   if (dir_prime != 0 && dir_prime != 1)
-//   {
-//     throw std::runtime_error("dir_prime must be 0 or 1");
-//   }
-//   if (fl_prime < 0 || fl_prime >= sps)
-//   {
-//     throw std::runtime_error("fl_prime must be in [0, sps)");
-//   }
-
-//   int x_prime = !dir_prime ? (xf1 + fl_prime) % sps + xf2 * sps : xf1 + (xf2 + fl_prime) % sps * sps;
-
-//   int x1_prime = x_prime % sps;
-//   int x2_prime = x_prime / sps;
-
-//   double mat_elem_prime = get_single_flip_elem(site, x1_prime, x2_prime, _state);
-//   double ratio = mat_elem_prime / mat_elem;
-
-//   if (dir_prime != 0 && dir_prime != 1)
-//   {
-//     throw std::runtime_error("dir_prime must be 0 or 1");
-//   }
-
-//   if (r < ratio)
-//     return make_pair(dir_prime, fl_prime);
-//   else
-//     return make_pair(dir, fl);
-// }
+  if (r < ratio)
+    return make_pair(!dir_in, fl);
+  else
+  {
+    op.update_nn_state(nn_index, (sps - fl)%sps );
+    return make_pair(dir_in, (sps - fl)%sps);
+  }
+}
 
 template <class MCT>
 void Worm<MCT>::printStateAtTime(const state_t &state, double time)
