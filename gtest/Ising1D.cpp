@@ -24,22 +24,21 @@ typedef spin_state::Operator OP_type;
 
 // This return energy per site for 1D Ising model with J = 1 and L = 2.
 // 1/4.0 since local hamiltonian is overwrapped for tow sites.
-double energy_ising_2(double beta) {
-  return -1.0/4 * tanh(beta / 2.0);
-}
+double energy_ising_2(double beta) { return -1.0 / 4 * tanh(beta / 2.0); }
 
 double n_diag_ising_2(double beta, double shift, int L = 2) {
-  return  L * 1 * beta * (0.5 + shift);
+  return L * 1 * beta * (0.5 + shift);
 }
 
 double n_diag_ising(double beta, double shift, int L = 2) {
   return L * 1 * beta * (shift);
 }
 
-double n_diag_all(double beta, double shift){
-  double h0 = 2*(0.5 + shift);
-  double h1 = 2*shift;
-  return beta * (h0 * exp(h0*beta) + h1 * exp(h1*beta)) / (exp(h0*beta) + exp(h1*beta));
+double n_diag_all(double beta, double shift) {
+  double h0 = 2 * (0.5 + shift);
+  double h1 = 2 * shift;
+  return beta * (h0 * exp(h0 * beta) + h1 * exp(h1 * beta)) /
+         (exp(h0 * beta) + exp(h1 * beta));
 }
 
 uniform_t uniform;
@@ -116,21 +115,21 @@ TEST(DiagonalUpdate, MC) {
   double beta = 1;
   std::vector<size_t> shapes = {4};
   model::base_lattice lat("chain lattice", "simple1d", shapes,
-                        "../config/lattices.xml", false);
+                          "../config/lattices.xml", false);
   model::base_model<MC> spin(lat, {2}, ham_path, {1}, {0}, shift, false, false,
                              false, alpha);
   Worm<MC> solver(beta, spin, {}, -1, 0);
   BC::observable op_cnt;
 
   int sweeps = 1000000;
- 
+
   for (int i = 0; i < sweeps; i++) {
     solver.diagonalUpdate(1);
     op_cnt << solver.ops_main.size();
     solver.ops_main.resize(0);
   }
   EXPECT_NEAR(op_cnt.mean(), n_diag_ising_2(beta, shift, shapes[0]),
-              3 * op_cnt.error()); 
+              3 * op_cnt.error());
 
   // for different initial state
   BC::observable op_cnt2;
@@ -146,8 +145,7 @@ TEST(DiagonalUpdate, MC) {
   }
 
   EXPECT_NEAR(op_cnt2.mean(), n_diag_ising(beta, shift, shapes[0]),
-              3 * op_cnt2.error()); 
-
+              3 * op_cnt2.error());
 
   // transition through all states
   // BC::observable op_cnt3;
@@ -161,7 +159,6 @@ TEST(DiagonalUpdate, MC) {
   // }
   // EXPECT_NEAR(op_cnt3.mean(), n_diag_all(beta, shift),
   //             3 * op_cnt3.error());
-
 }
 
 TEST(Ising1D_half_a, MC) {
@@ -169,7 +166,7 @@ TEST(Ising1D_half_a, MC) {
   double alpha = 0.5;
   std::vector<size_t> shapes = {4};
   model::base_lattice lat("chain lattice", "simple1d", shapes,
-                        "../config/lattices.xml", false);
+                          "../config/lattices.xml", false);
   model::base_model<MC> spin(lat, {2}, ham_path, {1}, {0}, shift, false, false,
                              false, alpha);
   double T = 1;
@@ -199,7 +196,7 @@ TEST(Ising1D_1a, MC) {
   double alpha = 1;
   std::vector<size_t> shapes = {4};
   model::base_lattice lat("chain lattice", "simple1d", shapes,
-                        "../config/lattices.xml", false);
+                          "../config/lattices.xml", false);
   model::base_model<MC> spin(lat, {2}, ham_path, {1}, {0}, shift, false, false,
                              false, alpha);
   double T = 1;
@@ -230,7 +227,7 @@ TEST(Ising1D_0a, MC) {
   double alpha = 0;
   std::vector<size_t> shapes = {4};
   model::base_lattice lat("chain lattice", "simple1d", shapes,
-                        "../config/lattices.xml", false);
+                          "../config/lattices.xml", false);
   model::base_model<MC> spin(lat, {2}, ham_path, {1}, {0}, shift, false, false,
                              false, alpha);
   double T = 1;
