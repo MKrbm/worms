@@ -147,18 +147,6 @@ TEST(DiagonalUpdate, MC) {
   EXPECT_NEAR(op_cnt2.mean(), n_diag_ising(beta, shift, shapes[0]),
               3 * op_cnt2.error());
 
-  // transition through all states
-  // BC::observable op_cnt3;
-  // double wcount, wlength;
-  // for (int i = 0; i < sweeps; i++) {
-  //   solver.diagonalUpdate(1);
-  //   solver.wormUpdate(wcount, wlength);
-  //   // std::cerr << solver.state << std::endl;
-  //   op_cnt3 << solver.ops_main.size();
-  //   // solver.ops_main.resize(0);
-  // }
-  // EXPECT_NEAR(op_cnt3.mean(), n_diag_all(beta, shift),
-  //             3 * op_cnt3.error());
 }
 
 TEST(Ising1D_half_a, MC) {
@@ -212,8 +200,6 @@ TEST(Ising1D_1a, MC) {
   wobs_paths.push_back("");
   std::vector<batch_res> res;
   model::observable obs(spin, "", false);
-
-  // run_worm(spin, T, sweeps, therms, res, obs, lat, mapwobs);
 
   mc_res out_res = run_worm(spin, T, sweeps, therms, res, obs, lat, mapwobs);
 
