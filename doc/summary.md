@@ -206,7 +206,7 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
     - ### MES : minimize energy loss
     - 
 # Test effect of add-first method 
-  - HXYZ model on 2D lattice (commit 9a9591a24501d4ab273d94601c60b66b8616a423)
+  - HXYZ model on 2D lattice (commit 86fbd568d695de1dbc824b8102190c43d7535fa6)
     - generate local hamiltonian with `python jax_optimize.py -m HXYZ2D -loss none -u original -Jz 1 -Jx 1 -Jy 1`
     - calculate exact energy per site `python solver_jax.py -m HXYZ2D -L1 3 -L2 3 -Jx 1 -Jy 1 -Jz 1`
     - J = [-1, -1, -1] sweeps = 5*E5
@@ -230,14 +230,17 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
           E = -0.433781 +- 0.000514781
 
     - # Summarize results with table formalt
-      - J1 = [-1, -1, -1] J2 = [-0.3, -0.5, -1] J3 = [0.3, 0.5 , 0.8] L = [2, 2] 
-        - Table : 
-          
-          |  | J1 (T = 1)| J2 (T = 1) | J3 (T = 1) | J3 (T = 0.5) |
-          | --- | --- | --- | --- | --- |
-          | exact | -0.2947239498963471 | -0.2042471924200272 | -0.10720369505809212 | -0.16921390812569803 |
-          | QMC | -0.296527 +- 0.00151379 | -0.204224 +- 0.000689048 | -0.106831 +- 0.000565658 |  -0.168934 +- 0.000404437 |
-          | average sign | 1 | 1 | 0.96896 +- 0.000475423 | 0.7855 +- 0.00153094 | 
+      - J1 = [-1, -1, -1] J2 = [-0.3, -0.5, -1] J3 = [0.3, 0.5 , 0.8] J4 = J3 + h[0, 0.3] L = [2, 2] 
+        - ### Table : 
+          |  | J1 (T = 1)| J2 (T = 1) | J3 (T = 1) | J3 (T = 0.5) | J3 (alpha = 0.2) (4*E6 sweeps)| J4 | 
+          | --- | --- | --- | --- | --- | --- | --- |
+          | exact | -0.2947239498963471 | -0.2042471924200272 | -0.10720369505809212 | -0.16921390812569803 | -0.16921390812569803 | -0.1199219559789621, | 
+          | QMC | -0.296527 +- 0.00151379 | -0.204224 +- 0.000689048 | -0.106831 +- 0.000565658 |  -0.168934 +- 0.000404437 | -0.169261 +- 0.000191556  | -0.118874 +- 0.000443377 |
+          | average sign | 1 | 1 | 0.96896 +- 0.000475423 | 0.7855 +- 0.00153094 | 0.88507 +- 0.000599312 | 
+        - ### Note
+          - zero worm is required to simulate J4.
+          - with this commit ( 86fbd568d695de1dbc824b8102190c43d7535fa6 ), J4 cannot be simulated precisely maybe because zero worm doesn't work well.
+
 
     
     - ## Optimize with python 
