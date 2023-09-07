@@ -95,6 +95,7 @@ public:
   std::vector<local_operator<MCT>> loperators;
   std::vector<double> s_flip_max_weights;
   double alpha;
+  bool zw; //zero worm 
 
   //* default constructor
   /*
@@ -126,7 +127,7 @@ public:
   boolean zw : 1 = zero worm. 
   thres : value lower than thres reduce to 0. usually 1E-8;
   */
-  void initial_setting(VD off_sets, double thres, bool zw);
+  void initial_setting(VD off_sets, double thres);
 
   size_t sps_sites(size_t i){return _sps_sites[i];}
 

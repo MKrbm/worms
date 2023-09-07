@@ -148,7 +148,7 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
                            std::string ham_path, VD params, VI types,
                            double shift, bool zero_worm, bool repeat,
                            bool print, double alpha)
-    : base_lattice(lat), alpha(alpha) {
+    : base_lattice(lat), alpha(alpha), zw(zero_worm) {
   // only accept single dof
   bool all_same = true;
   for (int i = 1; i < dofs.size(); ++i)
@@ -261,7 +261,7 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
 
   //* initial settings for local bond operators
   VD off_sets(N_op, shift);
-  initial_setting(off_sets, 1E-8, zero_worm);
+  initial_setting(off_sets, 1E-8);
 
   //* calculate origin shift
   origin_shift = 0;
@@ -306,7 +306,7 @@ template <class MC>
 base_model<MC>::base_model(model::base_lattice lat, VS dofs,
                            std::vector<std::vector<std::vector<double>>> hams,
                            double shift, bool zero_worm)
-    : base_lattice(lat) {
+    : base_lattice(lat), zw(zero_worm){
 
   //! Currently not available
   throw std::runtime_error("This constructor is not available yet");
@@ -334,7 +334,7 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
 
   //* initial settings for local bond operators
   VD off_sets(N_op, shift);
-  initial_setting(off_sets, 1E-8, zero_worm);
+  initial_setting(off_sets, 1E-8);
 
   //* calculate origin shift
   origin_shift = 0;
@@ -344,7 +344,7 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
 }
 
 template <class MC>
-void base_model<MC>::initial_setting(VD off_sets, double thres, bool zw) {
+void base_model<MC>::initial_setting(VD off_sets, double thres) {
   int i = 0;
   double tmp = 0;
   //! zero worm is disabled for now

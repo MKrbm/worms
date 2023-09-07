@@ -124,6 +124,8 @@ public:
   size_t u_cnt = 0;
   double rho;
   const double beta;
+  bool zw;
+
 
   std::unordered_map<std::string, WormObs> &get_worm_obs() { return _mp_worm_obs(); }
   alps::alea::batch_acc<double> &get_phys_cnt() { return _phys_cnt; }
@@ -214,6 +216,7 @@ public:
   void appendSingleOps(
       OPS &ops,
       DOTS &sp,
+      std::unordered_set<size_t> &warp_sp,
       int s_site,
       const BOND *const bp,
       const BOND *const pp,
