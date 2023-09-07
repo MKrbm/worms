@@ -132,7 +132,7 @@ public:
 
   local_operator(int leg, size_t sps = 2);
 
-  void set_ham(double off_set = 0, double thres = 1E-6, bool dw = false,
+  void set_ham(double off_set = 0, double thres = 1E-6, bool warp = false,
                double alpha = 1 / 6.0);
   void set_trans_weights();
   void check_trans_prob();
@@ -200,8 +200,11 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp,
                                  double alpha) {
 
   //! warp is not supported this version
-  if (warp)
-    throw std::invalid_argument("warp is not supported this version");
+  // if (warp)
+  //   throw std::invalid_argument("warp is not supported this version");
+  if (warp){
+    std::cout << "Warning! warp is not supported this version" << std::endl; 
+  }
 
   if (0 > alpha || alpha > 1)
     throw std::invalid_argument("alpha should be between 0 and 1");
@@ -249,7 +252,7 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp,
       _ham_vector[i] *= (1 - alpha);
       max_diagonal_weight_ = std::max(max_diagonal_weight_, _ham_vector[i]);
     } else if (index[0] == index[2] || index[1] == index[3]) {
-      _ham_vector[i] = 0;
+      _ham_vector[i] *= ( alpha == 0 ) ;
     }
   }
 

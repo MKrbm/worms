@@ -781,7 +781,7 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir,
     // n* if Worm stop at this operator
     if (tmp == 0)
     { // if head will warp.
-      throw std::runtime_error("Worm warp is not supported this version");
+      //! warp is experimental right now.
       if (!loperators[op_type].has_warp(state_num))
       {
         can_warp_ops.erase(cur_dot - dotp->index());
