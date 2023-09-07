@@ -190,3 +190,56 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
         - comparing the result with `python jax_optimize.py -m HXX -L 4 -Jx 1 -Jy 1 -Jz 1 -hx 0 -hz 0`
         - test : `HXX1D_02a` test the case of alpha = 0.2
 
+# jax_optimizer.py
+  - ## Note
+    - In the latest research, in some model, only system energy loss was effective.
+    - 
+  - ## Memos
+    - ### QES : quasi energy loss
+      In the case of Kagome Heisenberg model.
+      - ??
+    - ### SMES : system minimum energy loss
+      - Just calculate ground energy of the system.
+      - There might be the computationally efficient way to calculate differentiation of the ground energy.
+        - But for now, exact diagonalization is used.
+
+    - ### MES : minimize energy loss
+    - 
+# Test effect of add-first method 
+  - HXYZ model on 2D lattice (commit 9a9591a24501d4ab273d94601c60b66b8616a423)
+    - generate local hamiltonian with `python jax_optimize.py -m HXYZ2D -loss none -u original -Jz 1 -Jx 1 -Jy 1`
+    - calculate exact energy per site `python solver_jax.py -m HXYZ2D -L1 3 -L2 3 -Jx 1 -Jy 1 -Jz 1`
+    - J = [-1, -1, -1] sweeps = 5*E5
+      - with sign problem
+      - for T = 1, 
+        - exact energy per site
+           E = -0.2947239498963471 
+        - QMC result
+          E = -0.296527 +- 0.00151379
+    - J = [-0.3, -0.5, -1] sweeps = 5*E5
+      - with sign problem
+      - for T = 1, 
+        - exact energy per site
+           E = -0.2042471924200272 
+        - QMC result
+          E = -0.204224 +- 0.000689048
+      - for T = 0.5, 
+        - exact energy per site
+           E = -0.4332697322625007 
+        - QMC result
+          E = -0.433781 +- 0.000514781
+
+    - # Summarize results with table formalt
+      - J1 = [-1, -1, -1] J2 = [-0.3, -0.5, -1] J3 = [0.3, 0.5 , 0.8] L = [2, 2] 
+        - Table : 
+          
+          |  | J1 (T = 1)| J2 (T = 1) | J3 (T = 1) | J3 (T = 0.5) |
+          | --- | --- | --- | --- | --- |
+          | exact | -0.2947239498963471 | -0.2042471924200272 | -0.10720369505809212 | -0.16921390812569803 |
+          | QMC | -0.296527 +- 0.00151379 | -0.204224 +- 0.000689048 | -0.106831 +- 0.000565658 |  -0.168934 +- 0.000404437 |
+          | average sign | 1 | 1 | 0.96896 +- 0.000475423 | 0.7855 +- 0.00153094 | 
+
+    
+    - ## Optimize with python 
+      - ### Expected result
+    - ## Calculate with MC.
