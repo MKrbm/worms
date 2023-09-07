@@ -9,7 +9,7 @@ import logging
 unitary_algorithms = ["original", "3site", "3siteDiag"]
 
 
-def local(ua : str, params : dict):
+def local(ua : str, params : dict, D : int = 1):
     if ua not in unitary_algorithms:
         raise ValueError("unitary_algorithms not supported")
     Jz = params["Jz"]
@@ -21,7 +21,7 @@ def local(ua : str, params : dict):
     h_single = hz*Sz + hx*Sx
 
     if ua == "original":
-        h = h_bond + (np.kron(h_single, I2) +  np.kron(I2, h_single)) / 4.0 #n* there is 4 bond per site
+        h = h_bond + (np.kron(h_single, I2) +  np.kron(I2, h_single)) / (2 * D) #n* there is 4 bond per site
         sps = 2
         return [h], sps
     error_message = f"Other unitary_algorithms mode not implemented yet u = {ua}"
@@ -34,19 +34,39 @@ def system(_L : list[int], ua : str, params : dict) -> np.ndarray:
     if ua not in unitary_algorithms:
         raise ValueError("unitary_algorithms not supported")
     
-    if (len(_L) != 1):
-        raise ValueError(f"L must be 1D array")
-    L = _L[0]
-    logging.info(f"L      : {L} (3 site per unit cell)")
-    logging.info(f"params : {params}")
-    H = np.zeros((2**L, 2**L))
-    H_list, sps = local(ua, params)
+    if (len(_L) == 1):
+        L = _L[0]
+        logging.info(f"L      : {L} (3 site per unit cell)")
+        logging.info(f"params : {params}")
+        H = np.zeros((2**L, 2**L))
+        H_list, sps = local(ua, params)
 
-    if ua == "original":
-        bonds = [[i, (i+1)%L] for i in range(L)]
-        if (len(H_list) != 1):
-            raise RuntimeError("something wrong")
-        _H = rms.sum_ham(H_list[0], bonds, L, 2)
-        return _H 
-    else:
-        raise ValueError(f"ua = {ua} not supported")
+        if ua == "original":
+            bonds = [[i, (i+1)%L] for i in range(L)]
+            if (len(H_list) != 1):
+                raise RuntimeError("something wrong")
+            _H = rms.sum_ham(H_list[0], bonds, L, 2)
+            return _H 
+        else:
+            raise ValueError(f"ua = {ua} not supported")
+    elif (len(_L) == 2):
+        L = _L[0] * _L[1]
+        logging.info(f"L      : {L} (3 site per unit cell)")
+        logging.info(f"params : {params}")
+        H = np.zeros((2**L, 2**L))
+        H_list, sps = local(ua, params, 2) # 2 dimensional
+
+        if ua == "original":
+            s = np.arange(L)
+            x = s % _L[0]
+            y = s // _L[0]
+            T_x = (x + 1) % _L[0] + y * _L[0]
+            T_y = x + ((y + 1) % _L[1]) * _L[0]
+            bonds = [[i, T_x[i]] for i in range(L)] + [[i, T_y[i]] for i in range(L)]
+            print(bonds)
+            if (len(H_list) != 1):
+                raise RuntimeError("something wrong")
+            _H = rms.sum_ham(H_list[0], bonds, L, 2)
+            return _H 
+        else:
+            raise ValueError(f"ua = {ua} not supported")

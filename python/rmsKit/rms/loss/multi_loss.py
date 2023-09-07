@@ -45,6 +45,7 @@ def system_el_multi(state: SELMulti, u: Array) -> Array:
     return loss
 
 
+#minimize energy loss for multiple hamiltonian
 @jax.jit
 def system_mel_multi(state: SMELMulti, u: Array) -> Array:
     loss = jnp.array(0)

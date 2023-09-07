@@ -27,6 +27,7 @@ logging.basicConfig(
 models = [
     "KH",
     "HXYZ",
+    "HXYZ2D",
     "Ising1D",
     "Ising2D",
 ]
@@ -141,8 +142,10 @@ if __name__ == "__main__":
         if args.loss != "none" and "3site" not in ua:
             raise ValueError("optimizer is supported only for 3site unitary algorithm")
 
-    elif args.model == "HXYZ":
+    elif "HXYZ" in args.model:
         h_list, sps = HXYZ.local(ua, p)
+        if "2D" in args.model:
+            h_list, sps = HXYZ.local(ua, p, 2)
 
     elif "Ising" in args.model:
         h_list, sps = Ising.local(ua, p)
@@ -220,9 +223,6 @@ if __name__ == "__main__":
         logging.info("D           : %s", momentum_solver.D)
         logging.info("upper_bound : %s", momentum_solver.upper_bound)
 
-        # def scheduler(step):
-        #     r = step / 10
-        #     return 1 / math.sqrt(1 + r) * 0.01
 
         for _ in range(M):
             u = ur.reset_matrix()
@@ -233,7 +233,6 @@ if __name__ == "__main__":
             mass1 = np.random.lognormal(np.log(0.6), 0.5)
             mass2 = np.random.lognormal(np.log(0.5), 0.5)
             lr = np.random.lognormal(np.log(0.001), 2)
-            # print(f"mass1: {mass1}, mass2: {mass2}, lr: {lr}")
             logging.info(f"mass1: {mass1}, mass2: {mass2}, lr: {lr}")
             u, lv = lion_solver(
                 u,
@@ -259,8 +258,8 @@ if __name__ == "__main__":
         H = jnp.array(KH.system([2, 2], "3site", p))
         state = rms.loss.init_loss(H, 8, np.float64, "smel")
         state_list = [state]
-        qesLoss = rms.loss.system_mel_multi
-        lion_solver = rms.solver.lionSolver(qesLoss, state_list)
+        qesLoss = rms.loss.system_mel_multi # quasi energy loss
+        lion_solver = rms.solver.lionSolver(qesLoss, state_list) 
         momentum_solver = rms.solver.momentumSolver(qesLoss, state_list)
         # cg_solver = rms.solver.cgSolver(qesLoss, state_list)
         best_lv = 1e10

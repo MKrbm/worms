@@ -9,6 +9,7 @@ import argparse
 models = [
     "KH",
     "HXYZ",
+    "HXYZ2D",
     "Ising1D",
     "Ising2D",
 ]
@@ -62,6 +63,12 @@ if __name__ == '__main__':
         path = f"out/{model_name}/{ua}/{params_str}"
         N = L1
         H = HXYZ.system([L1], ua, p)
+
+    elif (args.model == "HXYZ2D"):
+        model_name = "HXYZ" + f"_{L1}_{L2}"
+        path = f"out/{model_name}/{ua}/{params_str}"
+        N = L1 * L2
+        H = HXYZ.system([L1, L2], ua, p)
 
     elif (args.model == "Ising1D"):
         model_name = "Ising" + f"_{L1}"

@@ -196,26 +196,6 @@ TEST(HXXX, WormUpdate)
     EXPECT_NEAR(markov_cnt[j] / N, markov_mat_elem[j] / sum, 1E-2);
   }
   
-  // for (int i = 0; i < 1E4; i++)
-  // {
-  //   solver.diagonalUpdate(wdensity);
-  //   solver.wormUpdate(wcount, wlength);
-  //   for (auto op : solver.ops_main)
-  //   {
-  //     int off_diag_count = 0;
-  //     if (op.is_off_diagonal()){
-  //       state_t lstate = op.get_state_vec();
-  //       off_diag_count++;
-  //     }
-  //     if (op._check_is_bond()){
-  //       cerr << "off diag count: " << off_diag_count << " elem:" << lop.ham_vector(op.state()) << endl;
-  //       if (off_diag_count == 0){
-  //         cerr << "count is zero" << endl;
-  //       }
-  //     }
-  //   }
-  // }
-
 }
 
 
