@@ -239,8 +239,9 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength) {
       obs_sum.assign(obs_sum.size(), 0);
 
       do {
-        if (fl != 0)
+        if (fl != 0) {
           n_dot_label = dot->move_next(dir); // next label of dot.
+        }
         size_t status =
             wormOpUpdate(n_dot_label, dir, site, wlength_prime, fl, tau, wt_dot,
                          wt_site, wt_tau, w_x, wt_x, t_fl, t_dir, w_index);
@@ -250,12 +251,13 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength) {
             exit(1);
           }
         }
-        if (fl != 0)
+        if (fl != 0) {
           dot = &spacetime_dots[n_dot_label];
+        }
       } while ((n_dot_label != wt_dot ||
                 ((t_dir == dir ? 1 : -1) * t_fl + fl + sps) % sps != 0));
 
-      // n* undo unnecessary flippling.
+      // n* undo unnecessary flip.
       if (dir != t_dir) {
         worm_states[w_index][site] =
             (worm_states[w_index][site] + sps - fl) % sps;
@@ -532,11 +534,15 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
   Dotv2 *wtdot = &spacetime_dots[wt_dot];
   // get imaginary temperature at the next dot.
   if (fl == 0) {
-    if (w_x != -1 || site != -1 || dir != -1) {
+    if (w_x != -1 || site != -1 || dir >= 0) {
       throw std::runtime_error(
           "warm is in warp state but some variables are not ready for that");
     }
-    goto warp_label;
+    if (dir == -1)
+      goto warp_label;
+    else if (dir == -2)
+      goto single_warp;
+    // goto warp_label;
   } else if (dotp->at_origin()) {
     tau_prime = 0;
     dout << "at origin" << endl;
@@ -627,8 +633,12 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
       // fl) % sps; // n* assign new spin.
       worm_states[i][site] = (worm_states[i][site] + fl) % sps;
 
-      // if (i == w_index && (worm_states[i][site] + fl) % sps != w_x)  throw
-      // std::runtime_error("spin is not consistent");
+      // if (i != w_index && worm_states[i][site] != w_x)  {
+      //   throw std::runtime_error("spin is not consistent");
+      // }
+      if (fl == 0){
+        std::runtime_error("fl must be non-zero since zero worm doesn't come here");
+      }
       if (i == w_index) {
         cstate[site] = w_x;
         if (wt_site == site) {
@@ -669,37 +679,43 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
     op_type = opsp->op_type();
 
     if (op_type < 0) {
+    single_warp:
       int nn_index = dotp->index();
       if (nn_index == 0) {
-
+        size_t _cur_dot;
+        Dotv2 *_dotp;
+        if (fl == 0) {
+          // n* randomly pick single flip operator.
+          std::unordered_set<size_t>::iterator it;
+          size_t n = static_cast<size_t>(can_warp_ops.size() * uniform(rand_src));
+          it = std::begin(can_warp_ops);
+          std::advance(it, n);
+          next_dot = *it;
+          dotp = &spacetime_dots[next_dot];
+          opsp = &ops_main[dotp->label()];
+        }
         int num = opsp->state();
-        auto flip = markov_next_flip(*opsp, dir_in, fl, zw);
-        // if (opsp->is_off_diagonal()){
-        //   throw std::runtime_error("state should be diagonal");
-        // }
+        auto flip = markov_next_flip(*opsp, fl ? dir_in : 0, fl, zw);
         dir = flip.first;
         fl = flip.second;
-
-        //! Debug
-        // opsp->update_state(0, fl);
-        // opsp->update_state(1, fl);
-        // if (opsp->is_off_diagonal()){
-        //   throw std::runtime_error("state should be diagonal");
-        // }
-        //* dir and fl doesn't change.
-        //! Finish Debug
         w_x = opsp->get_local_state(dir);
+        site = static_cast<int>(opsp->bond_ptr() - &nn_sites[0]);
+        if (fl == 0) {
+          w_x = -1; // w_x is ready to warp.
+          site = -1;
+          dir = -2;
+        }
       } else {
-        // opsp->update_nn_state(nn_index - 1, fl);
-        auto flip = markov_diagonal_nn(*opsp, dir_in, fl, nn_index - 1);
-        dir = flip.first;
-        fl = flip.second;
-
-        // if (w_x != opsp->nn_state(nn_index - 1)) throw
-        // std::runtime_error("w_x is not consistent");
-        w_x = opsp->nn_state(nn_index - 1);
+        if (fl != 0) {
+          auto flip = markov_diagonal_nn(*opsp, dir_in, fl, nn_index - 1);
+          dir = flip.first;
+          fl = flip.second;
+          w_x = opsp->nn_state(nn_index - 1);
+        } else {
+          std::runtime_error("fl must be non-zero since zero worm doesn't come "
+                             "out from operator");
+        }
       }
-      //* next_dot doesn't change.
       tau = opsp->tau();
       return 0;
     }
@@ -888,7 +904,7 @@ void Worm<MCT>::update_state_OD(typename OPS::iterator opi, state_t &state) {
       index++;
     }
   } else {
-    int site = static_cast<int>(opi->bond_ptr() - &nn_sites[0]);
+    int site = static_cast<int>(opi->bond_ptr() - &nn_sites[0]); //calculate site from the difference of pointer values. (nn_sites.begin() is the first element of vector)
 #ifndef NDEBUG
     if (state.at(site) != opi->get_local_state(0))
       throw std::runtime_error("state is not consistent");
@@ -1021,19 +1037,23 @@ std::pair<int, int> Worm<MCT>::markov_next_flip(OP_type &op, int dir, int fl,
 
   int num = op.state();
   double mat_elem = get_single_flip_elem(op);
+  if (fl == 0){
+    int x = 0;
+  }
   op.update_state(dir, fl);
   double r = uniform(rand_src);
 
   int fl_prime, dir_prime;
   if (zero_fl) {
-    int flip_prime = static_cast<int>((2 * sps - 1) * uniform(rand_src)) + 1;
-    dir_prime = flip_prime / sps;
-    fl_prime = flip_prime % sps;
-
-    // you might can randomly select direction when fl_prime = 0
-    // if (fl_prime == 0) {
-    //   dir_prime = -1;
-    // }
+    int flip_prime = static_cast<int>((2 * sps - 1) * uniform(rand_src));
+    if (flip_prime == 0){
+      dir_prime = 0;
+      fl_prime = 0;
+    }else{
+      flip_prime--;
+      dir_prime = flip_prime / (sps-1);
+      fl_prime = flip_prime % (sps-1) + 1;
+    }
     if (fl_prime < 0 || fl_prime >= sps)
       throw std::runtime_error("fl_prime must be in [0, sps)");
   } else {
