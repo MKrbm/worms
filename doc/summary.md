@@ -261,21 +261,20 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
         - QMC result
           E = -0.433781 +- 0.000514781
 
-    - # Summarize results with table formalt
+    - # Summarize results with table format 
       - J1 = [-1, -1, -1] J2 = [-0.3, -0.5, -1] J3 = [0.3, 0.5 , 0.8] J4 = J3 + h[0, 0.3]  /  L = [3, 3] 
         - ### Table : 
-          |  | J1 (T = 1)| J2 (T = 1) | J3 (T = 1) | J3 (T = 0.5) | J3 (alpha = 0.2) (4*E6 sweeps)| J4 (T = 1.0 sweeps = 50 * 5 * 1E6)| 
-          | --- | --- | --- | --- | --- | --- | --- |
-          | exact | -0.2947239498963471 | -0.2042471924200272 | -0.10720369505809212 | -0.16921390812569803 | -0.16921390812569803 | -0.1199219559789621, | 
-          | QMC | -0.296527 +- 0.00151379 | -0.204224 +- 0.000689048 | -0.106831 +- 0.000565658 |  -0.168934 +- 0.000404437 | -0.169261 +- 0.000191556  | -0.119987 +- 6.59584e-05 |
-          | average sign | 1 | 1 | 0.96896 +- 0.000475423 | 0.7855 +- 0.00153094 | 0.88507 +- 0.000599312 | 
+          |  | J1 (T = 1)| J2 (T = 1) | J3 (T = 1) | J3 (T = 0.5) | J3 (alpha = 0.2) (4*E6 sweeps)| J4 (T = 1.0 sweeps = 50 * 5 * 1E6)|  J4 (T = 1.0 sweeps = 50 * 5 * 1E6, alpha = 0.3)| J4 (T = 0.5 sweeps = 50 * 5 * 1E6, alpha = 0.3) |
+          | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+          | exact | -0.2947239498963471 | -0.2042471924200272 | -0.10720369505809212 | -0.16921390812569803 | -0.16921390812569803 | -0.1199219559789621 | -0.1199219559789621 | -0.1837105838760283 | 
+          | QMC | -0.296527 +- 0.00151379 | -0.204224 +- 0.000689048 | -0.106831 +- 0.000565658 |  -0.168934 +- 0.000404437 | -0.169261 +- 0.000191556  | -0.119987 +- 6.59584e-05 | -0.120032 +- 0.000152568 | -0.18378 +- 0.000146586 | 
+          | average sign | 1 | 1 | 0.96896 +- 0.000475423 | 0.7855 +- 0.00153094 | 0.88507 +- 0.000599312 | 0.880948 +- 0.000869874 |  0.367401 +- 0.000474544
         - ### Note
           - zero worm is required to simulate J4.
           - with this commit ( 86fbd568d695de1dbc824b8102190c43d7535fa6 ), J4 cannot be simulated precisely maybe because zero worm doesn't work well.
             - fix the bug in commit 
-            - I found the bug for this commit fix this with the next commit. 
-    
-  
+            - I found the bug for this commit fix this with the next commit (87e387c1d3fc401bda0531519bcde52b219a672f).
+            - J4 (alpha = 0.2) is simulated with commit b62ce3c91b63f3ef7fbcab3e856ca90c1657a0e4
 
     
     - ## Optimize with python 
@@ -288,7 +287,5 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
       - forbid bond operators having warm warp. 
         - indeed, warm warp only emerges when operator has single flip.
         - In this sense, the effect of warp can be interpreted into single flip.
-      
-
-
-
+        - Therefore, if we enable single-flip operator, warm warp among bond operator will be disabled.
+          
