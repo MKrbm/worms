@@ -34,13 +34,17 @@ class BaseSolver(abc.ABC):
         self,
         loss: Callable[[Any, Array], Array],
         state: Any,
+        system : bool = False,
     ):
         def _loss_wrapper(u: Array) -> Array:
             return loss(state, u)
 
         self.loss = _loss_wrapper
         self.state = state
-        self.D = round(math.sqrt(state[0].H.shape[0]))
+        self.D = round(math.sqrt(state[0].H.shape[0])) if not system else state[0].H.shape[0]
+        if (not system and self.D**2 != state[0].H.shape[0]):
+            raise ValueError("Dimension of H must be D^2")
+
 
         self.upper_bound = _loss_wrapper(jnp.eye(self.D))
 
