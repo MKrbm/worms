@@ -59,7 +59,11 @@ def sum_ham(h, bonds, L, sps, stoquastic_=False, out=None):
 
 def riemannian_grad(u: Array, euc_grad: Array) -> Array:
     if not check_is_unitary(u):
-        raise ValueError("u must be unitary matrix")
+        logging.warning("u is not unitary, use the closest unitary matrix via SVD")
+        s = jnp.linalg.svd(u)[0]
+        v = jnp.linalg.svd(u)[2]
+        u = s @ v
+
     if u.dtype != euc_grad.dtype:
         raise ValueError("dtype of u and euc_grad must be same")
 
