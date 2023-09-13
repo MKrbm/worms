@@ -22,6 +22,7 @@ using VVS = vector<VS>;
 using VI = vector<int>;
 using VVI = vector<VI>;
 using VD = vector<double>;
+using VVD = vector<VD>;
 
 template <class MC = bcl::heatbath> class local_operator;
 
@@ -180,7 +181,7 @@ local_operator<MC>::local_operator(int leg, size_t sps)
   _single_flip.resize(2 * sps);
   for (int i = 0; i < 2 * sps; ++i) {
     _single_flip[i] = std::vector<std::vector<double>>(
-        sps, std::vector<double>(sps, std::numeric_limits<double>::max()));
+        sps, std::vector<double>(sps, 0));
   }
 }
 
@@ -252,6 +253,9 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp,
       _ham_vector[i] *= (1 - alpha);
       max_diagonal_weight_ = std::max(max_diagonal_weight_, _ham_vector[i]);
     } else if (index[0] == index[2] || index[1] == index[3]) {
+      if (abs(_ham_vector[i]) > 1E-4) {
+        int x = 0;
+      }
       _ham_vector[i] *= ( alpha == 0 ) ;
     }
   }
