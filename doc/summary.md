@@ -274,6 +274,7 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
 - ## Memos
 
   - ### loss functions
+
     - #### QES : quasi energy loss
       In the case of Kagome Heisenberg model.
       - ??
@@ -286,6 +287,14 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
       - minimize expectation value of system energy at certain temperature.
     - #### MES : minimize energy loss
       - Minimize minimum energy of local hamiltonian
+
+  - ### Warm warp
+    - idea
+      - forbid bond operators having warm warp.
+        - indeed, warm warp only emerges when operator has single flip.
+        - In this sense, the effect of warp can be interpreted into single flip.
+        - Therefore, if we enable single-flip operator, warm warp among bond
+          operator will be disabled.
 
 # Test effect of add-first method
 
@@ -348,19 +357,19 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
 
         energy
 
-        | loss    | none | mes                      | sel (2x4)                |
-        | ------- | ---- | ------------------------ | ------------------------ |
-        | T = 0.2 |      | -0.438488 +- 0.0197447  | -0.421475 +- 8.98918e-05 |
-        | T = 0.5 |      | ?  | ?  |
-        | T = 1.0 |      | ? | ?  |
+        | loss    | none | mes                    | sel (2x4)                |
+        | ------- | ---- | ---------------------- | ------------------------ |
+        | T = 0.2 |      | -0.438488 +- 0.0197447 | -0.421475 +- 8.98918e-05 |
+        | T = 0.5 |      | ?                      | ?                        |
+        | T = 1.0 |      | ?                      | ?                        |
 
         average sign
 
-        | loss    | none | mes                     | sel (2x4) |
-        | ------- | ---- | ----------------------- | --------- |
-        | T = 0.2 |      | 0.002468 +- 0.00111234    | 1         |
-        | T = 0.5 |      | ? | 1         |
-        | T = 1.0 |      | ? | 1         |
+        | loss    | none | mes                    | sel (2x4) |
+        | ------- | ---- | ---------------------- | --------- |
+        | T = 0.2 |      | 0.002468 +- 0.00111234 | 1         |
+        | T = 0.5 |      | ?                      | 1         |
+        | T = 1.0 |      | ?                      | 1         |
 
       - ### Note
         - zero worm is required to simulate J4.
@@ -372,7 +381,6 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
             (87e387c1d3fc401bda0531519bcde52b219a672f).
           - J4 (alpha = 0.2) is simulated with commit
             b62ce3c91b63f3ef7fbcab3e856ca90c1657a0e4
-          -
 
   - ## Optimize with python
     - ### Expected result
@@ -401,10 +409,31 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
       | T = 0.5 |      | ?                       | 0.99983 +- 2.73328e-05  |                        |
       | T = 1.0 |      | 0.987138 +- 0.000205856 | 1                       |                        |
 
-  - ## Warm warp
-    - idea
-      - forbid bond operators having warm warp.
-        - indeed, warm warp only emerges when operator has single flip.
-        - In this sense, the effect of warp can be interpreted into single flip.
-        - Therefore, if we enable single-flip operator, warm warp among bond
-          operator will be disabled.
+- Kagome Heisenberg model
+
+  - J = [1, 1, 1] L = [2 x 2] sps = 8
+
+  - ## Table
+
+    Energy
+
+    | loss    | exact                | none                     | mes                      | sel (L = 2x2) | sel ( alpha = 0.1) |
+    | ------- | -------------------- | ------------------------ | ------------------------ | ------------- | ------------------ |
+    | T = 1   | -0.2906764218942059  | -0.291417 +- 0.000969184 | -0.289639 +- 0.000968546 |               |                    |
+    | T = 0.5 | -0.38218971185385137 | -0.3651 +- 0.00856272    | -0.380632 +- 0.00344475  |               |                    |
+    | T = 0.2 | -0.4242839047074232  | -0.896963 +- 0.297377    |                          |               |                    |
+
+    average sign
+
+    | loss    | none                    | mes                     | sel (L = 2x2) |
+    | ------- | ----------------------- | ----------------------- | ------------- |
+    | T = 1   | 0.605596 +- 0.00183426  | 0.602502 +- 0.00155575  |               |
+    | T = 0.5 | 0.056876 +- 0.0015803   | 0.0560778 +- 0.00060679 |               |
+    | T = 0.2 | -0.000806 +- 0.00149467 | ?                       |               |
+
+  - ## Bugs
+    - for u = 3site, there is a bug when turn-on zero_worm and single_flip at
+      the same time, since I thought only single_flip is able to have zero_worm
+      when it is enabled. (commit 5e0d860929e4283287c47aac82505b22528d59f4)
+    - Also, Kagome3 with signle_flip emboddies some bugs (although the above problem may be the main reason of the bug). 
+
