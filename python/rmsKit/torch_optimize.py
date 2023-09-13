@@ -101,7 +101,7 @@ args = parser.parse_args()
 
 now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 args_str = "args: {}".format(args)
-log_filename = f"optimizer_output/{now}_{args_str}_optimizer.log"
+log_filename = f"optimizer_output/{now}_optimizer.log"
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -109,11 +109,13 @@ logging.basicConfig(
     # handlers=[logging.FileHandler(log_filename), logging.StreamHandler()],
 )
 print(f"logging to file: {log_filename}")
+logging.info(args_str)
 
 
 
 
 device = torch.device("cuda") if args.platform == "gpu" else torch.device("cpu")
+logging.info("device: {}".format(device))
 # u0 = np.load("array/torch/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_200/u/0.npy")
 # u1 = np.load("array/torch/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_200/u/1.npy")
 # u2 = np.load("array/torch/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_200/u/2.npy")
