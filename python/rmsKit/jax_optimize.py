@@ -142,6 +142,7 @@ if __name__ == "__main__":
 
         if args.loss in ["smel", "sel"]:
             H = jnp.array(KH.system([2, 2], "3site", p))
+            loss_type += "/L_2x2"
         if args.loss != "none" and "3site" not in ua:
             raise ValueError("optimizer is supported only for 3site unitary algorithm")
 
@@ -166,7 +167,8 @@ if __name__ == "__main__":
 
     def scheduler(lr):
         def wrapper(step):
-            r = step / 10
+            # r = step / 10
+            r = 1
             return 1 / math.sqrt(1 + r) * lr
 
         return wrapper
@@ -207,6 +209,12 @@ if __name__ == "__main__":
             # u, lv = cg_solver(u, 500, 0.001, 0.1, cutoff_cnt=10, cout=True)
             if lv < best_lv:
                 best_u = (u).copy()
+                u = np.array(best_u)
+                U = np.kron(u,u)
+                h_list = [- U @ h @ U.T for h in h_list]
+                logging.info("loss value update : %s", best_lv)
+                save_npy(f"{path}/M_{M}/u", [np.array(best_u)])
+                save_npy(f"{path}/M_{M}/H", h_list)
 
     elif args.loss == "qes" and h_list:
         if groundstate_path:
@@ -228,7 +236,7 @@ if __name__ == "__main__":
             for _h, _x in zip(h_list, x_list)
         ]
         qesLoss = rms.loss.qes_multi
-        print(qesLoss(state_list, jnp.array(u0)))
+        # print(qesLoss(state_list, jnp.array(u0)))
         lion_solver = rms.solver.lionSolver(qesLoss, state_list)
         momentum_solver = rms.solver.momentumSolver(qesLoss, state_list)
         cg_solver = rms.solver.cgSolver(qesLoss, state_list)
@@ -241,7 +249,7 @@ if __name__ == "__main__":
 
         for _ in range(M):
             u = ur.reset_matrix()
-            u = jnp.array(u0)
+            # u = jnp.array(u0)
             
             # u = jnp.eye(8, dtype=np.float64)
             # u = U
@@ -269,6 +277,13 @@ if __name__ == "__main__":
             if lv < best_lv:
                 best_lv = lv
                 best_u = (u).copy()
+                u = np.array(best_u)
+                U = np.kron(u,u)
+                h_list = [- U @ h @ U.T for h in h_list]
+                logging.info("loss value update : %s", best_lv)
+                save_npy(f"{path}/M_{M}/u", [np.array(best_u)])
+                save_npy(f"{path}/M_{M}/H", h_list)
+
     elif args.loss == "smel" and h_list:
         state = rms.loss.init_loss(H, sps, np.float64, "smel")
         state_list = [state]
@@ -307,6 +322,12 @@ if __name__ == "__main__":
             if lv < best_lv:
                 best_lv = lv
                 best_u = (u).copy()
+                u = np.array(best_u)
+                U = np.kron(u,u)
+                h_list = [- U @ h @ U.T for h in h_list]
+                logging.info("loss value update : %s", best_lv)
+                save_npy(f"{path}/M_{M}/u", [np.array(best_u)])
+                save_npy(f"{path}/M_{M}/H", h_list)
 
     elif args.loss == "sel" and h_list:
         state = rms.loss.init_loss(H, sps, np.float64, "sel", beta=2.0)
@@ -337,17 +358,22 @@ if __name__ == "__main__":
                 cout=True,
                 cutoff_cnt=10,
                 mass=mass1,
-                offset=0.001,
+                offset=0.01,
             )
             if lv < best_lv:
                 best_lv = lv
                 best_u = (u).copy()
+                u = np.array(best_u)
+                U = np.kron(u,u)
+                h_list = [- U @ h @ U.T for h in h_list]
+                logging.info("loss value update : %s", best_lv)
+                save_npy(f"{path}/M_{M}/u", [np.array(best_u)])
+                save_npy(f"{path}/M_{M}/H", h_list)
             
     else:
         raise RuntimeError("loss function is not found")
-    logging.info("loss value: %s", best_lv)
-    u = np.array(best_u)
-    U = np.kron(u,u)
-    h_list = [- U @ h @ U.T for h in h_list]
-    save_npy(f"{path}/M_{M}/u", [np.array(best_u)])
-    save_npy(f"{path}/M_{M}/H", h_list)
+    # u = np.array(best_u)
+    # U = np.kron(u,u)
+    # h_list = [- U @ h @ U.T for h in h_list]
+    # save_npy(f"{path}/M_{M}/u", [np.array(best_u)])
+    # save_npy(f"{path}/M_{M}/H", h_list)
