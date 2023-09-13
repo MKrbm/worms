@@ -92,21 +92,17 @@ public:
   bool zw; // zero worm
 
   //* default constructor with no arguments
-  base_model(){
-
-  }
-
   /*
   constructor
   */
   base_model(model::base_lattice lat, VS dofs, std::string ham_path, VD params,
              VI types, double shift, bool zero_worm, bool repeat,
-             bool print = true, double alpha = 0.1);
+             bool print = true, double alpha = 0);
 
   base_model(model::base_lattice lat, VS dofs, std::string ham_path,
              std::string u_path, VD params, VI types, double shift,
              bool zero_worm, bool repeat, bool print = true,
-             double alpha = 0.1);
+             double alpha = 0);
 
   //* simple constructor
   base_model(model::base_lattice lat, VS dofs,

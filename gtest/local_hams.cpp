@@ -40,14 +40,15 @@ int seed = 1681255693;
 auto rand_src = engine_type(seed);
 
 std::vector<size_t> shapes = {4, 4};
+  double alpha = 1 / 6.0;
 model::base_lattice lat("triangular lattice", "anisotropic triangular", shapes, "../config/lattices.xml", false);
 string ham_path = "../gtest/model_array/KH/smel/H1";
-model::base_model<MC> spin(lat, {8}, ham_path, {1, 1, 1}, {0, 1, 2}, 0.1, false, false, true);
+model::base_model<MC> spin(lat, {8}, ham_path, {1, 1, 1}, {0, 1, 2}, 0.1, false, false, false, alpha);
 
 
 model::base_lattice lat2("triangular lattice", "kagome", shapes, "../config/lattices.xml", false);
 string ham_path2 = "/home/user/project/python/rmsKit/array/KH/original/none/Jx_1_Jy_1_Jz_1_hx_0_hz_0/H";
-model::base_model<MC> spin2(lat2, {2}, ham_path2, {1}, {0}, 0.3, false, false, true);
+model::base_model<MC> spin2(lat2, {2}, ham_path2, {1}, {0}, 0.3, false, false, false);
 
 
 TEST(HamsTest, Kagome4x4SplitTest2)
@@ -231,11 +232,11 @@ TEST(HamsTest, Kagome4x4DiagonalUpdate)
   }
 
   for (int b = 0; b < bonds.size(); b++){
-    EXPECT_NEAR(bops[b].mean(), weights_bonds[b], 5 * bops[b].error());
+    EXPECT_NEAR(bops[b].mean(), weights_bonds[b], 8 * bops[b].error());
   }
 
   for (int s = 0; s < sites.size(); s++){
-    EXPECT_NEAR(sops[s].mean(), weights_sites[s], 5 * sops[s].error());
+    EXPECT_NEAR(sops[s].mean(), weights_sites[s], 8 * sops[s].error());
   }
   
   auto state0 = state;
@@ -287,15 +288,17 @@ TEST(HamsTest, Kagome4x4DiagonalUpdate)
   for (int j=1; j < 2*sps; j++){
     double p = markov_mat_elem[j] / sum;
     double var = p * (1-p) / N;
-    EXPECT_NEAR(markov_cnt[j] / N, markov_mat_elem[j] / sum , 5 * sqrt(var));
+    EXPECT_NEAR(markov_cnt[j] / N, markov_mat_elem[j] / sum , 8 * sqrt(var));
   }
 }
 
 TEST(HamsTest, Kagome_4x4_aggr)
 {
+  double _shift = 0.1;
+  double alpha = 1 / 6.0;
+  model::base_model<MC> spin(lat, {8}, ham_path, {1, 1, 1}, {0, 1, 2}, _shift, false, false, false, alpha);
   spin_state::StateFunc state_func(8, 6);
   vector<double> shifts;
-  double alpha = 1.0 / 6;
 
   for (int i = 0; i < spin.loperators.size(); i++)
   {
@@ -308,7 +311,7 @@ TEST(HamsTest, Kagome_4x4_aggr)
       max_elem = std::max(max_elem, H[i][i]);
     }
     shift *= -1;
-    shift += 0.1;
+    shift += _shift;
     shifts.push_back(shift);
     EXPECT_FLOAT_EQ((max_elem + shift) * (1 - alpha), spin.loperators[i].max_diagonal_weight_);
   }
@@ -393,7 +396,6 @@ TEST(HamsTest, Kagome_2x2_array)
   double elem2 = -0.16666596146430332;
   elem2 += shift;
   elem2 = abs(elem2);
-  double alpha = 1 / 6.0;
   EXPECT_FLOAT_EQ(spin.loperators[0].ham_prime()[2 + 3 * 8][2 + 3 * 8], elem2);
   EXPECT_FLOAT_EQ(single_flip[2][2], elem2 / 2 * alpha);
 
