@@ -532,7 +532,8 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
                             const int wt_site, const double wt_tau, int &w_x,
                             int &wt_x, const int t_fl, const int t_dir,
                             const int w_index) {
-  dout << "w_x" << w_x << endl;
+  dout << "w_x : " << w_x << endl;
+  dout << "next_dot : " << next_dot << endl; 
   OP_type *opsp;
   double tau_prime;
   size_t h_x, h_x_prime, t_x, t_x_prime;
@@ -551,6 +552,8 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
     next_dot = *it;
     dotp = &spacetime_dots[next_dot];
     opsp = &ops_main[dotp->label()];
+    dout << "in fl == 0" << " next_dot = " << next_dot << " dotp_label = " 
+    << dotp->label() << endl;
     if (opsp->op_type() >= 0) {
       goto warp_label; //check if optype is single flip operator
     } else {
@@ -751,6 +754,7 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
       state_num_ = opsp->state();
       optype_ = opsp->op_type();
       tmp = loperators[optype_].markov[state_num_](0, rand_src);
+      dout << "in warp_label : " << " tmp : " << tmp << " state_num_ : " << state_num_ << " optype_ : " << optype_ << endl;
       leg_size = opsp->size();
 
       if (tmp == 0) // n* if tmp == 0
