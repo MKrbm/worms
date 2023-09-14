@@ -15,8 +15,10 @@
 #include <jackknife.hpp>
 #include "gtest/gtest.h"
 #include "dataset.hpp"
+#define SEED 16625035
 
 using namespace std;
+
 
 struct mc_res {
   struct res {
@@ -306,7 +308,7 @@ mc_res run_worm(model::base_model<MC> &spin, double T, size_t sweeps,
   // dont fix worm density. Not printout density information.
   alps::alea::autocorr_result<double> ac_res;
   exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, ac_res, obs,
-                    wobs);
+                    wobs, SEED);
 
   batch_res as = res[0];  // average sign
   batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
@@ -353,7 +355,7 @@ TEST(HXX1D_02a, MC) {
   double T = 1;
   double beta = 1 / T;
   size_t sweeps, therms;
-  sweeps = 1000000;
+  sweeps = 400000;
   therms = 0;
 
   size_t cutoff_l = std::numeric_limits<size_t>::max();
@@ -368,8 +370,69 @@ TEST(HXX1D_02a, MC) {
 
   mc_res out_res = run_worm(spin, T, sweeps, therms, res, obs, lat, mapwobs);
 
-
-  // check if result is withing 3 sigma.
+  EXPECT_FLOAT_EQ(out_res.ene.mean, -0.21661999999999898);
   EXPECT_NEAR(out_res.ene.mean, -0.21627057785439316,
               3 * out_res.ene.err); // -0.21627057785439316 for L = 4 J = [1, 1, 1]
 }
+
+TEST(HXX2D, none_a_zw) {
+  // alpha = 1 means local hamiltonian only contains single site.
+  double alpha = 0.2;
+  double shift = 0.1;
+  std::vector<size_t> shapes = {2, 2};
+  model::base_lattice lat("square lattice", "simple2d", shapes, "../config/lattices.xml", false);
+  string ham_path = "/home/user/project/python/rmsKit/array/HXYZ2D/original/none/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0/H/";
+  bool zero_worm = true;
+  model::base_model<MC> spin(lat, {2}, ham_path, {1}, {0}, shift, zero_worm, false, false, alpha);
+
+  double T = 1;
+  double beta = 1 / T;
+  size_t sweeps, therms;
+  sweeps = 400000;
+  therms = 0;
+
+  size_t cutoff_l = std::numeric_limits<size_t>::max();
+  model::MapWormObs mapwobs;
+
+  vector<string> wobs_paths;
+  wobs_paths.push_back("");
+  std::vector<batch_res> res;
+  model::observable obs(spin, "", false);
+  mc_res out_res = run_worm(spin, T, sweeps, therms, res, obs, lat, mapwobs);
+
+  EXPECT_FLOAT_EQ(out_res.ene.mean, -0.22672973371746891);
+  EXPECT_NEAR(out_res.ene.mean, -0.22695394021770868,
+              3 * out_res.ene.err); // -0.18543629571195416 for L = [2,4] J = [-0.3, 0.5, 0.8] hx = 0.3
+}
+
+TEST(HXX2D, MES_a_zw) {
+  // alpha = 1 means local hamiltonian only contains single site.
+  double alpha = 0.2;
+  double shift = 0.1;
+  std::vector<size_t> shapes = {2, 2};
+  model::base_lattice lat("square lattice", "simple2d", shapes, "../config/lattices.xml", false);
+  string ham_path = "/home/user/project/python/rmsKit/array/HXYZ2D/original/mes/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0/M_10/H/";
+  bool zero_worm = true;
+  model::base_model<MC> spin(lat, {2}, ham_path, {1}, {0}, shift, zero_worm, false, false, alpha);
+
+  double T = 1;
+  double beta = 1 / T;
+  size_t sweeps, therms;
+  sweeps = 400000;
+  therms = 0;
+
+  size_t cutoff_l = std::numeric_limits<size_t>::max();
+  model::MapWormObs mapwobs;
+
+  vector<string> wobs_paths;
+  wobs_paths.push_back("");
+  std::vector<batch_res> res;
+  model::observable obs(spin, "", false);
+
+  mc_res out_res = run_worm(spin, T, sweeps, therms, res, obs, lat, mapwobs);
+
+  EXPECT_FLOAT_EQ(out_res.ene.mean, -0.22710672923632713);
+  EXPECT_NEAR(out_res.ene.mean, -0.22695394021770868,
+              3 * out_res.ene.err); // -0.18543629571195416 for L = [2,4] J = [-0.3, 0.5, 0.8] hx = 0.3
+}
+

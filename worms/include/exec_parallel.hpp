@@ -50,7 +50,8 @@ std::unordered_map<std::string, model::WormObs> exe_worm_parallel(
   std::vector<batch_res>& res,
   alps::alea::autocorr_result<double>& ac_res,
   model::observable obs,
-  model::MapWormObs wobs
+  model::MapWormObs wobs, 
+  int seed = -1
 );
 
 
@@ -65,7 +66,8 @@ extern template map_wobs_t exe_worm_parallel<bcl::st2013>(
   std::vector<batch_res>& res,
   alps::alea::autocorr_result<double>& ac_res,
   model::observable obs,
-  model::MapWormObs wobs
+  model::MapWormObs wobs,
+  int seed = -1
 );
 
 extern template map_wobs_t exe_worm_parallel<bcl::st2010>(
@@ -79,7 +81,8 @@ extern template map_wobs_t exe_worm_parallel<bcl::st2010>(
   std::vector<batch_res>& res,
   alps::alea::autocorr_result<double>& ac_res,
   model::observable obs,
-  model::MapWormObs wobs
+  model::MapWormObs wobs,
+  int seed = -1
 );
 
 extern template map_wobs_t exe_worm_parallel<bcl::heatbath>(
@@ -93,7 +96,8 @@ extern template map_wobs_t exe_worm_parallel<bcl::heatbath>(
   std::vector<batch_res>& res,
   alps::alea::autocorr_result<double>& ac_res,
   model::observable obs,
-  model::MapWormObs wobs
+  model::MapWormObs wobs,
+  int seed = -1
 );
 
 

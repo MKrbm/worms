@@ -130,10 +130,10 @@ public:
   std::unordered_map<std::string, WormObs> &get_worm_obs() { return _mp_worm_obs(); }
   alps::alea::batch_acc<double> &get_phys_cnt() { return _phys_cnt; }
 
-  Worm(double beta, MODEL model_, size_t cl = SIZE_MAX, int rank = 0)
-    : Worm(beta, model_, model::WormObs(model_.sps_sites(0)), cl, rank) {}
+  Worm(double beta, MODEL model_, size_t cl = SIZE_MAX, int rank = 0, int seed = SEED)
+    : Worm(beta, model_, model::WormObs(model_.sps_sites(0)), cl, rank, seed) {}
 
-  Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_, size_t cl = SIZE_MAX, int rank = 0);
+  Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_, size_t cl = SIZE_MAX, int rank = 0, int seed = SEED);
 
   inline void initStates()
   { //* initialized to all up
