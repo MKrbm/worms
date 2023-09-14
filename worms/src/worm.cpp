@@ -732,13 +732,22 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
                                                 rand_src);
     // n* if Worm stop at this operator
     if (tmp == 0) { // if head will warp.
+      dout << "cur_dot : " << cur_dot << " dotp->index() : " << dotp->index()
+           << " optype : " << op_type << " state_num : " << state_num << endl;
       if (!loperators[op_type].has_warp(state_num)) {
+        dout << "can_warp_ops.erase : " << cur_dot - dotp->index() << endl;
         can_warp_ops.erase(cur_dot - dotp->index());
       } else {
+        dout << "inserted value : " << cur_dot - dotp->index() << endl;
+        // if inserted value is 5
+        if (cur_dot - dotp->index() == 5) {
+          cout << "Hey" << endl;
+        }
         can_warp_ops.insert(cur_dot - dotp->index());
       }
       sign *= loperators[op_type]
                   .signs[state_num]; // include an effect by start point
+      dout << "can_warp_ops.size : " << can_warp_ops.size() << endl;
       it = std::begin(can_warp_ops);
       std::advance(it, static_cast<size_t>(can_warp_ops.size() * uniform(rand_src)));
       next_dot = *it;
@@ -774,12 +783,17 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
       sign *= _lop.signs[opsp->update_state(nindex, fl)]; // after procceeding
       dir = nindex / (leg_size);
       site = opsp->bond(nindex % leg_size);
-      next_dot = opsp->next_dot(0, nindex, next_dot);
       if (!_lop.has_warp(state_num_)) {
+        dout << "can_warp_ops.erase : " << next_dot - dotp->index() << endl;
         can_warp_ops.erase(next_dot - dotp->index());
       } else {
+        dout << "inserted value : " << next_dot - dotp->index() << endl;
+        if (next_dot - dotp->index() == 5) {
+          cout << "Hey" << endl;
+        }
         can_warp_ops.insert(next_dot - dotp->index());
       }
+      next_dot = opsp->next_dot(0, nindex, next_dot);
       tau_prime = opsp->tau();
 
       // n* contribute to worm operator which flip single spin.
@@ -798,8 +812,13 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
       site = opsp->bond(nindex % leg_size);
       next_dot = opsp->next_dot(cindex, nindex, cur_dot);
       if (!loperators[op_type].has_warp(state_num)) {
+        dout << "can_warp_ops.erase : " << cur_dot - dotp->index() << endl;
         can_warp_ops.erase(cur_dot - dotp->index());
       } else {
+        dout << "inserted value : " << cur_dot - dotp->index() << endl;
+        if (cur_dot - dotp->index() == 5) {
+          cout << "Hey" << endl;
+        }
         can_warp_ops.insert(cur_dot - dotp->index());
       }
     }
