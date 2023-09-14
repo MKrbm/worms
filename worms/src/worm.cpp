@@ -12,7 +12,7 @@ double getWormDistTravel(double tau, double tau_prime, int dir) {
 
 template <class MCT>
 Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_,
-                size_t cl, int rank)
+                size_t cl, int rank, int seed)
     : spin_model(model_), L(spin_model.L), beta(beta), rho(-1),
       N_op(spin_model.N_op), bonds(spin_model.bonds),
       bond_type(spin_model.bond_type), state(spin_model.L),
@@ -24,11 +24,17 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_,
   srand(rank);
 #ifdef NDEBUG
   unsigned rseed = static_cast<unsigned>(time(0)) + rand() * (rank + 1);
-  rand_src = engine_type(SEED);
-  rand_src = engine_type(rseed);
+  if (seed != SEED || seed < 0){
+    seed = rseed;
+  }
+  rand_src = engine_type(seed);
+
 #else
-  rand_src = engine_type(SEED);
-  test_src = engine_type(SEED);
+  if (seed < 0){
+    seed = SEED;
+  }
+  rand_src = engine_type(seed);
+  test_src = engine_type(seed);
 #endif
 
   max_diagonal_weight = 0;
@@ -532,17 +538,24 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
   size_t h_x, h_x_prime, t_x, t_x_prime;
   Dotv2 *dotp = &spacetime_dots[next_dot];
   Dotv2 *wtdot = &spacetime_dots[wt_dot];
+  std::unordered_set<size_t>::iterator it;
   // get imaginary temperature at the next dot.
   if (fl == 0) {
     if (w_x != -1 || site != -1 || dir >= 0) {
       throw std::runtime_error(
           "warm is in warp state but some variables are not ready for that");
     }
-    if (dir == -1)
-      goto warp_label;
-    else if (dir == -2)
-      goto single_warp;
-    // goto warp_label;
+    size_t n = static_cast<size_t>(can_warp_ops.size() * uniform(rand_src));
+    it = std::begin(can_warp_ops);
+    std::advance(it, n);
+    next_dot = *it;
+    dotp = &spacetime_dots[next_dot];
+    opsp = &ops_main[dotp->label()];
+    if (opsp->op_type() >= 0) {
+      goto warp_label; //check if optype is single flip operator
+    } else {
+      goto single_warp; //check if optype is bond operator
+    }
   } else if (dotp->at_origin()) {
     tau_prime = 0;
     dout << "at origin" << endl;
@@ -682,18 +695,6 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
     single_warp:
       int nn_index = dotp->index();
       if (nn_index == 0) {
-        size_t _cur_dot;
-        Dotv2 *_dotp;
-        if (fl == 0) {
-          // n* randomly pick single flip operator.
-          std::unordered_set<size_t>::iterator it;
-          size_t n = static_cast<size_t>(can_warp_ops.size() * uniform(rand_src));
-          it = std::begin(can_warp_ops);
-          std::advance(it, n);
-          next_dot = *it;
-          dotp = &spacetime_dots[next_dot];
-          opsp = &ops_main[dotp->label()];
-        }
         int num = opsp->state();
         auto flip = markov_next_flip(*opsp, fl ? dir_in : 0, fl, zw);
         dir = flip.first;
@@ -726,10 +727,8 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
     state_num = opsp->update_state(cindex, fl);
     tmp = loperators[op_type].markov[state_num](cindex * (sps - 1) + sps - fl,
                                                 rand_src);
-
     // n* if Worm stop at this operator
     if (tmp == 0) { // if head will warp.
-      //! warp is experimental right now.
       if (!loperators[op_type].has_warp(state_num)) {
         can_warp_ops.erase(cur_dot - dotp->index());
       } else {
@@ -737,31 +736,21 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
       }
       sign *= loperators[op_type]
                   .signs[state_num]; // include an effect by start point
-
-      // n* head wapred
-
+      it = std::begin(can_warp_ops);
+      std::advance(it, static_cast<size_t>(can_warp_ops.size() * uniform(rand_src)));
+      next_dot = *it;
+      dotp = &spacetime_dots[next_dot];
+      opsp = &ops_main[dotp->label()];
     warp_label: //* goto this label if fl == 0
-      // if (wtdot->dot_type() == -10)
-      //   throw std::runtime_error("wtdot is not initialized properly");
-      size_t _cur_dot, _state_num, _optype;
-      Dotv2 *_dotp;
-      std::unordered_set<size_t>::iterator it;
-
-      // n* start warp
+      size_t  state_num_, optype_;
       t_x_prime = getDotState(wtdot->move_next(1), 1);
       t_x = getDotState(wtdot->move_next(0), 0);
-      size_t n = static_cast<size_t>(can_warp_ops.size() * uniform(rand_src));
-      it = std::begin(can_warp_ops);
-      std::advance(it, n);
       if (it == can_warp_ops.begin()) {
         calcWarpGreen(tau, wt_site, t_x, t_x_prime, worm_states[w_index]);
       }
-      _cur_dot = *it;
-      _dotp = &spacetime_dots[_cur_dot];
-      opsp = &ops_main[_dotp->label()];
-      _state_num = opsp->state();
-      _optype = opsp->op_type();
-      tmp = loperators[_optype].markov[_state_num](0, rand_src);
+      state_num_ = opsp->state();
+      optype_ = opsp->op_type();
+      tmp = loperators[optype_].markov[state_num_](0, rand_src);
       leg_size = opsp->size();
 
       if (tmp == 0) // n* if tmp == 0
@@ -774,18 +763,18 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
         return 0;
       }
       tmp--; // n* otherwise
-      auto &_lop = loperators[_optype];
-      sign *= _lop.signs[_state_num]; // warped point
+      auto &_lop = loperators[optype_];
+      sign *= _lop.signs[state_num_]; // warped point
       nindex = tmp / (sps - 1);       // sps_sites are filled with same value.
       fl = tmp % (sps - 1) + 1;
       sign *= _lop.signs[opsp->update_state(nindex, fl)]; // after procceeding
       dir = nindex / (leg_size);
       site = opsp->bond(nindex % leg_size);
-      next_dot = opsp->next_dot(0, nindex, _cur_dot);
-      if (!_lop.has_warp(_state_num)) {
-        can_warp_ops.erase(_cur_dot - _dotp->index());
+      next_dot = opsp->next_dot(0, nindex, next_dot);
+      if (!_lop.has_warp(state_num_)) {
+        can_warp_ops.erase(next_dot - dotp->index());
       } else {
-        can_warp_ops.insert(_cur_dot - _dotp->index());
+        can_warp_ops.insert(next_dot - dotp->index());
       }
       tau_prime = opsp->tau();
 
