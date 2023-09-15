@@ -33,7 +33,7 @@
 #include "automodel.hpp"
 #include "funcs.hpp"
 #include "autoobservable.hpp"
-#define SEED 16625035
+#define SEED 34
 /* inherit UnionFindTree and add find_and_flip function*/
 
 // template <typename MODEL>
