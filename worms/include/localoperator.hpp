@@ -203,9 +203,6 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp,
   //! warp is not supported this version
   // if (warp)
   //   throw std::invalid_argument("warp is not supported this version");
-  if (warp){
-    std::cout << "Warning! warp is not supported this version" << std::endl; 
-  }
 
   if (0 > alpha || alpha > 1)
     throw std::invalid_argument("alpha should be between 0 and 1");
@@ -256,7 +253,7 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp,
       if (abs(_ham_vector[i]) > 1E-4) {
         int x = 0;
       }
-      _ham_vector[i] *= ( alpha == 0 ) ;
+      _ham_vector[i] = ( alpha == 0 ) ? _ham_vector[i] : 0;
     }
   }
 
