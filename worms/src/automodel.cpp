@@ -571,9 +571,9 @@ void base_model<MC>::initial_setting(VD off_sets, double thres) {
   int i = 0;
   double tmp = 0;
   //! zero worm is disabled for now
-  if (zw) {
-    std::cout << "zero worm contains some bugs right now" << std::endl;
-  }
+  // if (zw) {
+  //   std::cout << "zero worm contains some bugs right now" << std::endl;
+  // }
   for (local_operator<MCT> &h : loperators) {
     h.set_ham(off_sets[i], thres, zw, alpha);
     shifts.push_back(h.ene_shift);
