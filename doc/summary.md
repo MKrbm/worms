@@ -435,5 +435,7 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
     - for u = 3site, there is a bug when turn-on zero_worm and single_flip at
       the same time, since I thought only single_flip is able to have zero_worm
       when it is enabled. (commit 5e0d860929e4283287c47aac82505b22528d59f4)
+      - fixed with the commit 058be4353306cc2f8c844d65c363ea394dd709cf
     - Also, Kagome3 with signle_flip emboddies some bugs (although the above problem may be the main reason of the bug). 
+
 
