@@ -17,11 +17,6 @@
 #include <string>
 #include <unistd.h>
 
-// #include <boost/mpi.hpp>
-// #include <boost/serialization/serialization.hpp>
-// #include <boost/serialization/access.hpp>
-// #include <boost/serialization/base_object.hpp>
-
 #include <alps/alea/batch.hpp>
 #include <alps/utilities/mpi.hpp>
 #include <jackknife.hpp>
