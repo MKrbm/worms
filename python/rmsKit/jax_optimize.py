@@ -85,6 +85,7 @@ if args.platform == "gpu":
 # u0 = np.load("array/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_1/u/0.npy")
 if __name__ == "__main__":
 
+    print("args : {}".format((args)))
     print("logging file: {}".format(log_filename))
     logging.info("args: {}".format(args))
 
