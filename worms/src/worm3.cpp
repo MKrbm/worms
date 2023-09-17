@@ -24,7 +24,7 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_,
   srand(rank);
 #ifdef NDEBUG
   unsigned rseed = static_cast<unsigned>(time(0)) + rand() * (rank + 1);
-  if (seed != SEED || seed < 0) {
+  if (seed < 0) {
     seed = rseed;
   }
   rand_src = engine_type(seed);
@@ -36,7 +36,8 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_,
   rand_src = engine_type(seed);
   test_src = engine_type(seed);
 #endif
-
+ 
+  cout << "seed was set to " << seed << endl;
   max_diagonal_weight = 0;
   for (auto const &lop : loperators) {
     max_diagonal_weight =

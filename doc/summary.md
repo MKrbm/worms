@@ -436,6 +436,11 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
       the same time, since I thought only single_flip is able to have zero_worm
       when it is enabled. (commit 5e0d860929e4283287c47aac82505b22528d59f4)
       - fixed with the commit 058be4353306cc2f8c844d65c363ea394dd709cf
+      - Above didn't solve every bugs, Indeed, the new worm.cpp and the previous one should return the same result but for model : alpha = 0.2, J4 HXYZ2D  (if alpha = 0, returns the same result)
+        - previous : e = 
+        - new : e = -0.185175 +- 0.000481603
     - Also, Kagome3 with signle_flip emboddies some bugs (although the above problem may be the main reason of the bug). 
+
+    
 
 

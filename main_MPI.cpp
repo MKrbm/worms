@@ -307,6 +307,11 @@ int main(int argc, char **argv) {
     cout << endl;
   }
 
+  //n* check argument
+  if (T < 0){
+    throw std::runtime_error("temperature must be positive");
+  }
+
   alps::alea::autocorr_result<double> ac_res;
 
   // simulate with worm algorithm (parallel computing is enable)
