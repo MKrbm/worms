@@ -212,10 +212,11 @@ if __name__ == "__main__":
                 best_u = (u).copy()
                 u = np.array(best_u)
                 U = np.kron(u,u)
-                h_list = [- U @ h @ U.T for h in h_list]
+                h_list_ = [- U @ h.copy() @ U.T for h in h_list]
                 logging.info("loss value update : %s", best_lv)
                 save_npy(f"{path}/M_{M}/u", [np.array(best_u)])
-                save_npy(f"{path}/M_{M}/H", h_list)
+                save_npy(f"{path}/M_{M}/H", h_list_)
+
 
     elif args.loss == "qes" and h_list:
         if groundstate_path:
