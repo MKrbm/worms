@@ -6,7 +6,7 @@ from ..core.constants import *
 from ..core.utils import *
 import rms
 import logging
-unitary_algorithms = ["original", "3site", "3siteDiag"]
+unitary_algorithms = ["original", "2site", "3siteDiag"]
 
 
 def local(ua : str, params : dict, D : int = 1):
@@ -24,6 +24,14 @@ def local(ua : str, params : dict, D : int = 1):
         h = h_bond + (np.kron(h_single, I2) +  np.kron(I2, h_single)) / (2 * D) #n* there is 4 bond per site
         sps = 2
         return [h], sps
+    elif ua == "2site":
+        if (D != 1):
+            raise ValueError("D must be 1 for 2site")
+        h = h_bond + (np.kron(h_single, I2) +  np.kron(I2, h_single)) / (2 * D) #n* there is 4 bond per site
+        H = rms. sum_ham(h/2, [[0,1],[2,3]], 4, 2)
+        H = H + rms.sum_ham(h, [[1,2]], 4, 2)
+        return [H], 4
+        
     error_message = f"Other unitary_algorithms mode not implemented yet u = {ua}"
     raise NotImplementedError(error_message)
     return None, None

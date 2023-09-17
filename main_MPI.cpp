@@ -318,7 +318,7 @@ int main(int argc, char **argv) {
   vector<batch_res> res;
   auto map_worm_obs =
       exe_worm_parallel(*spin_ptr, T, sweeps, therms, cutoff_l, fix_wdensity, rank,
-                        res, ac_res, obs, mapwobs, 32);
+                        res, ac_res, obs, mapwobs);
 
   batch_res as = res[0];  // average sign
   batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
