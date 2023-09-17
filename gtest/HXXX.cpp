@@ -381,7 +381,7 @@ TEST(HXX2D, none_a_zw) {
   double shift = 0.1;
   std::vector<size_t> shapes = {2, 2};
   model::base_lattice lat("square lattice", "simple2d", shapes, "../config/lattices.xml", false);
-  string ham_path = "/home/user/project/gtest/model_array/Heisenberg/2D/original/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0/";
+  string ham_path = "/home/user/project/gtest/model_array/Heisenberg/2D/original/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0/H/";
   bool zero_worm = true;
   model::base_model<MC> spin(lat, {2}, ham_path, {1}, {0}, shift, zero_worm, false, false, alpha);
 
