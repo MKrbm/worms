@@ -42,7 +42,7 @@ auto rand_src = engine_type(seed);
 
 std::vector<size_t> shapes = {4};
 model::base_lattice lat("chain lattice", "simple1d", shapes, "../config/lattices.xml", false);
-string ham_path = "/home/user/project/python/rmsKit/array/HXYZ/original/none/Jx_1_Jy_1_Jz_1_hx_0_hz_0/H";
+string ham_path = "/home/user/project/gtest/model_array/Heisenberg/1D/original/Jx_1_Jy_1_Jz_1_hx_0_hz_0/H/";
 double alpha = 0.9;
 double shift = 0.1;
 model::base_model<MC> spin(lat, {2}, ham_path, {1}, {0}, shift, false, false, true, alpha);
@@ -350,7 +350,7 @@ TEST(HXX1D_02a, MC) {
   double shift = 0.1;
   std::vector<size_t> shapes = {4};
   model::base_lattice lat("chain lattice", "simple1d", shapes, "../config/lattices.xml", false);
-  string ham_path = "/home/user/project/python/rmsKit/array/HXYZ/original/none/Jx_1_Jy_1_Jz_1_hx_0_hz_0/H";
+  string ham_path = "/home/user/project/gtest/model_array/Heisenberg/1D/original/Jx_1_Jy_1_Jz_1_hx_0_hz_0/H/";
   model::base_model<MC> spin(lat, {2}, ham_path, {1}, {0}, shift, false, false, false, alpha);
   double T = 1;
   double beta = 1 / T;
@@ -381,7 +381,7 @@ TEST(HXX2D, none_a_zw) {
   double shift = 0.1;
   std::vector<size_t> shapes = {2, 2};
   model::base_lattice lat("square lattice", "simple2d", shapes, "../config/lattices.xml", false);
-  string ham_path = "/home/user/project/python/rmsKit/array/HXYZ2D/original/none/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0/H/";
+  string ham_path = "/home/user/project/gtest/model_array/Heisenberg/2D/original/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0/";
   bool zero_worm = true;
   model::base_model<MC> spin(lat, {2}, ham_path, {1}, {0}, shift, zero_worm, false, false, alpha);
 
@@ -411,7 +411,7 @@ TEST(HXX2D, MES_a_zw) {
   double shift = 0.1;
   std::vector<size_t> shapes = {2, 2};
   model::base_lattice lat("square lattice", "simple2d", shapes, "../config/lattices.xml", false);
-  string ham_path = "/home/user/project/python/rmsKit/array/HXYZ2D/original/mes/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0/M_10/H/";
+  string ham_path = "/home/user/project/gtest/model_array/Heisenberg/2D/original/mes/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0/M_10/H/";
   bool zero_worm = true;
   model::base_model<MC> spin(lat, {2}, ham_path, {1}, {0}, shift, zero_worm, false, false, alpha);
 
