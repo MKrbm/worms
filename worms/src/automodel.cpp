@@ -3,7 +3,6 @@
 
 #include "../include/automodel.hpp"
 
-
 namespace model {
 
 VVD kron_product(const VVD &a, const VVD &b) {
@@ -428,6 +427,9 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
 
   VVD u_mat_kron = kron_product(u_mat, u_mat);
 
+  if (print) {
+    std::cout << "unitary matrix is read from " << u_path_npy << std::endl;
+  }
   for (int p_i = 0; p_i < path_list.size(); p_i++) {
     std::string path = path_list[p_i];
     auto pair = load_npy(path);
@@ -452,8 +454,9 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
       std::cerr << "matrix size : " << S << std::endl;
       exit(1);
     }
-    if (print)
+    if (print) {
       std::cout << "hamiltonian is read from " << path << std::endl;
+    }
     local_operator<MCT> &loperator = loperators[types[p_i]];
     for (int i = 0; i < shape[0]; i++) {
       for (int j = 0; j < shape[1]; j++) {
@@ -465,7 +468,7 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
 
   // apply unitary matrix to hamiltonian U @ H @ U.T
   size_t S = u_shape[0] * u_shape[0];
-  for (auto& loperator : loperators) {
+  for (auto &loperator : loperators) {
     VVD tmp(S, VD(S, 0));
     // tmp = u_mat_kron @ loperator._ham
     for (int i = 0; i < S; i++)
@@ -474,8 +477,7 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
           tmp[i][j] += u_mat_kron[i][k] * loperator._ham[k][j];
     // loperator._ham = tmp @ u_mat_kron.T
     for (int i = 0; i < S; i++)
-      for (int j = 0; j < S; j++)
-      {
+      for (int j = 0; j < S; j++) {
         double x = 0;
         for (int k = 0; k < S; k++)
           x += tmp[i][k] * u_mat_kron[j][k];

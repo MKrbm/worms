@@ -221,6 +221,16 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp,
     _ham_prime[i][i] += ene_shift;
   }
 
+#ifndef NDEBUG
+  //n* print hamiltonian
+  for (int i = 0; i < _ham_prime.size(); i++) {
+    for (int j = 0; j < _ham_prime.size(); j++) {
+      std::cout << _ham_prime[i][j] << " ";
+    }
+    std::cout << std::endl;
+  }
+#endif
+
   // d* set single_flip operator and bond operator
   max_diagonal_weight_ = 0;
 

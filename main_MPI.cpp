@@ -175,7 +175,8 @@ int main(int argc, char **argv) {
       wobs_paths.push_back(tmp);
     }
   } catch (const SettingNotFoundException &nfex) {
-    cout << "no worm observables" << endl;
+    if (rank == 0)
+        cout << "no worm observables" << endl;
   }
 
   // cout << file << endl;
@@ -253,6 +254,7 @@ int main(int argc, char **argv) {
     cout << "repeat : " << (repeat ? "YES" : "NO") << endl;
     cout << "params : " << params << endl;
     cout << "alpha : " << alpha << endl;
+    cout << "temperature : " << T << endl;
   }
 
   //* finish argparse
