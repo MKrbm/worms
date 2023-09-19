@@ -258,7 +258,7 @@ TEST(HamsTest, Kagome4x4DiagonalUpdate)
     int dir = j / sps;
     int fl = j % sps;
     int num = op3.update_state(dir, fl);
-    markov_mat_elem[j] = solver.get_single_flip_elem(op3);
+    markov_mat_elem[j] = std::abs(solver.get_single_flip_elem(op3));
     if (fl == 0) {
       markov_mat_elem[j] = 0;
     }

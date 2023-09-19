@@ -817,9 +817,11 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
 
     int dsign = 1;
     for (auto &op : ops_main) {
-      if (op.op_type() == -1) //! op_type == -1 will be ignored currently
-        continue;
-      dsign *= loperators[op.op_type()].signs[op.state()];
+      if (op.op_type() == -1){
+        dsign *= get_single_flip_elem(op) >= 0 ? 1 : -1;
+      } else {
+        dsign *= loperators[op.op_type()].signs[op.state()];
+      }
     }
     if (dsign != sign) {
       std::cerr << "sign is wrong" << endl;
@@ -985,8 +987,12 @@ template <class MCT> double Worm<MCT>::get_single_flip_elem(const OP_type &op) {
     auto target = spin_model.nn_sites[site][i];
     mat_elem += loperators[target.bt].single_flip(target.start, nn_state[i], x,
                                                   x_prime);
+    if (loperators[target.bt].single_flip(target.start, nn_state[i], x, x_prime) < 0){
+      int a = 0;
+    }
+
   }
-  return std::abs(mat_elem);
+  return mat_elem;
 }
 
 template <class MCT>
@@ -998,7 +1004,7 @@ double Worm<MCT>::get_single_flip_elem(int site, int x, int x_prime,
     mat_elem += loperators[target.bt].single_flip(
         target.start, _state[target.target], x, x_prime);
   }
-  return std::abs(mat_elem);
+  return mat_elem;
 }
 
 template <class MCT>
@@ -1013,7 +1019,7 @@ double Worm<MCT>::get_single_flip_elem(int site, int x, int x_prime,
     mat_elem += loperators[target.bt].single_flip(
         target.start, _state[target.target], x, x_prime);
   }
-  return std::abs(mat_elem);
+  return mat_elem;
 }
 
 /*
@@ -1040,6 +1046,9 @@ std::pair<int, int> Worm<MCT>::markov_next_flip(OP_type &op, int dir, int fl,
 
   int num = op.state();
   double mat_elem = get_single_flip_elem(op);
+  double old_sign = sign;
+  sign *= mat_elem > 0 ? 1 : -1;
+  mat_elem = std::abs(mat_elem);
   if (fl == 0) {
     int x = 0;
   }
@@ -1072,6 +1081,8 @@ std::pair<int, int> Worm<MCT>::markov_next_flip(OP_type &op, int dir, int fl,
   // n* update op state using dir_prime and fl_prime
   op.update_state(dir_prime, fl_prime);
   double mat_elem_prime = get_single_flip_elem(op);
+  sign *= mat_elem_prime > 0 ? 1 : -1;
+  mat_elem_prime = std::abs(mat_elem_prime);
 
   //* update op state using Metropolis
   double ratio = mat_elem_prime / mat_elem;
@@ -1080,6 +1091,7 @@ std::pair<int, int> Worm<MCT>::markov_next_flip(OP_type &op, int dir, int fl,
     return make_pair(dir_prime, fl_prime);
   else {
     op.set_state(num);
+    sign = old_sign;
     return make_pair(dir, (sps - fl) % sps);
   }
 }
@@ -1100,10 +1112,17 @@ std::pair<int, int> Worm<MCT>::markov_diagonal_nn(OP_type &op, int dir_in,
     throw std::runtime_error("fl must be in [0, sps)");
 
   int num = op.state();
+  // double mat_elem = std::abs(get_single_flip_elem(op));
+  double old_sign = sign;
   double mat_elem = get_single_flip_elem(op);
+  sign *= mat_elem > 0 ? 1 : -1;
+  mat_elem = std::abs(mat_elem);
   op.update_nn_state(nn_index, fl);
 
+  // double mat_elem_prime = std::abs(get_single_flip_elem(op));
   double mat_elem_prime = get_single_flip_elem(op);
+  sign *= mat_elem_prime > 0 ? 1 : -1;
+  mat_elem_prime = std::abs(mat_elem_prime);
   double ratio = mat_elem_prime / mat_elem;
   double r = uniform(rand_src);
 
@@ -1111,6 +1130,7 @@ std::pair<int, int> Worm<MCT>::markov_diagonal_nn(OP_type &op, int dir_in,
     return make_pair(!dir_in, fl);
   else {
     op.update_nn_state(nn_index, (sps - fl) % sps);
+    sign = old_sign;
     return make_pair(dir_in, (sps - fl) % sps);
   }
 }
