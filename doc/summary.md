@@ -413,36 +413,43 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
 
   - J = [1, 1, 1] L = [2 x 2] sps = 8
 
-  - ## Table
+    - ## Table
 
-    Energy
+      Energy
 
-    | loss    | exact                | none                     | mes                      | sel (L = 2x2) | sel ( alpha = 0.1) |
-    | ------- | -------------------- | ------------------------ | ------------------------ | ------------- | ------------------ |
-    | T = 1   | -0.2906764218942059  | -0.291417 +- 0.000969184 | -0.289639 +- 0.000968546 |               |                    |
-    | T = 0.5 | -0.38218971185385137 | -0.3651 +- 0.00856272    | -0.380632 +- 0.00344475  |               |                    |
-    | T = 0.2 | -0.4242839047074232  | -0.896963 +- 0.297377    |                          |               |                    |
+      | loss    | exact                | none                     | mes                      | sel (L = 2x2) | sel ( alpha = 0.1) |
+      | ------- | -------------------- | ------------------------ | ------------------------ | ------------- | ------------------ |
+      | T = 1   | -0.2906764218942059  | -0.291417 +- 0.000969184 | -0.289639 +- 0.000968546 |               |                    |
+      | T = 0.5 | -0.38218971185385137 | -0.3651 +- 0.00856272    | -0.380632 +- 0.00344475  |               |                    |
+      | T = 0.2 | -0.4242839047074232  | -0.896963 +- 0.297377    |                          |               |                    |
 
-    average sign
+      average sign
 
-    | loss    | none                    | mes                     | sel (L = 2x2) |
-    | ------- | ----------------------- | ----------------------- | ------------- |
-    | T = 1   | 0.605596 +- 0.00183426  | 0.602502 +- 0.00155575  |               |
-    | T = 0.5 | 0.056876 +- 0.0015803   | 0.0560778 +- 0.00060679 |               |
-    | T = 0.2 | -0.000806 +- 0.00149467 | ?                       |               |
+      | loss    | none                    | mes                     | sel (L = 2x2) |
+      | ------- | ----------------------- | ----------------------- | ------------- |
+      | T = 1   | 0.605596 +- 0.00183426  | 0.602502 +- 0.00155575  |               |
+      | T = 0.5 | 0.056876 +- 0.0015803   | 0.0560778 +- 0.00060679 |               |
+      | T = 0.2 | -0.000806 +- 0.00149467 | ?                       |               |
 
-  - ## Bugs
-    - for u = 3site, there is a bug when turn-on zero_worm and single_flip at
-      the same time, since I thought only single_flip is able to have zero_worm
-      when it is enabled. (commit 5e0d860929e4283287c47aac82505b22528d59f4)
-      - fixed with the commit 058be4353306cc2f8c844d65c363ea394dd709cf
-      - Above didn't solve every bugs, Indeed, the new worm.cpp and the previous
-        one should return the same result but for model : alpha = 0.2, J4 HXYZ2D
-        (if alpha = 0, returns the same result)
-        - previous : e =
-        - new : e = -0.185175 +- 0.000481603
-    - Also, Kagome3 with signle_flip emboddies some bugs (although the above
-      problem may be the main reason of the bug).
+    - ## Bugs
+      - for u = 3site, there is a bug when turn-on zero_worm and single_flip at
+        the same time, since I thought only single_flip is able to have zero_worm
+        when it is enabled. (commit 5e0d860929e4283287c47aac82505b22528d59f4)
+        - fixed with the commit 058be4353306cc2f8c844d65c363ea394dd709cf
+        - Above didn't solve every bugs, Indeed, the new worm.cpp and the previous
+          one should return the same result but for model : alpha = 0.2, J4 HXYZ2D
+          (if alpha = 0, returns the same result)
+          - previous : e =
+          - new : e = -0.185175 +- 0.000481603
+      - Also, Kagome3 with signle_flip emboddies some bugs (although the above
+        problem may be the main reason of the bug).
+
+  - J = J4
+    
+    - it seems above parameter region doesn't improve the result.
+
+
+
 
 - HXYZ1D 2site unit J4 to solve bugs (commit :
   def5e012700ee2b9ea2e7be632f3572f82cdf0a4 )

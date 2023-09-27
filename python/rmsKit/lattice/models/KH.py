@@ -8,6 +8,30 @@ import rms
 import logging
 unitary_algorithms = ["original", "3site", "3siteDiag"]
 
+def ind2state(ind):
+    state = []
+    for i in range(4):
+        state.append(ind % 8)
+        ind //= 8
+    return state[::-1]
+
+def state2ind(state):
+    num = 0
+    for s in state:
+        num *= 8
+        num += s
+    return num
+
+P = np.zeros((4096, 4096))
+for ind in range(len(P)):
+    state_ = ind2state(ind)
+    for i in range(4):
+        state = state_.copy()
+        for x in range(8):
+            state[i] = x
+            ind_ = state2ind(state)
+            P[ind, ind_] = 1
+    P[ind, ind] = 0
 
 def local(ua : str, params : dict):
     if ua not in unitary_algorithms:
@@ -71,7 +95,7 @@ def local(ua : str, params : dict):
 
 
 
-def system(_L : list[int], ua : str, params : dict) -> np.ndarray:
+def system(_L : list[int], ua : str, params : dict, separate : bool = False) -> np.ndarray:
 
     if ua not in unitary_algorithms:
         raise ValueError("unitary_algorithms not supported")
@@ -95,7 +119,7 @@ def system(_L : list[int], ua : str, params : dict) -> np.ndarray:
     if ua == "original":
         bonds = None
         if (L[0] == L[1] == 2):
-            bonds = [ [ 0, 1, ], [ 0, 2, ], [ 1, 2, ], [ 0, 4, ], [ 1, 11, ], 
+            bonds = [[ 0, 1, ], [ 0, 2, ], [ 1, 2, ], [ 0, 4, ], [ 1, 11, ], 
                      [ 0, 8, ], [ 3, 4, ], [ 3, 5, ], [ 4, 5, ], [ 3, 1, ], [ 4, 8, ], 
                      [ 3, 11, ], [ 6, 7, ], [ 6, 8, ], [ 7, 8, ], [ 6, 10, ], [ 7, 5, ], 
                      [ 6, 2, ], [ 9, 10, ], [ 9, 11, ], [ 10, 11, ], [ 9, 7, ], [ 10, 2, ], 
@@ -114,18 +138,37 @@ def system(_L : list[int], ua : str, params : dict) -> np.ndarray:
         return _H
 
     if ua == "3site" or ua == "3siteDiag":
-        _bonds = [[0,0,2], [1,0,1], [2,0,3], [0,1,3], [1,1,0], [2,1,2], [0,2,0], [1,2,3], 
-                  [2,2,1], [0,3,1], [1,3,2], [2,3,0]]
+        _bonds_prime = [[1,1,0], [0,2,0], [2,2,1], [0,3,1], [1,3,2], [2,3,0]]
         bonds = [[], [], []]
-        for bond in _bonds:
+        for bond in _bonds_prime:
             bonds[bond[0]].append(bond[1:])
+            bonds[bond[0]].append(bond[1:][::-1])
+
+        bonds_prime1 = [[], [], []]
+        bonds_prime2 = [[], [], []]
+        for bond in _bonds_prime:
+            bonds_prime1[bond[0]].append(bond[1:])
+            bonds_prime2[bond[0]].append(bond[1:][::-1])
 
         if (len(H_list) != 3):
             raise RuntimeError("something wrong")
-        _H = rms.sum_ham(H_list[0], bonds[0], 4, 8)
-        _H += rms.sum_ham(H_list[1], bonds[1], 4, 8)
-        _H += rms.sum_ham(H_list[2], bonds[2], 4, 8)
-        return _H
+        if separate == True:
+            _H_list = []
+            _H = rms.sum_ham(H_list[0], bonds_prime1[0], 4, 8)
+            _H += rms.sum_ham(H_list[1], bonds_prime1[1], 4, 8)
+            _H += rms.sum_ham(H_list[2], bonds_prime1[2], 4, 8)
+            _H_list.append(_H)
+            _H = rms.sum_ham(H_list[0], bonds_prime2[0], 4, 8)
+            _H += rms.sum_ham(H_list[1], bonds_prime2[1], 4, 8)
+            _H += rms.sum_ham(H_list[2], bonds_prime2[2], 4, 8)
+            _H_list.append(_H)
+            return np.array(_H_list), P
+        else:
+            _H = rms.sum_ham(H_list[0], bonds[0], 4, 8)
+            _H += rms.sum_ham(H_list[1], bonds[1], 4, 8)
+            _H += rms.sum_ham(H_list[2], bonds[2], 4, 8)
+            return _H
     
     else:
         raise ValueError(f"ua = {ua} not supported")
+

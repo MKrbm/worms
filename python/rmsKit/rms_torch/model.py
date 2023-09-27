@@ -44,11 +44,12 @@ class UnitaryRieman(nn.Module):
             p.data = random_unitary_matrix(self.unitary_size, self.device) if u0 is None else torch.tensor(u0, dtype=torch.float64, device=self.device)
 
     def forward(self) -> torch.Tensor:
-        U = self.u[0]
-        U = torch.kron(U, self.u[0])
-        U = torch.kron(U, self.u[0])
-        U = torch.kron(U, self.u[0])
+        # calculate kron of unitaries (result size must be H_size x H_size)
 
+        num_repeat = round(math.log2(self.H_size) / math.log2(self.unitary_size))
+        U = self.u[0]
+        for i in range(num_repeat - 1):
+            U = torch.kron(U, self.u[0]) 
         return U    
 
 
