@@ -1,1 +1,182 @@
-/home/user/project/Debug/compile_commands.json
+[
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/worms",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/worms/./include -I/Users/keisukemurota/Documents/todo/worms/_deps/npy-src/include  -arch arm64 -std=c++14 -o CMakeFiles/worm.dir/src/operator.cpp.o -c /Users/keisukemurota/Documents/todo/worms/worms/src/operator.cpp",
+  "file": "/Users/keisukemurota/Documents/todo/worms/worms/src/operator.cpp"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/worms",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/worms/./include -I/Users/keisukemurota/Documents/todo/worms/_deps/npy-src/include  -arch arm64 -std=c++14 -o CMakeFiles/worm.dir/src/load_npy.cpp.o -c /Users/keisukemurota/Documents/todo/worms/worms/src/load_npy.cpp",
+  "file": "/Users/keisukemurota/Documents/todo/worms/worms/src/load_npy.cpp"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/worms",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/worms/./include -I/Users/keisukemurota/Documents/todo/worms/_deps/npy-src/include  -arch arm64 -std=c++14 -o CMakeFiles/worm.dir/src/automodel.cpp.o -c /Users/keisukemurota/Documents/todo/worms/worms/src/automodel.cpp",
+  "file": "/Users/keisukemurota/Documents/todo/worms/worms/src/automodel.cpp"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/worms",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/worms/./include -I/Users/keisukemurota/Documents/todo/worms/_deps/npy-src/include  -arch arm64 -std=c++14 -o CMakeFiles/worm.dir/src/state_func.cpp.o -c /Users/keisukemurota/Documents/todo/worms/worms/src/state_func.cpp",
+  "file": "/Users/keisukemurota/Documents/todo/worms/worms/src/state_func.cpp"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/worms",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/worms/./include -I/Users/keisukemurota/Documents/todo/worms/_deps/npy-src/include  -arch arm64 -std=c++14 -o CMakeFiles/worm.dir/src/worm.cpp.o -c /Users/keisukemurota/Documents/todo/worms/worms/src/worm.cpp",
+  "file": "/Users/keisukemurota/Documents/todo/worms/worms/src/worm.cpp"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/worms",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/worms/./include -I/Users/keisukemurota/Documents/todo/worms/_deps/npy-src/include  -arch arm64 -std=c++14 -o CMakeFiles/worm.dir/src/autoobservable.cpp.o -c /Users/keisukemurota/Documents/todo/worms/worms/src/autoobservable.cpp",
+  "file": "/Users/keisukemurota/Documents/todo/worms/worms/src/autoobservable.cpp"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/worms",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/worms/./include -I/Users/keisukemurota/Documents/todo/worms/_deps/npy-src/include  -arch arm64 -std=c++14 -o CMakeFiles/worm.dir/src/funcs.cpp.o -c /Users/keisukemurota/Documents/todo/worms/worms/src/funcs.cpp",
+  "file": "/Users/keisukemurota/Documents/todo/worms/worms/src/funcs.cpp"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/worms",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/worms/./include -I/Users/keisukemurota/Documents/todo/worms/_deps/npy-src/include  -arch arm64 -std=c++14 -o CMakeFiles/worm.dir/src/exec_parallel.cpp.o -c /Users/keisukemurota/Documents/todo/worms/worms/src/exec_parallel.cpp",
+  "file": "/Users/keisukemurota/Documents/todo/worms/worms/src/exec_parallel.cpp"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/lib",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DHAVE_FREELOCALE -DHAVE_NEWLOCALE -DHAVE_USELOCALE -DLIBCONFIGXX_STATIC -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib  -arch arm64 -std=gnu99 -o CMakeFiles/config++.dir/grammar.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/grammar.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/grammar.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/lib",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DHAVE_FREELOCALE -DHAVE_NEWLOCALE -DHAVE_USELOCALE -DLIBCONFIGXX_STATIC -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib  -arch arm64 -std=gnu99 -o CMakeFiles/config++.dir/libconfig.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/libconfig.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/libconfig.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/lib",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DHAVE_FREELOCALE -DHAVE_NEWLOCALE -DHAVE_USELOCALE -DLIBCONFIGXX_STATIC -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib  -arch arm64 -std=gnu99 -o CMakeFiles/config++.dir/scanctx.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/scanctx.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/scanctx.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/lib",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DHAVE_FREELOCALE -DHAVE_NEWLOCALE -DHAVE_USELOCALE -DLIBCONFIGXX_STATIC -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib  -arch arm64 -std=gnu99 -o CMakeFiles/config++.dir/scanner.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/scanner.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/scanner.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/lib",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DHAVE_FREELOCALE -DHAVE_NEWLOCALE -DHAVE_USELOCALE -DLIBCONFIGXX_STATIC -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib  -arch arm64 -std=gnu99 -o CMakeFiles/config++.dir/strbuf.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/strbuf.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/strbuf.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/lib",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DHAVE_FREELOCALE -DHAVE_NEWLOCALE -DHAVE_USELOCALE -DLIBCONFIGXX_STATIC -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib  -arch arm64 -std=gnu99 -o CMakeFiles/config++.dir/strvec.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/strvec.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/strvec.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/lib",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DHAVE_FREELOCALE -DHAVE_NEWLOCALE -DHAVE_USELOCALE -DLIBCONFIGXX_STATIC -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib  -arch arm64 -std=gnu99 -o CMakeFiles/config++.dir/util.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/util.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/util.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/lib",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DHAVE_FREELOCALE -DHAVE_NEWLOCALE -DHAVE_USELOCALE -DLIBCONFIGXX_STATIC -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib  -arch arm64 -std=gnu99 -o CMakeFiles/config++.dir/wincompat.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/wincompat.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/wincompat.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/lib",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ -DHAVE_FREELOCALE -DHAVE_NEWLOCALE -DHAVE_USELOCALE -DLIBCONFIGXX_STATIC -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib  -arch arm64 -std=c++14 -o CMakeFiles/config++.dir/libconfigcpp.cc.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/libconfigcpp.cc",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/libconfigcpp.cc"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/lib",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DHAVE_FREELOCALE -DHAVE_NEWLOCALE -DHAVE_USELOCALE -DLIBCONFIG_STATIC -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib  -arch arm64 -std=gnu99 -o CMakeFiles/config.dir/grammar.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/grammar.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/grammar.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/lib",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DHAVE_FREELOCALE -DHAVE_NEWLOCALE -DHAVE_USELOCALE -DLIBCONFIG_STATIC -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib  -arch arm64 -std=gnu99 -o CMakeFiles/config.dir/libconfig.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/libconfig.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/libconfig.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/lib",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DHAVE_FREELOCALE -DHAVE_NEWLOCALE -DHAVE_USELOCALE -DLIBCONFIG_STATIC -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib  -arch arm64 -std=gnu99 -o CMakeFiles/config.dir/scanctx.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/scanctx.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/scanctx.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/lib",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DHAVE_FREELOCALE -DHAVE_NEWLOCALE -DHAVE_USELOCALE -DLIBCONFIG_STATIC -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib  -arch arm64 -std=gnu99 -o CMakeFiles/config.dir/scanner.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/scanner.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/scanner.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/lib",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DHAVE_FREELOCALE -DHAVE_NEWLOCALE -DHAVE_USELOCALE -DLIBCONFIG_STATIC -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib  -arch arm64 -std=gnu99 -o CMakeFiles/config.dir/strbuf.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/strbuf.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/strbuf.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/lib",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DHAVE_FREELOCALE -DHAVE_NEWLOCALE -DHAVE_USELOCALE -DLIBCONFIG_STATIC -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib  -arch arm64 -std=gnu99 -o CMakeFiles/config.dir/strvec.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/strvec.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/strvec.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/lib",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DHAVE_FREELOCALE -DHAVE_NEWLOCALE -DHAVE_USELOCALE -DLIBCONFIG_STATIC -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib  -arch arm64 -std=gnu99 -o CMakeFiles/config.dir/util.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/util.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/util.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/lib",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DHAVE_FREELOCALE -DHAVE_NEWLOCALE -DHAVE_USELOCALE -DLIBCONFIG_STATIC -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib  -arch arm64 -std=gnu99 -o CMakeFiles/config.dir/wincompat.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/wincompat.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/lib/wincompat.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/examples/c",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc  -I/Users/keisukemurota/Documents/todo/worms  -arch arm64 -std=gnu99 -o CMakeFiles/c_example1.dir/example1.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/examples/c/example1.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/examples/c/example1.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/examples/c",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc  -I/Users/keisukemurota/Documents/todo/worms  -arch arm64 -std=gnu99 -o CMakeFiles/c_example2.dir/example2.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/examples/c/example2.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/examples/c/example2.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/examples/c",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc  -I/Users/keisukemurota/Documents/todo/worms  -arch arm64 -std=gnu99 -o CMakeFiles/c_example3.dir/example3.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/examples/c/example3.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/examples/c/example3.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/examples/c++",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/keisukemurota/Documents/todo/worms  -arch arm64 -std=c++14 -o CMakeFiles/c++_example1.dir/example1.cpp.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/examples/c++/example1.cpp",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/examples/c++/example1.cpp"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/examples/c++",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/keisukemurota/Documents/todo/worms  -arch arm64 -std=c++14 -o CMakeFiles/c++_example2.dir/example2.cpp.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/examples/c++/example2.cpp",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/examples/c++/example2.cpp"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/examples/c++",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/keisukemurota/Documents/todo/worms  -arch arm64 -std=c++14 -o CMakeFiles/c++_example3.dir/example3.cpp.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/examples/c++/example3.cpp",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/examples/c++/example3.cpp"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/examples/c++",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/keisukemurota/Documents/todo/worms  -arch arm64 -std=c++14 -o CMakeFiles/c++_example4.dir/example4.cpp.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/examples/c++/example4.cpp",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/examples/c++/example4.cpp"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/tinytest",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc  -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/tinytest  -arch arm64 -std=gnu99 -o CMakeFiles/libtinytest.dir/tinytest.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/tinytest/tinytest.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/tinytest/tinytest.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-build/tests",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc  -I/Users/keisukemurota/Documents/todo/worms  -arch arm64 -std=gnu99 -o CMakeFiles/libconfig_tests.dir/tests.c.o -c /Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/tests/tests.c",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/libconfig-src/tests/tests.c"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/googletest-build/googletest",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/googletest-src/googletest/include -I/Users/keisukemurota/Documents/todo/worms/_deps/googletest-src/googletest  -arch arm64 -std=c++14 -o CMakeFiles/gtest.dir/src/gtest-all.cc.o -c /Users/keisukemurota/Documents/todo/worms/_deps/googletest-src/googletest/src/gtest-all.cc",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/googletest-src/googletest/src/gtest-all.cc"
+},
+{
+  "directory": "/Users/keisukemurota/Documents/todo/worms/_deps/googletest-build/googletest",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/keisukemurota/Documents/todo/worms -I/Users/keisukemurota/Documents/todo/worms/_deps/googletest-src/googletest/include -I/Users/keisukemurota/Documents/todo/worms/_deps/googletest-src/googletest  -arch arm64 -std=c++14 -o CMakeFiles/gtest_main.dir/src/gtest_main.cc.o -c /Users/keisukemurota/Documents/todo/worms/_deps/googletest-src/googletest/src/gtest_main.cc",
+  "file": "/Users/keisukemurota/Documents/todo/worms/_deps/googletest-src/googletest/src/gtest_main.cc"
+}
+]

@@ -56,10 +56,6 @@ set(CMAKE_CXX_FLAGS_GPROF
 
 MARK_AS_ADVANCED(CMAKE_CXX_FLAGS_GPROF)
 
-include_directories(${worms_SOURCE_DIR})
-
-add_subdirectory(./worms) #call /LoopAlgo/CMakeLists.txst
-
 # search for  
 message(STATUS "CMAKE_MODULE_PATH = ${CMAKE_MODULE_PATH}")
 message(STATUS "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
@@ -69,9 +65,13 @@ message(STATUS "MPI_CXX_INCLUDE_DIRS = ${MPI_CXX_INCLUDE_DIRS}")
 message(STATUS "MPI_CXX_LIBRARIES = ${MPI_CXX_LIBRARIES}")
 
 
-add_subdirectory(./gtest)
 add_executable(hello test_/hello_world.cpp)
 target_link_libraries(hello MPI::MPI_CXX)
+
+# add_subdirectory(./gtest)
+include_directories(${worms_SOURCE_DIR})
+
+add_subdirectory(./worms) #call /LoopAlgo/CMakeLists.txst
 
 FIND_PACKAGE(Boost COMPONENTS serialization REQUIRED)
 
@@ -87,8 +87,6 @@ ENDFOREACH(name)
 # message(STATUS "MPI_CXX_FOUND = ${MPI_CXX_FOUND}")
 # message(STATUS "MPI_CXX_INCLUDE_DIRS = ${MPI_CXX_INCLUDE_DIRS}")
 # message(STATUS "MPI_CXX_LIBRARIES = ${MPI_CXX_LIBRARIES}")
-#
-#
 
 # target_link_libraries(worm-gtest worm)
 # target_include_directories(worm-gtest PUBLIC "${PROJECT_BINARY_DIR}")
