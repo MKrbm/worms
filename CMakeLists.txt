@@ -68,10 +68,10 @@ message(STATUS "MPI_CXX_LIBRARIES = ${MPI_CXX_LIBRARIES}")
 add_executable(hello test_/hello_world.cpp)
 target_link_libraries(hello MPI::MPI_CXX)
 
-# add_subdirectory(./gtest)
 include_directories(${worms_SOURCE_DIR})
 
 add_subdirectory(./worms) #call /LoopAlgo/CMakeLists.txst
+add_subdirectory(./gtest)
 
 FIND_PACKAGE(Boost COMPONENTS serialization REQUIRED)
 
