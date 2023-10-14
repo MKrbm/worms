@@ -4,7 +4,7 @@ import sys, os
 import numpy as np
 from ..core.constants import *
 from ..core.utils import *
-import rms
+import utils
 import logging
 
 unitary_algorithms = ["original", "3site", "3siteDiag"]
@@ -55,28 +55,28 @@ def local(ua: str, params: dict):
         return [h], sps
 
     if ua == "3site":
-        _h = rms.sum_ham(h_bond / 6, [[0, 1], [1, 2], [2, 0], [3, 4], [4, 5], [5, 3]], 6, 2)
-        _h += rms.sum_ham(h_single / 6, [[i] for i in range(6)], 6, 2)  # n* there is 6 bond per site
+        _h = utils.sum_ham(h_bond / 6, [[0, 1], [1, 2], [2, 0], [3, 4], [4, 5], [5, 3]], 6, 2)
+        _h += utils.sum_ham(h_single / 6, [[i] for i in range(6)], 6, 2)  # n* there is 6 bond per site
 
         h = [
-            _h + rms.sum_ham(h_bond, [[0, 5]], 6, 2),
-            _h + rms.sum_ham(h_bond, [[0, 4]], 6, 2),
-            _h + rms.sum_ham(h_bond, [[2, 4]], 6, 2),
+            _h + utils.sum_ham(h_bond, [[0, 5]], 6, 2),
+            _h + utils.sum_ham(h_bond, [[0, 4]], 6, 2),
+            _h + utils.sum_ham(h_bond, [[2, 4]], 6, 2),
         ]
         return [_h for _h in h], 8
         # rewrite this with forloop
 
     if ua == "3siteDiag":
-        _h0 = rms.sum_ham(h_bond, [[0, 1], [1, 2], [2, 0]], 3, 2)
+        _h0 = utils.sum_ham(h_bond, [[0, 1], [1, 2], [2, 0]], 3, 2)
         E, V = np.linalg.eigh(_h0)
         U = np.kron(V, V)
-        _h = rms.sum_ham(h_bond / 6, [[0, 1], [1, 2], [2, 0], [3, 4], [4, 5], [5, 3]], 6, 2)
-        _h += rms.sum_ham(h_single / 6, [[i] for i in range(6)], 6, 2)  # n* there is 6 bond per site
+        _h = utils.sum_ham(h_bond / 6, [[0, 1], [1, 2], [2, 0], [3, 4], [4, 5], [5, 3]], 6, 2)
+        _h += utils.sum_ham(h_single / 6, [[i] for i in range(6)], 6, 2)  # n* there is 6 bond per site
 
         h = [
-            _h + rms.sum_ham(h_bond, [[0, 5]], 6, 2),
-            _h + rms.sum_ham(h_bond, [[0, 4]], 6, 2),
-            _h + rms.sum_ham(h_bond, [[2, 4]], 6, 2),
+            _h + utils.sum_ham(h_bond, [[0, 5]], 6, 2),
+            _h + utils.sum_ham(h_bond, [[0, 4]], 6, 2),
+            _h + utils.sum_ham(h_bond, [[2, 4]], 6, 2),
         ]
         # h = [_h] * 3
         h = [U.T @ _h @ U for _h in h]
@@ -295,7 +295,7 @@ def system(_L: list[int], ua: str, params: dict, separate: bool = False) -> np.n
             raise RuntimeError("something wrong")
 
         H_bond = H_list[0]
-        _H = rms.sum_ham(H_bond, bonds, N, 2)
+        _H = utils.sum_ham(H_bond, bonds, N, 2)
         return _H
 
     if ua == "3site" or ua == "3siteDiag":
@@ -315,19 +315,19 @@ def system(_L: list[int], ua: str, params: dict, separate: bool = False) -> np.n
             raise RuntimeError("something wrong")
         if separate == True:
             _H_list = []
-            _H = rms.sum_ham(H_list[0], bonds_prime1[0], 4, 8)
-            _H += rms.sum_ham(H_list[1], bonds_prime1[1], 4, 8)
-            _H += rms.sum_ham(H_list[2], bonds_prime1[2], 4, 8)
+            _H = utils.sum_ham(H_list[0], bonds_prime1[0], 4, 8)
+            _H += utils.sum_ham(H_list[1], bonds_prime1[1], 4, 8)
+            _H += utils.sum_ham(H_list[2], bonds_prime1[2], 4, 8)
             _H_list.append(_H)
-            _H = rms.sum_ham(H_list[0], bonds_prime2[0], 4, 8)
-            _H += rms.sum_ham(H_list[1], bonds_prime2[1], 4, 8)
-            _H += rms.sum_ham(H_list[2], bonds_prime2[2], 4, 8)
+            _H = utils.sum_ham(H_list[0], bonds_prime2[0], 4, 8)
+            _H += utils.sum_ham(H_list[1], bonds_prime2[1], 4, 8)
+            _H += utils.sum_ham(H_list[2], bonds_prime2[2], 4, 8)
             _H_list.append(_H)
             return np.array(_H_list), P
         else:
-            _H = rms.sum_ham(H_list[0], bonds[0], 4, 8)
-            _H += rms.sum_ham(H_list[1], bonds[1], 4, 8)
-            _H += rms.sum_ham(H_list[2], bonds[2], 4, 8)
+            _H = utils.sum_ham(H_list[0], bonds[0], 4, 8)
+            _H += utils.sum_ham(H_list[1], bonds[1], 4, 8)
+            _H += utils.sum_ham(H_list[2], bonds[2], 4, 8)
             return _H
 
     else:
