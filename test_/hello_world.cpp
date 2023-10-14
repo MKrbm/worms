@@ -1,8 +1,8 @@
 #include <mpi.h>
+// #include <iil.h>
 #include <iostream>
 
 int main(int argc, char** argv) {
-  // Initialize the MPI environment
   MPI::Init(argc, argv);
 
   // Get the number of processes
@@ -21,4 +21,5 @@ int main(int argc, char** argv) {
 
   // Finalize the MPI environment.
   MPI::Finalize();
+  std::cout << "Hello World from processor " << ", rank " << " out of " << " processors" << std::endl;
 }
