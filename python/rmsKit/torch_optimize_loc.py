@@ -77,22 +77,6 @@ def lr_lambda(epoch: int) -> float:
     return f(epoch)
 
 
-# def lr_lambda(epoch : int) -> float:
-#     lr = 1
-#     if epoch < 5:
-#         return lr
-#     elif epoch < 10:
-#         return 0.8 * lr
-#     elif epoch < 15:
-#         return 0.5 * lr
-#     elif epoch < 20:
-#         return 0.1 * lr
-#     elif epoch < 30:
-#         return 0.07 * lr
-#     elif epoch < 80:
-#         return 0.05 * lr
-#     else:
-#         return 0.01 * lr
 
 args = parser.parse_args()
 
@@ -134,7 +118,6 @@ if __name__ == "__main__":
 
     H = None
     P = None
-    model_name = ""
 
     if "KH" in args.model:
         h_list, sps = KH.local(ua, p)
@@ -154,7 +137,7 @@ if __name__ == "__main__":
                 )
         h_list, sps = FF.local(ua, p)
         # params_str = f"{d}D_{p["sps"]}s_{p["rank"]}r_{p["length"]}" 
-        params_str = f'{d}D_{p["sps"]}sps_{p["rank"]}r_{p["length"]_seed{p["seed"]}}'
+        params_str = f's_{p["sps"]}_r_{p["rank"]}_l_{p["length"]}_seed_{p["seed"]}'
 
     path = f"array/torch/{args.model}_loc/{ua}/{args.loss}/{params_str}"
     logging.info(f"operators ***will* be saved to {path}")
