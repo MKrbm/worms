@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
   auto args = parser.parseArgs(argc, argv);
 
   try {
-    cfg.readFile("/home/user/project/config/model.cfg");
+    cfg.readFile("../config/model.cfg");
   } catch (const FileIOException &fioex) {
     cerr << "I/O error while reading file." << endl;
     return (EXIT_FAILURE);
