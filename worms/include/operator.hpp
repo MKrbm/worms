@@ -160,7 +160,6 @@ namespace spin_state
     {
       if (!_check_is_bond())
       {
-        print_call_stack();
         throw std::invalid_argument("Operator::is_bond(): invalid operator");
       }
     }

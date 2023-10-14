@@ -33,4 +33,4 @@ template<class T> std::ostream& operator<<(std::ostream& os, const std::vector<T
 
 void fillStringWithSpaces(std::string& str, int targetLength);
 
-void print_call_stack();
+// void print_call_stack();
