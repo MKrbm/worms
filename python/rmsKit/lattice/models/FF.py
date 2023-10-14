@@ -70,16 +70,15 @@ def system(_L : list[int], ua : str, params : dict) -> np.ndarray:
     if ua not in unitary_algorithms:
         raise ValueError("unitary_algorithms not supported")
     _d = len(_L)
-    s = params.sps
-    bond_dim = params.rank
-    n = params.length
-    d = params.dimension
+    s = params["sps"]
+    d = params["dimension"]
+    L = _L[0]
     if (d!=_d):
         raise ValueError("dimension not match")
     H = np.zeros((s**L, s**L))
-    h_list, sps = local(ua, params, d) 
-    bonds = [[i, (i + 1) % n] for i in range(n)]
-    H = utils.sum_ham(h_list[0], bonds, n, s)
+    h_list, sps = local(ua, params) 
+    bonds = [[i, (i + 1) % L] for i in range(L)]
+    H = utils.sum_ham(h_list[0], bonds, L, s)
     return H
 
 
