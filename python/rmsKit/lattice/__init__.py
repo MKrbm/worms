@@ -1,2 +1,2 @@
-from .models import KH, HXYZ, Ising
+from .models import KH, FF
 from .core.utils import *

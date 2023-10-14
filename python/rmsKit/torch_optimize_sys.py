@@ -148,7 +148,7 @@ if __name__ == "__main__":
         a += f"{k}_{v:.4g}_"
     params_str = a[:-1]
     ua = args.unitary_algorithm
-    path = f"array/torch/{args.model}/{ua}/{args.loss}/{params_str}"
+    path = f"array/torch/{args.model}_sys/{ua}/{args.loss}/{params_str}"
 
     H = None
     P = None
