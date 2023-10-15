@@ -36,20 +36,21 @@ parser.add_argument("-l", "--length", help="number of spin", default=6, type=int
 parser.add_argument("-d", "--dimension", help="dimension of lattice", default=1, type=int)
 args = parser.parse_args()
 
-s = args.sps
+sps = args.sps
 bond_dim = args.rank
 n = args.length
 d = args.dimension
 
 def block(*dimensions):
-    """Construct a new matrix for the MPS with random numbers from 0 to 1"""
+    '''Construct a new matrix for the MPS with random numbers from 0 to 1'''
     size = tuple([x for x in dimensions])
-    return np.random.random_sample(size)
+    A = np.random.random_sample(size)
+    A = ((A.transpose(2,1,0) + A ) / 2)
+    return A
 
 
-def create_MPS(n, dimension, bd):
+def create_MPS(n, dimension, bd, A):
     """Build the MPS tensor"""
-    A = block(bond_dim, s, bond_dim)
     mps = [tn.Node(np.copy(A)) for _ in range(n)]
     # connect edges to build mps
     connected_edges = []
@@ -59,23 +60,21 @@ def create_MPS(n, dimension, bd):
 
     return mps, connected_edges
 
+A = block(bond_dim, sps, bond_dim)
 
-mps_nodes, mps_edges = create_MPS(n, s, bond_dim)
+#Calculate the kernel of A - A 
+A2 = np.einsum("ijk,klm->jlim", A, A).reshape(sps**2, bond_dim**2)
+U, s, V = np.linalg.svd(A2)
+Up = U[:, len(s):]
+h = Up @ Up.T
+
+mps_nodes, mps_edges = create_MPS(n, sps, bond_dim, A)
 for k in range(len(mps_edges)):
     A = tn.contract(mps_edges[k])
 
-y = A.tensor.reshape(-1)
-rho = y[:, None] @ y[None, :]
-rho_ = rho.reshape(s**2, s ** (n - 2), s**2, s ** (n - 2))
-prho = np.einsum("jiki->jk", rho_)
-e, V = np.linalg.eigh(prho)
-e = np.round(e, 10)
-P = np.diagflat((e == 0)).astype(np.float64)
-vp = V @ P
-h = vp @ vp.T
-bonds = [[i, (i + 1) % n] for i in range(n)]
-
-path = f"../array/torch/ff/s_{s}_bd_{bond_dim}_n{n}_d{d}"
-
-H = utils.sum_ham(h, bonds, n, s)
+yL = A.tensor.reshape(sps*sps,-1)
+yL /= np.linalg.norm(yL)
+# logging.info(np.linalg.norm(h @ yL))
+logging.info("Confirm this is indeed a frustration free hamiltonian h @ yL = 0 : %s", np.linalg.norm(h @ yL))
+path = f"../array/torch/ff/s_{sps}_bd_{bond_dim}_n{n}_d{d}"
 save_npy(f"{path}/H", [h])

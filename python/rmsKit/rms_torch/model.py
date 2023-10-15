@@ -46,7 +46,8 @@ class UnitaryRieman(nn.Module):
             p.data = (
                 random_unitary_matrix(self.unitary_size, self.device)
                 if u0 is None
-                else torch.tensor(u0, dtype=torch.float64, device=self.device)
+                # else torch.tensor(u0.clone().detach(), dtype=torch.float64, device=self.device)
+                else u0.clone().detach().to(torch.float64).to(self.device)
             )
 
     def forward(self) -> torch.Tensor:

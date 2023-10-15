@@ -1,8 +1,70 @@
 import torch
 import numpy as np
 from torch import nn
+
 # import math
-from typing import Union
+from typing import Union, List
+import logging
+
+
+class MinimumEnergyLoss(nn.Module):
+    def __init__(
+        self,
+        h_list: List[Union[np.ndarray, torch.Tensor]],
+        device: torch.device = torch.device("cpu"),
+    ):
+        super(MinimumEnergyLoss, self).__init__()
+
+        self.e_min = []
+        self.offset = []
+        self.eye_offset = []
+        self.h_list = []
+        for i in range(len(h_list)):
+            if isinstance(h_list[i], np.ndarray):
+                self.h_list.append(torch.from_numpy(h_list[i]).to(torch.float64).to(device))
+            elif isinstance(h_list[i], torch.Tensor):
+                self.h_list.append(h_list[i].to(device))
+            else:
+                raise TypeError("h should be of type np.ndarray or torch.Tensor.")
+            E, V = torch.linalg.eigh(self.h_list[i])
+            self.e_min.append(E[0])
+            logging.info(f"minimum energy of local hamiltonian {i}: {E[0]}")
+            self.offset.append(E[-1])
+            # self.eye_offset.append(E[-1] * torch.eye(h_list[i].shape[1], device=device))
+            self.h_list[i] = self.h_list[i] - self.offset[i] * torch.eye(h_list[i].shape[1], device=device)
+
+    def forward(self, U: torch.Tensor) -> torch.Tensor:
+        # add minimum energy of each local hamiltonian for calculating the total energy
+        # initialize with torch tensor
+        loss = torch.zeros(1, device=U.device)
+        for i in range(len(self.h_list)):
+            result_abs = self.get_stoquastic(self.h_list[i], U)
+            E = torch.linalg.eigvalsh(result_abs)
+            loss += E[0] + self.offset[i]
+        return -loss
+        #
+        # for h in self.h_list:
+        #     result_abs = self.get_stoquastic(h, U)
+        #     E = torch.linalg.eigvalsh(result_abs)
+        #
+        # result_abs = self.get_stoquastic(self.H, U)
+        # E = torch.linalg.eigvalsh(result_abs)
+        # z = torch.exp(-E * 1).sum()
+        # return torch.log(z)
+
+    def stoquastic(self, A: torch.Tensor):
+        return -torch.abs(A)
+
+    def initializer(self, U: Union[torch.Tensor, None] = None):
+        raise NotImplementedError("Initializer is not implemented for QuasiEnergyLoss.")
+        return
+
+    def get_stoquastic(self, h: torch.Tensor, U: torch.Tensor) -> torch.Tensor:
+        """
+        Return the stoquastic matrix of a given matrix.
+        """
+        A = U @ h @ U.T
+        return self.stoquastic(A)
 
 
 class SystemEnergyLoss(nn.Module):
