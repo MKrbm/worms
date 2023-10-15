@@ -305,8 +305,6 @@ if __name__ == "__main__":
         for _ in range(M):
             u = ur.reset_matrix()
             
-            # u = jnp.eye(8, dtype=np.float64)
-            # u = U
             mass1 = np.random.lognormal(np.log(0.6), 0.5)
             mass2 = np.random.lognormal(np.log(0.5), 0.5)
             lr = np.random.lognormal(np.log(0.001), 2)

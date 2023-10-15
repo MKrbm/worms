@@ -10,7 +10,7 @@ import numpy as np
 import rms_torch
 import logging
 import datetime
-
+import platform
 
 models = [
     "KH",
@@ -19,7 +19,7 @@ models = [
     "FF1D",
     "FF2D",
 ]
-loss_val = ["mes", "none"]  # minimum energy solver, quasi energy solver
+loss_val = ["mel", "none"]  # minimum energy solver, quasi energy solver
 
 parser = argparse.ArgumentParser(description="exact diagonalization of shastry_surtherland")
 parser.add_argument("-m", "--model", help="model (model) Name", required=True, choices=models)
@@ -56,6 +56,7 @@ parser.add_argument(
     "--optimizer",
     help="optimizer",
     choices=["LION", "Adam"],
+    default="LION",
     nargs="?",
     const="all",
 )
@@ -77,7 +78,6 @@ def lr_lambda(epoch: int) -> float:
     return f(epoch)
 
 
-
 args = parser.parse_args()
 
 now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -90,15 +90,28 @@ logging.basicConfig(
     # handlers=[logging.FileHandler(log_filename), logging.StreamHandler()],
 )
 print(f"logging to file: {log_filename}")
+logging.info("filename : torch_optimize_loc.py")
 logging.info(args_str)
 
 
-device = torch.device("cuda") if args.platform == "gpu" else torch.device("cpu")
+# if machine is osx then use mps backend instead of cuda
+if args.platform == "gpu":
+    #check if os is osx
+    if platform.system() == "Darwin":
+        device = torch.device("mps")
+    else:
+        device = torch.device("cuda")
+else: 
+    device = torch.device("cpu")
+
+
+# device = torch.device("") if args.platform == "gpu" else torch.device("cpu")
 logging.info("device: {}".format(device))
 
 logging.info("args: {}".format(args))
 M = args.num_iter
 seed_list = [randint(0, 1000000) for i in range(M)]
+# print("seed_list: {}".format(seed_list))    
 
 if __name__ == "__main__":
     p = dict(
@@ -129,15 +142,13 @@ if __name__ == "__main__":
         elif args.model == "FF2D":
             d = 2
         p = dict(
-                sps = 3,
-                rank = 2,
-                length = 6,
-                dimension = d,
-                seed = 0,
-                )
+            sps=4,
+            rank=2,
+            dimension=d,
+            seed=1,
+        )
         h_list, sps = FF.local(ua, p)
-        # params_str = f"{d}D_{p["sps"]}s_{p["rank"]}r_{p["length"]}" 
-        params_str = f's_{p["sps"]}_r_{p["rank"]}_l_{p["length"]}_seed_{p["seed"]}'
+        params_str = f's_{p["sps"]}_r_{p["rank"]}_seed_{p["seed"]}'
 
     path = f"array/torch/{args.model}_loc/{ua}/{args.loss}/{params_str}"
     logging.info(f"operators ***will* be saved to {path}")
@@ -147,6 +158,64 @@ if __name__ == "__main__":
         h_list = [-np.array(h) for h in h_list]
         save_npy(f"{path}/H", h_list)
         exit(0)
-    elif args.loss == "mes":
+    elif args.loss == "mel":
         loss = rms_torch.MinimumEnergyLoss(h_list, device=device)
 
+    model = rms_torch.UnitaryRieman(h_list[0].shape[1], sps, device=device).to(device)
+
+    best_loss = 1e10
+    best_us = None
+    good_seeds = []
+    unitaries = []
+
+    model.reset_params(torch.eye(sps))
+    logging.info("initial loss: %s", loss(model()).item())
+    for i, seed in enumerate(seed_list):
+        logging.info(f"iteration: {i+1}/{M}, seed: {seed}")
+        torch.manual_seed(seed)
+        np.random.seed(seed)
+        local_best_loss = 1e10
+        local_best_us = []
+        model.reset_params()
+
+        if args.optimizer == "LION":
+            optimizer = rms_torch.LION(model.parameters(), lr=args.learning_rate)
+        elif args.optimizer == "Adam":
+            optimizer = rms_torch.Adam(model.parameters(), lr=args.learning_rate, amsgrad=True)
+        else:
+            raise ValueError("not implemented")
+
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda) if args.schedule else None
+        # print(optimizer)
+        epochs = args.epoch
+        if args.loss == "smel":
+            loss.initializer(model())
+        for t in range(epochs):
+            optimizer.zero_grad()
+            output = model()
+            loss_val = loss(output)
+            if loss_val.item() < local_best_loss:
+                with torch.no_grad():
+                    local_best_loss = loss_val.item()
+                    local_best_us = [p.data.detach().cpu().numpy() for p in model.parameters()]
+            loss_val.backward()
+            for p in model.parameters():
+                grad = p.grad  # Get the gradient from the compiled model
+                if grad is not None:
+                    grad.data[:] = rms_torch.riemannian_grad_torch(p.data, grad)
+                else:
+                    raise RuntimeError("No gradient for parameter")
+            optimizer.step()
+            scheduler.step() if scheduler is not None else None
+            logging.info(f"Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}")
+
+        if local_best_loss < best_loss:
+            best_loss = local_best_loss
+            best_us = [np.copy(u) for u in local_best_us]
+        good_seeds.append([seed, local_best_loss])
+        logging.info(
+            f"best local loss: {local_best_loss}",
+        )
+        save_npy(f"{path}/lr_{args.learning_rate}/loss_{local_best_loss:5f}/u", local_best_us)
+
+    logging.info("best loss value: %s", best_loss)
