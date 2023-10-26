@@ -1,4 +1,4 @@
-from lattice import KH
+from lattice import KH, HXYZ, Ising
 from lattice.core.utils import *
 import numpy as np
 import jax
@@ -8,7 +8,10 @@ import argparse
 
 models = [
     "KH",
-    "HXYZ"
+    "HXYZ",
+    "HXYZ2D",
+    "Ising1D",
+    "Ising2D",
 ]
 parser = argparse.ArgumentParser(description='exact diagonalization of shastry_surtherland')
 parser.add_argument('-m','--model', help='model (model) Name', required=True, choices=models)
@@ -17,7 +20,7 @@ parser.add_argument('-Jx','--coupling_x', help='coupling constant (Jx)', type = 
 parser.add_argument('-Jy','--coupling_y', help='coupling constant (Jy)', type = float) 
 parser.add_argument("-hx", "--mag_x", help="magnetic field", type=float, default=0)
 parser.add_argument("-hz", "--mag_z", help="magnetic field", type=float, default=0)
-parser.add_argument('-T', "--temperature", help = "temperature", type = float)
+# parser.add_argument('-T', "--temperature", help = "temperature", type = float)
 parser.add_argument('-L1', "--length1", help = "length of side", type = int, required = True)
 parser.add_argument('-L2', "--length2", help = "length of side", type = int)
 parser.add_argument(
@@ -52,60 +55,83 @@ if __name__ == '__main__':
     if (args.model == "KH"):
         model_name = "KH" + f"_{L1}x{L2}"
         path = f"out/{model_name}/{ua}/{params_str}"
-        
-
         N = L1 * L2 * 3
         H = KH.system([L1, L2], ua, p)
-        E, V = jnp.linalg.eigh(H)
+
+    elif (args.model == "HXYZ"):
+        model_name = "HXYZ" + f"_{L1}"
+        path = f"out/{model_name}/{ua}/{params_str}"
+        N = L1
+        H = HXYZ.system([L1], ua, p)
+
+    elif (args.model == "HXYZ2D"):
+        model_name = "HXYZ" + f"_{L1}_{L2}"
+        path = f"out/{model_name}/{ua}/{params_str}"
+        N = L1 * L2
+        H = HXYZ.system([L1, L2], ua, p)
+
+    elif (args.model == "Ising1D"):
+        model_name = "Ising" + f"_{L1}"
+        params_str = f"Jz_{p['Jz']:.4g}_hx_{p['hx']:.4g}" #n* only Jz and hx are used
+        path = f"out/{model_name}/{ua}/{params_str}"
+        N = L1 
+        H = Ising.system([L1], ua, p)
+
+    elif (args.model == "Ising2D"):
+        model_name = "Ising" + f"_{L1}x{L2}"
+        params_str = f"Jz_{p['Jz']:.4g}_hx_{p['hx']:.4g}" #n* only Jz and hx are used
+        path = f"out/{model_name}/{ua}/{params_str}"
+        N = L1 * L2
+        H = Ising.system([L1, L2], ua, p)
+
+    else:
+        raise ValueError("model not found")
+
+    E, V = jnp.linalg.eigh(H)
+
+    file = f'{path}/groundstate.npy'
+    os.makedirs(os.path.dirname(file), exist_ok=True)
+    save_npy(file, V[:,0])
+    file = f'{path}/groundstate.csv'
+    os.makedirs(os.path.dirname(file), exist_ok=True)
+
+    with open(file, 'w') as dat_file:  
+        dat_file.write("index, value\n")
+        for i, v in enumerate(V[:,0]):
+            dat_file.write(f"{i}, {v:.60g}\n")
+
+    if args.gs:
+        exit()
+
+    beta = jax.numpy.linspace(0, 10, 1001).reshape(1,-1)
+    B = jax.numpy.exp(-beta*E[:,None])
+    Z = B.sum(axis=0)
+    E_mean = (E[:,None]*B).sum(axis=0) / Z
+    E_square_mean = ((E*E)[:,None]*B).sum(axis=0) / Z
+    beta = beta.reshape(-1)
+    C = (E_square_mean - E_mean**2)*(beta**2)
 
 
+    # * save calculated data
+    file = f'{path}/eigenvalues.npy'
+    os.makedirs(os.path.dirname(file), exist_ok=True)
+    save_npy(file, E)
 
-        file = f'{path}/groundstate.npy'
-        os.makedirs(os.path.dirname(file), exist_ok=True)
-        save_npy(file, V[:,0])
+    file = f'{path}/eigenvalues.csv'
+    os.makedirs(os.path.dirname(file), exist_ok=True)
+    with open(file, 'w') as dat_file:  
+        dat_file.write("index, value\n")
+        for i, e in enumerate(E):
+            dat_file.write(f"{i}, {e:.60g}\n")
 
-        file = f'{path}/groundstate.csv'
-        os.makedirs(os.path.dirname(file), exist_ok=True)
-        with open(file, 'w') as dat_file:  
-            dat_file.write("index, value\n")
-            for i, v in enumerate(V[:,0]):
-                dat_file.write(f"{i}, {v:.60g}\n")
-
-        if args.gs:
-            exit()
+    file = f'{path}/statistics.csv'
+    os.makedirs(os.path.dirname(file), exist_ok=True)
+    with open(file, 'w') as dat_file:
+        dat_file.write("beta, energy_per_site, specific_heat\n")
+        for b, e, c, in zip(beta, E_mean, C):
+            dat_file.write(f"{b}, {e/N}, {c/N}\n")
             
-
-        beta = jax.numpy.linspace(0, 10, 1001).reshape(1,-1)
-        B = jax.numpy.exp(-beta*E[:,None])
-        Z = B.sum(axis=0)
-        E_mean = (E[:,None]*B).sum(axis=0) / Z
-        E_square_mean = ((E*E)[:,None]*B).sum(axis=0) / Z
-        beta = beta.reshape(-1)
-        C = (E_square_mean - E_mean**2)*(beta**2)
-
-
-        # * save calculated data
-        file = f'{path}/eigenvalues.npy'
-        os.makedirs(os.path.dirname(file), exist_ok=True)
-        save_npy(file, E)
-
-        file = f'{path}/eigenvalues.csv'
-        os.makedirs(os.path.dirname(file), exist_ok=True)
-        with open(file, 'w') as dat_file:  
-            dat_file.write("index, value\n")
-            for i, e in enumerate(E):
-                dat_file.write(f"{i}, {e:.60g}\n")
-
-
-
-        
-
-        file = f'{path}/statistics.csv'
-        os.makedirs(os.path.dirname(file), exist_ok=True)
-        with open(file, 'w') as dat_file:
-            dat_file.write("beta, energy_per_site, specific_heat\n")
-            for b, e, c, in zip(beta, E_mean, C):
-                dat_file.write(f"{b}, {e/N}, {c/N}\n")
+    print(f"output to {path}")
     
 
       

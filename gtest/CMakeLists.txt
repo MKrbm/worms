@@ -4,6 +4,9 @@ set (test_src
      model
      example
      lops
+     local_hams
+     optype
+     # HXXX
     )
 
 
@@ -25,6 +28,8 @@ ENDFOREACH(name)
 set(worm
     worm
     worm_wobs
+    Kagome
+    Ising1D
     )
 
 FOREACH(name ${worm})

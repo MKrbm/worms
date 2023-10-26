@@ -1,4 +1,4 @@
-from lattice import KH
+from lattice import KH, HXYZ, Ising
 from lattice import save_npy
 import argparse
 from random import randint
@@ -8,7 +8,6 @@ import subprocess
 import jax
 import jax.numpy as jnp
 import math
-
 import logging
 import os
 import datetime
@@ -27,6 +26,9 @@ logging.basicConfig(
 models = [
     "KH",
     "HXYZ",
+    "HXYZ2D",
+    "Ising1D",
+    "Ising2D",
 ]
 loss = ["none", "mes", "qes", "smel", "sel"]  # minimum energy solver, quasi energy solver
 
@@ -59,6 +61,7 @@ parser.add_argument(
     choices=loss,
     nargs="?",
     const="all",
+    default="none",
 )
 
 parser.add_argument(
@@ -78,9 +81,13 @@ if args.platform == "gpu":
     # os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "true"
     os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"] = "0.5"
 
-u0 = np.load("array/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_1/u/0.npy")
+# u0 = np.load("array/KH/3site/sel/Jx_1_Jy_1_Jz_1_hx_0_hz_0/M_1/u/0.npy")
 if __name__ == "__main__":
+
+    print("args : {}".format((args)))
+    print("logging file: {}".format(log_filename))
     logging.info("args: {}".format(args))
+
     M = args.num_iter
     p = dict(
         Jx=args.coupling_x if args.coupling_x is not None else args.coupling_z,
@@ -96,11 +103,12 @@ if __name__ == "__main__":
     params_str = a[:-1]
     ua = args.unitary_algorithm
     folder = f"array/{args.model}/{ua}/{args.loss}/{params_str}"
-
     h_list = []
     sps = 2
     x = None
     groundstate_path = None
+    loss_type = args.loss
+
     if args.model == "KH":
         h_list, sps = KH.local(ua, p)
         model_name = "KH" + f"_2x2"
@@ -132,26 +140,57 @@ if __name__ == "__main__":
                 )
                 stdout, stderr = out.communicate()
 
+        if args.loss in ["smel", "sel"]:
+            H = jnp.array(KH.system([2, 2], "3site", p))
+            loss_type += "/L_2x2"
         if args.loss != "none" and "3site" not in ua:
             raise ValueError("optimizer is supported only for 3site unitary algorithm")
 
+    elif "HXYZ" in args.model:
+        if "2D" in args.model:
+            h_list, sps = HXYZ.local(ua, p, 2)
+            if args.loss in ["smel", "sel"]:
+                L = [2, 4]
+                H = jnp.array(HXYZ.system(L, "original", p))
+                loss_type += "/L_" + "_".join([str(l) for l in L])
+        else: #in the case of 1D
+            h_list, sps = HXYZ.local(ua, p)
+            if args.loss in ["smel", "sel"]:
+                L = 3
+                H = jnp.array(HXYZ.system([L], "original", p))
+                loss_type += f"/L_{L}"
+
+
+    elif "Ising" in args.model:
+        h_list, sps = Ising.local(ua, p)
+        params_str = f"Jz_{p['Jz']:.4g}_hx_{p['hx']}"
+
     def scheduler(lr):
         def wrapper(step):
-            r = step / 10
+            # r = step / 10
+            r = 1
             return 1 / math.sqrt(1 + r) * lr
 
         return wrapper
 
-    path = f"array/{args.model}/{ua}/{args.loss}/{params_str}"
+    path = f"array/{args.model}/{ua}/{loss_type}/{params_str}"
     seed = randint(0, 100000) if args.seed is None else args.seed
     np.random.seed(seed)
     logging.info("seed: %s", seed)
-    ur = rms.unitary.UnitaryRiemanGenerator(8, jax.random.PRNGKey(seed), np.float64)
+    ur = rms.unitary.UnitaryRiemanGenerator(sps, jax.random.PRNGKey(seed), np.float64)
     best_lv = 1e10
     best_u = None
-    if args.loss == "mes" and h_list:
 
-        state_list = [rms.loss.init_loss(jnp.array(h), 8, np.float64, "mes") for h in h_list]
+    if args.loss == "none":
+        h_list = [-np.array(h) for h in h_list]
+        save_npy(f"{path}/H", h_list)
+        exit(0)
+
+    elif args.loss == "mes" and h_list:
+
+        # state_list = [rms.loss.init_loss(jnp.array(h), 8, np.float64, "mes") for h in h_list]
+        print(h_list[0])
+        state_list = [rms.loss.init_loss(jnp.array(h), sps, np.float64, "mes") for h in h_list]
         mesLoss = rms.loss.mes_multi
         lion_solver = rms.solver.lionSolver(mesLoss, state_list)
         momentum_solver = rms.solver.momentumSolver(mesLoss, state_list)
@@ -169,13 +208,21 @@ if __name__ == "__main__":
             # u, lv = momentum_solver(u, 1000, 0.1, 0.3, cout=True, cutoff_cnt=10)
             # u, lv = cg_solver(u, 500, 0.001, 0.1, cutoff_cnt=10, cout=True)
             if lv < best_lv:
-                best_lv = lv
                 best_u = (u).copy()
+                u = np.array(best_u)
+                U = np.kron(u,u)
+                h_list_ = [- U @ h.copy() @ U.T for h in h_list]
+                logging.info("loss value update : %s", best_lv)
+                save_npy(f"{path}/M_{M}/u", [np.array(best_u)])
+                save_npy(f"{path}/M_{M}/H", h_list_)
+
+
     elif args.loss == "qes" and h_list:
         if groundstate_path:
             x = np.load(groundstate_path)
         else:
             raise RuntimeError("groundstate is not found")
+
         x0 = x.reshape([8] * 4)
         x0 = x0.transpose([0, 2, 1, 3]).reshape(-1)
         x0 = jnp.array(x0)
@@ -190,7 +237,7 @@ if __name__ == "__main__":
             for _h, _x in zip(h_list, x_list)
         ]
         qesLoss = rms.loss.qes_multi
-        print(qesLoss(state_list, jnp.array(u0)))
+        # print(qesLoss(state_list, jnp.array(u0)))
         lion_solver = rms.solver.lionSolver(qesLoss, state_list)
         momentum_solver = rms.solver.momentumSolver(qesLoss, state_list)
         cg_solver = rms.solver.cgSolver(qesLoss, state_list)
@@ -200,20 +247,16 @@ if __name__ == "__main__":
         logging.info("D           : %s", momentum_solver.D)
         logging.info("upper_bound : %s", momentum_solver.upper_bound)
 
-        # def scheduler(step):
-        #     r = step / 10
-        #     return 1 / math.sqrt(1 + r) * 0.01
 
         for _ in range(M):
             u = ur.reset_matrix()
-            u = jnp.array(u0)
+            # u = jnp.array(u0)
             
             # u = jnp.eye(8, dtype=np.float64)
             # u = U
             mass1 = np.random.lognormal(np.log(0.6), 0.5)
             mass2 = np.random.lognormal(np.log(0.5), 0.5)
             lr = np.random.lognormal(np.log(0.001), 2)
-            # print(f"mass1: {mass1}, mass2: {mass2}, lr: {lr}")
             logging.info(f"mass1: {mass1}, mass2: {mass2}, lr: {lr}")
             u, lv = lion_solver(
                 u,
@@ -235,13 +278,19 @@ if __name__ == "__main__":
             if lv < best_lv:
                 best_lv = lv
                 best_u = (u).copy()
+                u = np.array(best_u)
+                U = np.kron(u,u)
+                h_list = [- U @ h @ U.T for h in h_list]
+                logging.info("loss value update : %s", best_lv)
+                save_npy(f"{path}/M_{M}/u", [np.array(best_u)])
+                save_npy(f"{path}/M_{M}/H", h_list)
+
     elif args.loss == "smel" and h_list:
-        H = jnp.array(KH.system([2, 2], "3site", p))
-        state = rms.loss.init_loss(H, 8, np.float64, "smel")
+        state = rms.loss.init_loss(H, sps, np.float64, "smel")
         state_list = [state]
-        qesLoss = rms.loss.system_mel_multi
-        lion_solver = rms.solver.lionSolver(qesLoss, state_list)
-        momentum_solver = rms.solver.momentumSolver(qesLoss, state_list)
+        qesLoss = rms.loss.system_mel_multi # quasi energy loss
+        lion_solver = rms.solver.lionSolver(qesLoss, state_list, system = True) 
+        momentum_solver = rms.solver.momentumSolver(qesLoss, state_list, system = True)
         # cg_solver = rms.solver.cgSolver(qesLoss, state_list)
         best_lv = 1e10
         best_u = None
@@ -256,32 +305,35 @@ if __name__ == "__main__":
         for _ in range(M):
             u = ur.reset_matrix()
             
-            # u = jnp.eye(8, dtype=np.float64)
-            # u = U
             mass1 = np.random.lognormal(np.log(0.6), 0.5)
             mass2 = np.random.lognormal(np.log(0.5), 0.5)
-            lr = np.random.lognormal(np.log(0.0001), 2)
+            lr = np.random.lognormal(np.log(0.001), 2)
             logging.info("mass1: %s, mass2: %s, lr: %s", mass1, mass2, lr)
             u, lv = momentum_solver(
                 u,
                 1000,
                 scheduler(lr),
                 cout=True,
-                cutoff_cnt=100,
+                cutoff_cnt=10,
                 mass=mass1,
-                offset=0.01,
+                offset=0.001,
             )
             if lv < best_lv:
                 best_lv = lv
                 best_u = (u).copy()
+                u = np.array(best_u)
+                U = np.kron(u,u)
+                h_list = [- U @ h @ U.T for h in h_list]
+                logging.info("loss value update : %s", best_lv)
+                save_npy(f"{path}/M_{M}/u", [np.array(best_u)])
+                save_npy(f"{path}/M_{M}/H", h_list)
 
     elif args.loss == "sel" and h_list:
-        H = jnp.array(KH.system([2, 2], "3site", p))
-        state = rms.loss.init_loss(H, 8, np.float64, "sel", beta=1.0)
+        state = rms.loss.init_loss(H, sps, np.float64, "sel", beta=2.0)
         state_list = [state]
         qesLoss = rms.loss.system_el_multi
-        lion_solver = rms.solver.lionSolver(qesLoss, state_list)
-        momentum_solver = rms.solver.momentumSolver(qesLoss, state_list)
+        lion_solver = rms.solver.lionSolver(qesLoss, state_list, system = True)
+        momentum_solver = rms.solver.momentumSolver(qesLoss, state_list, system = True)
         # cg_solver = rms.solver.cgSolver(qesLoss, state_list)
         best_lv = 1e10
         best_u = None
@@ -300,7 +352,7 @@ if __name__ == "__main__":
             # u = U
             u, lv = momentum_solver(
                 u,
-                1000,
+                5000,
                 scheduler(lr),
                 cout=True,
                 cutoff_cnt=10,
@@ -310,9 +362,17 @@ if __name__ == "__main__":
             if lv < best_lv:
                 best_lv = lv
                 best_u = (u).copy()
-            logging.info("loss value: %s", best_lv)
+                u = np.array(best_u)
+                U = np.kron(u,u)
+                h_list = [- U @ h @ U.T for h in h_list]
+                logging.info("loss value update : %s", best_lv)
+                save_npy(f"{path}/M_{M}/u", [np.array(best_u)])
+                save_npy(f"{path}/M_{M}/H", h_list)
             
     else:
         raise RuntimeError("loss function is not found")
-    logging.info("loss value: %s", best_lv)
-    save_npy(f"{path}/M_{M}/u", [np.array(best_u)])
+    # u = np.array(best_u)
+    # U = np.kron(u,u)
+    # h_list = [- U @ h @ U.T for h in h_list]
+    # save_npy(f"{path}/M_{M}/u", [np.array(best_u)])
+    # save_npy(f"{path}/M_{M}/H", h_list)

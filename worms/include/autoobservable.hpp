@@ -90,7 +90,7 @@ public:
           std::cerr << "require square matrix" << std::endl;
           exit(1);
         }
-        if (data.size() != loperator.ham_prime.size() * loperator.ham_prime.size())
+        if (data.size() != loperator.ham_prime().size() * loperator.ham_prime().size())
         {
           std::cerr << "size of observable does not match to size of local operator" << std::endl;
           exit(1);
@@ -125,7 +125,7 @@ public:
       for (int p_i = 0; p_i < N_bond_t; p_i++)
       {
         model::local_operator<MCT> loperator = loperators[p_i];
-        std::vector<double> _obs(loperator.ham_prime.size() * loperator.ham_prime.size(), 0);
+        std::vector<double> _obs(loperator.ham_prime().size() * loperator.ham_prime().size(), 0);
         _obs_operators.push_back(_obs);
       }
     }

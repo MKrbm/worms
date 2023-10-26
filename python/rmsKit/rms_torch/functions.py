@@ -1,7 +1,11 @@
-
-#* below for torch
+# * below for torch
 import torch
-#* Type hinting change from Array to torch.Tensor
+import numpy as np
+from typing import Any, Tuple, Union, List
+from nptyping import NDArray
+
+# * Type hinting change from Array to torch.Tensor
+
 
 def check_is_unitary_torch(X: torch.Tensor) -> torch.Tensor:
     with torch.no_grad():
@@ -20,4 +24,5 @@ def riemannian_grad_torch(u: torch.Tensor, euc_grad: torch.Tensor) -> torch.Tens
         raise ValueError("shape of u and euc_grad must be same")
     rg = euc_grad @ u.T.conj() - u @ euc_grad.T.conj()
     return (rg - rg.T.conj()) / 2
+
 

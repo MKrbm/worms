@@ -4,6 +4,7 @@ project(worm_lib
     LANGUAGES CXX)
 
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+find_package(MPI REQUIRED COMPONENTS CXX)
 find_package(ALPSCore REQUIRED alea)
 
 include(libconfig)
@@ -11,33 +12,8 @@ include(eigen3)
 include(npy)
 include(googletest)
 
-# link alpscore
-
-#* list all targets
-# function(getAllSubdirs dir dirs)
-#     message("called with dir (${dir}) and dirs (${dirs})")
-#     set(_dirs "")
-#     # get subdirectories for dir
-#     get_property(subdirs DIRECTORY ${dir} PROPERTY SUBDIRECTORIES)
-#     # iterate any found subdirectories
-#     foreach(subdir ${subdirs})
-#         # append each sub directory
-#         list(APPEND _dirs ${subdir})
-#         set(${dirs} _dirs PARENT_SCOPE)
-#         getAllSubdirs(${subdir} ${_dirs})
-#     endforeach()
-# endfunction()
-# set(dirs ".")
-# getAllSubDirs(. ${dirs})
-# message("all dirs " ${dirs})
-
-
-# if(NOT (TARGET Eigen3::Eigen))
-#   message(SEND_ERROR "Attempt to link to non-existent library Eigen3::Eigen")
-# endif()
 
 add_library(worm STATIC
-    ./src/state.cpp
     ./src/operator.cpp
     ./src/load_npy.cpp
     ./src/automodel.cpp
@@ -52,8 +28,16 @@ add_subdirectory(./lib/bcl) #call /lib/bcl/CMakeLists.txst
 add_subdirectory(./lib/lattice) #call /lib/bcl/CMakeLists.txst
 
 
-message(STATUS "alpscore libs : ${ALPSCore_LIBRARIES}") # only alea is linked
+# Get the directory of the first library in ALPSCore_LIBRARIES
+# get_filename_component(ALPSCore_LIBRARY_DIR "${ALPSCore_LIBRARIES}" DIRECTORY)
+
+# # Make an educated guess about the include directory
+# set(ALPSCore_GUESSED_INCLUDE_DIR "${ALPSCore_LIBRARY_DIR}/../include/ALPSCore/")
+
+# message(STATUS "Guessed ALPSCore include dir: ${ALPSCore_LIBRARY_DIR}")
+
 target_link_libraries( worm
+    MPI::MPI_CXX  
     bcl 
     config++ 
     lattice 

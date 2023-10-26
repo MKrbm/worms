@@ -4,95 +4,23 @@
 #include <memory>
 #include <iterator>
 #include <tuple>
-#include "model.hpp"
+#include "automodel.hpp"
+#include "operator.hpp"
 
 using std::cout;
 using std::endl;
 
+using namespace model;
 
 namespace spin_state{
   class Dotv2;
   class OpStatev2;
   class Wormsv2;
-  template <size_t sps_=2, size_t max_L = 4>
-  class Operatorv2;
   
-  using SPIN = model::SPIN;
-  using size_t = std::size_t; 
-  using STATE = model::STATE;
-  using BOND = model::BOND;
-  using SPS_ARR = std::vector<size_t>;
-  template <class MC>
-  using local_operator = model::local_operator<MC>;
-  using WORM = std::tuple<int, int, double>;
-  using WORM_ARR = std::vector<WORM>; //  site, spin, dot_label, tau (dot label is needed for reverse lookup)
-  using DOT_ARR = std::vector<std::tuple<int,int,int,int>>;   //prev, next, dot_type, index, (index refers to the legs of the dot with respect to the class of dots)
 
-  template<size_t _sps, size_t max_L> 
-  struct state_func{
-  public:
-    static const std::array<size_t, max_L+1> pows;
-    static const size_t sps = _sps;
-    static size_t state2num(STATE const& state, int L = -1){
-      size_t num = 0;
-      if (L < 0) L = state.size();
-      if (L == 0) return 0;
-      size_t x = 1;
-      for (int i = L-1; i >= 0; i--) {
-        num += x*state[i];
-        x*=sps;
-      }
-      return num;
-    }
-
-    static size_t state2num(STATE const& state, BOND const& bond){
-      size_t u = 0;
-      // for(auto x : pows) cout << x << endl;
-      for (int i=0; i<bond.size(); i++){
-        u += (state[bond[i]] * pows[i]);
-      }
-      return u;
-  }
-  
-    static STATE num2state(int num, int L){
-      int coef = 1;
-      model::STATE state(L, 0); // all spin up
-      for (int i=0; i<L; i++){
-        state[L-i-1] = num/pows[L-i-1];
-        num%=pows[L-i-1];
-      }
-      return state;
-    }
-  };
-
-
-  //* old stuff
-
-  inline size_t state2num(STATE const& state, int L = -1){
-    size_t num = 0;
-    if (L < 0) L = state.size();
-    if (L == 0) return 0;
-    for (int i = L-1; i >= 0; i--) {
-      num = num<<1;
-      num += state[i];
-    }
-    return num;
-  }
-
-  //* old stuff
-
-  inline size_t state2num(STATE const& state, BOND const& bond){
-    size_t u = 0;
-    for (int i=0; i<bond.size(); i++){
-      // int tmp = cstate[bond[i]];
-      u += (state[bond[i]] << i);
-    }
-    return u;
-  }
-
-  STATE num2state(int num, int L);
-  std::string return_name(int dot_type, int op_type);
-
+  using WORM = std::tuple<size_t, size_t, double>;
+  using WORM_ARR = std::vector<WORM>; // site, spin, dot_label, tau (dot label is needed for reverse lookup)
+  using DOT_ARR = std::vector<std::tuple<int,int,int,int>>; //prev, next, dot_type, index, (index refers to the legs of the dot with respect to the class of dots)
 
   static std::string op_type_name[2] = {
       "diagonal",
@@ -107,18 +35,8 @@ namespace spin_state{
   };
 
 
-  template <size_t max_L = 4>
-  std::array<size_t, max_L+1> pows_array(size_t sps = 2){
-    std::array<size_t, max_L+1> arr; size_t x = 1;
-    for (int i=0; i<max_L+1; i++){ 
-      arr[i]=x; x*=sps;
-    }
-    return arr;
-  }
 }
 
-template <size_t sps_, size_t max_L>
-const std::array<size_t, max_L+1> spin_state::state_func<sps_, max_L>::pows = pows_array<max_L>(sps_);
 
 /*
 params
@@ -127,7 +45,6 @@ int prev : previous dot label
 int% sptr : ptr to state
 int dot_type : state type where -1 : state, -2 : worms, non-negative integer : operator label. 
 int index : index which will be used to indexing the corresponding type list. e.g. if dot_type = -1. state[index] is the spin on the dot, if -2, worm[index] is the worm corresponds to the dot. However, if dot_type=0, wich means the dot is operator, ops[dot_type] is the operator of the dot and the index refers to the position of dot with respect to the operator.
-
 */
 class spin_state::Dotv2
 {
@@ -137,7 +54,9 @@ class spin_state::Dotv2
   size_t index_; 
   size_t site_;
 public:
-  Dotv2(){}
+  Dotv2()
+  :dot_type_(-10){}
+  
   Dotv2(size_t p, size_t n, int o, size_t i, size_t s)
   :prev_(p), next_(n), dot_type_(o), index_(i), site_(s)
   {}
@@ -155,10 +74,11 @@ public:
     if (at_operator()) return dot_type_;
     else return index_;
   }
-
+  size_t index() const { return index_; }
   bool at_operator() const { return dot_type_ >= 0; }
   bool at_origin() const { return dot_type_ == -1; }
   bool at_worm() const { return dot_type_ == -2; }
+  int dot_type() const { return dot_type_; }
   void set_prev(size_t p) { prev_ = p; }
   void set_next(size_t n) { next_ = n; }
   size_t move_next(size_t dir) const {
@@ -185,120 +105,6 @@ public:
   double tau()const {return tau_;}
 };
 
-/*
-  the actual size of state (number of bits for expressing state ) is 2 * size
-*/
-template <size_t sps_, size_t max_L>
-class spin_state::Operatorv2{
-  const BOND* const bond_ptr_;
-  // size_t s0_;
-  // size_t s1_;
-  static const size_t sps = sps_;
-  static const std::array<size_t, max_L+1> pows;
-  size_t size_;
-  size_t op_type_;
-  size_t state_;
-  size_t cnt_;
-  double tau_;
-public:
-  Operatorv2() :bond_ptr_(nullptr){}
-  // Operatorv2(){}
 
-
-  //bond_, dot_labels_, size_, op_type, state_,tau_;
-  Operatorv2(const BOND* const bp , size_t st,
-            size_t si, size_t o, double t):bond_ptr_(bp), state_(st), size_(si), op_type_(o), tau_(t), cnt_(0)
-  {
-    ASSERT(size_ == bp->size(), "bond size and size is inconsistent");
-  }
-
-  //size_, op_type, state_,tau_;
-  Operatorv2(size_t st, size_t si, size_t o, double t)
-  :state_(st), size_(si), op_type_(o), tau_(t), bond_ptr_(nullptr), cnt_(0)
-  {
-    // ASSERT(size_ == bond_.size(), "bond size and size is inconsistent");
-  }
-
-  
-  // void set_state(size_t sp) { state_ = sp; }
-  size_t cnt() const {return cnt_;}
-  void set_state(size_t s) {
-    state_ = s;
-    cnt_ = 0;
-  }
-  void add_cnt() {cnt_++;}
-  size_t size() const {return size_;}
-  size_t op_type()const {return op_type_;}
-  size_t state()const {return state_;}
-  size_t state(size_t dir)const { // dir = 0 lower part, dir = 1 upper pirt
-    if (dir==0) return state_ % pows[size_];
-    else if (dir == 1) return state_ / pows[size_];
-    return -1;
-  }
-  double tau()const {return tau_;}
-  int bond(int i) {return bond_ptr_->operator[](i);}
-  const BOND* bond_ptr()const {return bond_ptr_;}
-  // size_t s0() const {return s0_;}
-  // size_t s1() const {return s1_;}
-
-  /*
-  leg = 0,1,2,3 for bond operator     
-  2  3
-  ====
-  0  1.
-  */
-
-  void update_state(size_t leg, size_t fl=1)
-    {
-    size_t a = pows[leg];
-    size_t t = pows[leg+1];
-    state_ = (state_/t)*t + (state_%t+fl*a) % t;
-    //  state_ ^= (fl << (nls*leg)); 
-    }
-  // SPIN get_spin(size_t leg) const {return (state_>>leg) & 1;}
-  SPIN get_local_state(size_t leg) const {
-    // std::cout << "sps : " << sps << std::endl;
-    return (state_ / pows[leg]) % sps; 
-  }
-  bool is_off_diagonal() const{ return (state(0) != state(1)); }
-  bool is_diagonal()const{ return !is_off_diagonal();}
-  static Operatorv2 sentinel(double tau = 1){ return Operatorv2(0, 0, 0, tau);}
-  void print(std::ostream& os) const {
-    for (size_t i=0; i<size_*2; i++) os << get_local_state(i) << " ";
-    os << tau_;
-  }
-  friend std::ostream& operator<<(std::ostream& os, Operatorv2 const& op) {
-    op.print(os);
-    return os;
-  }
-  STATE const get_state_vec(){
-    STATE state_vec(size_*2);
-    for (int i=0; i<size_*2; i++) {
-      state_vec[i] = get_local_state(i);
-    }
-    return state_vec;
-  }
-
-
-
-  /*
-  return label worm will move to
-  params
-  ------
-  cindex : current index (0 to 3). corresponds to which leg the worm comes in.
-  nindex : next index the worm goes out.
-  clabel : label of dot. (label doesn't distinguish the direction worm goes out or comes in)
-  L : number of site the operator acts, typically 2.
-
-  */
-  int next_dot(int cindex, int nindex, int clabel){
-    // int cindex = GetIndex(ptr, 0);
-    cindex %= size_;
-    nindex %= size_;
-    return clabel + (nindex - cindex);
-  }
-};
-
-
-template <size_t sps_, size_t max_L>
-const std::array<size_t, max_L+1> spin_state::Operatorv2<sps_, max_L>::pows = pows_array<max_L>(sps_);
+// template <size_t sps_, size_t max_L>
+// const std::array<size_t, max_L+1> spin_state::Operatorv2<sps_, max_L>::pows = pows_array<max_L>(sps_);

@@ -117,11 +117,6 @@ int main(int argc, char **argv) {
   }
 
 
-
-
-  // parser
-
-
   shapes[0] = args.safeGet<size_t>("L1", shapes[0]);
   shapes[1] = args.safeGet<size_t>("L2", shapes[1]);
   shapes[2] = args.safeGet<size_t>("L3", shapes[2]);

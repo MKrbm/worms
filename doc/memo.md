@@ -44,3 +44,19 @@ $\langle x_{\tau} | \hat{o}_i \hat{o}_j |x^\prime_{\tau} \rangle$
 - 厳密対角化 ワームのやつ
 
 
+
+- ## Memo
+  - First add the code to exactly calculate the physical quantity no matter how slow it is. 
+  - Next, write the test code and then reform the code to make it faster while keeping the test code.
+
+- # Result
+
+
+- 1. 1D Result
+  - What's model?
+  - What's the result?
+  - What's the method used in the this model.
+- 2. 2Dの場合
+  - 
+- At lest the name of section should be decided.
+

@@ -22,7 +22,7 @@ model::test::test(int L)
     int l = 2; //* leg size
     loperators[local] = local_operator<bcl::st2010>(l, 4); 
     leg_size[local] = l;
-    std::cout << "hamiltonian is read from " << path << std::endl;
+    std::cerr << "hamiltonian is read from " << path << std::endl;
     for (int i=0; i<shape[0]; i++){
       for (int j=0; j<shape[1]; j++)
       {

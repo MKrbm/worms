@@ -16,7 +16,7 @@
       "type": "python",
       "request": "launch",
       "program": "${file}",
-      "args": ["-m", "KH"],
+      "args": ["-m", "Ising1D"],
       // "args": ["-l", "dimer_optim", "-J", "1", "-M", "180", "-P", "1"],
       "console": "integratedTerminal",
       "justMyCode": true,
@@ -26,6 +26,7 @@
       "name": "cmake(linux)",
       "type": "cppdbg",
       "request": "launch",
+      "args": ["-m", "Kagome3"],
       // Resolved by CMake Tools:
       "program": "${command:cmake.launchTargetPath}",
       "stopAtEntry": false,
