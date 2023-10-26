@@ -470,3 +470,29 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
   | ----- | -------------------- | ------------------------- | ------------------------- | ------------------------- | ------------------------- | ----------------------------- |
   | T=1   | -0.07947518797058616 | -0.0797444 +- 0.000989955 | -0.0794962 +- 3.65553e-05 | -0.0795685 +- 0.000246453 | -0.0793597 +- 0.000176153 | ?                             |
   | T=0.5 | -0.14013342736830942 | ?                         | -0.140261 +- 0.000326007  | -0.131929 +- 2.89219e-05  | -0.140235 +- 0.000298051  | -0.140203 +- 0.000172569      |
+
+
+- FF_1D model (commit : 10a2a27336ffb000cff4d06e2e7588984e449c3b)
+    - Generate 1D frustration-free model using peps technique : https://arxiv.org/abs/0707.2260
+        - Actually the method was bit modified so that the local Hamiltonian can be frustration-free for any length of chain.
+    - In order to generate local FF hamiltonian, run e.g. : `python torch_optimize_loc.py -m FF1D -loss mel -o LION -e 1000 -M 10000 -lr 0.005 -r 2`
+        - here, 1D means lattice is 1D chain. Note that 2D has yet to be implemented.
+    - When you look through the code, you can find there are some parameters to generate ff model. 
+
+        ```python 
+        p = dict(
+            sps=3,
+            rank=2,
+            dimension=d,
+            us=1,
+            seed=1,
+        )
+        ```
+
+        - sps : degree of spin freedom per site. This will be determined by `-r` flag.
+        - rank : rank of tensor network, need to be lower than sps in order to be ff
+        - dimension : currently only 1D is available
+        - us : number of sites per unit cell. Usually 1.
+        - seed : random seed. The same seed generates the same local hamiltonian.
+    
+    - 
