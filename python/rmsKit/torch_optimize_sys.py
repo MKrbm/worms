@@ -172,7 +172,6 @@ if __name__ == "__main__":
     else:
         raise ValueError("not implemented")
     model = rms_torch.UnitaryRieman(H.shape[1], sps, device=device).to(device)
-    # model = torch.compile(model_, dynamic = False, fullgraph=False)
 
     best_loss = 1e10
     best_us = None
