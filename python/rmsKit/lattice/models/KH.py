@@ -38,8 +38,15 @@ for ind in range(len(P)):
     P[ind, ind] = 0
 
 
-def local(ua: str, params: dict):
-    if ua not in unitary_algorithms:
+def local(lt: str, params: dict):
+    """
+    params
+    ------
+    lt : str 
+        lattice type 
+    params : dict
+    """
+    if lt not in unitary_algorithms:
         raise ValueError("unitary_algorithms not supported")
     Jz = params["Jz"]
     Jx = params["Jx"]
@@ -49,12 +56,12 @@ def local(ua: str, params: dict):
     h_bond = Jz * SzSz + Jx * SxSx + Jy * SySy
     h_single = hz * Sz + hx * Sx
 
-    if ua == "original":
+    if lt == "original":
         h = h_bond + (np.kron(h_single, I2) + np.kron(I2, h_single)) / 4.0  # n* there is 4 bond per site
         sps = 2
         return [h], sps
 
-    if ua == "3site":
+    if lt == "3site":
         _h = utils.sum_ham(h_bond / 6, [[0, 1], [1, 2], [2, 0], [3, 4], [4, 5], [5, 3]], 6, 2)
         _h += utils.sum_ham(h_single / 6, [[i] for i in range(6)], 6, 2)  # n* there is 6 bond per site
 
@@ -66,7 +73,7 @@ def local(ua: str, params: dict):
         return [_h for _h in h], 8
         # rewrite this with forloop
 
-    if ua == "3siteDiag":
+    if lt == "3siteDiag":
         _h0 = utils.sum_ham(h_bond, [[0, 1], [1, 2], [2, 0]], 3, 2)
         E, V = np.linalg.eigh(_h0)
         U = np.kron(V, V)
@@ -86,15 +93,15 @@ def local(ua: str, params: dict):
         return h, 8
         # rewrite this with forloop
 
-    if ua == "6site":
+    if lt == "6site":
         print("impossible")
-    error_message = f"Other unitary_algorithms mode not implemented yet u = {ua}"
+    error_message = f"Other unitary_algorithms mode not implemented yet lattice type = {lt}"
     raise NotImplementedError(error_message)
     return None, None
 
 
-def system(_L: list[int], ua: str, params: dict, separate: bool = False) -> np.ndarray:
-    if ua not in unitary_algorithms:
+def system(_L: list[int], lt: str, params: dict, separate: bool = False) -> np.ndarray:
+    if lt not in unitary_algorithms:
         raise ValueError("unitary_algorithms not supported")
 
     L = np.array(_L)
@@ -111,9 +118,9 @@ def system(_L: list[int], ua: str, params: dict, separate: bool = False) -> np.n
     if N > 12:
         raise ValueError(f"Only N <= 12 is supported")
     H = np.zeros((2**N, 2**N))
-    H_list, sps = local(ua, params)
+    H_list, sps = local(lt, params)
 
-    if ua == "original":
+    if lt == "original":
         bonds = None
         if L[0] == L[1] == 2:
             bonds = [
@@ -298,7 +305,7 @@ def system(_L: list[int], ua: str, params: dict, separate: bool = False) -> np.n
         _H = utils.sum_ham(H_bond, bonds, N, 2)
         return _H
 
-    if ua == "3site" or ua == "3siteDiag":
+    if lt == "3site" or lt == "3siteDiag":
         _bonds_prime = [[1, 1, 0], [0, 2, 0], [2, 2, 1], [0, 3, 1], [1, 3, 2], [2, 3, 0]]
         bonds = [[], [], []]
         for bond in _bonds_prime:
@@ -331,4 +338,4 @@ def system(_L: list[int], ua: str, params: dict, separate: bool = False) -> np.n
             return _H
 
     else:
-        raise ValueError(f"ua = {ua} not supported")
+        raise ValueError(f"lattice type = {lt} not supported")
