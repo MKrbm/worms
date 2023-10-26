@@ -119,13 +119,13 @@ if __name__ == "__main__":
         p = dict(
             sps=3,
             rank=2,
-            length=6,
             dimension=d,
-            seed=0,
+            seed=1,
+            us = 1,
         )
         H = FF.system(L, ua, p)
         # params_str = f'{d}D_{p["sps"]}sps_{p["rank"]}r_{p["length"]}_seed{p["seed"]}'
-        params_str = f's_{p["sps"]}_r_{p["rank"]}_l_{p["length"]}_seed_{p["seed"]}'
+        params_str = f's_{p["sps"]}_r_{p["rank"]}_d_{p["dimension"]}_seed_{p["seed"]}'
     else:
         raise ValueError("model not found")
 
@@ -134,7 +134,10 @@ if __name__ == "__main__":
     E, V = torch.linalg.eigh(H)
     E = E.cpu().numpy()
     V = V.cpu().numpy()
-    #
+
+    logging.info(f"finish diagonalization of {model_name}")
+    logging.info(f"output to {path}")
+
     file = f"{path}/groundstate.npy"
     os.makedirs(os.path.dirname(file), exist_ok=True)
     save_npy(file, V[:, 0])

@@ -1,11 +1,11 @@
 import torch
-from torch import Tensor
 from lattice import KH, FF
-from lattice import save_npy, list_unitaries
+from lattice import save_npy
 
 import argparse
 from random import randint
-import random
+
+# import random
 import numpy as np
 import rms_torch
 import logging
@@ -93,17 +93,15 @@ print(f"logging to file: {log_filename}")
 logging.info("filename : torch_optimize_loc.py")
 logging.info(args_str)
 
-
 # if machine is osx then use mps backend instead of cuda
 if args.platform == "gpu":
-    #check if os is osx
+    # check if os is osx
     if platform.system() == "Darwin":
         device = torch.device("mps")
     else:
         device = torch.device("cuda")
-else: 
+else:
     device = torch.device("cpu")
-
 
 # device = torch.device("") if args.platform == "gpu" else torch.device("cpu")
 logging.info("device: {}".format(device))
@@ -111,7 +109,6 @@ logging.info("device: {}".format(device))
 logging.info("args: {}".format(args))
 M = args.num_iter
 seed_list = [randint(0, 1000000) for i in range(M)]
-# print("seed_list: {}".format(seed_list))    
 
 if __name__ == "__main__":
     p = dict(
@@ -142,23 +139,22 @@ if __name__ == "__main__":
         elif args.model == "FF2D":
             d = 2
         p = dict(
-            sps=4,
+            sps=3,
             rank=2,
             dimension=d,
+            us=1,
             seed=1,
         )
-        h_list, sps = FF.local(ua, p)
-        params_str = f's_{p["sps"]}_r_{p["rank"]}_seed_{p["seed"]}'
+        h_list, sps = FF.local(ua, p, [3])
+        params_str = f's_{sps}_r_{p["rank"]}_us_{p["us"]}_d_{p["dimension"]}_seed_{p["seed"]}'
 
     path = f"array/torch/{args.model}_loc/{ua}/{args.loss}/{params_str}"
+    ham_path = f"array/torch/{args.model}_loc/{ua}/none/{params_str}/H.npy"
     logging.info(f"operators ***will* be saved to {path}")
 
-    # decide the loss function
-    if args.loss == "none":
-        h_list = [-np.array(h) for h in h_list]
-        save_npy(f"{path}/H", h_list)
-        exit(0)
-    elif args.loss == "mel":
+    save_npy(f"{path}/H", [-np.array(h) for h in h_list])
+    logging.info(f"hamiltonian saved to {ham_path}")
+    if args.loss == "mel":
         loss = rms_torch.MinimumEnergyLoss(h_list, device=device)
 
     model = rms_torch.UnitaryRieman(h_list[0].shape[1], sps, device=device).to(device)
@@ -186,7 +182,6 @@ if __name__ == "__main__":
             raise ValueError("not implemented")
 
         scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda) if args.schedule else None
-        # print(optimizer)
         epochs = args.epoch
         if args.loss == "smel":
             loss.initializer(model())
