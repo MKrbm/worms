@@ -36,7 +36,6 @@ def get_local_best_loss_from_tensorboard(tensorboard_dir):
     """Get a list of local best loss values and their corresponding directory names."""
     dir_names = glob.glob(f"{tensorboard_dir}/*")
     loss_values_and_dir_names = []
-    
     for dir_name in dir_names:
         # Assuming directory name format contains "local_best_loss_{value}"
         try:
@@ -44,5 +43,4 @@ def get_local_best_loss_from_tensorboard(tensorboard_dir):
             loss_values_and_dir_names.append(loss_value)
         except:
             pass  # directory name might not match expected format
-
     return sorted(loss_values_and_dir_names)
