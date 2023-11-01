@@ -433,23 +433,21 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
 
     - ## Bugs
       - for u = 3site, there is a bug when turn-on zero_worm and single_flip at
-        the same time, since I thought only single_flip is able to have zero_worm
-        when it is enabled. (commit 5e0d860929e4283287c47aac82505b22528d59f4)
+        the same time, since I thought only single_flip is able to have
+        zero_worm when it is enabled. (commit
+        5e0d860929e4283287c47aac82505b22528d59f4)
         - fixed with the commit 058be4353306cc2f8c844d65c363ea394dd709cf
-        - Above didn't solve every bugs, Indeed, the new worm.cpp and the previous
-          one should return the same result but for model : alpha = 0.2, J4 HXYZ2D
-          (if alpha = 0, returns the same result)
+        - Above didn't solve every bugs, Indeed, the new worm.cpp and the
+          previous one should return the same result but for model : alpha =
+          0.2, J4 HXYZ2D (if alpha = 0, returns the same result)
           - previous : e =
           - new : e = -0.185175 +- 0.000481603
       - Also, Kagome3 with signle_flip emboddies some bugs (although the above
         problem may be the main reason of the bug).
 
   - J = J4
-    
+
     - it seems above parameter region doesn't improve the result.
-
-
-
 
 - HXYZ1D 2site unit J4 to solve bugs (commit :
   def5e012700ee2b9ea2e7be632f3572f82cdf0a4 )
@@ -463,36 +461,125 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
   | T=1   | -0.07947518797058616 | -0.0797444 +- 0.000989955 | -0.0794962 +- 3.65553e-05 | -0.0767406 +- 9.22165e-05 | -0.0768608 +- 4.09506e-05 | ?                             |
   | T=0.5 | -0.14013342736830942 | ?                         | -0.140261 +- 0.000326007  | -0.131929 +- 2.89219e-05  | -0.131934 +- 1.51194e-05  | -0.131945 +- 7.10646e-05      |
 
-
-  Fixed bug 
+  Fixed bug
 
   | loss  | exact                | none                      | mes (alpha = 0)           | mes (alpha = 0.1, zw)     | mes (alpha = 0.8, zw)     | mes (alpha a = 0.8, zw=false) |
   | ----- | -------------------- | ------------------------- | ------------------------- | ------------------------- | ------------------------- | ----------------------------- |
   | T=1   | -0.07947518797058616 | -0.0797444 +- 0.000989955 | -0.0794962 +- 3.65553e-05 | -0.0795685 +- 0.000246453 | -0.0793597 +- 0.000176153 | ?                             |
   | T=0.5 | -0.14013342736830942 | ?                         | -0.140261 +- 0.000326007  | -0.131929 +- 2.89219e-05  | -0.140235 +- 0.000298051  | -0.140203 +- 0.000172569      |
 
-
 - FF_1D model (commit : 10a2a27336ffb000cff4d06e2e7588984e449c3b)
-    - Generate 1D frustration-free model using peps technique : https://arxiv.org/abs/0707.2260
-        - Actually the method was bit modified so that the local Hamiltonian can be frustration-free for any length of chain.
-    - In order to generate local FF hamiltonian, run e.g. : `python torch_optimize_loc.py -m FF1D -loss mel -o LION -e 1000 -M 10000 -lr 0.005 -r 2`
-        - here, 1D means lattice is 1D chain. Note that 2D has yet to be implemented.
-    - When you look through the code, you can find there are some parameters to generate ff model. 
 
-        ```python 
-        p = dict(
-            sps=3,
-            rank=2,
-            dimension=d,
-            us=1,
-            seed=1,
-        )
-        ```
+  - Generate 1D frustration-free model using peps technique :
+    https://arxiv.org/abs/0707.2260
+    - Actually the method was bit modified so that the local Hamiltonian can be
+      frustration-free for any length of chain.
+  - In order to generate local FF hamiltonian, run e.g. :
+    `python torch_optimize_loc.py -m FF1D -loss mel -o LION -e 1000 -M 10000 -lr 0.005 -r 2`
+    - here, 1D means lattice is 1D chain. Note that 2D has yet to be
+      implemented.
+  - When you look through the code, you can find there are some parameters to
+    generate ff model.
 
-        - sps : degree of spin freedom per site. This will be determined by `-r` flag.
-        - rank : rank of tensor network, need to be lower than sps in order to be ff
-        - dimension : currently only 1D is available
-        - us : number of sites per unit cell. Usually 1.
-        - seed : random seed. The same seed generates the same local hamiltonian.
-    
-    - 
+    ```python
+    p = dict(
+        sps=3,
+        rank=2,
+        dimension=d,
+        us=1,
+        seed=1,
+    )
+    ```
+
+    - sps : degree of spin freedom per site. This will be determined by `-r`
+      flag.
+    - rank : rank of tensor network, need to be lower than sps in order to be ff
+    - dimension : currently only 1D is available
+    - us : number of sites per unit cell. Usually 1.
+    - seed : random seed. The same seed generates the same local hamiltonian.
+
+  - run_simulation.py
+
+  - seed = 512
+
+    - Use MPS generated randomly from normal distribution (unlike previously)
+    - sweeps : 6 \* 5E6
+    - loss = 0.00921
+
+      - Theoretically, the gs energy for absolute system is lower than loss \* L
+
+    - L = 6
+
+      Energy
+
+      | loss   | exact                | mes                       | none                      |
+      | ------ | -------------------- | ------------------------- | ------------------------- |
+      | T=1    | 0.14848181708495692  | 0.148396 +- 0.000117865   | 0.148396 +- 0.000117865   |
+      | T=0.5  | 0.024505723254959377 | 0.0245954 +- 7.01752e-05  | 0.0245954 +- 7.01752e-05  |
+      | T=0.25 | 0.004447369789880035 | 0.00437926 +- 4.15002e-05 | 0.00440814 +- 0.000424928 |
+      | T=0.1  | 0.00383386671997593  | 0.004206 +- 0.00571919    | 0.004206 +- 0.00571919    |
+      | T=0.01 | ?                    | 0.00383387 +- 0.000100001 | -0.142564 +- 0.160116     |
+
+      Average Sign
+
+      | loos     | mes                     | none                    |
+      | -------- | ----------------------- | ----------------------- |
+      | T=1      | 0.999934 +- 4.28854e-06 | 0.98369 +- 0.000202372  |
+      | T=0.5    | 0.999694 +- 1.10713e-05 | 0.896842 +- 0.00064242  |
+      | T=0.25   | 0.998954 +- 3.06621e-05 | 0.586869 +- 0.000703541 |
+      | T=0.1    | 0.993936 +- 0.000410075 | 0.036592 +- 0.00165042  |
+      | T = 0.01 | 0.974147 +- 0.00164656  | 0.001125 +- 0.00129898  |
+
+    - L = 20
+
+      Energy
+
+      | loss     | mes                       |
+      | -------- | ------------------------- |
+      | T = 0.05 | 0.00342205 +- 3.24912e-05 |
+
+      Average Sign
+
+      | loss     | mes                   |
+      | -------- | --------------------- |
+      | T = 0.05 | 0.918315 +- 0.0032797 |
+
+    - L = 100
+
+      Energy
+
+      | loss     | mes                       |
+      | -------- | ------------------------- |
+      | T = 0.05 | 0.00343649 +- 1.72491e-05 |
+
+      Average Sign
+
+      | loss     | mes                    |
+      | -------- | ---------------------- |
+      | T = 0.05 | 0.658012 +- 0.00474073 |
+
+  - seed = 0
+
+    - loss = 0.17387
+
+    - L = 6
+
+      Energy
+
+      | T    | exact               | mes                      | none                  |
+      | ---- | ------------------- | ------------------------ | --------------------- |
+      | 1    | 0.25118684103027006 | 0.251156 +- 0.000311873  | 0.250061 +- 0.0011267 |
+      | 0.5  | 0.10662484818538966 | 0.106549 +- 0.000278406  | 0.10926 +- 0.00700185 |
+      | 0.25 | 0.04332188189002812 | 0.0441297 +- 0.000682354 | -0.421567 +- 0.162081 |
+      | 0.1  | 0.01599607518647706 | -0.275572 +- 0.252839    | ?                     |
+
+      Average Sign
+
+      | T    | mes                        | none                      |
+      | ---- | -------------------------- | ------------------------- |
+      | 1    | 0.974711 +- 0.000225541    | 0.672731 +- 0.00136263    |
+      | 0.5  | 0.818884 +- 0.000745897    | 0.0647213 +- 0.00096075   |
+      | 0.25 | 0.272267 +- 0.00117836     | 0.00106233 +- 0.000761337 |
+      | 0.1  | 0.000597333 +- 0.000811593 | ?                         |
+
+Average sign = 0.974711 +- 0.000225541 Energy per site = 0.251156 +- 0.000311873
