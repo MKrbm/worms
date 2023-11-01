@@ -73,7 +73,7 @@ include_directories(${worms_SOURCE_DIR})
 add_subdirectory(./worms) #call /LoopAlgo/CMakeLists.txst
 add_subdirectory(./gtest)
 
-FIND_PACKAGE(Boost COMPONENTS serialization REQUIRED)
+FIND_PACKAGE(Boost COMPONENTS serialization filesystem REQUIRED)
 
 FOREACH(name main_MPI debug)
     add_executable(${name} ${name}.cpp)

@@ -3,10 +3,9 @@
 #include <argparse.hpp>
 #include <automodel.hpp>
 #include <autoobservable.hpp>
+#include <cstdio>
 #include <dirent.h>
 #include <exec_parallel.hpp>
-#include <filesystem>
-#include <fstream>
 #include <funcs.hpp>
 #include <functional>
 #include <iostream>
@@ -21,11 +20,13 @@
 #include <alps/utilities/mpi.hpp>
 #include <jackknife.hpp>
 
+#include <boost/filesystem.hpp>
+
+// using namespace boost::filesystem;
 using namespace std;
 using namespace libconfig;
-
+namespace fs = boost::filesystem;
 using namespace std;
-
 double elapsed;
 
 int main(int argc, char **argv) {
@@ -45,11 +46,8 @@ int main(int argc, char **argv) {
 
   // alps::mpi::communicator comm_;
 
-  // cout << rank << endl;
-
   char tmp[256];
   auto _ = getcwd(tmp, 256);
-  // cout << tmp << endl;
 
   Config cfg;
   cfg.setAutoConvert(true);
@@ -78,8 +76,9 @@ int main(int argc, char **argv) {
   parser.addArgument({"-wobs"}, "path to worm observables");
   parser.addArgument({"-P1"}, "set params[0]");
   parser.addArgument({"-P2"}, "set params[1]");
-
   parser.addArgument({"-alpha"}, "set alpha");
+  parser.addArgument({"--output"}, "save output to file",
+                     argparse::ArgumentType::StoreTrue);
 
   auto args = parser.parseArgs(argc, argv);
 
@@ -99,10 +98,7 @@ int main(int argc, char **argv) {
   string model_name = root["model"];
   bool print_lat = (bool)root["print_lattice"];
   model_name = args.safeGet<string>("m", model_name);
-  if (rank == 0) {
-    cout << "model name is \t : \t" << model_name << endl;
-    cout << "run on \t : \t" << size << " nodes" << endl;
-  }
+
   const Setting *mcfg;
   try {
     mcfg = &root["models"][model_name];
@@ -117,7 +113,8 @@ int main(int argc, char **argv) {
   const Setting &dofs_cfg = mcfg->lookup("dofs");
 
   double shift;
-  string file, basis, cell, ham_path, obs_path, u_path;
+  string file, basis, cell, ham_path, obs_path, u_path, out_file;
+  out_file = "";
   vector<string> wobs_paths;
   bool repeat; // true if repeat params and types.
   bool zero_worm;
@@ -159,27 +156,6 @@ int main(int argc, char **argv) {
   shift = (double)mcfg->lookup("shift");
   double alpha = (double)mcfg->lookup("alpha");
   zero_worm = (bool)mcfg->lookup("zero_worm");
-  try {
-    ns_unit = (size_t)mcfg->lookup("ns_unit");
-  } catch (...) {
-    if (rank == 0) {
-      cout << "Warning!!: please set ns_unit in model.cfg" << endl;
-      cout << "ns_unit is automatically set to 1" << endl;
-    }
-    ns_unit = 1;
-  }
-  try {
-    const Setting &wobs_path_list = mcfg->lookup("worm_obs_path");
-    for (int i = 0; i < wobs_path_list.getLength(); i++) {
-      string tmp = wobs_path_list[i];
-      wobs_paths.push_back(tmp);
-    }
-  } catch (const SettingNotFoundException &nfex) {
-    if (rank == 0)
-        cout << "no worm observables" << endl;
-  }
-
-  // cout << file << endl;
 
   //* settings for monte-carlo
   const Setting &settings = root["mc_settings"];
@@ -217,6 +193,60 @@ int main(int argc, char **argv) {
   params[1] = args.safeGet<float>("P2", params[1]);
   alpha = args.safeGet<double>("alpha", alpha);
 
+  if (args.has("output")) {
+    string folder = "../worm_result/";
+    string model_name_ = model_name;
+    if (shapes.size() == 1) {
+      model_name += ("_L_" + to_string(shapes[0]));
+    } else if (shapes.size() == 2) {
+      model_name += ("_L_" + to_string(shapes[0]) + "_" + to_string(shapes[1]));
+    } else if (shapes.size() == 3) {
+      model_name += ("_L_" + to_string(shapes[0]) + "_" + to_string(shapes[1]) +
+                     "_" + to_string(shapes[2]));
+    }
+    string setting_name = "T_" + to_string(T) + "/" + "N_" + to_string(sweeps);
+    string output_folder = folder + model_name + "/" + setting_name;
+    string dateTime = getCurrentDateTime();
+
+    out_file = output_folder + "/" + getCurrentDateTime() + ".txt";
+    fs::path output_folder_fs(output_folder);
+    if (!fs::exists(output_folder_fs)) {
+      if (rank == 0) {
+        cout << "create directory : " << output_folder_fs << endl;
+      }
+      boost::filesystem::create_directories(output_folder_fs);
+    }
+    if (rank == 0) {
+      freopen(out_file.c_str(), "w", stdout);
+    }
+  }
+
+  if (rank == 0) {
+    cout << "Output file: " << out_file << endl;
+    cout << "model name is \t : \t" << model_name << endl;
+    cout << "run on \t : \t" << size << " nodes" << endl;
+  }
+
+  try {
+    ns_unit = (size_t)mcfg->lookup("ns_unit");
+  } catch (...) {
+    if (rank == 0) {
+      cout << "Warning!!: please set ns_unit in model.cfg" << endl;
+      cout << "ns_unit is automatically set to 1" << endl;
+    }
+    ns_unit = 1;
+  }
+  try {
+    const Setting &wobs_path_list = mcfg->lookup("worm_obs_path");
+    for (int i = 0; i < wobs_path_list.getLength(); i++) {
+      string tmp = wobs_path_list[i];
+      wobs_paths.push_back(tmp);
+    }
+  } catch (const SettingNotFoundException &nfex) {
+    if (rank == 0)
+      cout << "no worm observables" << endl;
+  }
+
   try {
     ham_path = args.get<string>("ham");
     try {
@@ -248,6 +278,11 @@ int main(int argc, char **argv) {
   if (args.has("z"))
     zero_worm = true;
 
+  if (rank == 0) {
+    if (out_file != "")
+      cout << "output file : " << out_file << endl;
+  }
+
   sweeps = (sweeps / 2) * 2; // make sure sweeps is even number
   if (rank == 0) {
     cout << "zero_wom : " << (zero_worm ? "YES" : "NO") << endl;
@@ -271,7 +306,8 @@ int main(int argc, char **argv) {
         lat, dofs, ham_path, params, types, shift, zero_worm, repeat, !rank,
         alpha);
   } else {
-    // model::base_model<bcl::heatbath> spin(lat, dofs, ham_path, u_path, params,
+    // model::base_model<bcl::heatbath> spin(lat, dofs, ham_path, u_path,
+    // params,
     //                                       types, shift, zero_worm, repeat,
     //                                       !rank, alpha);
     spin_ptr = std::make_unique<model::base_model<bcl::heatbath>>(
@@ -287,8 +323,8 @@ int main(int argc, char **argv) {
   for (int i = 0; i < wobs_paths.size(); i++) {
     string name = "G";
     name += to_string(i);
-    mapwobs.push_back(name,
-                      model::WormObs(spin_ptr->sps_sites(0), wobs_paths[i], !rank));
+    mapwobs.push_back(
+        name, model::WormObs(spin_ptr->sps_sites(0), wobs_paths[i], !rank));
   }
 
   // model::WormObs wobs(spin.sps_sites(0), wobs_path, !rank); // all elements
@@ -309,8 +345,8 @@ int main(int argc, char **argv) {
     cout << endl;
   }
 
-  //n* check argument
-  if (T < 0){
+  // n* check argument
+  if (T < 0) {
     throw std::runtime_error("temperature must be positive");
   }
 
@@ -319,8 +355,8 @@ int main(int argc, char **argv) {
   // simulate with worm algorithm (parallel computing is enable)
   vector<batch_res> res;
   auto map_worm_obs =
-      exe_worm_parallel(*spin_ptr, T, sweeps, therms, cutoff_l, fix_wdensity, rank,
-                        res, ac_res, obs, mapwobs);
+      exe_worm_parallel(*spin_ptr, T, sweeps, therms, cutoff_l, fix_wdensity,
+                        rank, res, ac_res, obs, mapwobs);
 
   batch_res as = res[0];  // average sign
   batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$

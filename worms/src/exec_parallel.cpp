@@ -136,11 +136,11 @@ exe_worm_parallel(model::base_model<MC> spin_model, double T, size_t sweeps,
         std::cout << "Info: average number worms per MCS is reset from "
                   << spin_model.L << " to " << wdensity + 1 << "(rank=" << rank
                   << ")"
-                  << "\n\n";
+                  << "\n" << std::endl;
       else if (rank == 0)
         std::cout << "Info: average number worms per MCS is " << wdensity + 1
                   << "(rank=" << rank << ")"
-                  << "\n\n";
+                  << "\n" << std::endl;
     }
     cnt++;
   }
