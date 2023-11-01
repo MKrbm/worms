@@ -57,7 +57,6 @@ def create_MPS(n, dimension, bd, A):
     for k in range(0, n):
         conn = mps[k][2] ^ mps[(k + 1) % n][0]
         connected_edges.append(conn)
-
     return mps, connected_edges
 
 A = block(bond_dim, sps, bond_dim)
@@ -74,7 +73,6 @@ for k in range(len(mps_edges)):
 
 yL = A.tensor.reshape(sps*sps,-1)
 yL /= np.linalg.norm(yL)
-# logging.info(np.linalg.norm(h @ yL))
 logging.info("Confirm this is indeed a frustration free hamiltonian h @ yL = 0 : %s", np.linalg.norm(h @ yL))
 path = f"../array/torch/ff/s_{sps}_bd_{bond_dim}_n{n}_d{d}"
 save_npy(f"{path}/H", [h])
