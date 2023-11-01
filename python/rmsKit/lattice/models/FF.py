@@ -10,15 +10,18 @@ import utils
 from typing import List
 
 
-def block1D(*dimensions):
+def block1D(*dimensions, normal = True):
     """Construct a new matrix for the MPS with random numbers from 0 to 1"""
     size = tuple([x for x in dimensions])
-    A = np.random.random_sample(size)
+    if normal:
+        A = np.random.normal(size=size)
+    else:
+        A = np.random.random_sample(size)
     A = (A.transpose(2, 1, 0) + A) / 2
     return A
 
 
-def create_MPS(n, dimension, bd, A):
+def create_MPS(n, A):
     """Build the MPS tensor"""
     mps = [tn.Node(np.copy(A)) for _ in range(n)]
     # connect edges to build mps
@@ -40,7 +43,7 @@ def local(ua: str, params: dict, check_L: List[int] = []):
     bond_dim = params["rank"]
     d = params["dimension"]
     seed = params["seed"]
-    us = params["us"]  # number of sites in unit cell
+    lt = params["lt"]  # number of sites in unit cell
     logging.info(f"generate ff with seed: {seed}")
     np.random.seed(seed)
     random.seed(seed)
@@ -55,7 +58,7 @@ def local(ua: str, params: dict, check_L: List[int] = []):
         U, s, V = np.linalg.svd(A2)
         Up = U[:, len(s):]
         h = Up @ Up.T
-        if us == 2:
+        if lt == 2:
             _h = utils.sum_ham(h / 2, [[0, 1], [2, 3]], 4, sps)
             _h += utils.sum_ham(h, [[1, 2]], 4, sps)
             h = _h
