@@ -23,6 +23,7 @@ parser.add_argument("-Jx", "--coupling_x", help="coupling constant (Jx)", type=f
 parser.add_argument("-Jy", "--coupling_y", help="coupling constant (Jy)", type=float)
 parser.add_argument("-hx", "--mag_x", help="magnetic field", type=float, default=0)
 parser.add_argument("-hz", "--mag_z", help="magnetic field", type=float, default=0)
+parser.add_argument("-r", "--seed", help="random seed", type=int, default=None)
 # parser.add_argument('-T', "--temperature", help = "temperature", type = float)
 parser.add_argument("-L1", "--length1", help="length of side", type=int, required=True)
 parser.add_argument("-L2", "--length2", help="length of side", type=int)
@@ -120,8 +121,8 @@ if __name__ == "__main__":
             sps=3,
             rank=2,
             dimension=d,
-            seed=1,
-            us = 1,
+            seed=args.seed,
+            lt = 1,
         )
         H = FF.system(L, ua, p)
         # params_str = f'{d}D_{p["sps"]}sps_{p["rank"]}r_{p["length"]}_seed{p["seed"]}'
