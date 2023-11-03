@@ -1,42 +1,25 @@
 version: '3.4'
 
-volumes:
-  worm_data:
+# volumes:
+#   worm_data:
 
 services:
   main:
-    container_name: worms_gpu
-    # env_file: 
-    #   - .env
-    # environment:
-    #   DOCKER_BUILDKIT: 1
-    #   COMPOSE_DOCKER_CLI_BUILD: 1
-    # image: sonoisa/deep-learning-coding:pytorch1.12.0_tensorflow2.9.1
-    # image: ubuntu:jammy-20221101
-    image: kei0709/ubuntu20.04_cpp_jax
-    # build:
-    #   context: .
-    #   dockerfile: ./Dockerfile
+    container_name: worms_gpu_torch 
+    image: kei0709/cuda12.1_ubutnu22.04:latest 
     volumes:
-      # - worm_data:/home/user/project
       - ..:/home/user/project
       - type: bind
         source: ~/.ssh
         target: /home/user/.ssh
         read_only: true
-      # - type: bind
-      #   source: ~/.gitconfig
-      #   target: /home/user/.gitconfig
-      #   read_only: true
-    # ports:
-    #   - "8881:8888" #set by yourself
-    cap_add: 
-      - SYS_PTRACE
-    privileged: true
+    tty: true
+    user : 1000:1000
+    ports:
+      - 8899:8899
     security_opt: 
       - seccomp:unconfined
     stdin_open: true
-    tty: true
     working_dir: /home/user/project
     deploy:
       resources:

@@ -35,10 +35,8 @@ def create_MPS(n, A):
 unitary_algorithms = ["original"]
 
 
-def local(ua: str, params: dict, check_L: List[int] = []):
+def local(params: dict, check_L: List[int] = []):
     logging.info("params: {}".format(params))
-    if ua not in unitary_algorithms:
-        raise ValueError("unitary_algorithms not supported")
     sps = params["sps"]
     bond_dim = params["rank"]
     d = params["dimension"]
@@ -75,9 +73,7 @@ def local(ua: str, params: dict, check_L: List[int] = []):
         raise NotImplementedError("not implemented")
 
 
-def system(_L: list[int], ua: str, params: dict) -> np.ndarray:
-    if ua not in unitary_algorithms:
-        raise ValueError("unitary_algorithms not supported")
+def system(_L: list[int], params: dict) -> np.ndarray:
     _d = len(_L)
     s = params["sps"]
     d = params["dimension"]

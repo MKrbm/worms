@@ -177,10 +177,10 @@ if __name__ == "__main__":
             sps=3,
             rank=2,
             dimension=d,
-            lt=1,
+            lt=1 if lt == "original" else int(lt), # lattice type (number of sites in unit cell)
             seed=1 if seed is None else seed,
         )
-        h_list, sps = FF.local(lt, p, [3])
+        h_list, sps = FF.local(p, [3])
         params_str = f's_{sps}_r_{p["rank"]}_lt_{p["lt"]}_d_{p["dimension"]}_seed_{p["seed"]}'
         model_name = f"{args.model}_loc/{params_str}"
 
@@ -198,6 +198,8 @@ if __name__ == "__main__":
 
         
 
+    if args.loss == "none":
+        exit()
     if args.loss == "mel":
         loss = rms_torch.MinimumEnergyLoss(h_list, device=device)
 
@@ -269,29 +271,7 @@ if __name__ == "__main__":
         logging.info(
             f"best loss at epoch {epochs}: {local_best_loss}, best loss so far: {best_loss}"
         )
-
-        # if len(tensorboard_loss_values) > 100:
-        #     worst_loss  = tensorboard_loss_values[-1]  # Last element is the worst loss due to sorting
-        #     if local_best_loss > worst_loss:
-        #         continue  # Skip if the current loss is worse than the worst loss in the list
-        #     else:
-        #         worst_unitary_path = f"{path}/loss_{worst_loss:.5f}"
-        #         worst_loss_dir = f"{custom_dir}/{base_name}/loss_{worst_loss:.5f}"
-        #         print("Removing tensorboard dir: ", worst_loss_dir)
-        #         shutil.rmtree(worst_loss_dir)  # Delete tensorboard dir of the worst loss
-        #         shutil.rmtree(worst_unitary_path)  # Delete corresponding unitary matrix directory
-        #         logging.info(f"Removed tensorboard dir: {worst_loss_dir}")
-        #         logging.info(f"Removed unitary matrix dir: {worst_unitary_path}")
-        #         print("Removed tensorboard dir: ", tensorboard_loss_values.pop())
-
-        # tensorboard_loss_values.append(round(local_best_loss, 5))
-        # #pick only unique values
-        # tensorboard_loss_values = list(set(tensorboard_loss_values))
-        # tensorboard_loss_values.sort()
         save_npy(f"{path}/loss_{local_best_loss:.5f}/u", local_best_us)
-        # writer = SummaryWriter(tb_name)
-        # for t, ls in enumerate(loss_list):
-        #     writer.add_scalar('Loss', ls, t)
         writer.close()
 
     logging.info("best loss value: %s", best_loss)
