@@ -204,7 +204,7 @@ int main(int argc, char **argv) {
       model_name += ("_L_" + to_string(shapes[0]) + "_" + to_string(shapes[1]) +
                      "_" + to_string(shapes[2]));
     }
-    string setting_name = "T_" + to_string(T) + "/" + "N_" + to_string(sweeps);
+    string setting_name = "T_" + to_string(T) + "/" + "N_" + to_string(sweeps * size);
     string output_folder = folder + model_name + "/" + setting_name;
     string dateTime = getCurrentDateTime();
 
