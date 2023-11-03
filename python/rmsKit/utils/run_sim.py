@@ -38,6 +38,7 @@ def run_ff_1d(
     dimension: int = 1,
     M: int = 100,
     e: int = 1000,
+    gpu: bool = False,
     output_dir: str = "out/run_sim/",
     output: bool = False,
 ) -> Union[subprocess.CompletedProcess, str, None]:
@@ -58,7 +59,8 @@ def run_ff_1d(
         return None
 
     # Construct the command to run the optimization script
-    command = f"python torch_optimize_loc.py -m FF1D -loss mel -o LION -e {params['e']} -M {params['M']} -lr 0.005 --seed {params['seed']}"
+    command = f"python torch_optimize_loc.py -m FF1D -loss mel -o LION -e {params['e']} -M {params['M']} -lr 0.005 -r {params['seed']}" \
+         + f" -lt {params['lt']} -p {'gpu' if gpu else 'cpu'}"
 
     # Construct a timestamp
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -82,6 +84,7 @@ def run_ff_1d(
             print("Optimization successfully.")
         else:
             print("Optimization failed.")
+            print(process.stderr)
         print(
             f"""Command: {command}
                 Output: {output_filepath}\n
@@ -94,6 +97,7 @@ def run_ff_1d(
             print("Optimization successfully.")
         else:
             print("Optimization failed.")
+            print(process.stderr)
 
         print(
             f"""Command: {command}
