@@ -6,7 +6,8 @@ version: '3.4'
 services:
   main:
     container_name: worms_gpu_torch 
-    image: kei0709/cuda12.1_ubutnu22.04:latest 
+    image: kei0709/cuda12.1:latest 
+    # image: nvidia/cuda:12.1.1-runtime-ubuntu22.04
     volumes:
       - ..:/home/user/project
       - type: bind
@@ -14,9 +15,9 @@ services:
         target: /home/user/.ssh
         read_only: true
     tty: true
-    user : 1000:1000
+    # user : 1000:1000
     ports:
-      - 8899:8899
+      - 2222:22
     security_opt: 
       - seccomp:unconfined
     stdin_open: true
