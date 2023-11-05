@@ -32,7 +32,7 @@ $\langle x_{\tau} | \hat{o}_i \hat{o}_j |x^\prime_{\tau} \rangle$
 
 
 - # 聞くこと
-  - MPIをGtestでやる
+  - MPIをGtesthでやる
   - worm obs の reduce の方法。 (サイズが会わないからできないといわれる)
   - 低く見積もっている可能性がある？
 
@@ -60,3 +60,7 @@ $\langle x_{\tau} | \hat{o}_i \hat{o}_j |x^\prime_{\tau} \rangle$
   - 
 - At lest the name of section should be decided.
 
+
+- FF graph 
+  - beta = 20 まで
+  - exp(-beta * \delta) の \deltaを出す
