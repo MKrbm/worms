@@ -196,16 +196,17 @@ int main(int argc, char **argv) {
   if (args.has("output")) {
     string folder = "../worm_result/";
     string model_name_ = model_name;
+    string shape = "";
     if (shapes.size() == 1) {
-      model_name += ("_L_" + to_string(shapes[0]));
+      shape += ("L_" + to_string(shapes[0]));
     } else if (shapes.size() == 2) {
-      model_name += ("_L_" + to_string(shapes[0]) + "_" + to_string(shapes[1]));
+      shape += ("L_" + to_string(shapes[0]) + "_" + to_string(shapes[1]));
     } else if (shapes.size() == 3) {
-      model_name += ("_L_" + to_string(shapes[0]) + "_" + to_string(shapes[1]) +
+      shape += ("L_" + to_string(shapes[0]) + "_" + to_string(shapes[1]) +
                      "_" + to_string(shapes[2]));
     }
     string setting_name = "T_" + to_string(T) + "/" + "N_" + to_string(sweeps * size);
-    string output_folder = folder + model_name + "/" + setting_name;
+    string output_folder = folder + model_name + "/" + shape + "/" + setting_name;
     string dateTime = getCurrentDateTime();
 
     out_file = output_folder + "/" + getCurrentDateTime() + ".txt";

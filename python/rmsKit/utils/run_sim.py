@@ -59,7 +59,7 @@ def run_ff_1d(
         return None
 
     # Construct the command to run the optimization script
-    command = f"python torch_optimize_loc.py -m FF1D -loss mel -o LION -e {params['e']} -M {params['M']} -lr 0.005 -r {params['seed']}" \
+    command = f"python torch_optimize_loc.py -m FF1D -loss mel -o LION -e {params['e']} -M {params['M']} -lr 0.01 -r {params['seed']}" \
          + f" -lt {params['lt']} -p {'gpu' if gpu else 'cpu'}"
 
     # Construct a timestamp
