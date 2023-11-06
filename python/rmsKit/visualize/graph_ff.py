@@ -14,6 +14,7 @@ from utils import files_to_dataframe, bfs_search_and_get_files
 
 
 N = 4*10**6
+beta = 20
 
 
 def get_seed_and_loss(file_path):
@@ -28,7 +29,8 @@ def get_seed_and_loss(file_path):
 
 df = get_seed_and_loss("../../../worm_result")
 df = df[df.sweeps == N]
-
+print(df.temperature)
+df = df[df["temperature"] >= 1 / beta]
 
 for L in sorted(df.n_sites.unique()):
     df_n = df[df.n_sites == L]

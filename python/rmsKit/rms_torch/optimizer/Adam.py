@@ -119,7 +119,6 @@ def custom_adam(params: List[Tensor],
     if foreach is None:
         foreach = False
 
-    foreach = True
 
     if not all(isinstance(t, torch.Tensor) for t in state_steps):
         raise RuntimeError("API has changed, `state_steps` argument must contain a list of singleton tensors")
