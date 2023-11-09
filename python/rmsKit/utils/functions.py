@@ -192,6 +192,10 @@ def bfs_search_and_get_files(base_folder):
             if os.path.isdir(full_sub_dir):
                 queue.append(full_sub_dir)
 
+    if len(all_files) == 0:
+        # print(f"No files found in {base_folder}")
+        raise RuntimeError("No files found""")
+
     return all_files
 
 
