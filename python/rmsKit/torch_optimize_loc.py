@@ -25,21 +25,34 @@ models = [
     "FF1D",
     "FF2D",
 ]
-loss_val = ["mel", "none"]  # minimum energy solver, quasi energy solver
+loss_val = ["mel", "none", "Adam"]  # minimum energy solver, quasi energy solver
 
-parser = argparse.ArgumentParser(description="exact diagonalization of shastry_surtherland")
-parser.add_argument("-m", "--model", help="model (model) Name", required=True, choices=models)
-parser.add_argument("-Jz", "--coupling_z", help="coupling constant (Jz)", type=float, default=1)  # SxSx + SySy +
-parser.add_argument("-Jx", "--coupling_x", help="coupling constant (Jx)", type=float)
-parser.add_argument("-Jy", "--coupling_y", help="coupling constant (Jy)", type=float)
-parser.add_argument("-hx", "--mag_x", help="magnetic field", type=float, default=0)
-parser.add_argument("-hz", "--mag_z", help="magnetic field", type=float, default=0)
+parser = argparse.ArgumentParser(
+    description="exact diagonalization of shastry_surtherland")
+parser.add_argument("-m", "--model", help="model (model) Name",
+                    required=True, choices=models)
+parser.add_argument("-Jz", "--coupling_z", help="coupling constant (Jz)",
+                    type=float, default=1)  # SxSx + SySy +
+parser.add_argument("-Jx", "--coupling_x",
+                    help="coupling constant (Jx)", type=float)
+parser.add_argument("-Jy", "--coupling_y",
+                    help="coupling constant (Jy)", type=float)
+parser.add_argument("-hx", "--mag_x", help="magnetic field",
+                    type=float, default=0)
+parser.add_argument("-hz", "--mag_z", help="magnetic field",
+                    type=float, default=0)
 parser.add_argument("-T", "--temperature", help="temperature", type=float)
-parser.add_argument("-M", "--num_iter", help="# of iterations", type=int, default=10)
+parser.add_argument("-M", "--num_iter",
+                    help="# of iterations", type=int, default=10)
 parser.add_argument("-r", "--seed", help="random seed", type=int, default=None)
-parser.add_argument("-lr", "--learning_rate", help="learning rate", type=float, default=0.01)
-parser.add_argument("-schedule", help="Use scheduler if given", action="store_true")
-parser.add_argument("-f_path", help="Path to fine tuning unitaries", type=str, default="")
+parser.add_argument("-lr", "--learning_rate",
+                    help="learning rate", type=float, default=0.01)
+parser.add_argument(
+    "-schedule", help="Use scheduler if given", action="store_true")
+parser.add_argument(
+    "--print", help="print out the result", action="store_true")
+parser.add_argument(
+    "-f_path", help="Path to fine tuning unitaries", type=str, default="")
 parser.add_argument("-e", "--epoch", help="epoch", type=int, default=100)
 parser.add_argument(
     "-lt",
@@ -80,14 +93,16 @@ parser.add_argument(
 
 def list_arrays(path):
     array_files = []
-    
+
     for dirpath, dirnames, filenames in os.walk(path):
         for filename in [f for f in filenames if f.endswith('.npy')]:
             # print(re.search(r'u\/\d\.npy', os.path.join(dirpath, filename)))
-            if re.search(r'u\/\d\.npy', os.path.join(dirpath, filename)):  # matches both / and \ separators
+            # matches both / and \ separators
+            if re.search(r'u\/\d\.npy', os.path.join(dirpath, filename)):
                 array_files.append(os.path.join(dirpath, filename))
-            
+
     return array_files
+
 
 # specified_path = "array/torch/FF1D_loc/s_3_r_2_us_1_d_1_seed_11/original_mel_LION/lr_0.005_epoch_100_M_10000/"
 specified_path = ""
@@ -98,8 +113,9 @@ arrays_path.sort()
 arrays = [np.load(arr) for arr in arrays_path]
 # print(arrays[0])
 
+
 def lr_lambda(epoch: int) -> float:
-    f = lambda x: np.exp(-4.5 * np.tanh(x * 0.02))
+    def f(x): return np.exp(-4.5 * np.tanh(x * 0.02))
     epoch = (epoch // 10) * 10
     return f(epoch)
 
@@ -143,7 +159,8 @@ logging.info("device: {}".format(device))
 logging.info("args: {}".format(args))
 M = args.num_iter if not arrays else len(arrays)
 seed = args.seed
-seed_list = [randint(0, 1000000) for i in range(M)] # `-r` is for random seed determine randomness of local hamiltonian instead of optimization
+# `-r` is for random seed determine randomness of local hamiltonian instead of optimization
+seed_list = [randint(0, 1000000) for i in range(M)]
 
 
 if __name__ == "__main__":
@@ -177,7 +194,8 @@ if __name__ == "__main__":
             sps=3,
             rank=2,
             dimension=d,
-            lt=1 if lt == "original" else int(lt), # lattice type (number of sites in unit cell)
+            # lattice type (number of sites in unit cell)
+            lt=1 if lt == "original" else int(lt),
             seed=1 if seed is None else seed,
         )
         h_list, sps = FF.local(p, [3])
@@ -188,22 +206,33 @@ if __name__ == "__main__":
     path = f"array/torch/{model_name}/{loss_name}/{setting_name}"
     ham_path = f"array/torch/{model_name}/{loss_name}/{setting_name}/H.npy"
 
-
     save_npy(f"{path}/H", [-np.array(h) for h in h_list])
     print(f"logging to tensorboard under: {custom_dir}/{base_name}")
     logging.info("tensorboard under : {custom_dir}/{base_name}")
     logging.info(f"unitary will be saved to {path}")
     logging.info(f"hamiltonian saved to {ham_path}")
 
-
-        
-
     if args.loss == "none":
         exit()
     if args.loss == "mel":
         loss = rms_torch.MinimumEnergyLoss(h_list, device=device)
-
-    model = rms_torch.UnitaryRieman(h_list[0].shape[1], sps, device=device).to(device)
+        
+    optimizer_func: torch.optim.Optimizer = None
+    if args.optimizer == "LION":
+        optimizer_func = rms_torch.LION
+        learning_params = dict(
+            lr=args.learning_rate,
+        )
+    elif args.optimizer == "Adam":
+        optimizer_func = rms_torch.Adam
+        learning_params = dict(
+            lr=args.learning_rate,
+            betas=(0.3, 0.5),
+        )
+    else:
+        raise ValueError("not implemented")
+    model = rms_torch.UnitaryRieman(
+        h_list[0].shape[1], sps, device=device).to(device)
 
     best_loss = 1e10
     best_us = None
@@ -215,7 +244,7 @@ if __name__ == "__main__":
 
     if arrays:
         print("Fine tuning unitaries given")
-    #if f_path is given, initialize unitaries with the given unitaries and number of iteration is the number of unitaries in f_path
+    # if f_path is given, initialize unitaries with the given unitaries and number of iteration is the number of unitaries in f_path
     for i, seed in enumerate(seed_list):
         # now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         tb_name = f"{custom_dir}/{base_name}/{seed}"
@@ -230,16 +259,14 @@ if __name__ == "__main__":
             loss.initializer(model())
         local_best_loss = 1e10
         local_best_us = []
-        model.reset_params() if not arrays else model.reset_params(torch.from_numpy(arrays[i]))
+        model.reset_params() if not arrays else model.reset_params(
+            torch.from_numpy(arrays[i]))
 
-        if args.optimizer == "LION":
-            optimizer = rms_torch.LION(model.parameters(), lr=args.learning_rate)
-        elif args.optimizer == "Adam":
-            optimizer = rms_torch.Adam(model.parameters(), lr=args.learning_rate, amsgrad=True)
-        else:
-            raise ValueError("not implemented")
+        optimizer = optimizer_func(
+            model.parameters(), **learning_params)
 
-        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda) if args.schedule else None
+        scheduler = torch.optim.lr_scheduler.LambdaLR(
+            optimizer, lr_lambda=lr_lambda) if args.schedule else None
         epochs = args.epoch
 
         loss_list = []
@@ -251,14 +278,19 @@ if __name__ == "__main__":
             if loss_val_item < local_best_loss:
                 with torch.no_grad():
                     local_best_loss = loss_val_item
-                    local_best_us = [p.data.detach().cpu().numpy() for p in model.parameters()]
+                    local_best_us = [p.data.detach().cpu().numpy()
+                                     for p in model.parameters()]
             loss_val.backward()
             for p in model.parameters():
                 grad = p.grad  # Get the gradient from the compiled model
                 if grad is not None:
-                    grad.data[:] = rms_torch.riemannian_grad_torch(p.data, grad)
+                    grad.data[:] = rms_torch.riemannian_grad_torch(
+                        p.data, grad)
                 else:
                     raise RuntimeError("No gradient for parameter")
+            if args.print:
+                logging.info(f"Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}")
+                print(f"Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}")
             optimizer.step()
             scheduler.step() if scheduler is not None else None
             loss_list.append(loss_val_item)

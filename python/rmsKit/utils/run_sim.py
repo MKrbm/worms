@@ -39,6 +39,8 @@ def run_ff_1d(
     M: int = 100,
     e: int = 1000,
     gpu: bool = False,
+    o: str = "LION",
+    lr: float = 0.01,
     output_dir: str = "out/run_sim/",
     output: bool = False,
 ) -> Union[subprocess.CompletedProcess, str, None]:
@@ -51,6 +53,8 @@ def run_ff_1d(
         "seed": seed,
         "M": M,
         "e": e,
+        "o": o,
+        "lr": lr,
     }
 
     # check if executable exists
@@ -59,8 +63,10 @@ def run_ff_1d(
         return None
 
     # Construct the command to run the optimization script
-    command = f"python torch_optimize_loc.py -m FF1D -loss mel -o LION -e {params['e']} -M {params['M']} -lr 0.01 -r {params['seed']}" \
-         + f" -lt {params['lt']} -p {'gpu' if gpu else 'cpu'}"
+    command = f"python torch_optimize_loc.py -m FF1D -loss mel -o LION -e {params['e']} -M {params['M']} -lr {params['lr']} -r {params['seed']}" \
+        + f" -lt {params['lt']} -p {'gpu' if gpu else 'cpu'} "
+
+    command += f"-o {o}"
 
     # Construct a timestamp
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -77,7 +83,8 @@ def run_ff_1d(
 
         # Run the command and write to the output file
         with open(output_filepath, "w") as output_file:
-            process = subprocess.run(command, shell=True, stdout=output_file, stderr=subprocess.STDOUT, text=True)
+            process = subprocess.run(
+                command, shell=True, stdout=output_file, stderr=subprocess.STDOUT, text=True)
 
         # Provide feedback
         if process.returncode == 0:
@@ -92,7 +99,8 @@ def run_ff_1d(
         )
     else:
         # Run the command and capture the output
-        process = subprocess.run(command, shell=True, capture_output=True, text=True)
+        process = subprocess.run(
+            command, shell=True, capture_output=True, text=True)
         if process.returncode == 0:
             print("Optimization successfully.")
         else:
@@ -143,7 +151,7 @@ def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float
         return
 
     # 3. Prepare the command arguments
-    T = round(T, 4)
+    T = round(T, 5)
     cmd = [
         "mpirun",
         "-n",
