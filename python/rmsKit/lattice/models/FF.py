@@ -10,8 +10,11 @@ import utils
 from typing import List
 
 
-def block1D(*dimensions, normal = True):
+def block1D(*dimensions, normal = True, seed = None):
     """Construct a new matrix for the MPS with random numbers from 0 to 1"""
+    if seed is not None:
+        np.random.seed(seed)
+        random.seed(seed)
     size = tuple([x for x in dimensions])
     if normal:
         A = np.random.normal(size=size)

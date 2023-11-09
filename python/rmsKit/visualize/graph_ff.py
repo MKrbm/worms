@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import sys
 import os
 import numpy as np
@@ -9,22 +10,11 @@ current_script_path = os.path.dirname(os.path.abspath(__file__))
 parent_directory = os.path.dirname(current_script_path)
 sys.path.append(parent_directory)
 
-import matplotlib.pyplot as plt
-from utils import files_to_dataframe, bfs_search_and_get_files
+from utils import get_seed_and_loss
 
 
 N = 4*10**6
 beta = 20
-
-
-def get_seed_and_loss(file_path):
-    df = files_to_dataframe(bfs_search_and_get_files(
-        file_path), allow_missing=True, warning=False)
-#     df = df[df.model_name.str.contains("FF_1D")]
-    df['seed'] = df['ham_path'].str.extract(r'seed_(\d+)').astype(int)
-    df['loss'] = df['u_path'].str.extract(
-        r'loss_([+|-]?[0-9]*\.[0-9]+|[0-9]+\.[0-9]*$)').astype(float)
-    return df
 
 
 df = get_seed_and_loss("../../../worm_result")
@@ -41,18 +31,16 @@ for L in sorted(df.n_sites.unique()):
         df_dict["mel"] = dfs[dfs.u_path.str.contains("mel")]
         df_dict["none"] = dfs[dfs.u_path == ""]
 
-
         data_size = 0
         for key, _df in df_dict.items():
             df_dict[key] = _df.loc[_df.groupby(
                 "temperature")["as"].idxmax()].sort_values(by="temperature")
             data_size += len(df_dict[key])
 
-
         if (data_size / len(df_dict)) < 4:
             print("number of data is not sufficient")
             continue
-    
+
         fig, ax = plt.subplots(3, figsize=(10, 12))
         # gs = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 1], hspace=0.4)
         ax1 = ax[0]

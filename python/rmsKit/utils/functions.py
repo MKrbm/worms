@@ -209,3 +209,13 @@ def files_to_dataframe(file_list, **kwargs):
     df = pd.DataFrame(data)
 
     return df
+
+
+def get_seed_and_loss(file_path):
+    df = files_to_dataframe(bfs_search_and_get_files(
+        file_path), allow_missing=True, warning=False)
+#     df = df[df.model_name.str.contains("FF_1D")]
+    df['seed'] = df['ham_path'].str.extract(r'seed_(\d+)').astype(int)
+    df['loss'] = df['u_path'].str.extract(
+        r'loss_([+|-]?[0-9]*\.[0-9]+|[0-9]+\.[0-9]*$)').astype(float)
+    return df
