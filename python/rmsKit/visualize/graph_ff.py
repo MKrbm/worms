@@ -26,10 +26,14 @@ for L in sorted(df.n_sites.unique()):
     df_n = df[df.n_sites == L]
     seed_list = sorted(df_n.seed.unique())
     for seed in seed_list:
+        label_dict = {}
         dfs = df_n[df_n.seed == seed]
         df_dict = {}
         df_dict["mel"] = dfs[dfs.u_path.str.contains("mel")]
         df_dict["none"] = dfs[dfs.u_path == ""]
+
+        label_dict["mel"] = f'mel / loss = {df_dict["mel"].loss.unique()[0]}'
+        label_dict["none"] = "none"
 
         data_size = 0
         for key, _df in df_dict.items():
@@ -57,9 +61,9 @@ for L in sorted(df.n_sites.unique()):
 
         # Plotting Energy vs Inverse Temperature (Beta) in ax1
         ax1.errorbar(1/df_dict["mel"]['temperature'], df_dict["mel"]['e'],
-                     yerr=df_dict["mel"]['e_error'], fmt='o-', capsize=5, label='mes')
+                     yerr=df_dict["mel"]['e_error'], fmt='o-', capsize=5, label=label_dict["mel"])
         ax1.errorbar(1/df_dict["none"]['temperature'], df_dict["none"]['e'],
-                     yerr=df_dict["none"]['e_error'], fmt='s-', capsize=5, label='none', alpha=0.7)
+                     yerr=df_dict["none"]['e_error'], fmt='s-', capsize=5, label=label_dict["none"], alpha=0.7)
         ax1.set_title('Energy vs Beta')
         ax1.set_ylabel('Energy')
         ax1.set_ylim(lower_bound, upper_bound)
@@ -67,18 +71,18 @@ for L in sorted(df.n_sites.unique()):
 
         # Plotting AS vs Inverse Temperature in ax2
         ax2.errorbar(1/df_dict["mel"]['temperature'], df_dict["mel"]['as'],
-                     yerr=df_dict["mel"]['as_error'], fmt='o-', capsize=5, label='mes')
+                     yerr=df_dict["mel"]['as_error'], fmt='o-', capsize=5, label=label_dict["mel"])
         ax2.errorbar(1/df_dict["none"]['temperature'], df_dict["none"]['as'],
-                     yerr=df_dict["none"]['as_error'], fmt='s-', capsize=5, label='none', alpha=0.7)
+                     yerr=df_dict["none"]['as_error'], fmt='s-', capsize=5, label=label_dict["none"], alpha=0.7)
         ax2.set_title('Average Sign vs Beta')
         ax2.set_ylabel('Average Sign')
         ax2.legend()
 
         # Plotting AS vs Inverse Temperature (Log Scale) in ax3
         ax3.errorbar(1/df_dict["mel"]['temperature'], df_dict["mel"]['as'],
-                     yerr=df_dict["mel"]['as_error'], fmt='o-', capsize=5, label='mes')
+                     yerr=df_dict["mel"]['as_error'], fmt='o-', capsize=5, label=label_dict["mel"])
         ax3.errorbar(1/df_dict["none"]['temperature'], df_dict["none"]['as'],
-                     yerr=df_dict["none"]['as_error'], fmt='s-', capsize=5, label='none', alpha=0.7)
+                     yerr=df_dict["none"]['as_error'], fmt='s-', capsize=5, label=label_dict["none"], alpha=0.7)
         ax3.set_title('Average Sign vs Beta (log scale)')
         ax3.set_xlabel('Inverse Temperature (Beta)')
         ax3.set_ylabel('Average Sign')
