@@ -114,7 +114,7 @@ def extract_info_from_file(file_path, allow_missing=False, warning=True):
                 info_dict[NUMBER_OF_SITES] = int(line.split(":")[1].strip())
             elif "alpha" in line:
                 info_dict[ALPHA] = float(line.split(":")[1].strip())
-            elif "Total Energy" in line:
+            elif "Energy per site" in line:
                 values = line.split("=")[1].split("+-")
                 info_dict[ENERGY_P_SITE_MEAN] = float(values[0].strip())
                 info_dict[ENERGY_P_SITE_ERROR] = float(values[1].strip())
