@@ -5,9 +5,11 @@ import torch
 from lattice import KH, FF
 from lattice import save_npy
 from utils import get_local_best_loss_from_tensorboard
+import time
 
 import argparse
 from random import randint
+
 
 # for tensorboard
 from torch.utils.tensorboard import SummaryWriter
@@ -252,6 +254,7 @@ if __name__ == "__main__":
         print("Fine tuning unitaries given")
     # if f_path is given, initialize unitaries with the given unitaries and number of iteration is the number of unitaries in f_path
     for i, seed in enumerate(seed_list):
+        now = time.time()
         # now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         tb_name = f"{custom_dir}/{base_name}/{seed}"
         writer = SummaryWriter(tb_name)
@@ -306,8 +309,10 @@ if __name__ == "__main__":
             best_loss = local_best_loss
             best_us = [np.copy(u) for u in local_best_us]
         good_seeds.append([seed, local_best_loss])
+
+        time_elapsed = time.time() - now
         logging.info(
-            f"best loss at epoch {epochs}: {local_best_loss}, best loss so far: {best_loss}"
+            f"best loss at epoch {epochs}: {local_best_loss}, best loss so far: {best_loss} time elapsed: {time_elapsed:.4f} seconds"
         )
         save_npy(f"{path}/loss_{local_best_loss:.5f}/u", local_best_us)
         writer.close()

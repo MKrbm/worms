@@ -24,7 +24,9 @@ def block1D(*dimensions, normal = True, seed = None, canonical = True):
 
     if canonical:
         A = get_canonical_form(A)
-        return A
+        if np.linalg.norm(A.imag) > 1E-8:
+            raise ValueError("A is not real")
+        return A.real
     else:
         return A
 
