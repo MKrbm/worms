@@ -26,7 +26,8 @@ models = [
     "FF1D",
     "FF2D",
 ]
-loss_val = ["mel", "none", "Adam"]  # minimum energy solver, quasi energy solver
+# minimum energy solver, quasi energy solver
+loss_val = ["mel", "none", "Adam"]
 
 parser = argparse.ArgumentParser(description="exact diagonalization of shastry_surtherland")
 parser.add_argument("-m", "--model", help="model (model) Name", required=True, choices=models)
