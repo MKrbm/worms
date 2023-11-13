@@ -47,7 +47,7 @@ model::base_model<MC> spin(lat, {8}, ham_path, {1, 1, 1}, {0, 1, 2}, 0.1, false,
 
 
 model::base_lattice lat2("triangular lattice", "kagome", shapes, "../config/lattices.xml", false);
-string ham_path2 = "../gtest/model_array/KH/origina/none/H";
+string ham_path2 = "../gtest/model_array/KH/original/none";
 model::base_model<MC> spin2(lat2, {2}, ham_path2, {1}, {0}, 0.3, false, false, false);
 
 

@@ -11,6 +11,7 @@ __pycache__/
 *.so
 *.pdf
 myenv/
+Release.bak/
 *.jpeg
 !doc/**/*.jpeg
 *.zip

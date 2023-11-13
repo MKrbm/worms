@@ -172,6 +172,11 @@ if __name__ == "__main__":
     params_str = a[:-1]
     lt = args.lattice_type
 
+    # Get the current number of threads used by PyTorch
+    num_threads = torch.get_num_threads()
+
+    # print(f'Number of CPU threads used: {num_threads}')
+    logging.info(f"Number of CPU threads used: {num_threads}")
     H = None
     P = None
 

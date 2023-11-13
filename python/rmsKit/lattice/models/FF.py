@@ -10,7 +10,7 @@ import utils
 from typing import List
 
 
-def block1D(*dimensions, normal = True, seed = None):
+def block1D(*dimensions, normal = True, seed = None, canonical = True):
     """Construct a new matrix for the MPS with random numbers from 0 to 1"""
     if seed is not None:
         np.random.seed(seed)
@@ -21,7 +21,12 @@ def block1D(*dimensions, normal = True, seed = None):
     else:
         A = np.random.random_sample(size)
     A = (A.transpose(2, 1, 0) + A) / 2
-    return A
+
+    if canonical:
+        A = get_canonical_form(A)
+        return A
+    else:
+        return A
 
 
 def create_MPS(n, A):
@@ -88,3 +93,42 @@ def system(_L: list[int], params: dict) -> np.ndarray:
     bonds = [[i, (i + 1) % L] for i in range(L)]
     H = utils.sum_ham(h_list[0], bonds, L, s)
     return H
+
+
+def get_canonical_form(A):
+
+    check_validity = True
+    if A.ndim != 3:
+        raise ValueError("A must be a 3-rank tensor")
+    if A.shape[0] != A.shape[2]:
+        raise ValueError(
+            "middle index should represent physical index and the side indices should be virtual indices")
+
+    A = A.transpose(1, 0, 2)
+    A_tilde = np.einsum("ijk,ilm->jlkm", A, A)
+    A_tilde = A_tilde.reshape(4, 4)
+    e, V = np.linalg.eigh(A_tilde)
+    rho = e[-1]
+    A_tilde = A_tilde / rho
+
+    e, V = np.linalg.eigh(A_tilde)
+    x = V[:, -1].reshape(2, 2)
+
+    e, U = np.linalg.eigh(x)
+    x_h = U @ np.diag(np.sqrt(e + 0j)) @ U.T
+    x_h_inv = U @ np.diag(1/np.sqrt(e + 0j)) @ U.T
+
+    B = x_h_inv @ A @ x_h / np.sqrt(rho)  # canonical form
+    B = B.transpose(1, 0, 2)
+
+    if check_validity:
+        check_cano = np.einsum("jik, lik->jl", B, B)
+        if np.linalg.norm(np.eye(check_cano.shape[0]) - check_cano) > 1E-8:
+            raise ValueError("B is not a canonical")
+        B_ = B.transpose(1, 0, 2)
+        B_tilde = np.einsum("ijk,ilm->jlkm", B_, B_).reshape(4, 4)
+        Eb = np.sort(np.linalg.eigvals(B_tilde))
+        Ea = np.sort(np.linalg.eigvals(A_tilde))
+        if np.linalg.norm(Ea.real - Eb.real) > 1E-8:
+            raise ValueError("B is not a canonical")
+    return B
