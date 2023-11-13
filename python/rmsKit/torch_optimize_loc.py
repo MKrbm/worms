@@ -17,6 +17,7 @@ import rms_torch
 import logging
 import datetime
 import platform
+import time
 
 models = [
     "KH",
@@ -27,32 +28,20 @@ models = [
 ]
 loss_val = ["mel", "none", "Adam"]  # minimum energy solver, quasi energy solver
 
-parser = argparse.ArgumentParser(
-    description="exact diagonalization of shastry_surtherland")
-parser.add_argument("-m", "--model", help="model (model) Name",
-                    required=True, choices=models)
-parser.add_argument("-Jz", "--coupling_z", help="coupling constant (Jz)",
-                    type=float, default=1)  # SxSx + SySy +
-parser.add_argument("-Jx", "--coupling_x",
-                    help="coupling constant (Jx)", type=float)
-parser.add_argument("-Jy", "--coupling_y",
-                    help="coupling constant (Jy)", type=float)
-parser.add_argument("-hx", "--mag_x", help="magnetic field",
-                    type=float, default=0)
-parser.add_argument("-hz", "--mag_z", help="magnetic field",
-                    type=float, default=0)
+parser = argparse.ArgumentParser(description="exact diagonalization of shastry_surtherland")
+parser.add_argument("-m", "--model", help="model (model) Name", required=True, choices=models)
+parser.add_argument("-Jz", "--coupling_z", help="coupling constant (Jz)", type=float, default=1)  # SxSx + SySy +
+parser.add_argument("-Jx", "--coupling_x", help="coupling constant (Jx)", type=float)
+parser.add_argument("-Jy", "--coupling_y", help="coupling constant (Jy)", type=float)
+parser.add_argument("-hx", "--mag_x", help="magnetic field", type=float, default=0)
+parser.add_argument("-hz", "--mag_z", help="magnetic field", type=float, default=0)
 parser.add_argument("-T", "--temperature", help="temperature", type=float)
-parser.add_argument("-M", "--num_iter",
-                    help="# of iterations", type=int, default=10)
+parser.add_argument("-M", "--num_iter", help="# of iterations", type=int, default=10)
 parser.add_argument("-r", "--seed", help="random seed", type=int, default=None)
-parser.add_argument("-lr", "--learning_rate",
-                    help="learning rate", type=float, default=0.01)
-parser.add_argument(
-    "-schedule", help="Use scheduler if given", action="store_true")
-parser.add_argument(
-    "--print", help="print out the result", action="store_true")
-parser.add_argument(
-    "-f_path", help="Path to fine tuning unitaries", type=str, default="")
+parser.add_argument("-lr", "--learning_rate", help="learning rate", type=float, default=0.01)
+parser.add_argument("-schedule", help="Use scheduler if given", action="store_true")
+parser.add_argument("--print", help="print out the result", action="store_true")
+parser.add_argument("-f_path", help="Path to fine tuning unitaries", type=str, default="")
 parser.add_argument("-e", "--epoch", help="epoch", type=int, default=100)
 parser.add_argument(
     "-lt",
@@ -95,10 +84,10 @@ def list_arrays(path):
     array_files = []
 
     for dirpath, dirnames, filenames in os.walk(path):
-        for filename in [f for f in filenames if f.endswith('.npy')]:
+        for filename in [f for f in filenames if f.endswith(".npy")]:
             # print(re.search(r'u\/\d\.npy', os.path.join(dirpath, filename)))
             # matches both / and \ separators
-            if re.search(r'u\/\d\.npy', os.path.join(dirpath, filename)):
+            if re.search(r"u\/\d\.npy", os.path.join(dirpath, filename)):
                 array_files.append(os.path.join(dirpath, filename))
 
     return array_files
@@ -115,7 +104,9 @@ arrays = [np.load(arr) for arr in arrays_path]
 
 
 def lr_lambda(epoch: int) -> float:
-    def f(x): return np.exp(-4.5 * np.tanh(x * 0.02))
+    def f(x):
+        return np.exp(-4.5 * np.tanh(x * 0.02))
+
     epoch = (epoch // 10) * 10
     return f(epoch)
 
@@ -164,7 +155,6 @@ seed_list = [randint(0, 1000000) for i in range(M)]
 
 
 if __name__ == "__main__":
-
     a = ""
     for k, v in p.items():
         v = float(v)
@@ -221,7 +211,7 @@ if __name__ == "__main__":
         exit()
     if args.loss == "mel":
         loss = rms_torch.MinimumEnergyLoss(h_list, device=device)
-        
+
     optimizer_func: torch.optim.Optimizer = None
     if args.optimizer == "LION":
         optimizer_func = rms_torch.LION
@@ -236,8 +226,7 @@ if __name__ == "__main__":
         )
     else:
         raise ValueError("not implemented")
-    model = rms_torch.UnitaryRieman(
-        h_list[0].shape[1], sps, device=device).to(device)
+    model = rms_torch.UnitaryRieman(h_list[0].shape[1], sps, device=device).to(device)
 
     best_loss = 1e10
     best_us = None
@@ -251,63 +240,56 @@ if __name__ == "__main__":
         print("Fine tuning unitaries given")
     # if f_path is given, initialize unitaries with the given unitaries and number of iteration is the number of unitaries in f_path
     for i, seed in enumerate(seed_list):
-        # now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         tb_name = f"{custom_dir}/{base_name}/{seed}"
         writer = SummaryWriter(tb_name)
+
         if args.loss == "smel":
             loss.initializer(model())
         logging.info(f"iteration: {i+1}/{M}, seed: {seed}")
-        # original_dir_name = f"{custom_dir}/{base_name}/seed_{seed}_{now}"
+
         torch.manual_seed(seed)
         np.random.seed(seed)
         if args.loss == "smel":
             loss.initializer(model())
         local_best_loss = 1e10
         local_best_us = []
-        model.reset_params() if not arrays else model.reset_params(
-            torch.from_numpy(arrays[i]))
+        model.reset_params() if not arrays else model.reset_params(torch.from_numpy(arrays[i]))
 
-        optimizer = optimizer_func(
-            model.parameters(), **learning_params)
-
-        scheduler = torch.optim.lr_scheduler.LambdaLR(
-            optimizer, lr_lambda=lr_lambda) if args.schedule else None
+        optimizer = optimizer_func(model.parameters(), **learning_params)
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda) if args.schedule else None
         epochs = args.epoch
 
-        loss_list = []
+        total_time_per_iteration = 0  # Initialize the total time for this iteration
+
         for t in range(epochs):
+            epoch_start_time = time.time()  # Start time of the epoch
+
             optimizer.zero_grad()
             output = model()
             loss_val = loss(output)
-            loss_val_item = loss_val.item()
-            if loss_val_item < local_best_loss:
-                with torch.no_grad():
-                    local_best_loss = loss_val_item
-                    local_best_us = [p.data.detach().cpu().numpy()
-                                     for p in model.parameters()]
             loss_val.backward()
             for p in model.parameters():
-                grad = p.grad  # Get the gradient from the compiled model
+                grad = p.grad
                 if grad is not None:
-                    grad.data[:] = rms_torch.riemannian_grad_torch(
-                        p.data, grad)
+                    grad.data[:] = rms_torch.riemannian_grad_torch(p.data, grad)
                 else:
                     raise RuntimeError("No gradient for parameter")
-            if args.print:
-                logging.info(f"Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}")
-                print(f"Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}")
             optimizer.step()
             scheduler.step() if scheduler is not None else None
-            loss_list.append(loss_val_item)
-            writer.add_scalar('Loss', loss_val_item, t)
+
+            epoch_end_time = time.time()  # End time of the epoch
+            epoch_duration = epoch_end_time - epoch_start_time
+            total_time_per_iteration += epoch_duration  # Accumulate the time
+
+            writer.add_scalar("Loss", loss_val.item(), t)
+
+        average_time_per_epoch = total_time_per_iteration / epochs
+        logging.info(f"Average time per epoch in iteration {i+1}/{M}: {average_time_per_epoch:.0.5f} seconds")
 
         if local_best_loss < best_loss:
             best_loss = local_best_loss
             best_us = [np.copy(u) for u in local_best_us]
         good_seeds.append([seed, local_best_loss])
-        logging.info(
-            f"best loss at epoch {epochs}: {local_best_loss}, best loss so far: {best_loss}"
-        )
         save_npy(f"{path}/loss_{local_best_loss:.5f}/u", local_best_us)
         writer.close()
 
