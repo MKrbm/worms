@@ -99,10 +99,12 @@ def benchmark_on_device(device, operations, repetitions):
 
 if __name__ == "__main__":
     operations = [
-        (kron_operation, "Kronecker Product", 150),  # Adjust data_size as needed
-        (eigvalsh_operation, "Eigenvalues", 2300),
-        (matrix_mult_operation, "Matrix Multiplication", 6000),
+        (kron_operation, "Kronecker Product", 100),  # Adjust data_size as needed
+        (eigvalsh_operation, "Eigenvalues", 2000),
+        (matrix_mult_operation, "Matrix Multiplication", 5000),
     ]
+    num_threads = torch.get_num_threads()
+    print(f"Number of threads: {num_threads}")
 
     for device in ["cpu", "cuda"]:
         benchmark_on_device(device, operations, 10)
