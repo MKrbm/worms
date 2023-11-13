@@ -65,8 +65,6 @@ message(STATUS "MPI_CXX_INCLUDE_DIRS = ${MPI_CXX_INCLUDE_DIRS}")
 message(STATUS "MPI_CXX_LIBRARIES = ${MPI_CXX_LIBRARIES}")
 
 
-add_executable(hello test_/hello_world.cpp)
-target_link_libraries(hello MPI::MPI_CXX)
 
 include_directories(${worms_SOURCE_DIR})
 
