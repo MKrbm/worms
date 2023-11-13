@@ -285,7 +285,7 @@ if __name__ == "__main__":
             writer.add_scalar("Loss", loss_val.item(), t)
 
         average_time_per_epoch = total_time_per_iteration / epochs
-        logging.info(f"Average time per epoch in iteration {i+1}/{M}: {average_time_per_epoch:.0.5f} seconds")
+        logging.info(f"Average time per epoch in iteration {i+1}/{M}: {average_time_per_epoch:.5f} seconds")
 
         if local_best_loss < best_loss:
             best_loss = local_best_loss
