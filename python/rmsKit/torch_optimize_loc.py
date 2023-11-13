@@ -25,7 +25,8 @@ models = [
     "FF1D",
     "FF2D",
 ]
-loss_val = ["mel", "none", "Adam"]  # minimum energy solver, quasi energy solver
+# minimum energy solver, quasi energy solver
+loss_val = ["mel", "none", "Adam"]
 
 parser = argparse.ArgumentParser(
     description="exact diagonalization of shastry_surtherland")
@@ -221,7 +222,7 @@ if __name__ == "__main__":
         exit()
     if args.loss == "mel":
         loss = rms_torch.MinimumEnergyLoss(h_list, device=device)
-        
+
     optimizer_func: torch.optim.Optimizer = None
     if args.optimizer == "LION":
         optimizer_func = rms_torch.LION
