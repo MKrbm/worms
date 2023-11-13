@@ -44,6 +44,11 @@ $\langle x_{\tau} | \hat{o}_i \hat{o}_j |x^\prime_{\tau} \rangle$
 - 厳密対角化 ワームのやつ
 
 
+- Next mtg
+  - About ALPSCOre compiler mismatch with normal compiler.
+  - `/opt/intel/oneapi/compiler/2023.1.0/linux/bin-llvm/clang++`
+  - `set(CMAKE_CXX_COMPILER /opt/intel/oneapi/compiler/2023.1.0/linux/bin-llvm/clang++)
+
 
 - ## Memo
   - First add the code to exactly calculate the physical quantity no matter how slow it is. 

@@ -10,6 +10,7 @@ __pycache__/
 # C extensions
 *.so
 *.pdf
+Release.bak/
 
 *.jpeg
 !doc/**/*.jpeg
