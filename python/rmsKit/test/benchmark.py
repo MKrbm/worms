@@ -1,5 +1,7 @@
 import torch
 import time
+import argparse
+
 
 
 def generate_data(size, device, is_square=True):
@@ -96,8 +98,21 @@ def benchmark_on_device(device, operations, repetitions):
         avg_time = sum(times) / len(times)
         print(f"{name} ({data_size}{'x' + str(data_size)}): {avg_time:.4f} seconds (avg over {repetitions} runs)")
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='PyTorch Benchmarking with specified number of CPUs.')
+    parser.add_argument('-n', '--num-cpus', type=int, default=torch.get_num_threads(),
+                        help='Number of CPUs to use')
+    args = parser.parse_args()
+    return args
+
 
 if __name__ == "__main__":
+    args = parse_arguments()
+
+    # Set the number of threads in PyTorch
+    torch.set_num_threads(args.num_cpus)
+    num_threads = torch.get_num_threads()
+    print(f"Number of threads set to: {num_threads}")
     operations = [
         (kron_operation, "Kronecker Product", 100),  # Adjust data_size as needed
         (eigvalsh_operation, "Eigenvalues", 2000),
