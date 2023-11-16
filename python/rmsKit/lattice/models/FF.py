@@ -30,6 +30,20 @@ def block1D(*dimensions, normal = True, seed = None, canonical = True):
     else:
         return A
 
+def block2D(sps, bd, seed = None, normal = True):
+    if seed is not None:
+        np.random.seed(seed)
+        random.seed(seed)
+
+    '''Construct a new matrix for the MPS with random numbers from 0 to 1'''
+    size = (bd,) * 4 + (sps,)
+    if normal:
+        A = np.random.normal(size=size)
+    else:
+        A = np.random.random_sample(size)
+    A = (A.transpose(2,1,0,3,4) + A.transpose(0,3,2,1,4) + A.transpose(2,3,0,1,4) + A) / 4
+    A = A + A.transpose([1,2,3,0,4])
+    return A
 
 def create_MPS(n, A):
     """Build the MPS tensor"""
@@ -40,6 +54,23 @@ def create_MPS(n, A):
         conn = mps[k][2] ^ mps[(k + 1) % n][0]
         connected_edges.append(conn)
     return mps, connected_edges
+
+def create_PEPS(L1, L2, A):
+    '''Build the PEPS tensor'''
+    if A.ndim != 5:
+        raise ValueError("hi")
+    peps =  [ tn.Node( np.copy(A) ) for _ in range(L1*L2)] 
+    s = np.arange(L1 * L2)
+    x = s % L1
+    y = s // L1
+    T_x = (x + 1) % L1 + y * L1
+    T_y = x + ((y + 1) % L2) * L1
+    bonds = [([i, T_x[i]], [0, 2]) for i in range(L1*L2)] + [([i, T_y[i]], [1, 3]) for i in range(L1*L2)]
+    connected_edges=[]
+    for bond in bonds:
+        conn=peps[bond[0][0]][bond[1][0]]^peps[bond[0][1]][bond[1][1]]
+        connected_edges.append(conn)
+    return peps, connected_edges
 
 
 unitary_algorithms = ["original"]
@@ -79,6 +110,21 @@ def local(params: dict, check_L: List[int] = []):
             return [h], sps
         else:
             return [h], sps
+    elif d == 2:
+        if lt != 1:
+            raise NotImplementedError("2D PEPS are not implemented for lt != 1")
+
+        AP = block2D(sps, bond_dim)
+        AP2 = np.einsum("ijklm,abide->mejklabd",AP,AP).reshape(sps ** 2, -1)
+        U, s, V = np.linalg.svd(AP2)
+        s = np.round(s,10)
+        s = s[s!=0]
+        Up = U[:, len(s):]
+        h = Up @ Up.T
+        h = (h + h.T)/2
+        if np.linalg.norm(h) < 1E-8:
+            raise ValueError("h is null operator")
+        return [h], sps
     else:
         raise NotImplementedError("not implemented")
 
@@ -87,14 +133,17 @@ def system(_L: list[int], params: dict) -> np.ndarray:
     _d = len(_L)
     s = params["sps"]
     d = params["dimension"]
-    L = _L[0]
-    if d != _d:
-        raise ValueError("dimension not match")
-    H = np.zeros((s**L, s**L))
-    h_list, sps = local(ua, params)
-    bonds = [[i, (i + 1) % L] for i in range(L)]
-    H = utils.sum_ham(h_list[0], bonds, L, s)
-    return H
+    if _d == 1:
+        L = _L[0]
+        if d != _d:
+            raise ValueError("dimension not match")
+        H = np.zeros((s**L, s**L))
+        h_list, sps = local(params)
+        bonds = [[i, (i + 1) % L] for i in range(L)]
+        H = utils.sum_ham(h_list[0], bonds, L, s)
+        return H
+    elif _d == 2:
+        raise NotImplementedError("not implemented")
 
 
 def get_canonical_form(A):
@@ -106,15 +155,16 @@ def get_canonical_form(A):
         raise ValueError(
             "middle index should represent physical index and the side indices should be virtual indices")
 
+    s = A.shape[0]
     A = A.transpose(1, 0, 2)
     A_tilde = np.einsum("ijk,ilm->jlkm", A, A)
-    A_tilde = A_tilde.reshape(4, 4)
+    A_tilde = A_tilde.reshape(s**2, s**2)
     e, V = np.linalg.eigh(A_tilde)
     rho = e[-1]
     A_tilde = A_tilde / rho
 
     e, V = np.linalg.eigh(A_tilde)
-    x = V[:, -1].reshape(2, 2)
+    x = V[:, -1].reshape(s, s)
 
     e, U = np.linalg.eigh(x)
     x_h = U @ np.diag(np.sqrt(e + 0j)) @ U.T
