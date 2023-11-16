@@ -234,15 +234,17 @@ def get_canonical_form(A):
         raise ValueError(
             "middle index should represent physical index and the side indices should be virtual indices")
 
+    s = A.shape[0]
     A = A.transpose(1, 0, 2)
     A_tilde = np.einsum("ijk,ilm->jlkm", A, A)
-    A_tilde = A_tilde.reshape(4, 4)
+    A_tilde = A_tilde.reshape(s**2, s**2)
     e, V = np.linalg.eigh(A_tilde)
     rho = e[-1]
     A_tilde = A_tilde / rho
 
     e, V = np.linalg.eigh(A_tilde)
-    x = V[:, -1].reshape(2, 2)
+    x = V[:, -1].reshape(s, s)
+    print(x - x.t)
 
     e, U = np.linalg.eigh(x)
     x_h = U @ np.diag(np.sqrt(e + 0j)) @ U.T

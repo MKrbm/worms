@@ -48,6 +48,7 @@ parser.add_argument("-T", "--temperature", help="temperature", type=float)
 parser.add_argument("-M", "--num_iter",
                     help="# of iterations", type=int, default=10)
 parser.add_argument("-r", "--seed", help="random seed", type=int, default=None)
+parser.add_argument("--sps", help="sps", type=int, default=3)
 parser.add_argument("-lr", "--learning_rate",
                     help="learning rate", type=float, default=0.01)
 parser.add_argument(
@@ -199,14 +200,14 @@ if __name__ == "__main__":
         elif args.model == "FF2D":
             d = 2
         p = dict(
-            sps=3,
+            sps=args.sps,
             rank=2,
             dimension=d,
             # lattice type (number of sites in unit cell)
             lt=1 if lt == "original" else int(lt),
             seed=1 if seed is None else seed,
         )
-        h_list, sps = FF.local(p, [3])
+        h_list, sps = FF.local(p)
         params_str = f's_{sps}_r_{p["rank"]}_lt_{p["lt"]}_d_{p["dimension"]}_seed_{p["seed"]}'
         model_name = f"{args.model}_loc/{params_str}"
 
