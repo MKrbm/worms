@@ -3,7 +3,6 @@
 #include <argparse.hpp>
 #include <automodel.hpp>
 #include <autoobservable.hpp>
-#include <cstdio>
 #include <dirent.h>
 #include <exec_parallel.hpp>
 #include <funcs.hpp>
@@ -14,7 +13,6 @@
 #include <observable.hpp>
 #include <options.hpp>
 #include <string>
-#include <unistd.h>
 
 #include <alps/alea/batch.hpp>
 #include <alps/utilities/mpi.hpp>
@@ -22,18 +20,12 @@
 
 #include <boost/filesystem.hpp>
 
-// using namespace boost::filesystem;
 using namespace std;
 using namespace libconfig;
 namespace fs = boost::filesystem;
-using namespace std;
 double elapsed;
 
 int main(int argc, char **argv) {
-
-#ifdef WORKING_DIR
-  chdir(WORKING_DIR);
-#endif
 
   int rank, size;
   MPI_Init(&argc, &argv);
@@ -43,8 +35,6 @@ int main(int argc, char **argv) {
   // set up alps::mpi::reducer
   alps::alea::mpi_reducer red_(alps::mpi::communicator(), 0);
   alps::alea::reducer_setup setup = red_.get_setup();
-
-  // alps::mpi::communicator comm_;
 
   char tmp[256];
   auto _ = getcwd(tmp, 256);
@@ -202,11 +192,13 @@ int main(int argc, char **argv) {
     } else if (shapes.size() == 2) {
       shape += ("L_" + to_string(shapes[0]) + "_" + to_string(shapes[1]));
     } else if (shapes.size() == 3) {
-      shape += ("L_" + to_string(shapes[0]) + "_" + to_string(shapes[1]) +
-                     "_" + to_string(shapes[2]));
+      shape += ("L_" + to_string(shapes[0]) + "_" + to_string(shapes[1]) + "_" +
+                to_string(shapes[2]));
     }
-    string setting_name = "T_" + to_string(T) + "/" + "N_" + to_string(sweeps * size);
-    string output_folder = folder + model_name + "/" + shape + "/" + setting_name;
+    string setting_name =
+        "T_" + to_string(T) + "/" + "N_" + to_string(sweeps * size);
+    string output_folder =
+        folder + model_name + "/" + shape + "/" + setting_name;
     string dateTime = getCurrentDateTime();
 
     out_file = output_folder + "/" + getCurrentDateTime() + ".txt";
