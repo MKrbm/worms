@@ -39,7 +39,12 @@ class MinimumEnergyLoss(nn.Module):
         loss = torch.zeros(1, device=U.device)
         for i in range(len(self.h_list)):
             result_abs = self.get_stoquastic(self.h_list[i], U)
-            E = torch.linalg.eigvalsh(result_abs)
+            try:
+                E = torch.linalg.eigvalsh(result_abs)
+            except RuntimeError:    
+                # If there are some errors during the eigen decomposition.
+                result_abs = (result_abs + result_abs.T)/2
+                E = torch.linalg.eigvalsh(result_abs)
             loss += E[0] + self.offset[i]
         return -loss
 
