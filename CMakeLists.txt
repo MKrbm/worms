@@ -87,7 +87,7 @@ ENDFOREACH(name)
 # message(STATUS "MPI_CXX_LIBRARIES = ${MPI_CXX_LIBRARIES}")
 
 add_executable(mpi_test ./test_/hello_world.cpp)
-target_link_libraries(mpi_test ${MPI_CXX_LIBRARIES})
+target_link_libraries(mpi_test MPI::MPI_CXX)
 
 # target_link_libraries(worm-gtest worm)
 # target_include_directories(worm-gtest PUBLIC "${PROJECT_BINARY_DIR}")
