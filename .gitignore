@@ -5,6 +5,7 @@ HPhi
 __pycache__/
 *.py[cod]
 *$py.class
+**/*.swp
 
 **/CMakeFiles/**
 # C extensions

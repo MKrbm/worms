@@ -1,0 +1,64 @@
+logging to file: optimizer_output/2023-11-16_17-28-33_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_32/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_17-36-01_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_33/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_17-43-44_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_34/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_17-50-53_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_35/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_17-58-17_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_36/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_18-05-31_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_37/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_18-13-55_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_38/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_18-21-25_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_39/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_18-28-42_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_40/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_18-36-08_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_41/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_18-43-40_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_42/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_18-51-02_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_43/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_18-58-24_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_44/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_19-05-51_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_45/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_19-13-12_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_46/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_19-20-31_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_47/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_19-27-48_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_48/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_19-35-12_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_49/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_19-42-19_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_50/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_19-49-46_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_51/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_19-57-25_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_52/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_20-05-12_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_53/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_20-12-43_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_54/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_20-19-49_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_55/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_20-27-12_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_56/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_20-34-38_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_57/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_20-42-18_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_58/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_20-49-48_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_59/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_20-57-10_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_60/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_21-04-30_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_61/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_21-11-58_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_62/1_mel_Adam/lr_0.001_epoch_4000
+logging to file: optimizer_output/2023-11-16_21-19-23_optimizer.log
+logging to tensorboard under: out/tensorboard/FF2D_loc/s_8_r_2_lt_1_d_2_seed_63/1_mel_Adam/lr_0.001_epoch_4000
