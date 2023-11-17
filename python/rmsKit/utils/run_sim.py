@@ -15,9 +15,9 @@ def extract_loss(dir_name):
     return None
 
 
-def path_with_lowest_loss(parent_dir):
-    # Get all directory names under the parent directory using glob
-    dir_names = glob.glob(f"{parent_dir}/*")
+def path_with_lowest_loss(parent_dir, return_ham=False, absolute_path=False):
+    # Get all directory names under the parent directory using glob (not only direct children)
+    dir_names = glob.glob(os.path.join(parent_dir, "**"), recursive=True)
 
     # Extract loss values and associate them with their paths
     losses = [(path, extract_loss(path)) for path in dir_names]
@@ -26,11 +26,32 @@ def path_with_lowest_loss(parent_dir):
 
     # Find the path with the lowest loss
     min_path, min_loss = min(valid_losses, key=lambda x: x[1])
+    min_path = min_path + "/u"
+
+    if return_ham:
+        # find the file path include "/H/" in the dir_names
+        ham_path = [path for path in dir_names if "/H" in path][0]
+        if ham_path is None:
+            raise ValueError("No hamiltonian file found.")
+        elif len(ham_path) > 1:
+            print("Warning: Multiple hamiltonian files found : ", ham_path)
+
+        if absolute_path:
+            # get absolute path to parent_dir
+            ham_path = os.path.abspath(ham_path)
+            min_path = os.path.abspath(min_path)
+            return min_path, min_loss, ham_path
+
+        return min_path, min_loss, ham_path
+
+    if absolute_path:
+        min_path = os.path.abspath(min_path)
+        return min_path, min_loss
 
     return min_path, min_loss
 
 
-def run_ff_1d(
+def run_ff(
     seed: int,
     rank: int,
     sps: int,
@@ -61,9 +82,11 @@ def run_ff_1d(
     if not os.path.isfile("torch_optimize_loc.py"):
         print("torch_optimize_loc.py not found. Please check the path.")
         return None
+    if dimension not in [1, 2]:
+        raise ValueError("Dimension must be 1 or 2.")
 
     # Construct the command to run the optimization script
-    command = f"python torch_optimize_loc.py -m FF1D -loss mel -o LION -e {params['e']} -M {params['M']} -lr {params['lr']} -r {params['seed']}" \
+    command = f"python torch_optimize_loc.py -m FF{dimension}D -loss mel -o LION -e {params['e']} -M {params['M']} -lr {params['lr']} -r {params['seed']}" \
         + f" -lt {params['lt']} -p {'gpu' if gpu else 'cpu'} "
 
     command += f"-o {o}"
@@ -140,22 +163,25 @@ def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float
     # 1. Get the current directory
     current_dir = os.getcwd()
 
-    # 2. Move up two directories and find the executable
-    grandparent_dir = os.path.abspath(os.path.join(current_dir, "..", ".."))
-    # release_dir, executable_name = find_executable(grandparent_dir)
-    executable_name = "main_MPI"
-    release_dir = os.path.join(grandparent_dir, "Release")
 
-    if not release_dir:
-        print("Executable not found.")
+
+    # 2. Find the executable
+    # release_dir, executable_name = find_executable(current_dir)
+    release_dir = os.path.join(current_dir, "build")
+    executable_name = "./main_MPI"
+
+
+    if not os.path.isdir(release_dir):
+        print("current dir is: ", os.getcwd())
+        print("release_dir : ", release_dir, " not found. Please check the path.")
         return
 
     # 3. Prepare the command arguments
     T = round(T, 5)
     cmd = [
         "mpirun",
-        "-n",
-        str(n),
+        "-n" if n > 1 else "",
+        str(n) if n > 1 else "",
         executable_name,
         "-m",
         model_name,
@@ -172,7 +198,10 @@ def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float
         "-L2" if len(L) > 1 else "",
         str(L[1]) if len(L) > 1 else "",
         "--output",
+        "--split-sweeps"
     ]
+
+    cmd = [str(arg) for arg in cmd if arg != ""]
 
     # Add -L arguments
     for i, length in enumerate(L, start=1):
@@ -180,16 +209,13 @@ def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float
         cmd.append(str(length))
 
     with change_directory(release_dir):
+        print("cmd: ", cmd)
         # check if folder for ham_path and u_path exist (they are path to the folder)
         if not os.path.isdir(ham_path):
             print("current dir is: ", os.getcwd())
             print("ham_path : ", ham_path, " not found. Please check the path.")
             return
 
-        # if not os.path.isdir(u_path):
-        #     print("current dir is: ", os.getcwd())
-        #     print("u_path : ", u_path, " not found. Please check the path.")
-        #     return
         out = subprocess.run(cmd, stderr=subprocess.STDOUT)
 
     return out
