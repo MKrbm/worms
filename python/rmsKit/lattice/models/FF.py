@@ -1,5 +1,6 @@
 # kagome heisenberg model
-import sys, os
+import sys
+import os
 import numpy as np
 import random
 from ..core.constants import *
@@ -10,7 +11,7 @@ import utils
 from typing import List
 
 
-def block1D(*dimensions, normal = True, seed = None, canonical = True):
+def block1D(*dimensions, normal=True, seed=None, canonical=True):
     """Construct a new matrix for the MPS with random numbers from 0 to 1"""
     if seed is not None:
         np.random.seed(seed)
@@ -30,7 +31,8 @@ def block1D(*dimensions, normal = True, seed = None, canonical = True):
     else:
         return A
 
-def block2D(sps, bd, seed = None, normal = True):
+
+def block2D(sps, bd, seed=None, normal=True):
     if seed is not None:
         np.random.seed(seed)
         random.seed(seed)
@@ -41,9 +43,11 @@ def block2D(sps, bd, seed = None, normal = True):
         A = np.random.normal(size=size)
     else:
         A = np.random.random_sample(size)
-    A = (A.transpose(2,1,0,3,4) + A.transpose(0,3,2,1,4) + A.transpose(2,3,0,1,4) + A) / 4
-    A = A + A.transpose([1,2,3,0,4])
+    A = (A.transpose(2, 1, 0, 3, 4) + A.transpose(0, 3,
+         2, 1, 4) + A.transpose(2, 3, 0, 1, 4) + A) / 4
+    A = A + A.transpose([1, 2, 3, 0, 4])
     return A
+
 
 def create_MPS(n, A):
     """Build the MPS tensor"""
@@ -55,20 +59,22 @@ def create_MPS(n, A):
         connected_edges.append(conn)
     return mps, connected_edges
 
+
 def create_PEPS(L1, L2, A):
     '''Build the PEPS tensor'''
     if A.ndim != 5:
         raise ValueError("hi")
-    peps =  [ tn.Node( np.copy(A) ) for _ in range(L1*L2)] 
+    peps = [tn.Node(np.copy(A)) for _ in range(L1*L2)]
     s = np.arange(L1 * L2)
     x = s % L1
     y = s // L1
     T_x = (x + 1) % L1 + y * L1
     T_y = x + ((y + 1) % L2) * L1
-    bonds = [([i, T_x[i]], [0, 2]) for i in range(L1*L2)] + [([i, T_y[i]], [1, 3]) for i in range(L1*L2)]
-    connected_edges=[]
+    bonds = [([i, T_x[i]], [0, 2]) for i in range(L1*L2)] + \
+        [([i, T_y[i]], [1, 3]) for i in range(L1*L2)]
+    connected_edges = []
     for bond in bonds:
-        conn=peps[bond[0][0]][bond[1][0]]^peps[bond[0][1]][bond[1][1]]
+        conn = peps[bond[0][0]][bond[1][0]] ^ peps[bond[0][1]][bond[1][1]]
         connected_edges.append(conn)
     return peps, connected_edges
 
@@ -112,13 +118,14 @@ def local(params: dict, check_L: List[int] = []):
             return [h], sps
     elif d == 2:
         if lt != 1:
-            raise NotImplementedError("2D PEPS are not implemented for lt != 1")
+            raise NotImplementedError(
+                "2D PEPS are not implemented for lt != 1")
 
         AP = block2D(sps, bond_dim)
-        AP2 = np.einsum("ijklm,abide->mejklabd",AP,AP).reshape(sps ** 2, -1)
+        AP2 = np.einsum("ijklm,abide->mejklabd", AP, AP).reshape(sps ** 2, -1)
         U, s, V = np.linalg.svd(AP2)
-        s = np.round(s,10)
-        s = s[s!=0]
+        s = np.round(s, 10)
+        s = s[s != 0]
         Up = U[:, len(s):]
         h = Up @ Up.T
         h = (h + h.T)/2
@@ -143,6 +150,19 @@ def system(_L: list[int], params: dict) -> np.ndarray:
         H = utils.sum_ham(h_list[0], bonds, L, s)
         return H
     elif _d == 2:
+        L1 = _L[0]
+        L2 = _L[1]
+        s_ = np.arange(L1 * L2)
+        x = s_ % L1
+        y = s_ // L1
+        T_x = (x + 1) % L1 + y * L1
+        T_y = x + ((y + 1) % L2) * L1
+        bonds = [[i, T_x[i]]
+                 for i in range(L1*L2)] + [[i, T_y[i]] for i in range(L1*L2)]
+        h_list, sps = local(params)
+        H = utils.sum_ham(h_list[0], bonds, L1*L2, s)
+        return H
+    else:
         raise NotImplementedError("not implemented")
 
 
