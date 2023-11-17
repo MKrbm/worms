@@ -13,14 +13,22 @@ double getWormDistTravel(double tau, double tau_prime, int dir) {
 template <class MCT>
 Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_,
                 size_t cl, int rank, int seed)
-    : spin_model(model_), L(spin_model.L), beta(beta), rho(-1),
-      N_op(spin_model.N_op), bonds(spin_model.bonds),
-      bond_type(spin_model.bond_type), state(spin_model.L),
-      cstate(spin_model.L), cutoff_length(cl), _mp_worm_obs(mp_worm_obs_),
-      _phys_cnt(1), loperators(spin_model.loperators),
-      sps(spin_model.sps_sites(0)), obs_sum(mp_worm_obs_().size()),
+    : spin_model(model_),
+      L(spin_model.L),
+      beta(beta),
+      rho(-1),
+      N_op(spin_model.N_op),
+      bonds(spin_model.bonds),
+      bond_type(spin_model.bond_type),
+      state(spin_model.L),
+      cstate(spin_model.L),
+      cutoff_length(cl),
+      _mp_worm_obs(mp_worm_obs_),
+      _phys_cnt(1),
+      loperators(spin_model.loperators),
+      sps(spin_model.sps_sites(0)),
+      obs_sum(mp_worm_obs_().size()),
       zw(spin_model.zw) {
-
   srand(rank);
 #ifdef NDEBUG
   unsigned rseed = static_cast<unsigned>(time(0)) + rand() * (rank + 1);
@@ -36,7 +44,7 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_,
   rand_src = engine_type(seed);
   test_src = engine_type(seed);
 #endif
- 
+
   max_diagonal_weight = 0;
   for (auto const &lop : loperators) {
     max_diagonal_weight =
@@ -74,28 +82,28 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_,
     }
   }
 }
-template <class MCT> void Worm<MCT>::diagonalUpdate(double wdensity) {
-
+template <class MCT>
+void Worm<MCT>::diagonalUpdate(double wdensity) {
   swapOps();
   expdist_t expdist(rho * beta +
-                    wdensity); // initialize exponential distribution
+                    wdensity);  // initialize exponential distribution
   double pstart =
-      wdensity / (beta * rho + wdensity); // probability of choosing worms
+      wdensity / (beta * rho + wdensity);  // probability of choosing worms
   std::copy(state.begin(), state.end(), cstate.begin());
   size_t lop_label;
-  lop_label = 0; // typically, lop_label is fixed to 0
+  lop_label = 0;  // typically, lop_label is fixed to 0
 
-  ops_main.resize(0);   //* init_ops_main()
-  can_warp_ops.clear(); // forget previous record
+  ops_main.resize(0);    //* init_ops_main()
+  can_warp_ops.clear();  // forget previous record
 
-  initDots(); //*init spacetime_dots
+  initDots();  //*init spacetime_dots
 
   // n*init worms
   worms_list.resize(0);
   worm_states.resize(0);
   worm_taus.resize(0);
 
-  ops_sub.push_back(OP_type::sentinel(1)); //*sentinels
+  ops_sub.push_back(OP_type::sentinel(1));  //*sentinels
   double tau0 = uniform(rand_src);
   double tau = expdist(rand_src);
   bool set_atleast_one = false;
@@ -106,19 +114,19 @@ template <class MCT> void Worm<MCT>::diagonalUpdate(double wdensity) {
       if (tau0 < opi->tau()) {
         size_t s = static_cast<int>(L * uniform(rand_src));
         appendWorms(worms_list, s, spacetime_dots.size(), tau0);
-        set_dots(s, -2, 0); //*index is always 0
+        set_dots(s, -2, 0);  //*index is always 0
         set_atleast_one = true;
         worm_states.push_back(cstate);
         worm_taus.push_back(tau0);
       }
     }
     if (tau <
-        opi->tau()) { //* if new point is behind the next operator is opsub.
+        opi->tau()) {  //* if new point is behind the next operator is opsub.
       double r = uniform(rand_src);
       if (r < pstart) {
         size_t s = static_cast<int>(L * uniform(rand_src));
         appendWorms(worms_list, s, spacetime_dots.size(), tau);
-        set_dots(s, -2, 0); //*index is always 0
+        set_dots(s, -2, 0);  //*index is always 0
         worm_states.push_back(cstate);
         worm_taus.push_back(tau);
       } else {
@@ -130,8 +138,7 @@ template <class MCT> void Worm<MCT>::diagonalUpdate(double wdensity) {
           auto const &accept = accepts[bop_label];
           auto const &bond = bonds[b];
           size_t u = state_funcs[bop_label].state2num(cstate, bond);
-          if (accept[u] > 1)
-            throw std::runtime_error("accept[u] > 1");
+          if (accept[u] > 1) throw std::runtime_error("accept[u] > 1");
           if (r < accept[u]) {
             appendOps(ops_main, spacetime_dots, can_warp_ops, &bond,
                       &pows_vec[bop_label],
@@ -144,8 +151,7 @@ template <class MCT> void Worm<MCT>::diagonalUpdate(double wdensity) {
           double mat_elem =
               get_single_flip_elem(site, spin, spin, cstate, nn_state);
           mat_elem = std::abs(mat_elem) / max_diagonal_weight;
-          if (mat_elem > 1)
-            throw std::runtime_error("mat_elem > 1");
+          if (mat_elem > 1) throw std::runtime_error("mat_elem > 1");
           if (r < mat_elem) {
             appendSingleOps(ops_main, spacetime_dots, can_warp_ops, site,
                             &nn_sites[site],
@@ -155,7 +161,7 @@ template <class MCT> void Worm<MCT>::diagonalUpdate(double wdensity) {
         }
       }
       tau += expdist(rand_src);
-    } else { //*if tau went over the operator time.
+    } else {  //*if tau went over the operator time.
       if (opi->is_off_diagonal()) {
         update_state(opi, cstate);
         if (opi->_check_is_bond()) {
@@ -177,7 +183,7 @@ template <class MCT> void Worm<MCT>::diagonalUpdate(double wdensity) {
       }
       ++opi;
     }
-  } // end of while loop
+  }  // end of while loop
 #ifndef NDEBUG
   if (cstate != state) {
     throw std::runtime_error("diagonalupdate : state is not updated correctly");
@@ -198,12 +204,12 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength) {
   dout << "\nStart worm update" << endl;
   dout << "---------------------" << endl;
   std::copy(state.begin(), state.end(), cstate.begin());
-  ops_main.push_back(OP_type::sentinel(1)); //*sentinels
+  ops_main.push_back(OP_type::sentinel(1));  //*sentinels
   typename WORMS::iterator wsi = worms_list.begin();
   size_t w_index = 0;
   for (typename OPS::iterator opi = ops_main.begin(); opi != ops_main.end();) {
     if (opi->tau() <
-        std::get<2>(*wsi)) { // n* if operator is behind the worm tail.
+        std::get<2>(*wsi)) {  // n* if operator is behind the worm tail.
 #ifndef NDEBUG
       if (opi->is_off_diagonal()) {
         update_state(opi, cstate);
@@ -219,8 +225,9 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength) {
       // t : tail, h : head. direction of tails is opposite to the direction of
       // the initial head. prime means the spin state in front of the worm.
       int wt_dot, site, wt_site, _t_spin, n_dot_label;
-      double wt_tau, tau; // tau_prime is the time of the next operator.
-      std::tie(wt_site, wt_dot, wt_tau) = *wsi; // contains site, dot label, tau
+      double wt_tau, tau;  // tau_prime is the time of the next operator.
+      std::tie(wt_site, wt_dot, wt_tau) =
+          *wsi;  // contains site, dot label, tau
       tau = wt_tau;
       site = wt_site;
       Dotv2 *dot = &spacetime_dots[wt_dot];
@@ -236,7 +243,7 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength) {
            << worm_states[w_index] << endl;
       int w_x = worm_states[w_index][wt_site];
       int wt_x = w_x;
-      bool wh = true; //* Worm head stil exists.
+      bool wh = true;  //* Worm head stil exists.
       double wlength_prime = 0;
       wcount += 1;
 
@@ -246,7 +253,7 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength) {
 
       do {
         if (fl != 0) {
-          n_dot_label = dot->move_next(dir); // next label of dot.
+          n_dot_label = dot->move_next(dir);  // next label of dot.
         }
         size_t status =
             wormOpUpdate(n_dot_label, dir, site, wlength_prime, fl, tau, wt_dot,
@@ -351,8 +358,8 @@ void Worm<MCT>::calcHorizontalGreen(double tau, size_t h_site, size_t t_site,
           }
         }
         phys_cnt = (double)sign / (sps - 1);
-      } else { // n* This case could contribute to single flip operator but not
-               // implemented yet.
+      } else {  // n* This case could contribute to single flip operator but not
+                // implemented yet.
         ;
       }
     }
@@ -394,7 +401,6 @@ void Worm<MCT>::appendOps(OPS &ops, DOTS &sp,
                           std::unordered_set<size_t> &warp_sp,
                           const BOND *const bp, const BOND *const pp, int state,
                           int op_type, double tau) {
-
   int s = bp->size();
   if (op_type >= int(loperators.size()) || op_type < 0) {
     // n* output the value op_type >= loperators.size()
@@ -415,7 +421,7 @@ void Worm<MCT>::appendOps(OPS &ops, DOTS &sp,
   //! warp is disabled for now
   if (loperators[op_type].has_warp(state)) {
     warp_sp.insert(label);
-  } // if the operator has warp, add the label of the leftmost dot to the set.
+  }  // if the operator has warp, add the label of the leftmost dot to the set.
 
   for (int i = 0; i < s; i++) {
     // set_dots(bond[i], 0, i);
@@ -434,7 +440,6 @@ void Worm<MCT>::appendSingleOps(OPS &ops, DOTS &sp,
                                 const BOND *const bp, const BOND *const pp,
                                 int state, const state_t &nn_state, int op_type,
                                 double tau) {
-
   if (op_type >= 0) {
     // n* output the value op_type >= loperators.size()
 
@@ -458,7 +463,7 @@ void Worm<MCT>::appendSingleOps(OPS &ops, DOTS &sp,
   size_t label = sp.size();
   int site;
   warp_sp.insert(label);
-  for (int i = 0; i < bp->size() + 1; i++) // nn_site + center site
+  for (int i = 0; i < bp->size() + 1; i++)  // nn_site + center site
   {
     if (i == 0)
       site = s_site;
@@ -494,7 +499,7 @@ size_t Worm<MCT>::getDotState(size_t ndot_label, size_t dir) {
     OP_type &opstate = ops_main[ndot->label()];
     if (opstate._check_is_bond()) {
       size_t cindex =
-          ndot->leg(!dir, opstate.size()); // direction must be reversed here.
+          ndot->leg(!dir, opstate.size());  // direction must be reversed here.
       return opstate.get_local_state(cindex);
     } else {
       //* if the operator is single-flip operator
@@ -556,13 +561,13 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
     dotp = &spacetime_dots[next_dot];
     opsp = &ops_main[dotp->label()];
     op_type = opsp->op_type();
-    dout << "warp to : " << " next_dot = " << next_dot << " dotp_label = " << dotp->label()
-         << "tau : " << opsp->tau() 
-         << endl;
+    dout << "warp to : "
+         << " next_dot = " << next_dot << " dotp_label = " << dotp->label()
+         << "tau : " << opsp->tau() << endl;
     if (opsp->op_type() >= 0) {
-      goto warp_label; // check if optype is single flip operator
+      goto warp_label;  // check if optype is single flip operator
     } else {
-      goto single_warp; // check if optype is bond operator
+      goto single_warp;  // check if optype is bond operator
     }
   } else if (dotp->at_origin()) {
     tau_prime = 0;
@@ -641,12 +646,22 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
       }
       if (i == w_index) {
         if (wt_site != site && (worm_states[i][site] + fl) % sps != w_x) {
+          dout << "wt_site : " << wt_site;
+          dout << " site : " << site;
+          dout << " worm_states[i][site] : " << worm_states[i][site];
+          dout << " fl : " << fl;
+          dout << " w_x : " << w_x;
           throw std::runtime_error("spin is not consistent");
         }
         if (wt_site == site &&
             (worm_states[i][site] + (t_dir != dir ? sps + fl - t_fl : fl)) %
                     sps !=
                 w_x) {
+          dout << "wt_site : " << wt_site;
+          dout << " site : " << site;
+          dout << " worm_states[i][site] : " << worm_states[i][site];
+          dout << " fl : " << fl;
+          dout << " w_x : " << w_x;
           throw std::runtime_error("spin is not consistent");
         }
       }
@@ -658,13 +673,13 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
       //   throw std::runtime_error("spin is not consistent");
       // }
       if (fl == 0) {
-        std::runtime_error(
+        throw std::runtime_error(
             "fl must be non-zero since zero worm doesn't come here");
       }
       if (i == w_index) {
         cstate[site] = w_x;
         if (wt_site == site) {
-          wt_x = (wt_x + fl) % sps; // n* fliped by worm head.
+          wt_x = (wt_x + fl) % sps;  // n* fliped by worm head.
           w_x = (t_dir == dir) ? (w_x + sps - t_fl) % sps : (w_x + t_fl) % sps;
           if (w_x != ((dir == 1 ? h_x_prime : h_x) + fl) % sps) {
             throw std::runtime_error("w_x is not consistent");
@@ -693,7 +708,7 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
     }
 
     int state_num, tmp, nindex, dir_in, leg_size, cindex, index;
-    dir_in = !dir; // n* direction the Worm comes in from the view of operator.
+    dir_in = !dir;  // n* direction the Worm comes in from the view of operator.
     leg_size = opsp->size();
     cindex = dotp->leg(dir_in, leg_size);
     index = dotp->leg(0, leg_size);
@@ -710,7 +725,7 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
         w_x = opsp->get_local_state(dir);
         site = static_cast<int>(opsp->bond_ptr() - &nn_sites[0]);
         if (fl == 0) {
-          w_x = -1; // w_x is ready to warp.
+          w_x = -1;  // w_x is ready to warp.
           site = -1;
           dir = -2;
         }
@@ -721,17 +736,17 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
           fl = flip.second;
           w_x = opsp->nn_state(nn_index - 1);
         } else {
-          std::runtime_error("fl must be non-zero since zero worm doesn't come "
-                             "out from operator");
+          std::runtime_error(
+              "fl must be non-zero since zero worm doesn't come "
+              "out from operator");
         }
       }
       tau = opsp->tau();
       return 0;
     }
 
-    sign *=
-        loperators[op_type]
-            .signs[opsp->state()]; //! sign for single-flip is not included yet.
+    sign *= loperators[op_type].signs[opsp->state()];  //! sign for single-flip
+                                                       //! is not included yet.
     dout << "sign1 : " << sign << endl;
     if (true) {
       state_num = opsp->update_state(cindex, fl);
@@ -739,15 +754,16 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
                                                   rand_src);
       dout << "tmp : " << tmp << " state_num : " << state_num << endl;
     } else {
-  warp_label:
-      if (fl != 0) throw std::runtime_error("fl must be zero when warp_label is called");
+    warp_label:
+      if (fl != 0)
+        throw std::runtime_error("fl must be zero when warp_label is called");
       warped = true;
       state_num = opsp->state();
       tmp = loperators[op_type].markov[state_num](0, rand_src);
       dout << "tmp : " << tmp << " state_num : " << state_num << endl;
     }
     // n* if Worm stop at this operator
-    if (tmp == 0) { // if head will warp.
+    if (tmp == 0) {  // if head will warp.
       dout << "cur_dot : " << cur_dot << " dotp->index() : " << dotp->index()
            << " optype : " << op_type << " state_num : " << state_num << endl;
       if (!loperators[op_type].has_warp(state_num)) {
@@ -757,9 +773,9 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
         dout << "inserted value : " << cur_dot - dotp->index() << endl;
         can_warp_ops.insert(cur_dot - dotp->index());
       }
-      if (!warped){
+      if (!warped) {
         sign *= loperators[op_type]
-                .signs[state_num]; // include an effect by start point
+                    .signs[state_num];  // include an effect by start point
       }
       dout << "can_warp_ops.size : " << can_warp_ops.size() << endl;
       t_x_prime = getDotState(wtdot->move_next(1), 1);
@@ -767,8 +783,8 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
       if (it == can_warp_ops.begin()) {
         calcWarpGreen(tau, wt_site, t_x, t_x_prime, worm_states[w_index]);
       }
-      fl = 0;   // redo selection of warping point.
-      w_x = -1; // w_x is ready to warp.
+      fl = 0;    // redo selection of warping point.
+      w_x = -1;  // w_x is ready to warp.
       site = -1;
       dir = -1;
       tau = opsp->tau();
@@ -776,7 +792,7 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
     } else {
       tmp--;
       nindex = tmp / (sps - 1);
-      if (warped){
+      if (warped) {
         if (fl != 0) {
           throw std::runtime_error("fl must be zero when warp_label is called");
         }
@@ -785,10 +801,11 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
       }
       fl = tmp % (sps - 1) + 1;
       state_num = opsp->update_state(nindex, fl);
-      dout << "non-warp" << "nindex : " << nindex << " fl : " << fl << " state_num : "
-           << state_num << endl;
+      dout << "non-warp"
+           << "nindex : " << nindex << " fl : " << fl
+           << " state_num : " << state_num << endl;
       sign *= loperators[op_type].signs[state_num];
-      if (warped){
+      if (warped) {
         dout << "sign(after warp)2 : " << sign << endl;
       } else {
         dout << "sign(non-warp) : " << sign << endl;
@@ -796,7 +813,7 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
       // n* assigin for next step
       dir = nindex / (leg_size);
       site = opsp->bond(nindex % leg_size);
-      if (warped){
+      if (warped) {
         next_dot = opsp->next_dot(0, nindex, cur_dot);
         tau_prime = opsp->tau();
       } else {
@@ -817,7 +834,7 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
 
     int dsign = 1;
     for (auto &op : ops_main) {
-      if (op.op_type() == -1){
+      if (op.op_type() == -1) {
         dsign *= get_single_flip_elem(op) >= 0 ? 1 : -1;
       } else {
         dsign *= loperators[op.op_type()].signs[op.state()];
@@ -839,7 +856,6 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
  */
 template <class MCT>
 void Worm<MCT>::set_dots(size_t site, size_t dot_type, size_t index) {
-
   size_t label = spacetime_dots.size();
 
   if (dot_type == -1) {
@@ -908,8 +924,8 @@ void Worm<MCT>::update_state_OD(typename OPS::iterator opi, state_t &state) {
   } else {
     int site = static_cast<int>(
         opi->bond_ptr() -
-        &nn_sites[0]); // calculate site from the difference of pointer values.
-                       // (nn_sites.begin() is the first element of vector)
+        &nn_sites[0]);  // calculate site from the difference of pointer values.
+                        // (nn_sites.begin() is the first element of vector)
 #ifndef NDEBUG
     if (state.at(site) != opi->get_local_state(0))
       throw std::runtime_error("state is not consistent");
@@ -929,7 +945,6 @@ p_label : label of dot before reaching at the current position of Worm.
 template <class MCT>
 void Worm<MCT>::checkOpsInUpdate(int worm_label, int p_label, int t_dir,
                                  int t_fl, int fl, int dir) {
-
 #ifndef NDEBUG
   auto state_ = state;
 
@@ -937,7 +952,7 @@ void Worm<MCT>::checkOpsInUpdate(int worm_label, int p_label, int t_dir,
   d_cnt++;
   std::cout << "debug cnt = " << d_cnt << std::endl;
   for (const auto &dot : spacetime_dots) {
-    if (dot.at_operator() && (dot.index() == 0)) { // if dot_type is operator
+    if (dot.at_operator() && (dot.index() == 0)) {  // if dot_type is operator
       auto opi = ops_main.begin() + dot.label();
       update_state(opi, state_);
     } else if (dot.at_origin()) {
@@ -960,7 +975,7 @@ bool Worm<MCT>::detectWormCross(double tau, double tau_prime, double wt_tau,
       return true;
     else
       return false;
-  } else { // if dir == 0
+  } else {  // if dir == 0
     if (tau_prime <= wt_tau && wt_tau < (tau == 0 ? 1 : tau))
       return true;
     else
@@ -968,13 +983,15 @@ bool Worm<MCT>::detectWormCross(double tau, double tau_prime, double wt_tau,
   }
 }
 
-template <class MCT> void Worm<MCT>::reset_ops() {
+template <class MCT>
+void Worm<MCT>::reset_ops() {
   for (size_t i = 0; i < psop.size(); i++) {
     ops_main[psop[i]].set_state(pres[i]);
   }
 }
 
-template <class MCT> double Worm<MCT>::get_single_flip_elem(const OP_type &op) {
+template <class MCT>
+double Worm<MCT>::get_single_flip_elem(const OP_type &op) {
   if (op._check_is_bond())
     throw std::runtime_error("op must be a single site operator");
   ptrdiff_t _index = op.bond_ptr() - &nn_sites[0];
@@ -988,13 +1005,13 @@ template <class MCT> double Worm<MCT>::get_single_flip_elem(const OP_type &op) {
     mat_elem += loperators[target.bt].single_flip(target.start, nn_state[i], x,
                                                   x_prime);
   }
-  if (x != x_prime){
+  if (x != x_prime) {
     int a = 0;
     vector<int> tmp_state(4);
     vector<int> tmp_state2(4);
     tmp_state[site] = x;
     tmp_state2[site] = x_prime;
-    for (int j = 0; j < nn_sites[site].size(); j++){
+    for (int j = 0; j < nn_sites[site].size(); j++) {
       tmp_state[nn_sites[site][j]] = nn_state[j];
       tmp_state2[nn_sites[site][j]] = nn_state[j];
     }
@@ -1049,12 +1066,10 @@ template <class MCT>
 std::pair<int, int> Worm<MCT>::markov_next_flip(OP_type &op, int dir, int fl,
                                                 bool zero_fl) {
   // d* error check
-  if (dir != 0 && dir != 1)
-    throw std::runtime_error("dir must be 0 or 1");
+  if (dir != 0 && dir != 1) throw std::runtime_error("dir must be 0 or 1");
   if (op._check_is_bond())
     throw std::runtime_error("op must be a single site operator");
-  if (fl < 0 || fl >= sps)
-    throw std::runtime_error("fl must be in [0, sps)");
+  if (fl < 0 || fl >= sps) throw std::runtime_error("fl must be in [0, sps)");
 
   int num = op.state();
   double mat_elem = get_single_flip_elem(op);
@@ -1120,8 +1135,7 @@ std::pair<int, int> Worm<MCT>::markov_diagonal_nn(OP_type &op, int dir_in,
     throw std::runtime_error("dir must be 0 or 1");
   if (op._check_is_bond())
     throw std::runtime_error("op must be a single site operator");
-  if (fl < 0 || fl >= sps)
-    throw std::runtime_error("fl must be in [0, sps)");
+  if (fl < 0 || fl >= sps) throw std::runtime_error("fl must be in [0, sps)");
 
   int num = op.state();
   // double mat_elem = std::abs(get_single_flip_elem(op));
