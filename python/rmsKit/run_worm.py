@@ -11,8 +11,6 @@ parser.add_argument('-m', '--model_name', type=str, required=True,
                     help='The name of the model.')
 parser.add_argument('-f', '--path', type=str, required=True,
                     help='The python file will look for the Hamiltonian and the best unitary in this directory.')
-parser.add_argument('-r', '--seed', type=int, required=True,
-                    help='The seed for the random number generator.')
 parser.add_argument('-n', '--n', type=int, default=-1,
                     help='The number of processes to use.')
 parser.add_argument('-s', '--sweeps', type=int, required=True,
@@ -40,7 +38,6 @@ if __name__ == "__main__":
     # define the number of samples
     p = args.n
     M = args.sweeps
-    r = args.seed
 
     if M % p != 0:
         print(
