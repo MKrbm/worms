@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
   const Setting &dofs_cfg = mcfg->lookup("dofs");
 
   double shift;
-  string file, basis, cell, ham_path, obs_path, u_path, out_file;
+  string file, basis, cell, ham_path, obs_path, u_path, out_file, output_folder;
   out_file = "";
   vector<string> wobs_paths;
   bool repeat;  // true if repeat params and types.
@@ -188,7 +188,6 @@ int main(int argc, char **argv) {
 
   if (args.has("output")) {
     string folder = "../worm_result/";
-    string model_name_ = model_name;
     string shape = "";
     if (shapes.size() == 1) {
       shape += ("L_" + to_string(shapes[0]));
@@ -200,7 +199,7 @@ int main(int argc, char **argv) {
     }
     string setting_name =
         "T_" + to_string(T) + "/" + "N_" + to_string(sweeps * size);
-    string output_folder =
+    output_folder =
         folder + model_name + "/" + shape + "/" + setting_name;
 
     hash<std::string> hasher;
@@ -208,23 +207,27 @@ int main(int argc, char **argv) {
 
     out_file = output_folder + "/" + getCurrentDateTime() + "_" +
                to_string(hash) + ".txt";
-    fs::path output_folder_fs(output_folder);
-    if (!fs::exists(output_folder_fs)) {
-      if (rank == 0) {
-        cout << "create directory : " << output_folder_fs << endl;
-      }
-      boost::filesystem::create_directories(output_folder_fs);
-    }
-    if (rank == 0) {
-      freopen(out_file.c_str(), "w", stdout);
-    }
   }
 
   if (rank == 0) {
     cout << "Output file: " << out_file << endl;
     cout << "model name is \t : \t" << model_name << endl;
     cout << "run on \t : \t" << size << " nodes" << endl;
+    if (args.has("output")){
+      fs::path output_folder_fs(output_folder);
+      if (!fs::exists(output_folder_fs)) {
+        if (rank == 0) {
+          cout << "create directory : " << output_folder_fs << endl;
+        }
+        boost::filesystem::create_directories(output_folder_fs);
+      }
+      if (rank == 0) {
+        freopen(out_file.c_str(), "w", stdout);
+      }
+    }
   }
+  
+
 
   try {
     ns_unit = (size_t)mcfg->lookup("ns_unit");
