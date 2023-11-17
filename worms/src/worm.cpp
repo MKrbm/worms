@@ -1004,23 +1004,28 @@ double Worm<MCT>::get_single_flip_elem(const OP_type &op) {
     auto target = spin_model.nn_sites[site][i];
     mat_elem += loperators[target.bt].single_flip(target.start, nn_state[i], x,
                                                   x_prime);
+
+    dout << "mat_elem : " << mat_elem << "x / x_prime : " << x << " / "
+         << x_prime << endl;
   }
-  if (x != x_prime) {
-    int a = 0;
-    vector<int> tmp_state(4);
-    vector<int> tmp_state2(4);
-    tmp_state[site] = x;
-    tmp_state2[site] = x_prime;
-    for (int j = 0; j < nn_sites[site].size(); j++) {
-      tmp_state[nn_sites[site][j]] = nn_state[j];
-      tmp_state2[nn_sites[site][j]] = nn_state[j];
-    }
-    dout << "state = " << tmp_state << endl;
-    dout << "state2 = " << tmp_state2 << endl;
-    dout << "x : " << x << " x_prime : " << x_prime << endl;
-    dout << "mat_elem : " << mat_elem << endl;
-    int xxx = 0;
-  }
+  dout << "mat_elem" << mat_elem << endl;
+  // if (x != x_prime) {
+  //   int a = 0;
+  //   vector<int> tmp_state(4);
+  //   vector<int> tmp_state2(4);
+  //   tmp_state[site] = x;
+  //   tmp_state2[site] = x_prime;
+  //   for (int j = 0; j < nn_sites[site].size(); j++) {
+  //     tmp_state[nn_sites[site][j]] = nn_state[j];
+  //     tmp_state2[nn_sites[site][j]] = nn_state[j];
+  //   }
+  //   dout << "site : " << site << "nn_sites : " << nn_sites[site] << endl;
+  //   dout << "state = " << tmp_state << endl;
+  //   dout << "state2 = " << tmp_state2 << endl;
+  //   dout << "x : " << x << " x_prime : " << x_prime << endl;
+  //   dout << "mat_elem : " << mat_elem << endl;
+  //   int xxx = 0;
+  // }
   return mat_elem;
 }
 
