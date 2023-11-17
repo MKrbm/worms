@@ -1,1 +1,0 @@
-By default the scripts will store the generated plots in this subdirectory. 
