@@ -210,12 +210,17 @@ def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float
 
     with change_directory(release_dir):
         print("cmd: ", cmd)
-        # check if folder for ham_path and u_path exist (they are path to the folder)
         if not os.path.isdir(ham_path):
             print("current dir is: ", os.getcwd())
             print("ham_path : ", ham_path, " not found. Please check the path.")
             return
 
-        out = subprocess.run(cmd, stderr=subprocess.STDOUT)
+        out = subprocess.run(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+
+        # Check if command executed successfully
+        if out.returncode != 0:
+            error_message = f"Command execution failed with return code {out.returncode}"
+            print("Error output:", out.stdout.decode())
+            raise RuntimeError(error_message)
 
     return out
