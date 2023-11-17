@@ -170,6 +170,34 @@ int main(int argc, char **argv) {
     fix_wdensity = config.lookup("fix_wdensity");
   }
 
+  try {
+    ham_path = args.get<string>("ham");
+    try {
+      u_path = args.get<string>("unitary");
+    } catch (...) {
+      u_path = "";
+    }
+    try {
+      obs_path = args.get<string>("obs");
+    } catch (...) {
+      if (rank == 0)
+        cout << "obs_path is not given. Elements of observables are set to zero"
+             << endl;
+      obs_path = "";
+    }
+    try {
+      wobs_paths = vector<string>(1, args.get<string>("wobs"));
+    } catch (...) {
+      if (rank == 0)
+        cout << "wobs_path is not given. Elements of worm observables will set "
+                "to zero"
+             << endl;
+    }
+  } catch (...) {
+    // cout << "I/O error while reading mc_settings.default settings" << endl;
+  }
+
+
   // parser
   shapes[0] = args.safeGet<size_t>("L1", shapes[0]);
   shapes[1] = args.safeGet<size_t>("L2", shapes[1]);
@@ -207,9 +235,11 @@ int main(int argc, char **argv) {
 
     out_file = output_folder + "/" + getCurrentDateTime() + "_" +
                to_string(hash) + ".txt";
+
   }
 
   if (rank == 0) {
+
     cout << "Output file: " << out_file << endl;
     cout << "model name is \t : \t" << model_name << endl;
     cout << "run on \t : \t" << size << " nodes" << endl;
@@ -248,31 +278,6 @@ int main(int argc, char **argv) {
     if (rank == 0) cout << "no worm observables" << endl;
   }
 
-  try {
-    ham_path = args.get<string>("ham");
-    try {
-      u_path = args.get<string>("unitary");
-    } catch (...) {
-      u_path = "";
-    }
-    try {
-      obs_path = args.get<string>("obs");
-    } catch (...) {
-      if (rank == 0)
-        cout << "obs_path is not given. Elements of observables are set to zero"
-             << endl;
-      obs_path = "";
-    }
-    try {
-      wobs_paths = vector<string>(1, args.get<string>("wobs"));
-    } catch (...) {
-      if (rank == 0)
-        cout << "wobs_path is not given. Elements of worm observables will set "
-                "to zero"
-             << endl;
-    }
-  } catch (...) {
-  }
 
   if (args.has("z")) zero_worm = true;
 
