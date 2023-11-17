@@ -181,7 +181,6 @@ int main(int argc, char **argv) {
   params[1] = args.safeGet<float>("P2", params[1]);
   alpha = args.safeGet<double>("alpha", alpha);
 
-
   if (args.has("split-sweeps")) {
     sweeps = sweeps / size;
   }
@@ -203,9 +202,12 @@ int main(int argc, char **argv) {
         "T_" + to_string(T) + "/" + "N_" + to_string(sweeps * size);
     string output_folder =
         folder + model_name + "/" + shape + "/" + setting_name;
-    string dateTime = getCurrentDateTime();
 
-    out_file = output_folder + "/" + getCurrentDateTime() + ".txt";
+    hash<std::string> hasher;
+    size_t hash = hasher(ham_path);
+
+    out_file = output_folder + "/" + getCurrentDateTime() + "_" +
+               to_string(hash) + ".txt";
     fs::path output_folder_fs(output_folder);
     if (!fs::exists(output_folder_fs)) {
       if (rank == 0) {
