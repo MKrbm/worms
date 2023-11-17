@@ -1,24 +1,23 @@
-#include "MainConfig.h"
+#include <dirent.h>
+#include <mpi.h>
 
+#include <alps/alea/batch.hpp>
+#include <alps/utilities/mpi.hpp>
 #include <argparse.hpp>
 #include <automodel.hpp>
 #include <autoobservable.hpp>
-#include <dirent.h>
+#include <boost/filesystem.hpp>
 #include <exec_parallel.hpp>
 #include <funcs.hpp>
 #include <functional>
 #include <iostream>
+#include <jackknife.hpp>
 #include <libconfig.h++>
-#include <mpi.h>
 #include <observable.hpp>
 #include <options.hpp>
 #include <string>
 
-#include <alps/alea/batch.hpp>
-#include <alps/utilities/mpi.hpp>
-#include <jackknife.hpp>
-
-#include <boost/filesystem.hpp>
+#include "MainConfig.h"
 
 using namespace std;
 using namespace libconfig;
@@ -26,7 +25,6 @@ namespace fs = boost::filesystem;
 double elapsed;
 
 int main(int argc, char **argv) {
-
   int rank, size;
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -106,7 +104,7 @@ int main(int argc, char **argv) {
   string file, basis, cell, ham_path, obs_path, u_path, out_file;
   out_file = "";
   vector<string> wobs_paths;
-  bool repeat; // true if repeat params and types.
+  bool repeat;  // true if repeat params and types.
   bool zero_worm;
   size_t ns_unit;
   vector<size_t> shapes;
@@ -183,6 +181,12 @@ int main(int argc, char **argv) {
   params[1] = args.safeGet<float>("P2", params[1]);
   alpha = args.safeGet<double>("alpha", alpha);
 
+
+  if (args.has("split-sweeps")) {
+    sweeps = sweeps / size;
+  }
+  sweeps = (sweeps / 2) * 2;  // make sure sweeps is even number
+
   if (args.has("output")) {
     string folder = "../worm_result/";
     string model_name_ = model_name;
@@ -236,8 +240,7 @@ int main(int argc, char **argv) {
       wobs_paths.push_back(tmp);
     }
   } catch (const SettingNotFoundException &nfex) {
-    if (rank == 0)
-      cout << "no worm observables" << endl;
+    if (rank == 0) cout << "no worm observables" << endl;
   }
 
   try {
@@ -266,17 +269,12 @@ int main(int argc, char **argv) {
   } catch (...) {
   }
 
-  if (args.has("split-sweeps"))
-    sweeps = sweeps / size;
-  if (args.has("z"))
-    zero_worm = true;
+  if (args.has("z")) zero_worm = true;
 
   if (rank == 0) {
-    if (out_file != "")
-      cout << "output file : " << out_file << endl;
+    if (out_file != "") cout << "output file : " << out_file << endl;
   }
 
-  sweeps = (sweeps / 2) * 2; // make sure sweeps is even number
   if (rank == 0) {
     cout << "zero_wom : " << (zero_worm ? "YES" : "NO") << endl;
     cout << "repeat : " << (repeat ? "YES" : "NO") << endl;
@@ -310,8 +308,7 @@ int main(int argc, char **argv) {
   model::observable obs(*spin_ptr, obs_path, !rank);
 
   // n* set wobs
-  if (wobs_paths.size() == 0)
-    wobs_paths.push_back("");
+  if (wobs_paths.size() == 0) wobs_paths.push_back("");
   model::MapWormObs mapwobs;
   for (int i = 0; i < wobs_paths.size(); i++) {
     string name = "G";
@@ -333,8 +330,7 @@ int main(int argc, char **argv) {
          << "sweeps(in total)        : " << sweeps * size << endl;
 
   if (rank == 0) {
-    for (int i = 0; i < 40; i++)
-      cout << "-";
+    for (int i = 0; i < 40; i++) cout << "-";
     cout << endl;
   }
 
@@ -351,14 +347,14 @@ int main(int argc, char **argv) {
       exe_worm_parallel(*spin_ptr, T, sweeps, therms, cutoff_l, fix_wdensity,
                         rank, res, ac_res, obs, mapwobs);
 
-  batch_res as = res[0];  // average sign
-  batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
+  batch_res as = res[0];   // average sign
+  batch_res ene = res[1];  // signed energy i.e. $\sum_i E_i S_i / N_MC$
   batch_res n_neg_ele = res[2];
   batch_res n_ops = res[3];
   batch_res N2 = res[4];
   batch_res N = res[5];
-  batch_res dH = res[6];  // $\frac{\frac{\partial}{\partial h}Z}{Z}$
-  batch_res dH2 = res[7]; // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
+  batch_res dH = res[6];   // $\frac{\frac{\partial}{\partial h}Z}{Z}$
+  batch_res dH2 = res[7];  // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
   batch_res phys_conf = res[8];
 
   vector<pair<string, batch_res>> worm_obs;
@@ -388,25 +384,24 @@ int main(int argc, char **argv) {
   MPI_Allreduce(&elapsed, &elapsed_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
 
   if (setup.have_result) {
-
     std::function<double(double, double, double)> f;
 
     pair<double, double> as_mean =
-        jackknife_reweight_single(as); // calculate <S>
+        jackknife_reweight_single(as);  // calculate <S>
     pair<double, double> nop_mean =
-        jackknife_reweight_single(n_ops); // calculate <S>
+        jackknife_reweight_single(n_ops);  // calculate <S>
     pair<double, double> nnop_mean =
-        jackknife_reweight_single(n_neg_ele); // calculate <S>
+        jackknife_reweight_single(n_neg_ele);  // calculate <S>
 
     // n* install
     pair<double, double> ene_mean =
-        jackknife_reweight_div(ene, as); // calculate <SH> / <S>
+        jackknife_reweight_div(ene, as);  // calculate <SH> / <S>
 
     // calculate worm_observable
     vector<pair<string, pair<double, double>>> worm_obs_mean;
     for (auto &obs : worm_obs) {
       auto mean = jackknife_reweight_div(get<1>(obs),
-                                         phys_conf); // calculate <WoS> / <S>
+                                         phys_conf);  // calculate <WoS> / <S>
       worm_obs_mean.push_back(make_pair(obs.first, mean));
     }
 
