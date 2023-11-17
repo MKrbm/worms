@@ -695,10 +695,6 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
     state[dotp->label()] = (state[dotp->label()] + fl) % sps;
   } else if (dotp->at_operator()) {
     dout << "update cnt : " << u_cnt << endl;
-    if (u_cnt == 25) {
-      dout << "Hey" << endl;
-      throw std::runtime_error("Hey");
-    }
     u_cnt++;
 
     // if (opsp->cnt() == 0) {
