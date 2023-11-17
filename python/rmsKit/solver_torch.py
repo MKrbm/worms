@@ -112,19 +112,21 @@ if __name__ == "__main__":
             d = 1
             L = [L1]
             N = L1
+            sps = 2
         elif args.model == "FF2D":
             model_name = "FF" + f"_{L1}x{L2}"
             d = 2
             L = [L1, L2]
             N = L1 * L2
+            sps = 8
         p = dict(
-            sps=3,
+            sps=sps,
             rank=2,
             dimension=d,
             seed=args.seed,
             lt = 1,
         )
-        H = FF.system(L, ua, p)
+        H = FF.system(L, p)
         # params_str = f'{d}D_{p["sps"]}sps_{p["rank"]}r_{p["length"]}_seed{p["seed"]}'
         params_str = f's_{p["sps"]}_r_{p["rank"]}_d_{p["dimension"]}_seed_{p["seed"]}'
     else:
