@@ -697,15 +697,15 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
     dout << "update cnt : " << u_cnt << endl;
     u_cnt++;
 
-    if (opsp->cnt() == 0) {
-      psop.push_back(dotp->label());
-      pres.push_back(opsp->state());
-    }
+    // if (opsp->cnt() == 0) {
+    //   psop.push_back(dotp->label());
+    //   pres.push_back(opsp->state());
+    // }
     opsp->add_cnt();
 
-    if (opsp->cnt() > cutoff_length) {
-      return 1;
-    }
+    // if (opsp->cnt() > cutoff_length) {
+    //   return 1;
+    // }
 
     int state_num, tmp, nindex, dir_in, leg_size, cindex, index;
     dir_in = !dir;  // n* direction the Worm comes in from the view of operator.
