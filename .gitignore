@@ -40,7 +40,12 @@ ALPSCore
 *.wiki*
 #hidden folder
 #Exclude all dlls
-.*
+# .*
+**/*.DS_Store
+.cmake/
+# .devcontainer/.clang-format
+.nvim.lua
+.envrc
 
 # python numpy array data
 *.npy
