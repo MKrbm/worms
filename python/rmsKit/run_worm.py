@@ -13,7 +13,7 @@ parser.add_argument('-f', '--path', type=str, required=True,
                     help='The python file will look for the Hamiltonian and the best unitary in this directory.')
 parser.add_argument('-r', '--seed', type=int, required=True,
                     help='The seed for the random number generator.')
-parser.add_argument('-n', '--n', type=int, default=1,
+parser.add_argument('-n', '--n', type=int, default=-1,
                     help='The number of processes to use.')
 parser.add_argument('-s', '--sweeps', type=int, required=True,
                     help='The number of sweeps to perform.')
@@ -31,7 +31,7 @@ if not os.path.isdir(args.path):
 if __name__ == "__main__":
 
     # define parameters list to be passed to the run_worm function
-    beta = np.linspace(1, 5, 21)
+    beta = np.linspace(0.5, 5, 21)
     T_list = 1/beta
 
     # define the lattice sizes
@@ -50,7 +50,6 @@ if __name__ == "__main__":
     path = args.path
     path = os.getcwd() + "/" + path
 
-
     min_path, min_loss, ham_path = utils.path_with_lowest_loss(
         args.path, return_ham=True, absolute_path=True)
     print("ham_path: ", ham_path)
@@ -63,8 +62,9 @@ if __name__ == "__main__":
     print("L_list: ", L_list)
     print("T_list: ", T_list)
 
-
     # run the simulation
     for L in L_list:
         for T in T_list:
-            utils.run_worm(args.model_name, ham_path, min_path, L, T, M, n=p)
+            subprocess_out = utils.run_worm(
+                args.model_name, ham_path, min_path, L, T, M, n=p)
+            print("subprocess_out: ", subprocess_out.stdout)

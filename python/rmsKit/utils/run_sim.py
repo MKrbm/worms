@@ -167,7 +167,7 @@ def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float
 
     # 2. Find the executable
     # release_dir, executable_name = find_executable(current_dir)
-    release_dir = os.path.join(current_dir, "Release")
+    release_dir = os.path.join(current_dir, "build")
     executable_name = "./main_MPI"
 
 
@@ -180,8 +180,8 @@ def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float
     T = round(T, 5)
     cmd = [
         "mpirun",
-        "-n",
-        str(n) if n > 1 else "1",
+        "-n" if n > 1 else "",
+        str(n) if n > 1 else "",
         executable_name,
         "-m",
         model_name,
@@ -201,6 +201,8 @@ def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float
         "--split-sweeps"
     ]
 
+    cmd = [str(arg) for arg in cmd if arg != ""]
+
     # Add -L arguments
     for i, length in enumerate(L, start=1):
         cmd.append(f"-L{i}")
@@ -214,10 +216,6 @@ def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float
             print("ham_path : ", ham_path, " not found. Please check the path.")
             return
 
-        # if not os.path.isdir(u_path):
-        #     print("current dir is: ", os.getcwd())
-        #     print("u_path : ", u_path, " not found. Please check the path.")
-        #     return
         out = subprocess.run(cmd, stderr=subprocess.STDOUT)
 
     return out
