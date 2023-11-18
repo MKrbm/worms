@@ -49,7 +49,6 @@ if __name__ == "__main__":
     path = args.path
     path = os.getcwd() + "/" + path
 
-
     if not args.original:
         min_path, min_loss, ham_path = utils.path_with_lowest_loss(
             args.path, return_ham=True, absolute_path=True)
@@ -71,7 +70,7 @@ if __name__ == "__main__":
                 print("subprocess_out: ", subprocess_out.stdout)
     else:
         ham_path = utils.path_with_lowest_loss(
-            args.path, return_ham=True, absolute_path=True)
+            args.path, return_ham=True, absolute_path=True, only_ham=True)
 
         print("ham_path: ", ham_path)
         print("simulation parameters:")
