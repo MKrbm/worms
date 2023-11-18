@@ -15,9 +15,24 @@ def extract_loss(dir_name):
     return None
 
 
-def path_with_lowest_loss(parent_dir, return_ham=False, absolute_path=False):
+def path_with_lowest_loss(parent_dir, return_ham=False, absolute_path=False, only_ham=False):
     # Get all directory names under the parent directory using glob (not only direct children)
     dir_names = glob.glob(os.path.join(parent_dir, "**"), recursive=True)
+
+    if only_ham:
+        # find the file path include "/H/" in the dir_names
+        ham_path = [path for path in dir_names if "/H" in path][0]
+        if ham_path is None:
+            raise ValueError("No hamiltonian file found.")
+        elif len(ham_path) > 1:
+            print("Warning: Multiple hamiltonian files found : ", ham_path)
+
+        if absolute_path:
+            # get absolute path to parent_dir
+            ham_path = os.path.abspath(ham_path)
+            return ham_path
+
+        return ham_path
 
     # Extract loss values and associate them with their paths
     losses = [(path, extract_loss(path)) for path in dir_names]
@@ -162,9 +177,6 @@ def find_executable(grandparent_dir: str) -> Tuple[str, str]:
 def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float, N: int, n: int = 1):
     # 1. Get the current directory
     current_dir = os.getcwd()
-
-
-
     # 2. Find the executable
     # release_dir, executable_name = find_executable(current_dir)
     release_dir = os.path.join(current_dir, "build")
