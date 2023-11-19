@@ -29,7 +29,7 @@ if not os.path.isdir(args.path):
 if __name__ == "__main__":
 
     # define parameters list to be passed to the run_worm function
-    beta = np.linspace(0.5, 5, 21)
+    beta = np.linspace(0.05, 2, 51)
     T_list = 1/beta
 
     # define the lattice sizes
