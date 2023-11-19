@@ -5,6 +5,7 @@ from datetime import datetime
 import os
 import glob
 from collections import deque
+import re
 
 
 def sum_ham(h: np.ndarray, bonds: List, L: int, sps: int, stoquastic_=False, out=None):
@@ -57,11 +58,11 @@ def get_files_in_order(folder_path):
     # Function to convert file names to datetime for sorting
     def file_to_datetime(filename):
         try:
-            # Convert the filename to a datetime object
-            # Adjust this if the filename format changes
-            return datetime.strptime(filename.split('.')[0], "%Y%m%d_%H%M%S")
-        except:
+            split_filename = re.split(r'[_\.]', filename)
+            return datetime.strptime("_".join(split_filename[:2]), "%Y%m%d_%H%M%S")
+        except Exception as e:
             print(f"Warning: {filename} does not match the expected format.")
+            print(e)
             return None
 
     # Sort files based on datetime
