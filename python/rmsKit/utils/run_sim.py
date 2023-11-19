@@ -205,10 +205,6 @@ def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float
         u_path if u_path else "",
         "-N",
         str(N),
-        "-L1",
-        str(L[0]),
-        "-L2" if len(L) > 1 else "",
-        str(L[1]) if len(L) > 1 else "",
         "--output",
         "--split-sweeps"
     ]
