@@ -241,8 +241,6 @@ int main(int argc, char **argv) {
   if (rank == 0) {
 
     cout << "Output file: " << out_file << endl;
-    cout << "model name is \t : \t" << model_name << endl;
-    cout << "run on \t : \t" << size << " nodes" << endl;
     if (args.has("output")){
       fs::path output_folder_fs(output_folder);
       if (!fs::exists(output_folder_fs)) {
@@ -255,6 +253,10 @@ int main(int argc, char **argv) {
         freopen(out_file.c_str(), "w", stdout);
       }
     }
+
+    cout << "model name is \t : \t" << model_name << endl;
+    cout << "run on \t : \t" << size << " nodes" << endl;
+
   }
   
 

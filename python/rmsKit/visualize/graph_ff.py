@@ -1,3 +1,4 @@
+from utils import get_seed_and_loss
 import matplotlib.pyplot as plt
 import sys
 import os
@@ -10,14 +11,13 @@ current_script_path = os.path.dirname(os.path.abspath(__file__))
 parent_directory = os.path.dirname(current_script_path)
 sys.path.append(parent_directory)
 
-from utils import get_seed_and_loss
 
-
-N = 4*10**6
+N = 5000000
 beta = 20
 
 
-df = get_seed_and_loss("../../../worm_result")
+model_name = "FF2D"
+df = get_seed_and_loss(f"../../../worm_result/{model_name}")
 df = df[df.sweeps == N]
 print(df.temperature)
 df = df[df["temperature"] >= 1 / beta]
@@ -32,7 +32,6 @@ for L in sorted(df.n_sites.unique()):
         df_dict["mel"] = dfs[dfs.u_path.str.contains("mel")]
         df_dict["none"] = dfs[dfs.u_path == ""]
 
-
         data_size = 0
         for key, _df in df_dict.items():
             df_dict[key] = _df.loc[_df.groupby(
@@ -40,7 +39,8 @@ for L in sorted(df.n_sites.unique()):
             data_size += len(df_dict[key])
 
         if (data_size / len(df_dict)) < 4:
-            print("number of data is not sufficient for seed = {} and L = {}".format(seed, L))
+            print(
+                "number of data is not sufficient for seed = {} and L = {}".format(seed, L))
             continue
 
         label_dict["mel"] = f'mel / loss = {df_dict["mel"].loss.unique()[0]}'
@@ -92,10 +92,10 @@ for L in sorted(df.n_sites.unique()):
 
         fig.tight_layout()
 
-        if not os.path.exists(f"image/FF1D/N_{N:.0e}/comp_T"):
-            os.makedirs(f"image/FF1D/N_{N:.0e}/comp_T")
+        if not os.path.exists(f"image/{model_name}/N_{N:.0e}/comp_T"):
+            os.makedirs(f"image/{model_name}/N_{N:.0e}/comp_T")
         fig.savefig(
-            f"image/FF1D/N_{N:.0e}/comp_T/L_{L}_r_{seed}.png")
+            f"image/{model_name}/N_{N:.0e}/comp_T/L_{L}_r_{seed}.png")
 
         plt.close()
 
@@ -109,7 +109,6 @@ for t in sorted(df.temperature.unique()):
         df_dict["mel"] = dfs[dfs.u_path.str.contains("mel")]
         df_dict["none"] = dfs[dfs.u_path == ""]
 
-
         data_size = 0
         for key, _df in df_dict.items():
 
@@ -118,7 +117,8 @@ for t in sorted(df.temperature.unique()):
             data_size += len(df_dict[key])
 
         if (data_size / len(df_dict)) < 4:
-            print("number of data is not sufficient for seed = {} and T = {}".format(seed, t))
+            print(
+                "number of data is not sufficient for seed = {} and T = {}".format(seed, t))
             continue
 
         label_dict["mel"] = f'mel / loss = {df_dict["mel"].loss.unique()[0]}'
@@ -142,7 +142,7 @@ for t in sorted(df.temperature.unique()):
         ax1.errorbar(df_dict["mel"]['n_sites'], df_dict["mel"]['e'],
                      yerr=df_dict["mel"]['e_error'], fmt='o-', capsize=5, label=label_dict["mel"])
         ax1.errorbar(df_dict["none"]['n_sites'], df_dict["none"]['e'],
-                     yerr=df_dict["none"]['e_error'], fmt='s-', capsize=5, label=label_dict["none"], alpha = 0.7)
+                     yerr=df_dict["none"]['e_error'], fmt='s-', capsize=5, label=label_dict["none"], alpha=0.7)
 
         ax1.set_title('Energy per site vs L at beta = {}'.format(t))
 
@@ -155,7 +155,7 @@ for t in sorted(df.temperature.unique()):
         ax2.errorbar(df_dict["mel"]['n_sites'], df_dict["mel"]['as'],
                      yerr=df_dict["mel"]['as_error'], fmt='o-', capsize=5, label=label_dict["mel"])
         ax2.errorbar(df_dict["none"]['n_sites'], df_dict["none"]['as'],
-                     yerr=df_dict["none"]['as_error'], fmt='s-', capsize=5, label=label_dict["none"], alpha = 0.7)
+                     yerr=df_dict["none"]['as_error'], fmt='s-', capsize=5, label=label_dict["none"], alpha=0.7)
 
         ax2.set_title('Average Sign vs L at beta = {}'.format(t))
         ax2.set_ylabel('Average Sign')
@@ -165,7 +165,7 @@ for t in sorted(df.temperature.unique()):
         ax3.errorbar(df_dict["mel"]['n_sites'], df_dict["mel"]['as'],
                      yerr=df_dict["mel"]['as_error'], fmt='o-', capsize=5, label=label_dict["mel"])
         ax3.errorbar(df_dict["none"]['n_sites'], df_dict["none"]['as'],
-                     yerr=df_dict["none"]['as_error'], fmt='s-', capsize=5, label=label_dict["none"], alpha = 0.7)
+                     yerr=df_dict["none"]['as_error'], fmt='s-', capsize=5, label=label_dict["none"], alpha=0.7)
 
         ax3.set_title('Average Sign vs L (log scale) at beta = {}'.format(t))
         ax3.set_xlabel('L')
@@ -175,11 +175,9 @@ for t in sorted(df.temperature.unique()):
 
         fig.tight_layout()
 
-        if not os.path.exists(f"image/FF1D/N_{N:.0e}/comp_L"):
-            os.makedirs(f"image/FF1D/N_{N:.0e}/comp_L")
+        if not os.path.exists(f"image/{model_name}/N_{N:.0e}/comp_L"):
+            os.makedirs(f"image/{model_name}/N_{N:.0e}/comp_L")
         fig.savefig(
-            f"image/FF1D/N_{N:.0e}/comp_L/T_{t}_r_{seed}.png")
+            f"image/{model_name}/N_{N:.0e}/comp_L/T_{t}_r_{seed}.png")
 
         plt.close()
-
-

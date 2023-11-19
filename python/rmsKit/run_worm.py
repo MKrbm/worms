@@ -15,6 +15,8 @@ parser.add_argument('-n', '--n', type=int, default=-1,
                     help='The number of processes to use.')
 parser.add_argument('-s', '--sweeps', type=int, required=True,
                     help='The number of sweeps to perform.')
+parser.add_argument('--original', action='store_true', default=False,
+                    help='If this flag is set, the original Hamiltonian will be used.')
 
 # parse the arguments
 args = parser.parse_args()
@@ -47,21 +49,39 @@ if __name__ == "__main__":
     path = args.path
     path = os.getcwd() + "/" + path
 
-    min_path, min_loss, ham_path = utils.path_with_lowest_loss(
-        args.path, return_ham=True, absolute_path=True)
-    print("ham_path: ", ham_path)
-    print("min_path: ", min_path)
-    print("min_loss: ", min_loss)
+    if not args.original:
+        min_path, min_loss, ham_path = utils.path_with_lowest_loss(
+            args.path, return_ham=True, absolute_path=True)
+        print("ham_path: ", ham_path)
+        print("min_path: ", min_path)
+        print("min_loss: ", min_loss)
 
-    print("simulation parameters:")
-    print("model_name: ", args.model_name)
-    print("path: ", path)
-    print("L_list: ", L_list)
-    print("T_list: ", T_list)
+        print("simulation parameters:")
+        print("model_name: ", args.model_name)
+        print("path: ", path)
+        print("L_list: ", L_list)
+        print("T_list: ", T_list)
 
-    # run the simulation
-    for L in L_list:
-        for T in T_list:
-            subprocess_out = utils.run_worm(
-                args.model_name, ham_path, min_path, L, T, M, n=p)
-            print("subprocess_out: ", subprocess_out.stdout)
+        # run the simulation
+        for L in L_list:
+            for T in T_list:
+                subprocess_out = utils.run_worm(
+                    args.model_name, ham_path, min_path, L, T, M, n=p)
+                print("subprocess_out: ", subprocess_out.stdout)
+    else:
+        ham_path = utils.path_with_lowest_loss(
+            args.path, return_ham=True, absolute_path=True, only_ham=True)
+
+        print("ham_path: ", ham_path)
+        print("simulation parameters:")
+        print("model_name: ", args.model_name)
+        print("path: ", path)
+        print("L_list: ", L_list)
+        print("T_list: ", T_list)
+
+        # run the simulation
+        for L in L_list:
+            for T in T_list:
+                subprocess_out = utils.run_worm(
+                    args.model_name, ham_path, "", L, T, M, n=p)
+                print("subprocess_out: ", subprocess_out.stdout)
