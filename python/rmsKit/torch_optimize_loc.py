@@ -94,6 +94,13 @@ parser.add_argument(
     default="cpu",
 )
 
+parser.add_argument(
+    "-n",
+    "--num_threads",
+    help="number of threads",
+    type=int,
+    default=-1,
+)
 
 def list_arrays(path):
     array_files = []
@@ -156,10 +163,15 @@ if args.platform == "gpu":
         device = torch.device("cuda")
 else:
     device = torch.device("cpu")
+    if args.num_threads == -1:
+        args.num_threads = torch.get_num_threads()
+    torch.set_num_threads(args.num_threads)
 
 # device = torch.device("") if args.platform == "gpu" else torch.device("cpu")
 logging.info("device: {}".format(device))
 
+num_threads = torch.get_num_threads()
+print("Number of CPU threads used: {}".format(num_threads))
 logging.info("args: {}".format(args))
 M = args.num_iter if not arrays else len(arrays)
 seed = args.seed
