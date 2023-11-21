@@ -147,7 +147,7 @@ def system(_L: list[int], params: dict) -> np.ndarray:
         H = np.zeros((s**L, s**L))
         h_list, sps = local(params)
         bonds = [[i, (i + 1) % L] for i in range(L)]
-        H = utils.sum_ham(h_list[0], bonds, L, s)
+        H = utils.sum_ham(h_list[0], bonds, L, s ** params["lt"])
         return H
     elif _d == 2:
         L1 = _L[0]

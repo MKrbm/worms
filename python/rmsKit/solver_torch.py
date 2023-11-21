@@ -16,16 +16,24 @@ models = [
     "FF1D",
     "FF2D",
 ]
-parser = argparse.ArgumentParser(description="solver exact diagonalization of given model")
-parser.add_argument("-m", "--model", help="model (model) Name", required=True, choices=models)
-parser.add_argument("-Jz", "--coupling_z", help="coupling constant (Jz)", type=float, default=1)  # SxSx + SySy +
-parser.add_argument("-Jx", "--coupling_x", help="coupling constant (Jx)", type=float)
-parser.add_argument("-Jy", "--coupling_y", help="coupling constant (Jy)", type=float)
-parser.add_argument("-hx", "--mag_x", help="magnetic field", type=float, default=0)
-parser.add_argument("-hz", "--mag_z", help="magnetic field", type=float, default=0)
+parser = argparse.ArgumentParser(
+    description="solver exact diagonalization of given model")
+parser.add_argument("-m", "--model", help="model (model) Name",
+                    required=True, choices=models)
+parser.add_argument("-Jz", "--coupling_z", help="coupling constant (Jz)",
+                    type=float, default=1)  # SxSx + SySy +
+parser.add_argument("-Jx", "--coupling_x",
+                    help="coupling constant (Jx)", type=float)
+parser.add_argument("-Jy", "--coupling_y",
+                    help="coupling constant (Jy)", type=float)
+parser.add_argument("-hx", "--mag_x", help="magnetic field",
+                    type=float, default=0)
+parser.add_argument("-hz", "--mag_z", help="magnetic field",
+                    type=float, default=0)
 parser.add_argument("-r", "--seed", help="random seed", type=int, default=None)
 # parser.add_argument('-T', "--temperature", help = "temperature", type = float)
-parser.add_argument("-L1", "--length1", help="length of side", type=int, required=True)
+parser.add_argument("-L1", "--length1",
+                    help="length of side", type=int, required=True)
 parser.add_argument("-L2", "--length2", help="length of side", type=int)
 parser.add_argument(
     "-u",
@@ -33,7 +41,8 @@ parser.add_argument(
     help="algorithm determine local unitary matrix",
     default="original",
 )
-parser.add_argument("-gs", action="store_true", help="calculate only ground state")
+parser.add_argument("-gs", action="store_true",
+                    help="calculate only ground state")
 parser.add_argument(
     "-p",
     "--platform",
@@ -60,7 +69,8 @@ print(f"logging to file: {log_filename}")
 logging.info(args_str)
 
 if __name__ == "__main__":
-    device = torch.device("cuda") if args.platform == "gpu" else torch.device("cpu")
+    device = torch.device(
+        "cuda") if args.platform == "gpu" else torch.device("cpu")
     logging.info("device: {}".format(device))
 
     L1 = args.length1
@@ -96,13 +106,15 @@ if __name__ == "__main__":
 
     elif args.model == "Ising1D":
         model_name = "Ising" + f"_{L1}"
-        params_str = f"Jz_{p['Jz']:.4g}_hx_{p['hx']:.4g}"  # n* only Jz and hx are used
+        # n* only Jz and hx are used
+        params_str = f"Jz_{p['Jz']:.4g}_hx_{p['hx']:.4g}"
         N = L1
         H = Ising.system([L1], ua, p)
 
     elif args.model == "Ising2D":
         model_name = "Ising" + f"_{L1}x{L2}"
-        params_str = f"Jz_{p['Jz']:.4g}_hx_{p['hx']:.4g}"  # n* only Jz and hx are used
+        # n* only Jz and hx are used
+        params_str = f"Jz_{p['Jz']:.4g}_hx_{p['hx']:.4g}"
         N = L1 * L2
         H = Ising.system([L1, L2], ua, p)
 
@@ -112,7 +124,7 @@ if __name__ == "__main__":
             d = 1
             L = [L1]
             N = L1
-            sps = 2
+            sps = 3
         elif args.model == "FF2D":
             model_name = "FF" + f"_{L1}x{L2}"
             d = 2
@@ -124,7 +136,7 @@ if __name__ == "__main__":
             rank=2,
             dimension=d,
             seed=args.seed,
-            lt = 1,
+            lt=1,
         )
         H = FF.system(L, p)
         # params_str = f'{d}D_{p["sps"]}sps_{p["rank"]}r_{p["length"]}_seed{p["seed"]}'
