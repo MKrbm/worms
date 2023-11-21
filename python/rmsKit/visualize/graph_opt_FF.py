@@ -1,5 +1,5 @@
-import sys
 from pathlib import Path
+import sys
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 import seaborn as sns
 from matplotlib import pyplot as plt
@@ -12,7 +12,7 @@ from utils import path_with_lowest_loss, sum_ham
 # Assuming the 'utils' module provides the path_with_lowest_loss and sum_ham functions
 
 
-def check_valid_seeds(base_path, sps, lt=1, setting_name="1_mel_Adam/lr_001_epoch_8000", num_seeds=50000):
+def check_valid_seeds(base_path, sps, lt=1, setting_name="1_mel_Adam/lr_001_epoch_8000", num_seeds=5000):
     valid_seeds = []
     valid_path = []
     for seed in range(num_seeds):
@@ -50,19 +50,24 @@ def compute_gap_loc(A, bd, sps):
     return h, 0  # Assuming max_gap is 0 for now
 
 
-def compute_results(seed, sps, bd, base_dir):
+def compute_results(seed, sps, bd, base_dir, L):
+
     u_path, lowest_val = path_with_lowest_loss(base_dir)
+
     u = load_matrix(u_path, "0.npy")
 
     A = FF.block1D(bd, sps, bd, seed=seed)
+
     gap_transfer = compute_gap(A)
 
     h, gap_loc = compute_gap_loc(A, bd, sps)
 
-    gap_sys = compute_gap_sys(h, 4, sps)
+    h_matrix = -load_matrix(base_dir, "H/0.npy")
 
-    h_matrix = load_matrix(base_dir, "H/0.npy")
+    gap_sys = compute_gap_sys(h_matrix, L, sps)
+
     U = np.kron(u, u)
+
     hu = U @ h_matrix @ U.T
 
     return {
@@ -79,9 +84,12 @@ def main():
     bd = 2
     sps = 3
     lt = 1
+    sps = sps ** lt
     res = []
-    base_path = "array/torch/FF1D_s4"
+    # base_path = "array/torch/FF1D_s4"
     base_path = "array/torch/FF1D_loc_quetta"
+    # base_path = "array/torch/FF1D_lt_2"
+    # setting_name = "2_mel_Adam/lr_0.001_epoch_8000"
     setting_name = "1_mel_Adam/lr_0.001_epoch_10000"
 
     valid_seeds, valid_path = check_valid_seeds(
@@ -90,7 +98,7 @@ def main():
     for seed, array_dir in zip(valid_seeds, valid_path):
 
         try:
-            result = compute_results(seed, sps, bd, array_dir)
+            result = compute_results(seed, sps, bd, array_dir, 3)
             res.append(result)
             print(f"finish seed = {seed}")
         except Exception as e:
@@ -98,6 +106,7 @@ def main():
             print(e)
 
     df = pd.DataFrame(res)
+    df.loss = df.loss / lt
     df["log_gap_loc"] = df['gap_loc'].apply(np.log)
     df["log_gap_sys"] = df['gap_sys'].apply(np.log)
     df["log_loss"] = df['loss'].apply(lambda x: np.log(x+0.0001))
@@ -112,6 +121,23 @@ def main():
 
     # Save the plot with a variable filename.
     plot_filename = f'visualize/image/FF1D/pairplot_sps_{sps}_bd_{bd}_lt_{lt}.png'
+    plt.savefig(plot_filename, dpi=300)
+
+    fig, ax = plt.subplots(2, 5, figsize=(20, 10))  # Corrected order here
+    for i in range(10):
+        sample_df = df.iloc[i*100:(i+1)*100]
+        ax[i//5, i % 5].scatter(sample_df['log_gap_sys'], sample_df['loss'])
+        ax[i//5, i % 5].set_title(f"seed = {sample_df['seed'].iloc[0]}")
+        for j in range(len(sample_df)):  # Changed to 'j' to avoid conflict with outer loop
+            ax[i//5, i % 5].annotate(sample_df['seed'].iloc[j],  # Also changed to 'j' here
+                                     (sample_df['log_gap_sys'].iloc[j],
+                                      sample_df['loss'].iloc[j]),
+                                     textcoords="offset points", xytext=(0, 10), ha='center')
+
+    fig.suptitle(
+        f'Correlation between Loss and gap_sys for SPS={sps} / bd={bd} / lt={lt}', size=10, y=1.05)
+    fig.tight_layout()
+    plot_filename = f'visualize/image/FF1D/scatter_sps_{sps}_bd_{bd}_lt_{lt}.png'
     plt.savefig(plot_filename, dpi=300)
 
 
