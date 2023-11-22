@@ -76,6 +76,7 @@ def matrix_mult_operation(A, B):
 
 def benchmark_on_device(device, operations, repetitions):
     print(f"\nBenchmarking on {device.upper()}")
+    no_gpu=False
     for operation, name, data_size in operations:
         times = []
 
@@ -83,10 +84,12 @@ def benchmark_on_device(device, operations, repetitions):
             if device == 'cuda' and not torch.cuda.is_available():
                 # Infinitely large time if CUDA not available
                 times.append(float('inf'))
+                no_gpu=True
                 break
             if device == 'mps' and not torch.backends.mps.is_available():
                 # Infinitely large time if MPS not available
                 times.append(float('inf'))
+                no_gpu=True
                 break
 
             torch.cuda.empty_cache()  # Clear cache if on GPU
@@ -96,7 +99,8 @@ def benchmark_on_device(device, operations, repetitions):
             times.append(exec_time)
 
         avg_time = sum(times) / len(times)
-        print(f"{name} ({data_size}{'x' + str(data_size)}): {avg_time:.4f} seconds (avg over {repetitions} runs)")
+        if not no_gpu:
+            print(f"{name} ({data_size}{'x' + str(data_size)}): {avg_time:.4f} seconds (avg over {repetitions} runs)")
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='PyTorch Benchmarking with specified number of CPUs.')
@@ -110,7 +114,8 @@ if __name__ == "__main__":
     args = parse_arguments()
 
     # Set the number of threads in PyTorch
-    torch.set_num_threads(args.num_cpus)
+    # torch.set_num_threads(args.num_cpus)
+    print(torch.__config__.parallel_info())
     num_threads = torch.get_num_threads()
     print(f"Number of threads set to: {num_threads}")
     operations = [
