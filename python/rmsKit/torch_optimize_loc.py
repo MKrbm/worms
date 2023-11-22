@@ -169,15 +169,12 @@ if args.platform == "gpu":
         device = torch.device("cuda")
 else:
     device = torch.device("cpu")
-    if args.num_threads == -1:
-        args.num_threads = torch.get_num_threads()
-    torch.set_num_threads(args.num_threads)
 
+print(torch.__config__.parallel_info())
 # device = torch.device("") if args.platform == "gpu" else torch.device("cpu")
 logging.info("device: {}".format(device))
+logging.info("parallel info: {}".format(torch.__config__.parallel_info()))
 
-num_threads = torch.get_num_threads()
-print("Number of CPU threads used: {}".format(num_threads))
 logging.info("args: {}".format(args))
 M = args.num_iter if not arrays else len(arrays)
 seed = args.seed
@@ -194,8 +191,6 @@ if __name__ == "__main__":
     params_str = a[:-1]
     lt = args.lattice_type
 
-    # Get the current number of threads used by PyTorch
-    num_threads = torch.get_num_threads()
 
     # print(f'Number of CPU threads used: {num_threads}')
     logging.info(f"Number of CPU threads used: {num_threads}")
