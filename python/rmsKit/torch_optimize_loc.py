@@ -102,6 +102,7 @@ parser.add_argument(
     default=-1,
 )
 
+
 def list_arrays(path):
     array_files = []
 
@@ -142,7 +143,12 @@ p = dict(
 
 now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 args_str = "args: {}".format(args)
-log_filename = f"optimizer_output/{now}_optimizer.log"
+
+# hashing args_str
+args_str = args_str.replace(" ", "_")
+hash_str = str(hash(args_str))
+
+log_filename = f"optimizer_output/{now}_{hash_str}.log"
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
