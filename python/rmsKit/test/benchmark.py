@@ -2,7 +2,7 @@ import torch
 import time
 import argparse
 import numpy as np
-
+import os
 
 
 def generate_data(size, device, is_square=True):
@@ -58,12 +58,12 @@ def eigvalsh_operation(A, _):
 def matrix_mult_operation(A, B):
     return torch.matmul(A, B)
 
+
 def combine_operation(A, B):
     K = kron_operation(A, B)
     E = eigvalsh_operation(K, None)
 
     return matrix_mult_operation(K, K) + E[0]
-
 
 
 # def benchmark_on_device(device, operations):
@@ -84,7 +84,7 @@ def combine_operation(A, B):
 
 def benchmark_on_device(device, operations, repetitions):
     print(f"\nBenchmarking on {device.upper()}")
-    no_gpu=False
+    no_gpu = False
     for operation, name, data_size in operations:
         times = []
 
@@ -92,12 +92,12 @@ def benchmark_on_device(device, operations, repetitions):
             if device == 'cuda' and not torch.cuda.is_available():
                 # Infinitely large time if CUDA not available
                 times.append(float('inf'))
-                no_gpu=True
+                no_gpu = True
                 break
             if device == 'mps' and not torch.backends.mps.is_available():
                 # Infinitely large time if MPS not available
                 times.append(float('inf'))
-                no_gpu=True
+                no_gpu = True
                 break
 
             torch.cuda.empty_cache()  # Clear cache if on GPU
@@ -108,10 +108,13 @@ def benchmark_on_device(device, operations, repetitions):
 
         avg_time = sum(times) / len(times)
         if not no_gpu:
-            print(f"{name} ({data_size}{'x' + str(data_size)}): {avg_time:.4f} seconds (avg over {repetitions} runs)")
+            print(
+                f"{name} ({data_size}{'x' + str(data_size)}): {avg_time:.4f} seconds (avg over {repetitions} runs)")
+
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description='PyTorch Benchmarking with specified number of CPUs.')
+    parser = argparse.ArgumentParser(
+        description='PyTorch Benchmarking with specified number of CPUs.')
     parser.add_argument('-n', '--num-cpus', type=int, default=torch.get_num_threads(),
                         help='Number of CPUs to use')
     args = parser.parse_args()
@@ -122,8 +125,7 @@ if __name__ == "__main__":
     args = parse_arguments()
 
     # Set the number of threads in PyTorch
-    # torch.set_num_threads(args.num_cpus)
-    
+
     print(torch.__config__.parallel_info())
     num_threads = torch.get_num_threads()
     print(f"Number of threads set to: {num_threads}")
