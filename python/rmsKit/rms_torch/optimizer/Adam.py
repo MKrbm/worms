@@ -136,16 +136,16 @@ def adam(params: List[Tensor],
         raise RuntimeError("torch.jit.script not supported with fused optimizers")
 
     if fused and not torch.jit.is_scripting():
-        raise RuntimeError("fused adam is not supported for ns optimizer")
+        raise RuntimeError("fused adam is not supported for rms optimizer")
     elif foreach and not torch.jit.is_scripting():
-        raise RuntimeError("multi tensor adam is not supported for ns optimizer")
+        func = _single_tensor_adam
     else:
         func = _single_tensor_adam
 
 
     # What is capturable?
     if capturable is True or differentiable is True:
-        raise RuntimeError("capturable is not supported for ns optimizer")
+        raise RuntimeError("capturable is not supported for rms optimizer")
 
     func(params,
          grads,

@@ -150,6 +150,14 @@ logging.basicConfig(
     # handlers=[logging.FileHandler(log_filename), logging.StreamHandler()],
 )
 
+log_filename = f"optimizer_output/{now}_{hash_str}.log"
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    filename=log_filename,
+    # handlers=[logging.FileHandler(log_filename), logging.StreamHandler()],
+)
+
 print(f"logging to file: {log_filename}")
 logging.info("filename : torch_optimize_loc.py")
 logging.info(args_str)
@@ -163,8 +171,8 @@ if args.platform == "gpu":
         device = torch.device("cuda")
 else:
     device = "cpu"
+    print(torch.__config__.parallel_info())
 
-print(torch.__config__.parallel_info())
 # device = torch.device("") if args.platform == "gpu" else torch.device("cpu")
 logging.info("device: {}".format(device))
 logging.info("parallel info: {}".format(torch.__config__.parallel_info()))
