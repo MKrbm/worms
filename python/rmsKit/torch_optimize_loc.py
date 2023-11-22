@@ -162,7 +162,7 @@ if args.platform == "gpu":
     else:
         device = torch.device("cuda")
 else:
-    device = torch.device("cpu")
+    device = "cpu"
 
 print(torch.__config__.parallel_info())
 # device = torch.device("") if args.platform == "gpu" else torch.device("cpu")

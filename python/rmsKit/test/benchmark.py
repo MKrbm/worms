@@ -1,6 +1,7 @@
 import torch
 import time
 import argparse
+import numpy as np
 
 
 
@@ -56,6 +57,13 @@ def eigvalsh_operation(A, _):
 
 def matrix_mult_operation(A, B):
     return torch.matmul(A, B)
+
+def combine_operation(A, B):
+    K = kron_operation(A, B)
+    E = eigvalsh_operation(K, None)
+
+    return matrix_mult_operation(K, K) + E[0]
+
 
 
 # def benchmark_on_device(device, operations):
@@ -115,10 +123,12 @@ if __name__ == "__main__":
 
     # Set the number of threads in PyTorch
     # torch.set_num_threads(args.num_cpus)
+    
     print(torch.__config__.parallel_info())
     num_threads = torch.get_num_threads()
     print(f"Number of threads set to: {num_threads}")
     operations = [
+        (combine_operation, "Combine", 47),
         (kron_operation, "Kronecker Product", 100),  # Adjust data_size as needed
         (eigvalsh_operation, "Eigenvalues", 2000),
         (matrix_mult_operation, "Matrix Multiplication", 5000),
