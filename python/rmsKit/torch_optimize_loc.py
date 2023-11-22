@@ -150,13 +150,6 @@ logging.basicConfig(
     # handlers=[logging.FileHandler(log_filename), logging.StreamHandler()],
 )
 
-log_filename = f"optimizer_output/{now}_{hash_str}.log"
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    filename=log_filename,
-    # handlers=[logging.FileHandler(log_filename), logging.StreamHandler()],
-)
 
 print(f"logging to file: {log_filename}")
 logging.info("filename : torch_optimize_loc.py")

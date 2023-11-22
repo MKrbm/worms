@@ -8,7 +8,7 @@ from ..core.utils import *
 import logging
 import tensornetwork as tn
 import utils
-from typing import List
+from typing import List, Any, Tuple, Dict
 
 
 def block1D(*dimensions, normal=True, seed=None, canonical=True):
@@ -82,7 +82,7 @@ def create_PEPS(L1, L2, A):
 unitary_algorithms = ["original"]
 
 
-def local(params: dict, check_L: List[int] = []):
+def local(params: Dict[Any, Any], check_L: List[int] = []) -> Tuple[Any, int]:
     logging.info("params: {}".format(params))
     sps = params["sps"]
     bond_dim = params["rank"]
