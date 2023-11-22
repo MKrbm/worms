@@ -82,7 +82,7 @@ def create_PEPS(L1, L2, A):
 unitary_algorithms = ["original"]
 
 
-def local(params: dict, check_L: List[int] = []):
+def local(params: dict, check_L: List[int] = []) -> Any, int:
     logging.info("params: {}".format(params))
     sps = params["sps"]
     bond_dim = params["rank"]

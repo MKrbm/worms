@@ -5,16 +5,16 @@ import time
 import platform
 import sys
 import logging
-from typing import List, Tuple, Type
-from nptyping import NDArray
+from typing import List, Tuple, Type, Any, Dict
+from numpy._typing import NDArray
 
 import lattice
 from lattice import save_npy
-from utils.parser import args, params, args_str, hash_str
+from utils.parser import args, params,  hash_str
 from utils import now, get_logger
 
 
-def get_model_ham(model, params) -> Tuple[List[NDArray], int, str]:
+def get_model_ham(model: str, params: Dict[str, str]) -> Tuple[List[NDArray[Any]], int, str]:
     lt = params["lt"]
     sps = params["sps"]
     seed = params["seed"]
@@ -32,6 +32,7 @@ def get_model_ham(model, params) -> Tuple[List[NDArray], int, str]:
             seed=1 if seed is None else seed,
         )
         h_list, sps = lattice.FF.local(p)
+        # h_list: List[NDArray[Any]] = [h.numpy() for h in _h_list]
         params_str = f's_{sps}_r_{p["rank"]}_lt_{p["lt"]}_d_{p["dimension"]}_seed_{p["seed"]}'
         model_name = f"{model}_loc/{params_str}"
 
