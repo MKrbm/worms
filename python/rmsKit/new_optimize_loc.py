@@ -110,6 +110,7 @@ if __name__ == "__main__":
 
     best_loss = 1e10
     best_us = None
+    num_print = 10
     for i, seed in enumerate(seed_list):
         start = time.time()
         tb_name = f"{custom_dir}/{base_name}/{seed}"
@@ -142,7 +143,8 @@ if __name__ == "__main__":
                         p.data, grad)
                 else:
                     raise RuntimeError("No gradient for parameter")
-                logging.info(f"Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}")
+                if (t+1) % (epochs // num_print) == 0 or t == 0:
+                    logging.info(f"Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}")
             optimizer.step()
             loss_list.append(loss_val_item)
 
@@ -154,6 +156,7 @@ if __name__ == "__main__":
         # print(
         #     f"best loss at epoch {epochs}: {local_best_loss}, best loss so far: {best_loss} time elapsed: {time_elapsed:.4f} seconds"
         # )
+
         logging.info(
             f"best loss at epoch {epochs}: {local_best_loss}, best loss so far: {best_loss} time elapsed: {time_elapsed:.4f} seconds"
         )
