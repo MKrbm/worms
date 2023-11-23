@@ -34,7 +34,7 @@ parser.add_argument("--sps", help="sps", type=int, default=3)
 parser.add_argument("-lr", "--learning_rate",
                     help="learning rate", type=float, default=0.01)
 parser.add_argument(
-    "--print", help="print out the result", action="store_true")
+    "--stdout", help="print out the result in system terminal", action="store_true")
 parser.add_argument("-e", "--epochs", help="epoch", type=int, default=100)
 parser.add_argument(
     "-lt",

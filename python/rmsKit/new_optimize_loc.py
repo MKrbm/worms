@@ -52,7 +52,7 @@ if __name__ == "__main__":
     # )
 
     log_filename = f"optimizer_output/{now}_{hash_str}.log"
-    logger = get_logger(log_filename, level=logging.INFO)
+    logger = get_logger(log_filename, level=logging.INFO, stdout=args.stdout)
 
     if args.platform == "gpu":
         # check if os is osx

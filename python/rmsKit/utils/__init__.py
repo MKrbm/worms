@@ -11,21 +11,32 @@ from .run_sim import run_ff, extract_loss, path_with_lowest_loss, run_worm
 now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 
-def get_logger(log_filename: str, level: int = logging.INFO) -> logging.Logger:
-    logging.basicConfig(
-        level=level,
-        stream=sys.stdout,
-        format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+def get_logger(log_filename: str, level: int = logging.INFO,
+               stdout: bool = False) -> logging.Logger:
+    if not stdout:
+        logging.basicConfig(
+            level=level,
+            filename=log_filename,
+            format="%(asctime)s - %(levelname)s - %(message)s"
+        )
 
-    file_handler = logging.FileHandler(log_filename)
-    file_handler.setLevel(logging.INFO)
-    file_formatter = logging.Formatter(
-        "%(asctime)s - %(levelname)s - %(message)s")
-    file_handler.setFormatter(file_formatter)
+        logger = logging.getLogger()
+        print("Log file will be saved to " + log_filename)
+    else:
+        logging.basicConfig(
+            level=level,
+            stream=sys.stdout,
+            format="%(asctime)s - %(levelname)s - %(message)s"
+        )
 
-    logger = logging.getLogger()
-    logger.addHandler(file_handler)
+        file_handler = logging.FileHandler(log_filename)
+        file_handler.setLevel(logging.INFO)
+        file_formatter = logging.Formatter(
+            "%(asctime)s - %(levelname)s - %(message)s")
+        file_handler.setFormatter(file_formatter)
+
+        logger = logging.getLogger()
+        logger.addHandler(file_handler)
 
     logging.info("Log file will be saved to " + log_filename)
     logging.info("filename : torch_optimize_loc.py")
