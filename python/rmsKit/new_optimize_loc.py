@@ -144,7 +144,7 @@ if __name__ == "__main__":
                 else:
                     raise RuntimeError("No gradient for parameter")
                 if (t+1) % (epochs // num_print) == 0 or t == 0:
-                    logging.info(f"Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}")
+                    logging.info(f"I: {i}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}")
             optimizer.step()
             loss_list.append(loss_val_item)
 
@@ -153,10 +153,6 @@ if __name__ == "__main__":
             best_us = [np.copy(u) for u in local_best_us]
 
         time_elapsed = time.time() - start
-        # print(
-        #     f"best loss at epoch {epochs}: {local_best_loss}, best loss so far: {best_loss} time elapsed: {time_elapsed:.4f} seconds"
-        # )
-
         logging.info(
             f"best loss at epoch {epochs}: {local_best_loss}, best loss so far: {best_loss} time elapsed: {time_elapsed:.4f} seconds"
         )
