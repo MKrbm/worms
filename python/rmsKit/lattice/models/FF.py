@@ -88,7 +88,7 @@ def local(params: Dict[Any, Any], check_L: List[int] = []) -> Tuple[Any, int]:
     bond_dim = params["rank"]
     d = params["dimension"]
     seed = params["seed"]
-    lt = params["lt"]  # number of sites in unit cell
+    L = params["lt"]  # number of sites in unit cell
     logging.info(f"generate ff with seed: {seed}")
     np.random.seed(seed)
     random.seed(seed)
@@ -103,11 +103,12 @@ def local(params: Dict[Any, Any], check_L: List[int] = []) -> Tuple[Any, int]:
         U, s, V = np.linalg.svd(A2)
         Up = U[:, len(s):]
         h = Up @ Up.T
-        if lt == 2:
-            _h = utils.sum_ham(h / 2, [[0, 1], [2, 3]], 4, sps)
-            _h += utils.sum_ham(h, [[1, 2]], 4, sps)
+        if L >= 2:
+            _h = utils.sum_ham(h / 2, [[i, i+1] for i in range(2*L-1)], 2 * L, sps)
+            _h += utils.sum_ham(h / 2, [[L-1, L]], 2 * L, sps)
             h = _h
-            sps = sps**2
+            sps = sps**L
+
         if check_L:
             L = check_L[0]
             H = utils.sum_ham(h, [[i, (i + 1) % L] for i in range(L)], L, sps)
@@ -117,7 +118,7 @@ def local(params: Dict[Any, Any], check_L: List[int] = []) -> Tuple[Any, int]:
         else:
             return [h], sps
     elif d == 2:
-        if lt != 1:
+        if L != 1:
             raise NotImplementedError(
                 "2D PEPS are not implemented for lt != 1")
 
