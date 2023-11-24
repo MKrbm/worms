@@ -17,6 +17,7 @@ def extract_loss(dir_name):
 
 def path_with_lowest_loss(parent_dir, return_ham=False, absolute_path=False, only_ham=False):
     # Get all directory names under the parent directory using glob (not only direct children)
+    parent_dir = os.path.abspath(parent_dir)
     dir_names = glob.glob(os.path.join(parent_dir, "**"), recursive=True)
 
     if only_ham:
