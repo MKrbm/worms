@@ -57,8 +57,6 @@ __all__ = [
     "files_to_dataframe",
     "get_seed_and_loss",
     "get_canonical_form",
-    "get_version",
-    "get_numpy_version",
     "now",
     "get_logger",
 ]
