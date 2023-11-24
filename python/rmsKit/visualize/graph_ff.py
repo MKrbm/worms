@@ -1,24 +1,29 @@
-from utils import get_seed_and_loss
-import matplotlib.pyplot as plt
 import sys
 import os
-import numpy as np
-
 # Get the path of the current script's directory.
 current_script_path = os.path.dirname(os.path.abspath(__file__))
 
 # Add the parent directory to the sys.path.
 parent_directory = os.path.dirname(current_script_path)
 sys.path.append(parent_directory)
+from utils import get_seed_and_loss
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 
 
 N = 5000000
 beta = 20
 
 
-model_name = "FF2D"
-df = get_seed_and_loss(f"../../../worm_result/{model_name}")
+model_name = "FF2D_quetta"
+df = get_seed_and_loss(f"../../worm_result/{model_name}")
 df = df[df.sweeps == N]
+model_name = "FF2D_zetta"
+df1 = get_seed_and_loss(f"../../worm_result/{model_name}")
+df1 = df1[df1.sweeps == 4999872]
+df = pd.concat([df, df1])
 print(df.temperature)
 df = df[df["temperature"] >= 1 / beta]
 
@@ -67,7 +72,13 @@ for L in sorted(df.n_sites.unique()):
                      yerr=df_dict["none"]['e_error'], fmt='s-', capsize=5, label=label_dict["none"], alpha=0.7)
         ax1.set_title('Energy per site vs Beta at L = {}'.format(L))
         ax1.set_ylabel('energy')
-        ax1.set_ylim(lower_bound, upper_bound)
+        try:
+            ax1.set_ylim(lower_bound, upper_bound)
+        except ValueError:
+            print("lower_bound / upper_bound was not valid (nan / inf))")
+            continue
+
+
         ax1.legend()
 
         # Plotting AS vs Inverse Temperature in ax2
@@ -147,7 +158,11 @@ for t in sorted(df.temperature.unique()):
         ax1.set_title('Energy per site vs L at beta = {}'.format(t))
 
         ax1.set_ylabel('Energy')
-        ax1.set_ylim(lower_bound, upper_bound)
+        try:
+            ax1.set_ylim(lower_bound, upper_bound)
+        except ValueError:
+            print("lower_bound / upper_bound was not valid (nan / inf))")
+            continue
         ax1.legend()
 
         # Plotting AS vs Inverse Temperature in ax2
