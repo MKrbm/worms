@@ -245,7 +245,6 @@ def get_canonical_form(A):
 
     e, V = np.linalg.eigh(A_tilde)
     x = V[:, -1].reshape(s, s)
-    print(x - x.t)
 
     e, U = np.linalg.eigh(x)
     x_h = U @ np.diag(np.sqrt(e + 0j)) @ U.T
