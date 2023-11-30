@@ -6,11 +6,10 @@ current_script_path = os.path.dirname(os.path.abspath(__file__))
 # Add the parent directory to the sys.path.
 parent_directory = os.path.dirname(current_script_path)
 sys.path.append(parent_directory)
-from utils import get_seed_and_loss
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-
+import numpy as np
+import matplotlib.pyplot as plt
+from utils import get_seed_and_loss
 
 
 N = 5000000
@@ -77,7 +76,6 @@ for L in sorted(df.n_sites.unique()):
         except ValueError:
             print("lower_bound / upper_bound was not valid (nan / inf))")
             continue
-
 
         ax1.legend()
 
