@@ -1,4 +1,5 @@
 # https://github.com/microsoft/vscode-dev-containers/tree/v0.209.6/containers/cpp/.devcontainer/base.Dockerfile
+# Note that this is old version
 
 FROM ubuntu:22.04 as base
 RUN echo "I'm $TARGETARCH"

@@ -3,9 +3,8 @@ import numpy as np
 import rms_torch
 import time
 import platform
-import sys
 import logging
-from typing import List, Tuple, Type, Any, Dict
+from typing import List, Tuple, Any, Dict
 from numpy._typing import NDArray
 
 import lattice
@@ -144,7 +143,8 @@ if __name__ == "__main__":
                 else:
                     raise RuntimeError("No gradient for parameter")
                 if (t+1) % (epochs // num_print) == 0 or t == 0:
-                    logging.info(f"I: {i}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}")
+                    logging.info(
+                        f"I: {i + 1}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}")
             optimizer.step()
             loss_list.append(loss_val_item)
 
@@ -154,6 +154,9 @@ if __name__ == "__main__":
 
         time_elapsed = time.time() - start
         logging.info(
-            f"best loss at epoch {epochs}: {local_best_loss}, best loss so far: {best_loss} time elapsed: {time_elapsed:.4f} seconds"
+            f"""
+            best loss at epoch {epochs}: {local_best_loss},
+            best loss so far: {best_loss} time elapsed: {time_elapsed:.4f} seconds
+            """
         )
         save_npy(f"{path}/loss_{local_best_loss:.5f}/u", local_best_us)
