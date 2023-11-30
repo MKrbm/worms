@@ -1,4 +1,5 @@
 # https://github.com/microsoft/vscode-dev-containers/tree/v0.209.6/containers/cpp/.devcontainer/base.Dockerfile
+# Note that this is old version
 
 FROM ubuntu:22.04 as base
 RUN echo "I'm $TARGETARCH"
@@ -76,5 +77,7 @@ ENV PATH=/home/${USERNAME}/miniconda3/bin:$PATH
 ENV PATH=/home/${USERNAME}/miniconda3/condabin:$PATH
 RUN conda init 
 RUN conda update -y conda
+
+
 
 WORKDIR /home/${USERNAME}/project

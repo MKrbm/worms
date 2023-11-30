@@ -1,21 +1,21 @@
-from pathlib import Path
 import sys
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-import seaborn as sns
-from matplotlib import pyplot as plt
-import pandas as pd
-from lattice import FF
-import numpy as np
 import os
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils import path_with_lowest_loss, sum_ham
+import numpy as np
+from lattice import FF
+import pandas as pd
+from matplotlib import pyplot as plt
+import seaborn as sns
 # Assuming the 'lattice' module provides the FF.block1D function
 # Assuming the 'utils' module provides the path_with_lowest_loss and sum_ham functions
 
 
-def check_valid_seeds(base_path, sps, lt=1, setting_name="1_mel_Adam/lr_001_epoch_8000", num_seeds=5000):
+def check_valid_seeds(base_path, sps, lt, setting_name, range_seed=range(3000, 4000)):
     valid_seeds = []
     valid_path = []
-    for seed in range(num_seeds):
+    for seed in range_seed:
         dir_path = f"{base_path}/s_{sps}_r_2_lt_{lt}_d_1_seed_{seed}/{setting_name}"
         if os.path.isdir(dir_path):
             valid_seeds.append(seed)
@@ -41,7 +41,7 @@ def compute_gap(A):
     return sorted_eigenvalues.real[0] - sorted_eigenvalues.real[1]
 
 
-def compute_gap_loc(A, bd, sps):
+def get_projector(A, bd, sps):
     A2 = np.einsum("ijk,klm->jlim", A, A).reshape(sps**2, bd**2)
     U, s, V = np.linalg.svd(A2)
     Up = U[:, len(s):]
@@ -50,26 +50,20 @@ def compute_gap_loc(A, bd, sps):
     return h, 0  # Assuming max_gap is 0 for now
 
 
-def compute_results(seed, sps, bd, base_dir, L):
+def compute_results(seed, sps, bd, lt, base_dir, L):
 
     u_path, lowest_val = path_with_lowest_loss(base_dir)
-
     u = load_matrix(u_path, "0.npy")
-
-    A = FF.block1D(bd, sps, bd, seed=seed)
-
-    gap_transfer = compute_gap(A)
-
-    h, gap_loc = compute_gap_loc(A, bd, sps)
-
     h_matrix = -load_matrix(base_dir, "H/0.npy")
-
-    gap_sys = compute_gap_sys(h_matrix, L, sps)
-
     U = np.kron(u, u)
-
     hu = U @ h_matrix @ U.T
 
+    # sps will be a power of lt, and here calculate the original sps
+    sps = np.round(sps ** (1 / lt)).astype(int)
+    A = FF.block1D(bd, sps, bd, seed=seed)
+    gap_transfer = compute_gap(A)
+    h, gap_loc = get_projector(A, bd, sps)
+    gap_sys = compute_gap_sys(h, L, sps)
     return {
         "seed": seed,
         "loss": lowest_val,
@@ -82,23 +76,23 @@ def compute_results(seed, sps, bd, base_dir, L):
 
 def main():
     bd = 2
-    sps = 3
+    sps = 8
     lt = 1
     sps = sps ** lt
     res = []
-    # base_path = "array/torch/FF1D_s4"
-    base_path = "array/torch/FF1D_loc_quetta"
-    # base_path = "array/torch/FF1D_lt_2"
+    # base_path = "array/torch/FF1D_loc_lt_3"
+    base_path = "array/torch/FF1D_8"
+    # base_path = "array/torch/FF1D_loc_lt_2"
+    setting_name = f"{lt}_mel_Adam/lr_0.001_epoch_2000"
     # setting_name = "2_mel_Adam/lr_0.001_epoch_8000"
-    setting_name = "1_mel_Adam/lr_0.001_epoch_10000"
+    # base_path = "array/torch/FF1D_lt_2"
 
     valid_seeds, valid_path = check_valid_seeds(
-        base_path, sps, lt=lt, setting_name=setting_name)
+        base_path, sps, lt=lt, setting_name=setting_name, range_seed=range(3000, 4000))
 
     for seed, array_dir in zip(valid_seeds, valid_path):
-
         try:
-            result = compute_results(seed, sps, bd, array_dir, 3)
+            result = compute_results(seed, sps, bd, lt, array_dir, 3)
             res.append(result)
             print(f"finish seed = {seed}")
         except Exception as e:
