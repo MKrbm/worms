@@ -77,4 +77,6 @@ ENV PATH=/home/${USERNAME}/miniconda3/condabin:$PATH
 RUN conda init 
 RUN conda update -y conda
 
+
+
 WORKDIR /home/${USERNAME}/project
