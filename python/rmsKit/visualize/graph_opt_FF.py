@@ -83,7 +83,7 @@ def main():
     # base_path = "array/torch/FF1D_loc_lt_3"
     base_path = "array/torch/FF1D_8"
     # base_path = "array/torch/FF1D_loc_lt_2"
-    setting_name = f"{lt}_mel_Adam/lr_0.001_epoch_2000"
+    setting_name = f"{lt}_mel_Adam/lr_0.001_epoch_4000"
     # setting_name = "2_mel_Adam/lr_0.001_epoch_8000"
     # base_path = "array/torch/FF1D_lt_2"
 
