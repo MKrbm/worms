@@ -11,7 +11,7 @@ import utils
 from typing import List, Any, Tuple, Dict
 
 
-def block1D(*dimensions, normal=True, seed=None, canonical=True):
+def block1D(*dimensions, normal=True, seed=None, canonical=True, sym=True):
     """Construct a new matrix for the MPS with random numbers from 0 to 1"""
     if seed is not None:
         np.random.seed(seed)
@@ -21,9 +21,13 @@ def block1D(*dimensions, normal=True, seed=None, canonical=True):
         A = np.random.normal(size=size)
     else:
         A = np.random.random_sample(size)
-    A = (A.transpose(2, 1, 0) + A) / 2
+    if sym:
+        A = (A.transpose(2, 1, 0) + A) / 2
 
     if canonical:
+        if not sym:
+            raise NotImplementedError("Currently MPS must be symmetric to be canonical ")
+
         A = get_canonical_form(A)
         if np.linalg.norm(A.imag) > 1E-8:
             raise ValueError("A is not real")
@@ -176,16 +180,16 @@ def get_canonical_form(A):
         raise ValueError(
             "middle index should represent physical index and the side indices should be virtual indices")
 
-    s = A.shape[0]
+    bd = A.shape[0]
     A = A.transpose(1, 0, 2)
     A_tilde = np.einsum("ijk,ilm->jlkm", A, A)
-    A_tilde = A_tilde.reshape(s**2, s**2)
+    A_tilde = A_tilde.reshape(bd**2, bd**2)
     e, V = np.linalg.eigh(A_tilde)
     rho = e[-1]
     A_tilde = A_tilde / rho
 
     e, V = np.linalg.eigh(A_tilde)
-    x = V[:, -1].reshape(s, s)
+    x = V[:, -1].reshape(bd, bd)
 
     e, U = np.linalg.eigh(x)
     x_h = U @ np.diag(np.sqrt(e + 0j)) @ U.T
@@ -199,9 +203,10 @@ def get_canonical_form(A):
         if np.linalg.norm(np.eye(check_cano.shape[0]) - check_cano) > 1E-8:
             raise ValueError("B is not a canonical")
         B_ = B.transpose(1, 0, 2)
-        B_tilde = np.einsum("ijk,ilm->jlkm", B_, B_).reshape(4, 4)
+        B_tilde = np.einsum("ijk,ilm->jlkm", B_, B_).reshape(bd**2, bd ** 2)
         Eb = np.sort(np.linalg.eigvals(B_tilde))
         Ea = np.sort(np.linalg.eigvals(A_tilde))
+        # print("Ea: " ,Ea)
         if np.linalg.norm(Ea.real - Eb.real) > 1E-8:
             raise ValueError("B is not a canonical")
     return B
