@@ -41,7 +41,7 @@ def system(_L: list[int], params: dict) -> Tuple[NDArray[Any], int]:
 
     if len(_L) == 1:
         L = _L[0]
-        logging.info(f"L      : {L} (3 site per unit cell)")
+        logging.info(f"L      : {L}")
         logging.info(f"params : {params}")
         H_list, sps = local(params, D=1)
 
