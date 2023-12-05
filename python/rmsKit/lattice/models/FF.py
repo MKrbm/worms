@@ -1,4 +1,4 @@
-# kagome heisenberg model
+# FF model
 import sys
 import os
 import numpy as np
