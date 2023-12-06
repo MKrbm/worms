@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from typing import List
+from typing import List, Dict, Any, Tuple
 from datetime import datetime
 import os
 import glob
@@ -92,7 +92,7 @@ SUSCEPTIBILITY_MEAN = "chi"
 SUSCEPTIBILITY_ERROR = "chi_error"
 
 
-def extract_info_from_file(file_path, allow_missing=False, warning=True):
+def extract_info_from_file(file_path, allow_missing: bool = False, warning: bool = True) -> Tuple[Dict, None]:
     # Dictionary to store extracted info
     info_dict = {}
 
@@ -216,14 +216,18 @@ def files_to_dataframe(file_list, **kwargs):
     return df
 
 
+def get_loss(df):
+    df['loss'] = df['u_path'].str.extract(
+        r'loss_([+|-]?[0-9]*\.[0-9]+|[0-9]+\.[0-9]*$)').astype(float)
+    return df
+
+
 def get_seed_and_loss(file_path):
     df = files_to_dataframe(bfs_search_and_get_files(
         file_path), allow_missing=True, warning=False)
 #     df = df[df.model_name.str.contains("FF_1D")]
     df['seed'] = df['ham_path'].str.extract(r'seed_(\d+)').astype(int)
-    df['loss'] = df['u_path'].str.extract(
-        r'loss_([+|-]?[0-9]*\.[0-9]+|[0-9]+\.[0-9]*$)').astype(float)
-    return df
+    return get_loss(df)
 
 
 def get_canonical_form(A):
