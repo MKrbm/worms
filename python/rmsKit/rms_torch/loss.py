@@ -29,9 +29,13 @@ class MinimumEnergyLoss(nn.Module):
                 raise TypeError(
                     "h should be of type np.ndarray or torch.Tensor.")
             E, V = torch.linalg.eigh(self.h_list[i])
+            
+            logging.info(f"minimum energy of local hamiltonian {i}: {E[0]:.3f}")
             self.e_min.append(E[0])
-            logging.info(
-                f"minimum energy of local hamiltonian {i}: {E[0]:.3f}")
+            # logging.info(
+            #     f"minimum energy of local hamiltonian {i}: {E[0]:.3f}")
+            self.h_list[i][:] = self.h_list[i] - E[0] * torch.eye(
+                h_list[i].shape[1], device=device)
             self.offset.append(E[-1])
             # self.eye_offset.append(E[-1] * torch.eye(h_list[i].shape[1], device=device))
             self.h_list[i][:] = self.h_list[i] - self.offset[i] * \
@@ -50,7 +54,7 @@ class MinimumEnergyLoss(nn.Module):
                 result_abs = (result_abs + result_abs.T)/2
                 E = torch.linalg.eigvalsh(result_abs)
             loss += E[0] + self.offset[i]
-        return -loss
+        return -loss - sum(self.e_min)
 
     def stoquastic(self, A: torch.Tensor):
         return -torch.abs(A)

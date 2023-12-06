@@ -4,38 +4,14 @@ import rms_torch
 import time
 import platform
 import logging
-from typing import List, Tuple, Any, Dict
-from numpy._typing import NDArray
 
-import lattice
-from lattice import save_npy
-from utils.parser import args, params,  hash_str
+from lattice import save_npy, get_model
+from utils.parser import get_parser
 from utils import now, get_logger
 
+args, params, hash_str = get_parser()
 
-def get_model_ham(model: str, params: Dict[str, str]) -> Tuple[List[NDArray[Any]], int, str]:
-    lt = params["lt"]
-    sps = params["sps"]
-    seed = params["seed"]
-    if "FF" in model:
-        if model == "FF1D":
-            d = 1
-        elif model == "FF2D":
-            d = 2
-        p = dict(
-            sps=sps,
-            rank=2,
-            dimension=d,
-            # lattice type (number of sites in unit cell)
-            lt=1 if lt == "original" else int(lt),
-            seed=1 if seed is None else seed,
-        )
-        h_list, sps = lattice.FF.local(p)
-        # h_list: List[NDArray[Any]] = [h.numpy() for h in _h_list]
-        params_str = f's_{sps}_r_{p["rank"]}_lt_{p["lt"]}_d_{p["dimension"]}_seed_{p["seed"]}'
-        model_name = f"{model}_loc/{params_str}"
 
-    return h_list, sps, model_name
 
 
 if __name__ == "__main__":
@@ -68,20 +44,20 @@ if __name__ == "__main__":
     # print(f"Info : device = {device}")
     logging.info(f"device = {device}")
 
-    h_list, sps, model_name = get_model_ham(args.model, params)
+    h_list, sps, model_name = get_model(args.model, params)
 
     custom_dir = "out/tensorboard"  # Adjust this to your desired directory
     loss_name = f"{params['lt']}_{args.loss}_{args.optimizer}"
     setting_name = f"lr_{args.learning_rate}_epoch_{epochs}"
     base_name = f"{model_name}/{loss_name}/{setting_name}"
     path = f"array/torch/{model_name}/{loss_name}/{setting_name}"
-    ham_path = f"array/torch/{model_name}/{loss_name}/{setting_name}/H.npy"
+    # ham_path = f"array/torch/{model_name}/{loss_name}/{setting_name}/H.npy"
 
     # print(f"Info : Unitary will be saved to {path}")
     # print(f"Info : Hamiltonian saved to {ham_path}")
     logging.info(f"Unitary will be saved to {path}")
-    logging.info(f"Hamiltonian saved to {ham_path}")
-    save_npy(f"{path}/H", [-np.array(h) for h in h_list])
+    logging.info(f"Hamiltonian saved to {path}/H/")
+    save_npy(f"{path}/H", [-np.array(h) for h in h_list]) # minus for - beta * H
 
     loss = rms_torch.MinimumEnergyLoss(h_list, device=device)
     optimizer_func: type[torch.optim.Optimizer] = rms_torch.LION
@@ -105,7 +81,8 @@ if __name__ == "__main__":
 
     loss_val = loss(model())
     # print(f"Info : initial loss = {loss_val.item()}")
-    logging.info(f"initial loss = {loss_val.item()}")
+    initial_loss = loss_val.item()
+    logging.info(f"initial loss = {initial_loss}")
 
     best_loss = 1e10
     best_us = None
@@ -160,3 +137,6 @@ if __name__ == "__main__":
             """
         )
         save_npy(f"{path}/loss_{local_best_loss:.5f}/u", local_best_us)
+    logging.info(f"best loss: {best_loss} / initial loss: {initial_loss}")
+    logging.info(f"best loss was saved to {path}/loss_{best_loss:.5f}/u")
+    logging.info(f"hamiltonian was saved to {path}/H")
