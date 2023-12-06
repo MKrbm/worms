@@ -12,12 +12,15 @@ models = [
 loss_val = ["mel", "none"]
 
 
-def get_parser(length=False):
+def get_parser(length=False, model=None):
 
     parser = argparse.ArgumentParser(
         description="exact diagonalization of shastry_surtherland")
-    parser.add_argument("-m", "--model", help="model (model) Name",
-                        required=True, choices=models)
+    if model is None:
+        parser.add_argument("-m", "--model", help="model (model) Name",
+                            required=True, choices=models)
+    else:
+        pass
     parser.add_argument("-Jz", "--coupling_z", help="coupling constant (Jz)",
                         type=float, default=1)  # SxSx + SySy +
     parser.add_argument("-Jx", "--coupling_x",
