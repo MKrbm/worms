@@ -40,9 +40,9 @@ if __name__ == "__main__":
     os.makedirs(os.path.dirname(file), exist_ok=True)
 
     with open(file, "w") as dat_file:
-        dat_file.write("index, value\n")
+        dat_file.write("index,value\n")
         for i, v in enumerate(V[:, 0]):
-            dat_file.write(f"{i}, {v:.60g}\n")
+            dat_file.write(f"{i},{v:.60g}\n")
 
     beta = np.linspace(0, 10, 1001).reshape(1, -1)
     B = np.exp(-beta * E[:, None])
@@ -60,20 +60,20 @@ if __name__ == "__main__":
     file = f"{path}/eigenvalues.csv"
     os.makedirs(os.path.dirname(file), exist_ok=True)
     with open(file, "w") as dat_file:
-        dat_file.write("index, value\n")
+        dat_file.write("index,value\n")
         for i, e in enumerate(E):
-            dat_file.write(f"{i}, {e:.60g}\n")
+            dat_file.write(f"{i},{e:.60g}\n")
 
     file = f"{path}/statistics.csv"
     os.makedirs(os.path.dirname(file), exist_ok=True)
     logging.info("stat file: {}".format(file))
     with open(file, "w") as dat_file:
-        dat_file.write("beta, energy_per_site, specific_heat\n")
+        dat_file.write("beta,energy_per_site,specific_heat\n")
         for (
             b,
             e,
             c,
         ) in zip(beta, E_mean, C):
-            dat_file.write(f"{b}, {e/N}, {c/N}\n")
+            dat_file.write(f"{b},{e/N},{c/N}\n")
 
     # print(f"output to {path}")
