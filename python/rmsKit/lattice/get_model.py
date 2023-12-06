@@ -3,7 +3,7 @@ from typing import List, Tuple, Any, Dict, Union
 from numpy._typing import NDArray
 
 
-def get_model(model: str, params: Dict[str, Any], L=Union[List[int], None]
+def get_model(model: str, params: Dict[str, Any], L: Union[List[int], None] = None
               ) -> Tuple[Union[List[NDArray[Any]], NDArray[Any]], int, str]:
 
     if "FF" in model:
