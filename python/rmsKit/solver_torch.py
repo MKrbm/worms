@@ -32,7 +32,8 @@ if __name__ == "__main__":
     logging.info(f"finish diagonalization of {path}")
     logging.info(f"output to {path}")
 
-    file = f"{path}/groundstate.npy"
+    path = "out/" + path
+    file = f"{path}/groundstate"
     os.makedirs(os.path.dirname(file), exist_ok=True)
     save_npy(file, V[:, 0])
     file = f"{path}/groundstate.csv"
@@ -52,7 +53,7 @@ if __name__ == "__main__":
     C = (E_square_mean - E_mean**2) * (beta**2)
 
     # * save calculated data
-    file = f"{path}/eigenvalues.npy"
+    file = f"{path}/eigenvalues"
     os.makedirs(os.path.dirname(file), exist_ok=True)
     save_npy(file, E)
 
@@ -65,6 +66,7 @@ if __name__ == "__main__":
 
     file = f"{path}/statistics.csv"
     os.makedirs(os.path.dirname(file), exist_ok=True)
+    logging.info("stat file: {}".format(file))
     with open(file, "w") as dat_file:
         dat_file.write("beta, energy_per_site, specific_heat\n")
         for (
@@ -74,4 +76,4 @@ if __name__ == "__main__":
         ) in zip(beta, E_mean, C):
             dat_file.write(f"{b}, {e/N}, {c/N}\n")
 
-    print(f"output to {path}")
+    # print(f"output to {path}")
