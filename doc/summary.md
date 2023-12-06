@@ -389,6 +389,7 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
 - 1D HXYZ model
 
   - J = [-0.3, 0.8, 0.5], hx = 0.3
+    `-Jz -0.3 -Jx 0.8 -Jy 0.5 -hx 0.3 -hz 0`
 
     - exact energy per site E = -0.07947479512910453
     - ### Table L = 9, N = 1E6,
