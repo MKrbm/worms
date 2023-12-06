@@ -5,7 +5,9 @@ import re
 from datetime import datetime
 import contextlib
 from typing import Union, List, Tuple
+import logging
 
+logger = logging.getLogger(__name__)
 
 def extract_loss(dir_name):
     # Use regex to extract the loss value from the directory name
@@ -175,18 +177,22 @@ def find_executable(grandparent_dir: str) -> Tuple[str, str]:
     return "", ""
 
 
-def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float, N: int, n: int = 1):
+def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float, N: int, n: int = 1, project_dir: str = None, logging: bool = True):
     # 1. Get the current directory
-    current_dir = os.getcwd()
+    if project_dir is not None:
+        release_dir = os.path.join(project_dir, "build")
+    else:
+        current_dir = os.getcwd()
+        release_dir = os.path.join(current_dir, "build")
     # 2. Find the executable
     # release_dir, executable_name = find_executable(current_dir)
-    release_dir = os.path.join(current_dir, "build")
     executable_name = "./main_MPI"
 
-
     if not os.path.isdir(release_dir):
-        print("current dir is: ", os.getcwd())
-        print("release_dir : ", release_dir, " not found. Please check the path.")
+        # print("current dir is: ", os.getcwd())
+        # print("release_dir : ", release_dir, " not found. Please check the path.")
+        logger.error("release_dir : %s not found. Please check the path.", release_dir)
+        logger.error("current dir is: %s", os.getcwd())
         return
 
     # 3. Prepare the command arguments
@@ -206,7 +212,7 @@ def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float
         u_path if u_path else "",
         "-N",
         str(N),
-        "--output",
+        "--output" if logging else "",
         "--split-sweeps"
     ]
 
@@ -217,14 +223,17 @@ def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float
         cmd.append(f"-L{i}")
         cmd.append(str(length))
 
+    command = " ".join(cmd)
+    env = os.environ.copy()
     with change_directory(release_dir):
-        print("cmd: ", cmd)
         if not os.path.isdir(ham_path):
-            print("current dir is: ", os.getcwd())
-            print("ham_path : ", ham_path, " not found. Please check the path.")
+            logger.error("ham_path : %s not found. Please check the path.", ham_path)
+            logger.error("current dir is: %s", os.getcwd())
             return
+        # print("command: \n", command)
+        logger.info("command: %s", command)
 
-        out = subprocess.run(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+        out = subprocess.run(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True, env=env)
 
         # Check if command executed successfully
         if out.returncode != 0:
