@@ -50,14 +50,15 @@ if __name__ == "__main__":
     loss_name = f"{params['lt']}_{args.loss}_{args.optimizer}"
     setting_name = f"lr_{args.learning_rate}_epoch_{epochs}"
     base_name = f"{model_name}/{loss_name}/{setting_name}"
-    path = f"array/torch/{model_name}/{loss_name}/{setting_name}"
+    h_path = f"array/torch/{model_name}"
+    u_path = f"{h_path}/{loss_name}/{setting_name}"
     # ham_path = f"array/torch/{model_name}/{loss_name}/{setting_name}/H.npy"
 
     # print(f"Info : Unitary will be saved to {path}")
     # print(f"Info : Hamiltonian saved to {ham_path}")
-    logging.info(f"Unitary will be saved to {path}")
-    logging.info(f"Hamiltonian saved to {path}/H/")
-    save_npy(f"{path}/H", [-np.array(h) for h in h_list]) # minus for - beta * H
+    logging.info(f"Unitary will be saved to {u_path}")
+    logging.info(f"Hamiltonian saved to {h_path}/H/")
+    save_npy(f"{h_path}/H", [-np.array(h) for h in h_list]) # minus for - beta * H
 
     loss = rms_torch.MinimumEnergyLoss(h_list, device=device)
     optimizer_func: type[torch.optim.Optimizer] = rms_torch.LION
@@ -136,7 +137,7 @@ if __name__ == "__main__":
             best loss so far: {best_loss} time elapsed: {time_elapsed:.4f} seconds
             """
         )
-        save_npy(f"{path}/loss_{local_best_loss:.5f}/u", local_best_us)
+        save_npy(f"{u_path}/loss_{local_best_loss:.5f}/u", local_best_us)
     logging.info(f"best loss: {best_loss} / initial loss: {initial_loss}")
-    logging.info(f"best loss was saved to {path}/loss_{best_loss:.5f}/u")
-    logging.info(f"hamiltonian was saved to {path}/H")
+    logging.info(f"best loss was saved to {u_path}/loss_{best_loss:.5f}/u")
+    logging.info(f"hamiltonian was saved to {h_path}/H")
