@@ -1,52 +1,52 @@
-#include <automodel.hpp>
-#include <string>
-#include <vector>
-
 #include <argparse.hpp>
 #include <automodel.hpp>
 #include <autoobservable.hpp>
 #include <exec_parallel.hpp>
 #include <funcs.hpp>
+#include <jackknife.hpp>
 #include <observable.hpp>
 #include <options.hpp>
 #include <state.hpp>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "dataset.hpp"
 #include "gtest/gtest.h"
-#include <jackknife.hpp>
 #define SEED 16625035
 
-using namespace std;
 
 struct mc_res {
   struct res {
     double mean;
     double err;
   };
-  res ene; // energy per site
-  res as;  // average sign
+  res ene;  // energy per site
+  res as;   // average sign
 };
 
-typedef bcl::st2013 MC;
-typedef std::exponential_distribution<> expdist_t;
-typedef std::uniform_real_distribution<> uniform_t;
-typedef spin_state::state_t state_t;
-typedef spin_state::Operator OP_type;
+using MC = bcl::st2013;
+using expdist_t = std::exponential_distribution<>;
+using uniform_t = std::uniform_real_distribution<>;
+using state_t = spin_state::state_t;
+using OP_type = spin_state::Operator;
+
 
 uniform_t uniform;
 // int seed = static_cast<unsigned>(time(0));
 int seed = 1681255693;
-auto rand_src = engine_type(seed);
+auto rand_src = engine_type(SEED);
 
 std::vector<size_t> shapes = {4};
 model::base_lattice lat("chain lattice", "simple1d", shapes,
                         "../config/lattices.xml", false);
-string ham_path = "/home/user/project/gtest/model_array/Heisenberg/1D/original/"
-                  "Jx_1_Jy_1_Jz_1_hx_0_hz_0/H/";
+string ham_path =
+    "../gtest/model_array/Heisenberg/1D/original/"
+    "Jx_1_Jy_1_Jz_1_hx_0_hz_0/H/";
 double alpha = 0.9;
 double shift = 0.1;
 model::base_model<MC> spin(lat, {2}, ham_path, {1}, {0}, shift, false, false,
-                           true, alpha);
+                           false, alpha); // print = false
 size_t sps = spin.sps_sites(0);
 spin_state::StateFunc state_func(sps);
 spin_state::StateFunc bond_func(sps *sps);
@@ -58,10 +58,10 @@ mc_res run_worm(model::base_model<MC> &spin, double T, size_t sweeps,
   // dont fix worm density. Not printout density information.
   alps::alea::autocorr_result<double> ac_res;
   exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, ac_res, obs,
-                    wobs, SEED);
+                    std::move(wobs), SEED);
 
-  batch_res as = res[0];  // average sign
-  batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
+  batch_res as = res[0];   // average sign
+  batch_res ene = res[1];  // signed energy i.e. $\sum_i E_i S_i / N_MC$
   batch_res sglt = res[2];
   batch_res n_neg_ele = res[3];
   batch_res n_ops = res[4];
@@ -70,15 +70,16 @@ mc_res run_worm(model::base_model<MC> &spin, double T, size_t sweeps,
 
   std::function<double(double, double, double)> f;
 
-  pair<double, double> as_mean = jackknife_reweight_single(as); // calculate <S>
+  pair<double, double> as_mean =
+      jackknife_reweight_single(as);  // calculate <S>
   pair<double, double> nop_mean =
-      jackknife_reweight_single(n_ops); // calculate <S>
+      jackknife_reweight_single(n_ops);  // calculate <S>
   pair<double, double> nnop_mean =
-      jackknife_reweight_single(n_neg_ele); // calculate <S>
+      jackknife_reweight_single(n_neg_ele);  // calculate <S>
 
   // calculate energy
   pair<double, double> ene_mean =
-      jackknife_reweight_div(ene, as); // calculate <SH> / <S>
+      jackknife_reweight_div(ene, as);  // calculate <SH> / <S>
 
   // calculat heat capacity
   f = [](double x1, double x2, double y) {
@@ -99,15 +100,16 @@ TEST(HXX1D2SITE, check_update_a) {
   std::vector<size_t> shapes = {2};
   model::base_lattice lat("chain lattice", "simple1d", shapes,
                           "../config/lattices.xml", false);
-  string ham_path = "/home/user/project/python/rmsKit/array/HXYZ/2site/mes/"
-                    "Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0/M_10/H";
+  string ham_path =
+      "../gtest/model_array/Heisenberg/1D/2sites/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0_lt_2/";
   bool zero_worm = false;
   model::base_model<MC> spin(lat, {4}, ham_path, {1}, {0}, shift, zero_worm,
                              false, false, alpha);
 
   double T = 0.3;
   double beta = 1 / T;
-  size_t sweeps, therms;
+  size_t sweeps;
+  size_t therms;
   sweeps = 500000;
   therms = 0;
 
@@ -115,7 +117,7 @@ TEST(HXX1D2SITE, check_update_a) {
   model::MapWormObs mapwobs;
 
   vector<string> wobs_paths;
-  wobs_paths.push_back("");
+  wobs_paths.emplace_back("");
   std::vector<batch_res> res;
   model::observable obs(spin, "", false);
   auto lop = spin.loperators[0];
@@ -126,17 +128,17 @@ TEST(HXX1D2SITE, check_update_a) {
   typedef std::vector<OP_type> OPS;
   using state_t = spin_state::state_t;
 
-  //n* loop until ops_main has 3 operators
-  double wdensity = 5, wcount = 1, wlength = 1;
+  // n* loop until ops_main has 3 operators
+  double wdensity = 5;
+  double wcount = 1;
+  double wlength = 1;
   while (true) {
-    solver.diagonalUpdate(10); // n* need to be comment out
+    solver.diagonalUpdate(10);  // n* need to be comment out
     solver.wormUpdate(wcount, wlength);
     auto ops = solver.ops_main;
     int cnt = 0;
-    for (const auto &op : ops)
-      cnt += op.is_diagonal() ? 0 : 1;
-    if (ops.size() == 4)
-      break;
+    for (const auto &op : ops) cnt += op.is_diagonal() ? 0 : 1;
+    if (ops.size() == 4) break;
   }
 
   std::vector<state_t> state_list;
@@ -150,16 +152,14 @@ TEST(HXX1D2SITE, check_update_a) {
     auto ops = solver.ops_main;
     size_t state_num = 0;
     double bolzman = 1;
-    for (typename OPS::iterator opi = ops.begin(); opi != ops.end();
-         opi++) {
+    for (auto opi = ops.begin(); opi != ops.end(); opi++) {
       state_num += cstate[0] * 4 + cstate[1];
       state_num *= 16;
-      if (opi->op_type() > 0) {
+      if (opi->op_type() >= 0) {
         bolzman *= lop.ham_vector(opi->state());
       } else {
         bolzman *= solver.get_single_flip_elem(*opi);
       }
-      bolzman *= lop.ham_vector(opi->state());
       solver.update_state(opi, cstate);
     }
     if (cnt.find(state_num) == cnt.end()) {
@@ -170,9 +170,9 @@ TEST(HXX1D2SITE, check_update_a) {
     }
   }
 
-  //loop over all key and value of cnt 
+  // loop over all key and value of cnt
   double sum_mat = 0;
-  double sum_cnt = 0; 
+  double sum_cnt = 0;
   for (auto const &x : cnt) {
     size_t state_num = x.first;
     size_t count = x.second;
@@ -182,7 +182,7 @@ TEST(HXX1D2SITE, check_update_a) {
     // EXPECT_NEAR(count / sweeps, mat_elem_ / solver.sum, 1E-2);
   }
 
-  EXPECT_FLOAT_EQ((double) sweeps, sum_cnt);
+  EXPECT_FLOAT_EQ((double)sweeps, sum_cnt);
 
   for (auto const &x : cnt) {
     size_t state_num = x.first;
@@ -191,7 +191,7 @@ TEST(HXX1D2SITE, check_update_a) {
     double p_prime = count / sum_cnt;
     double var = p * (1 - p) / sweeps;
     EXPECT_NE(p, 0);
-    if (count != 1){
+    if (count != 1) {
       EXPECT_NEAR(p_prime, p, 8 * sqrt(var));
     } else {
       // EXPECT_NEAR(p_prime, p, 20 * sqrt(var));
@@ -206,8 +206,8 @@ TEST(HXX1D2SITE, check_update) {
   std::vector<size_t> shapes = {2};
   model::base_lattice lat("chain lattice", "simple1d", shapes,
                           "../config/lattices.xml", false);
-  string ham_path = "/home/user/project/python/rmsKit/array/HXYZ/2site/mes/"
-                    "Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0/M_10/H";
+  string ham_path =
+      "../gtest/model_array/Heisenberg/1D/original/mes/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0/";
   bool zero_worm = false;
   model::base_model<MC> spin(lat, {4}, ham_path, {1}, {0}, shift, zero_worm,
                              false, false, alpha);
@@ -233,17 +233,15 @@ TEST(HXX1D2SITE, check_update) {
   typedef std::vector<OP_type> OPS;
   using state_t = spin_state::state_t;
 
-  //n* loop until ops_main has 3 operators
+  // n* loop until ops_main has 3 operators
   double wdensity = 5, wcount = 1, wlength = 1;
   while (true) {
-    solver.diagonalUpdate(10); // n* need to be comment out
+    solver.diagonalUpdate(10);  // n* need to be comment out
     solver.wormUpdate(wcount, wlength);
     auto ops = solver.ops_main;
     int cnt = 0;
-    for (const auto &op : ops)
-      cnt += op.is_diagonal() ? 0 : 1;
-    if (ops.size() == 4)
-      break;
+    for (const auto &op : ops) cnt += op.is_diagonal() ? 0 : 1;
+    if (ops.size() == 4) break;
   }
 
   std::vector<state_t> state_list;
@@ -257,8 +255,7 @@ TEST(HXX1D2SITE, check_update) {
     auto ops = solver.ops_main;
     size_t state_num = 0;
     double bolzman = 1;
-    for (typename OPS::iterator opi = ops.begin(); opi != ops.end();
-         opi++) {
+    for (typename OPS::iterator opi = ops.begin(); opi != ops.end(); opi++) {
       state_num += cstate[0] * 4 + cstate[1];
       state_num *= 16;
       bolzman *= lop.ham_vector(opi->state());
@@ -272,9 +269,9 @@ TEST(HXX1D2SITE, check_update) {
     }
   }
 
-  //loop over all key and value of cnt 
+  // loop over all key and value of cnt
   double sum_mat = 0;
-  double sum_cnt = 0; 
+  double sum_cnt = 0;
   for (auto const &x : cnt) {
     size_t state_num = x.first;
     size_t count = x.second;
@@ -284,7 +281,7 @@ TEST(HXX1D2SITE, check_update) {
     // EXPECT_NEAR(count / sweeps, mat_elem_ / solver.sum, 1E-2);
   }
 
-  EXPECT_FLOAT_EQ((double) sweeps, sum_cnt);
+  EXPECT_FLOAT_EQ((double)sweeps, sum_cnt);
 
   for (auto const &x : cnt) {
     size_t state_num = x.first;
@@ -293,7 +290,7 @@ TEST(HXX1D2SITE, check_update) {
     double p_prime = count / sum_cnt;
     double var = p * (1 - p) / sweeps;
     EXPECT_NE(p, 0);
-    if (count != 1){
+    if (count != 1) {
       EXPECT_NEAR(p_prime, p, 8 * sqrt(var));
     } else {
       // EXPECT_NEAR(p_prime, p, 20 * sqrt(var));
@@ -340,20 +337,18 @@ TEST(HXXX, WormUpdate) {
   model::MapWormObs mapwobs;
 
   vector<string> wobs_paths;
-  if (wobs_paths.size() == 0)
-    wobs_paths.push_back("");
+  if (wobs_paths.empty()) wobs_paths.emplace_back("");
   for (int i = 0; i < wobs_paths.size(); i++) {
     string name = "G";
     name += to_string(i);
     mapwobs.push_back(name,
-                      model::WormObs(spin.sps_sites(0), wobs_paths[i], 0));
+                      model::WormObs(spin.sps_sites(0), wobs_paths[i], false));
   }
 
   Worm<MC> solver(beta, spin, mapwobs, cutoff_l,
-                  0); // template needs for std=14
+                  0);  // template needs for std=14
 
   for (int n = 0; n < 100; n++) {
-
     solver.initStates();
     state_t state = solver.state;
     double sum = 0;
@@ -361,7 +356,8 @@ TEST(HXXX, WormUpdate) {
     EXPECT_EQ(lops.size(), 1);
     auto lop = lops[0];
     for (auto b : solver.bonds) {
-      int x1, x2;
+      int x1;
+      int x2;
       x1 = state[b[0]];
       x2 = state[b[1]];
       int s = x1 + sps * x2;
@@ -370,7 +366,8 @@ TEST(HXXX, WormUpdate) {
 
     double sum_prime = 0;
     for (auto b : solver.bonds) {
-      int x1, x2;
+      int x1;
+      int x2;
       x1 = state[b[0]];
       x2 = state[b[1]];
       int s = x1 + sps * x2;
@@ -401,7 +398,7 @@ TEST(HXXX, WormUpdate) {
   state_t state0 = {0, 1, 0};
   size_t u = state_func.state2num(state0, bond);
   for (int j = 1; j < 4 * sps; j++) {
-    OP_type op = OP_type(&bond, &solver.pows_vec[0], u + 4 * u, 0, 0);
+    OP_type op = OP_type(&bond, solver.pows_vec.data(), u + 4 * u, 0, 0);
     op.update_state(leg_index0, (sps - fl0) % sps);
     int leg_index = j / sps;
     int fl = j % sps;
@@ -414,7 +411,7 @@ TEST(HXXX, WormUpdate) {
   }
   int fl = 1;
   int leg_index = leg_index0;
-  OP_type op = OP_type(&bond, &solver.pows_vec[0], u + 4 * u, 0, 0);
+  OP_type op = OP_type(&bond, solver.pows_vec.data(), u + 4 * u, 0, 0);
   vector<double> markov_cnt(4 * sps, 0);
   int N = 1E5;
   for (int n = 0; n < N; n++) {
@@ -444,8 +441,7 @@ TEST(HXXX, DiagonalUpdate) {
   model::MapWormObs mapwobs;
 
   vector<string> wobs_paths;
-  if (wobs_paths.size() == 0)
-    wobs_paths.push_back("");
+  if (wobs_paths.empty()) wobs_paths.push_back("");
   for (int i = 0; i < wobs_paths.size(); i++) {
     string name = "G";
     name += to_string(i);
@@ -453,7 +449,7 @@ TEST(HXXX, DiagonalUpdate) {
   }
 
   Worm<MC> solver(beta, spin, mapwobs, cutoff_l,
-                  0); // template needs for std=14
+                  0);  // template needs for std=14
   for (int n = 0; n < 8; n++) {
     solver.initStates();
     auto state_ = state_func.num2state(n, 3);
@@ -531,8 +527,9 @@ TEST(HXX1D_02a, MC) {
   std::vector<size_t> shapes = {4};
   model::base_lattice lat("chain lattice", "simple1d", shapes,
                           "../config/lattices.xml", false);
-  string ham_path = "/home/user/project/gtest/model_array/Heisenberg/1D/"
-                    "original/Jx_1_Jy_1_Jz_1_hx_0_hz_0/H/";
+  string ham_path =
+      "../gtest/model_array/Heisenberg/1D/"
+      "original/Jx_1_Jy_1_Jz_1_hx_0_hz_0/H/";
   model::base_model<MC> spin(lat, {2}, ham_path, {1}, {0}, shift, false, false,
                              false, alpha);
   double T = 1;
@@ -556,7 +553,7 @@ TEST(HXX1D_02a, MC) {
   EXPECT_FLOAT_EQ(out_res.ene.mean, -0.21661999999999898);
   EXPECT_NEAR(
       out_res.ene.mean, -0.21627057785439316,
-      3 * out_res.ene.err); // -0.21627057785439316 for L = 4 J = [1, 1, 1]
+      3 * out_res.ene.err);  // -0.21627057785439316 for L = 4 J = [1, 1, 1]
 }
 
 TEST(HXX2D, none_a_zw) {
@@ -567,14 +564,16 @@ TEST(HXX2D, none_a_zw) {
   std::vector<size_t> shapes = {2, 2};
   model::base_lattice lat("square lattice", "simple2d", shapes,
                           "../config/lattices.xml", false);
-  string ham_path = "/home/user/project/gtest/model_array/Heisenberg/2D/"
-                    "original/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0/H/";
+  string ham_path =
+      "../gtest/model_array/Heisenberg/2D/"
+      "original/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0/H/";
   model::base_model<MC> spin(lat, {2}, ham_path, {1}, {0}, shift, zero_worm,
                              false, false, alpha);
 
   double T = 1;
   double beta = 1 / T;
-  size_t sweeps, therms;
+  size_t sweeps;
+  size_t therms;
   sweeps = 400000;
   therms = 0;
 
@@ -582,15 +581,15 @@ TEST(HXX2D, none_a_zw) {
   model::MapWormObs mapwobs;
 
   vector<string> wobs_paths;
-  wobs_paths.push_back("");
+  wobs_paths.emplace_back("");
   std::vector<batch_res> res;
   model::observable obs(spin, "", false);
   mc_res out_res = run_worm(spin, T, sweeps, therms, res, obs, lat, mapwobs);
 
   EXPECT_FLOAT_EQ(out_res.ene.mean, -0.22672973371746891);
   EXPECT_NEAR(out_res.ene.mean, -0.22695394021770868,
-              3 * out_res.ene.err); // -0.18543629571195416 for L = [2,4] J =
-                                    // [-0.3, 0.5, 0.8] hx = 0.3
+              3 * out_res.ene.err);  // -0.18543629571195416 for L = [2,4] J =
+                                     // [-0.3, 0.5, 0.8] hx = 0.3
 }
 
 TEST(HXX2D, MES_a_zw) {
@@ -600,15 +599,17 @@ TEST(HXX2D, MES_a_zw) {
   std::vector<size_t> shapes = {2, 2};
   model::base_lattice lat("square lattice", "simple2d", shapes,
                           "../config/lattices.xml", false);
-  string ham_path = "/home/user/project/gtest/model_array/Heisenberg/2D/"
-                    "original/mes/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0/M_10/H/";
+  string ham_path =
+      "../gtest/model_array/Heisenberg/2D/"
+      "original/mes/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0/M_10/H/";
   bool zero_worm = true;
   model::base_model<MC> spin(lat, {2}, ham_path, {1}, {0}, shift, zero_worm,
                              false, false, alpha);
 
   double T = 1;
   double beta = 1 / T;
-  size_t sweeps, therms;
+  size_t sweeps;
+  size_t therms;
   sweeps = 400000;
   therms = 0;
 
@@ -616,7 +617,7 @@ TEST(HXX2D, MES_a_zw) {
   model::MapWormObs mapwobs;
 
   vector<string> wobs_paths;
-  wobs_paths.push_back("");
+  wobs_paths.emplace_back("");
   std::vector<batch_res> res;
   model::observable obs(spin, "", false);
 
@@ -624,6 +625,6 @@ TEST(HXX2D, MES_a_zw) {
 
   EXPECT_FLOAT_EQ(out_res.ene.mean, -0.22710672923632713);
   EXPECT_NEAR(out_res.ene.mean, -0.22695394021770868,
-              3 * out_res.ene.err); // -0.18543629571195416 for L = [2,4] J =
-                                    // [-0.3, 0.5, 0.8] hx = 0.3
+              3 * out_res.ene.err);  // -0.18543629571195416 for L = [2,4] J =
+                                     // [-0.3, 0.5, 0.8] hx = 0.3
 }

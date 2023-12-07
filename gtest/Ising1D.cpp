@@ -49,7 +49,7 @@ auto rand_src = engine_type(seed);
 std::vector<size_t> shapes = {2};
 model::base_lattice lat("chain lattice", "simple1d", shapes,
                         "../config/lattices.xml", false);
-string ham_path = "/home/user/project/gtest/model_array/Ising1D/test1";
+string ham_path = "../gtest/model_array/Ising1D/test1";
 double alpha = 0;
 double shift = 0.5;
 model::base_model<MC> spin(lat, {2}, ham_path, {1}, {0}, shift, false, false,

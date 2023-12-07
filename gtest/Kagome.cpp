@@ -33,11 +33,11 @@ auto rand_src = engine_type(seed);
 std::vector<size_t> shapes = {4, 4};
 model::base_lattice lat("triangular lattice", "anisotropic triangular", shapes, "../config/lattices.xml", false);
 // string ham_path = "../gtest/model_array/KH/smel/H1";
-string ham_path = "/home/user/project/python/rmsKit/array/KH/3site/none/Jx_1_Jy_1_Jz_1_hx_0_hz_0/H";
+string ham_path = "../python/rmsKit/array/KH/3site/none/Jx_1_Jy_1_Jz_1_hx_0_hz_0/H";
 model::base_model<MC> spin(lat, {8}, ham_path, {1, 1, 1}, {0, 1, 2}, 0.1, false, false, true);
 
 model::base_lattice lat2("triangular lattice", "kagome", shapes, "../config/lattices.xml", false);
-string ham_path2 = "/home/user/project/python/rmsKit/array/KH/original/none/Jx_1_Jy_1_Jz_1_hx_0_hz_0/H";
+string ham_path2 = "../python/rmsKit/array/KH/original/none/Jx_1_Jy_1_Jz_1_hx_0_hz_0/H";
 model::base_model<MC> spin2(lat2, {2}, ham_path2, {1}, {0}, 0.3, false, false, true);
 
 void run_worm(
