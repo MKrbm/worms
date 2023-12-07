@@ -633,3 +633,14 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
       | 1  | 0.483834 +- 0.000720713    | 0.0001202 +- 0.000229833   |
 
   - 
+
+# todo list
+- [ ] Implement mes.
+- [ ] Calculate optimized unitary for heisenberg ( in different parameter region )
+- [ ] Fix zero_worm bug.
+  - Compare the result previous result which was correct.
+# Bug fix history
+
+- commit : `8e76d392c1668bec7e166244a0506bfa05b4151f`
+
+  - zero_wrom has some issues. I thought this was already fixed in the previous commit but it wasn't.
