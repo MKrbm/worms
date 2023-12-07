@@ -238,7 +238,9 @@ def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float
         # Check if command executed successfully
         if out.returncode != 0:
             error_message = f"Command execution failed with return code {out.returncode}"
-            print("Error output:", out.stdout.decode())
+            # print("Error output:", out.stdout.decode())
+            logger.error("Error output: %s", out.stdout.decode())
+            logger.error("command: %s", command)
             raise RuntimeError(error_message)
 
     return out
