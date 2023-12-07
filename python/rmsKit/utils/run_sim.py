@@ -9,6 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def extract_loss(dir_name):
     # Use regex to extract the loss value from the directory name
     match = re.search(r"loss_(\d+\.\d+)", dir_name)
@@ -177,7 +178,16 @@ def find_executable(grandparent_dir: str) -> Tuple[str, str]:
     return "", ""
 
 
-def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float, N: int, n: int = 1, project_dir: str = None, logging: bool = True):
+def run_worm(
+        model_name: str,
+        ham_path: str,
+        u_path: str,
+        L: List[int],
+        T: float,
+        N: int,
+        n: int = 1,
+        project_dir: str = "",
+        logging: bool = True):
     # 1. Get the current directory
     if project_dir is not None:
         release_dir = os.path.join(project_dir, "build")
@@ -231,9 +241,14 @@ def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float
             logger.error("current dir is: %s", os.getcwd())
             return
         # print("command: \n", command)
-        logger.info("command: %s", command)
+        logger.debug("command: %s", command)
 
-        out = subprocess.run(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True, env=env)
+        out = subprocess.run(
+            command,
+            stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE,
+            shell=True,
+            env=env)
 
         # Check if command executed successfully
         if out.returncode != 0:
