@@ -639,6 +639,7 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
 - [ ] Calculate optimized unitary for heisenberg ( in different parameter region )
 - [ ] Fix zero_worm bug.
   - Compare the result previous result which was correct.
+  - find out the cause of this
 # Bug fix history
 
 - commit : `8e76d392c1668bec7e166244a0506bfa05b4151f`
