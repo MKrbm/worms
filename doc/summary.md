@@ -38,6 +38,18 @@
 - Remote-Container : v0.251.0
 
 # EXACT CALCULATION
+Compare the result of `solver_torch` and [HPhi](https://issp-center-dev.github.io/HPhi/manual/develop/tutorial/en/html/index.html).
+- All the information about the instattion of HPhi is written in the link above.
+  - Don't forget to call `sudo make install` after `make`.
+- Tutorial is [here](https://issp-center-dev.github.io/HPhi/manual/develop/tutorial/en/html/index.html). Especially, Check finite-temperature calculattions.
+- method = "Exact", "CG", "Lanczos" need to impose constraints on the system. This mean this cannot be appropriate this time
+
+## Comparison between HPhi and torch_solver
+
+- ### HXYZ1D model
+
+#### J = [1, 1, 1] L = [4] 
+
 
 ## How to calculate the exact expectation value of quantum spin system?
 
