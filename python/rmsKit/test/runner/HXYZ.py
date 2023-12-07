@@ -34,7 +34,7 @@ def run_HXYZ1D(params: Dict,
                                     pd.DataFrame,
                                     pd.DataFrame]:
 
-    output_file = output_dir + f"{{}}_{NOW}_HXYZ1D.txt"
+    output_file = output_dir + f"/{{}}_{NOW}_HXYZ1D.txt"
 
     with change_directory(rmsKit_directory):
         # Add the rmsKit directory to the path
@@ -223,8 +223,10 @@ def run_HXYZ1D(params: Dict,
         merged_df["c_test"] = merged_df["c_diff"].abs() < 3 * merged_df["c_error"]
 
         merged_df_h = merged_df
+
+    return_cols = ["beta", "e", "e_diff", "e_error", "c", "c_diff", "c_error", "e_test", "c_test"]
     # return optimized unitary, identity, eigenvalues, statistics
-    return merged_df_u, merged_df_h, df_eig, df_stat 
+    return merged_df_u[return_cols], merged_df_h[return_cols], df_eig, df_stat
     # print("No unitary")
     # print(merged_df[["beta", "e", "e_diff", "e_error", "e_diff_in_3sigma"]])
     # print(merged_df[["beta", "c", "c_diff", "c_error", "c_diff_in_3sigma"]])
