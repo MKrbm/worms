@@ -7,32 +7,41 @@ import contextlib
 from typing import List, Any, Tuple
 import numpy as np
 import pandas as pd
+from nptyping import NDArray
 
 from .runner.HXYZ import run_HXYZ1D
 
 
-def test_sim_res(df_u, df_h, df_e, df_s, eigs):
+def test_sim_res(df_u: pd.DataFrame,
+                 df_h: pd.DataFrame,
+                 df_e: pd.DataFrame,
+                 df_s: pd.DataFrame,
+                 eigs: NDArray = np.array([])):
 
-    diff = np.abs(np.sort(eigs) - np.sort(df_e.value)).mean()
-    if diff < 1e-8:
-        logging.info("HPhi test passed")
+    if len(eigs):
+        diff = np.abs(np.sort(eigs) - np.sort(df_e.value)).mean()
+        if diff < 1e-8:
+            logging.info("HPhi test passed")
+        else:
+            logging.warning("HPhi test failed")
+            logging.warning("diff: {}".format(diff))
     else:
-        logging.warning("HPhi test failed")
-        logging.warning("diff: {}".format(diff))
+        logging.warning("HPhi test skipped")
 
     if np.all(df_u.c_test) & np.all(df_u.e_test):
         logging.info("optimized unitary worm passed solver test")
     else:
         logging.warning("optimized unitary worm failed solver test")
-        logging.warning("c_test: {}".format(df_u.c_test))
-        logging.warning("e_test: {}".format(df_u.e_test))
+        logging.warning("c_test: \n{}".format(df_u))
+        logging.warning("e_test: \n{}".format(df_u))
 
     if np.all(df_h.c_test) & np.all(df_h.e_test):
         logging.info("identity worm passed solver test")
     else:
         logging.warning("identity worm failed solver test")
-        logging.warning("c_test: {}".format(df_h.c_test))
-        logging.warning("e_test: {}".format(df_h.e_test))
+        logging.warning("c_test: \n{}".format(df_h))
+        logging.warning("e_test: \n{}".format(df_h))
+
 
 @contextlib.contextmanager
 def change_directory(directory):
@@ -91,20 +100,8 @@ def _run_HXYZ1D(Js: List[float],
         __file__).resolve().parent.parent.as_posix()
     output_dir = FILE_DIR / "output"
     output_dir.mkdir(exist_ok=True)
-    output_dir = output_dir.as_posix()
-    logging.debug("output_dir: {}".format(output_dir))
-    return run_HXYZ1D(params, rmsKit_directory, output_dir)
-
-    # cmd = CMD_TEST.format("HXYZ1D.py", L, *Js, *Hs)
-    # with change_directory(FILE_DIR):
-    #     out = subprocess.run(
-    #         cmd,
-    #         stderr=subprocess.STDOUT,
-    #         stdout=subprocess.PIPE,
-    #         shell=True,
-    #         env=ENV)
-    # stdout = out.stdout.decode("utf-8")
-    # logging.info(stdout)
+    logging.debug("output_dir: {}".format(output_dir.as_posix()))
+    return run_HXYZ1D(params, rmsKit_directory, output_dir.as_posix())
 
 
 logging.basicConfig(
@@ -136,38 +133,30 @@ if __name__ == "__main__":
     Hs = [H, 0]
     logging.info("Js: {} / Hs: {}".format(Js, Hs))
 
-    # HPhi_in = """
-    #     L={}
-    #     model = "Spin"
-    #     method = "FullDiag"
-    #     lattice = "chain"
-    #     Jx = {}
-    #     Jy = {}
-    #     Jz = {}
-    #     H = {}
-    #     2Sz = {{}} """.format(L, Js[0], Js[1], Js[2], H)
-    # HPhi_in = dedent(HPhi_in)
-    # eigs = np.sort(call_HPhi(HPhi_in, L))
-    # mdfu, mdfh, dfe, dfs = _run_HXYZ1D(Js, Hs, L)
-    #
-    # test_sim_res(mdfu, mdfh, dfe, dfs, eigs)
-
-    H = 0.3
-    Hs = [H, 0]
-    logging.info("Js: {} / Hs: {}".format(Js, Hs))
-
-    HPhi_in = """
+    HPHI_HXYZ = """
         L={}
         model = "Spin"
         method = "FullDiag"
         lattice = "chain"
         J = {}
         H = {}
-        2Sz = {{}} """.format(L, J, H)
+        2Sz = {{}} """
 
-    HPhi_in = dedent(HPhi_in)
+    HPhi_in = dedent(HPHI_HXYZ.format(L, J, H))
     eigs = np.sort(call_HPhi(HPhi_in, L))
     mdfu, mdfh, dfe, dfs = _run_HXYZ1D(Js, Hs, L)
-
     test_sim_res(mdfu, mdfh, dfe, dfs, eigs)
 
+    H = 0.3
+    Hs = [H, 0]
+    logging.info("Js: {} / Hs: {}".format(Js, Hs))
+    HPhi_in = dedent(HPHI_HXYZ.format(L, J, H))
+    eigs = np.sort(call_HPhi(HPhi_in, L))
+    mdfu, mdfh, dfe, dfs = _run_HXYZ1D(Js, Hs, L)
+    test_sim_res(mdfu, mdfh, dfe, dfs, eigs)
+
+    Js = [-0.3, 0.5, 0.8]
+    Hs = [0.3, 0]
+    logging.info("Js: {} / Hs: {}".format(Js, Hs))
+    mdfu, mdfh, dfe, dfs = _run_HXYZ1D(Js, Hs, L)
+    test_sim_res(mdfu, mdfh, dfe, dfs)
