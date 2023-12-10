@@ -29,19 +29,21 @@ class MinimumEnergyLoss(nn.Module):
                 raise TypeError(
                     "h should be of type np.ndarray or torch.Tensor.")
             E, V = torch.linalg.eigh(self.h_list[i])
-            
+
             logging.info(f"minimum energy of local hamiltonian {i}: {E[0]:.3f}")
             self.e_min.append(E[0])
-            # logging.info(
-            #     f"minimum energy of local hamiltonian {i}: {E[0]:.3f}")
-            self.h_list[i][:] = self.h_list[i] - E[0] * torch.eye(
-                h_list[i].shape[1], device=device)
+            print("E[0] : {}".format(E[0]))
             self.offset.append(E[-1])
-            # self.eye_offset.append(E[-1] * torch.eye(h_list[i].shape[1], device=device))
             self.h_list[i][:] = self.h_list[i] - self.offset[i] * \
                 torch.eye(h_list[i].shape[1], device=device)
+            print("offset:", self.offset[i])
+            print(self.h_list[i])
 
     def forward(self, U: torch.Tensor) -> torch.Tensor:
+        """
+        Return loss value for the minimum eigen loss. (Or minimum eigen local loss)
+        Local Hamiltonian will be shifted so that miminum value will be 0
+        """
         # add minimum energy of each local hamiltonian for calculating the total energy
         # initialize with torch tensor
         loss = torch.zeros(1, device=U.device)
@@ -53,10 +55,18 @@ class MinimumEnergyLoss(nn.Module):
                 # If there are some errors during the eigen decomposition.
                 result_abs = (result_abs + result_abs.T)/2
                 E = torch.linalg.eigvalsh(result_abs)
-            loss += E[0] + self.offset[i]
-        return -loss - sum(self.e_min)
+
+            loss += E[0] + self.offset[i] - self.e_min[i]
+        # Loss is supposed to be positive, but sometimes the function return
+        # nevative value without absolute
+        return torch.abs(-loss)
 
     def stoquastic(self, A: torch.Tensor):
+        """
+        Change the sign of all non-diagonal elements into negative.
+        If A is already negative definite matrix,
+        then just take negative absolute value do the same operation.
+        """
         return -torch.abs(A)
 
     def initializer(self, U: Union[torch.Tensor, None] = None):
@@ -163,7 +173,8 @@ class SystemQuasiEnergyLoss(SystemEnergyLoss):
         # return gap - SUx @ y - self.offset
         z = SUH @ quasi_Sgs
         # * if H is real and symmetric
-        return -(quasi_Sgs @ z + self.offset) + r * (1 - torch.abs(quasi_Sgs.dot(z) / torch.norm(z)))
+        return -(quasi_Sgs @ z + self.offset) + r * \
+            (1 - torch.abs(quasi_Sgs.dot(z) / torch.norm(z)))
 
     def initializer(self, U: Union[torch.Tensor, None] = None):
         raise NotImplementedError(
