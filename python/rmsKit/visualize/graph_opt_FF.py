@@ -2,12 +2,12 @@ import sys
 import os
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from utils import path_with_lowest_loss, sum_ham
-import numpy as np
-from lattice import FF
-import pandas as pd
-from matplotlib import pyplot as plt
-import seaborn as sns
+from utils import path_with_lowest_loss, sum_ham  # noqa: E402
+import numpy as np  # noqa: E402
+from lattice import FF  # noqa: E402
+import pandas as pd  # noqa: E402
+from matplotlib import pyplot as plt  # noqa: E402
+import seaborn as sns  # noqa: E402
 # Assuming the 'lattice' module provides the FF.block1D function
 # Assuming the 'utils' module provides the path_with_lowest_loss and sum_ham functions
 
