@@ -34,6 +34,8 @@ Release/
 julia_practice/
 julia_test/
 worm_result/
+result_worm/
+output_worm/
 
 # packages / libraries
 ALPSCore

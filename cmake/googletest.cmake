@@ -1,5 +1,4 @@
 find_package(GTest QUIET)
-message(STATUS "GTest_FOUND: ${GTest_FOUND}")
 if(GTest_FOUND)
   message(STATUS "Found GTest: ${GTest_INCLUDE_DIRS}")
   return()

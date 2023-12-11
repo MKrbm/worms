@@ -10,7 +10,6 @@ find_package(ALPSCore REQUIRED alea)
 include(libconfig)
 include(eigen3)
 include(npy)
-include(googletest)
 
 
 add_library(worm STATIC
