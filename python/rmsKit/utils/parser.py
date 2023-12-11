@@ -90,6 +90,12 @@ def get_parser(length=False, model=None):
     if length:
         parser.add_argument('-L1', "--length1", help="length of side", type=int, required=True)
         parser.add_argument('-L2', "--length2", help="length of side", type=int)
+
+    return parser
+
+
+def get_params_parser(parser):
+
     args = parser.parse_args()
 
     params = dict(
