@@ -11,7 +11,7 @@ from utils import get_logger, extract_info_from_file  # noqa: E402
 
 
 parser = get_parser()
-logger = get_logger("log.log", stdout=True, level=logging.DEBUG)
+logger = get_logger("log.log", stdout=True, level=logging.INFO)
 
 parser.add_argument(
     '-f',
@@ -38,14 +38,12 @@ rmsKit_directory = Path(os.path.abspath(__file__)).parent.parent
 if __name__ == "__main__":
 
     # define parameters list to be passed to the run_worm function
-    beta = np.linspace(0.5, 2, 31)
-    # beta = np.array([1, 2, 4])
+    beta = np.linspace(0.5, 5, 21)
     T_list = 1/beta
 
     # define the lattice sizes
     # L_list = [[i, i] for i in range(4, 11)]
-    L_list = [[i] for i in range(11, 110, 10)]
-    L_list += [[i+1] for i in range(10, 110, 10)]
+    L_list = [[i] for i in range(10, 110, 10)] + [[i + 5] for i in range(10, 110, 10)]
 
     # define the number of samples
     p = args.num_threads
@@ -93,9 +91,17 @@ if __name__ == "__main__":
                 result_file_path = match.group(1)
                 # with open(result_file_path, 'r') as file:
                 #     file_content = file.read()
-                extracted_info = extract_info_from_file(
+                data = extract_info_from_file(
                     result_file_path, warning=True, allow_missing=False)
-                print(extracted_info)
+                if data["as_error"] / data["as"] > 0.2:
+                    logger.info(
+                        "Simulation is not reliable. The simulation for the following temperature will be ignored.")
+                    logger.info("data: {}".format(data))
+                    continue
+                else:
+                    logger.info(
+                        "Simulation succeeded. Sweeps : {} L : {}, T : {}, Negativity : {}".format(
+                            M, L, T, data["as_error"] / data["as"]))
             except Exception as e:
                 logger.error("Exception: {}".format(e))
                 logger.error(
