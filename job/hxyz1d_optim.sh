@@ -2,7 +2,6 @@
 
 # Function to run a job with specific values of J and H
 
-
 run_job() {
   # Get the directory of the current script
   PROJECT_DIR=$(dirname "$(pwd)")
@@ -26,8 +25,8 @@ NUM_CPU=90
 
 # Generate the list of J and H values
 generate_values() {
-  for J in $(seq -10 0.5 10); do
-    for H in $(seq -10 0.5 10); do
+  for J in $(seq -5 0.5 5); do
+    for H in $(seq -5 0.5 5); do
       echo $J $H
     done
   done

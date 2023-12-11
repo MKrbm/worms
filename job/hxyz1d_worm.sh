@@ -13,7 +13,7 @@ run_job() {
   export MKL_NUM_THREADS=1
   echo "Running job with J=$J and H=$H"
 	python -u -m run_worm  -m HXYZ1D -f $PROJECT_DIR/python/rmsKit/array/torch/HXYZ1D_loc/Jx_${J}_Jy_${J}_Jz_1_hx_${H}_hz_0_lt_1/ -s 10000\
-	>> $PROJECT_DIR/job/korm/J_${J}_H_${H}_output.log
+	>> $PROJECT_DIR/job/worm/J_${J}_H_${H}_output.log
 	deactivate
 }
 
@@ -23,8 +23,8 @@ NUM_CPU=4
 
 # Generate the list of J and H values
 generate_values() {
-  for J in $(seq -10 0.5 10); do
-    for H in $(seq -10 0.5 10); do
+  for J in $(seq -5 0.5 5); do
+    for H in $(seq -5 0.5 5); do
       echo $J $H
     done
   done
