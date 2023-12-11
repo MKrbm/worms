@@ -1,8 +1,3 @@
-find_package(GTest QUIET)
-if(GTest_FOUND)
-  message(STATUS "Found GTest: ${GTest_INCLUDE_DIRS}")
-  return()
-endif()
 message(STATUS "GTest not found, downloading...")
 option(BUILD_GMOCK OFF)
 option(INSTALL_GTEST OFF)
