@@ -30,6 +30,7 @@ search_path = Path(args.path)
 if not os.path.isdir(args.path):
     logging.debug("current dir is: ", os.getcwd())
     logging.info("given serch path doesn't exit.")
+    logging.info("search path: {}".format(args.path))
     sys.exit()
 
 rmsKit_directory = Path(os.path.abspath(__file__)).parent.parent
@@ -38,12 +39,12 @@ rmsKit_directory = Path(os.path.abspath(__file__)).parent.parent
 if __name__ == "__main__":
 
     # define parameters list to be passed to the run_worm function
-    beta = np.linspace(0.5, 5, 21)
+    beta = np.linspace(0.5, 5, 3)
     T_list = 1/beta
 
     # define the lattice sizes
     # L_list = [[i, i] for i in range(4, 11)]
-    L_list = [[i] for i in range(10, 110, 10)] + [[i + 5] for i in range(10, 110, 10)]
+    L_list = [[i] for i in range(10, 30, 10)] + [[i + 5] for i in range(10, 30, 10)]
 
     # define the number of samples
     p = args.num_threads
