@@ -6,12 +6,11 @@ import platform
 import logging
 
 from lattice import save_npy, get_model
-from utils.parser import get_parser
+from utils.parser import get_parser, get_params_parser
 from utils import now, get_logger
 
-args, params, hash_str = get_parser()
-
-
+parser = get_parser()
+args, params, hash_str = get_params_parser(parser)
 
 
 if __name__ == "__main__":
@@ -58,7 +57,7 @@ if __name__ == "__main__":
     # print(f"Info : Hamiltonian saved to {ham_path}")
     logging.info(f"Unitary will be saved to {u_path}")
     logging.info(f"Hamiltonian saved to {h_path}/H/")
-    save_npy(f"{h_path}/H", [-np.array(h) for h in h_list]) # minus for - beta * H
+    save_npy(f"{h_path}/H", [-np.array(h) for h in h_list])  # minus for - beta * H
 
     loss = rms_torch.MinimumEnergyLoss(h_list, device=device)
     optimizer_func: type[torch.optim.Optimizer] = rms_torch.LION
