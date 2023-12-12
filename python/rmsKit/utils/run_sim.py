@@ -213,8 +213,8 @@ def run_worm(
     T = round(T, 5)
     cmd = [
         "mpirun",
-        "-n" if n > 1 else "",
-        str(n) if n > 1 else "",
+        "-n" if n >= 1 else "",
+        str(n) if n >= 1 else "",
         executable_name,
         "-m",
         model_name,
