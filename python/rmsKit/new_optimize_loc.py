@@ -4,14 +4,23 @@ import rms_torch
 import time
 import platform
 import logging
+from pathlib import Path
+import os
 
 from lattice import save_npy, get_model
 from utils.parser import get_parser, get_params_parser
 from utils import now, get_logger
 
 parser = get_parser()
-args, params, hash_str = get_params_parser(parser)
 
+# add symbolic link to generated hamiltonian and unitary
+parser.add_argument(
+    "--symoblic_link",
+    type=Path,  # Changed to Path for direct pathlib support
+    default=None,
+    help="The symbolic link to the directory the generated hamiltonian and unitary are stored.",
+)
+args, params, hash_str = get_params_parser(parser)
 
 if __name__ == "__main__":
 
@@ -19,45 +28,37 @@ if __name__ == "__main__":
     epochs = args.epochs
     seed_list = [np.random.randint(0, 1000000) for i in range(args.num_iter)]
 
-    # logging.basicConfig(
-    #     stream=sys.stdout,
-    #     level=logging.DEBUG,  # This can be adjusted to the desired level.
-    #     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    # )
-
-    log_filename = f"optimizer_output/{now}_{hash_str}.log"
-    logger = get_logger(log_filename, level=logging.INFO, stdout=args.stdout)
+    log_dir = Path("optimizer_output")
+    log_dir.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
+    log_filename = log_dir / f"{now}_{hash_str}.log"
+    logger = get_logger(log_filename.resolve().as_posix(), level=logging.INFO, stdout=args.stdout)
 
     if args.platform == "gpu":
-        # check if os is osx
         if platform.system() == "Darwin":
             device = torch.device("mps")
         else:
             device = torch.device("cuda")
     else:
         device = torch.device("cpu")
-        # print("Info : please specify the number of threads with OMP_NUM_THREADS and MKL_NUM_THREADS")
-        logging.info(
-            "Please specify the number of threads with OMP_NUM_THREADS and MKL_NUM_THREADS")
+        logging.info("Please specify the number of threads with OMP_NUM_THREADS and MKL_NUM_THREADS")
 
-    # print(f"Info : device = {device}")
     logging.info(f"device = {device}")
 
     h_list, sps, model_name = get_model(args.model, params)
 
-    custom_dir = "out/tensorboard"  # Adjust this to your desired directory
+    custom_dir = Path("out/tensorboard")
+    custom_dir.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
     loss_name = f"{params['lt']}_{args.loss}_{args.optimizer}"
     setting_name = f"lr_{args.learning_rate}_epoch_{epochs}"
-    base_name = f"{model_name}/{loss_name}/{setting_name}"
-    h_path = f"array/torch/{model_name}"
-    u_path = f"{h_path}/{loss_name}/{setting_name}"
-    # ham_path = f"array/torch/{model_name}/{loss_name}/{setting_name}/H.npy"
+    base_name = Path(model_name) / loss_name / setting_name
+    h_path = Path("array/torch") / model_name
+    h_path.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
+    u_path = h_path / loss_name / setting_name
+    u_path.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
 
-    # print(f"Info : Unitary will be saved to {path}")
-    # print(f"Info : Hamiltonian saved to {ham_path}")
-    logging.info(f"Unitary will be saved to {u_path}")
+    logging.info(f"Unitary will be saved to {u_path.resolve()}")
     logging.info(f"Hamiltonian saved to {h_path}/H/")
-    save_npy(f"{h_path}/H", [-np.array(h) for h in h_list])  # minus for - beta * H
+    save_npy(h_path / "H", [-np.array(h) for h in h_list])  # minus for - beta * H
 
     loss = rms_torch.MinimumEnergyLoss(h_list, device=device)
     optimizer_func: type[torch.optim.Optimizer] = rms_torch.LION
@@ -79,9 +80,7 @@ if __name__ == "__main__":
         h_list[0].shape[1], sps, device=device).to(device)
     model.reset_params(torch.eye(sps))
 
-    loss_val = loss(model())
-    # print(f"Info : initial loss = {loss_val.item()}")
-    initial_loss = loss_val.item()
+    initial_loss = loss(model()).item()
     logging.info(f"initial loss = {initial_loss}")
 
     best_loss = 1e10
@@ -89,7 +88,6 @@ if __name__ == "__main__":
     num_print = 10
     for i, seed in enumerate(seed_list):
         start = time.time()
-        tb_name = f"{custom_dir}/{base_name}/{seed}"
         torch.manual_seed(seed)
         np.random.seed(seed)
         if args.loss == "smel":
@@ -97,10 +95,8 @@ if __name__ == "__main__":
         local_best_loss = 1e10
         local_best_us = []
         model.reset_params()
-        optimizer = optimizer_func(
-            model.parameters(), **learning_params)
+        optimizer = optimizer_func(model.parameters(), **learning_params)
 
-        loss_list = []
         for t in range(epochs):
             optimizer.zero_grad()
             output = model()
@@ -109,21 +105,18 @@ if __name__ == "__main__":
             if loss_val_item < local_best_loss:
                 with torch.no_grad():
                     local_best_loss = loss_val_item
-                    local_best_us = [p.data.detach().cpu().numpy()
-                                     for p in model.parameters()]
+                    local_best_us = [p.data.detach().cpu().numpy() for p in model.parameters()]
             loss_val.backward()
             for p in model.parameters():
                 grad = p.grad
                 if grad is not None:
-                    grad.data[:] = rms_torch.riemannian_grad_torch(
-                        p.data, grad)
+                    grad.data[:] = rms_torch.riemannian_grad_torch(p.data, grad)
                 else:
                     raise RuntimeError("No gradient for parameter")
                 if (t+1) % (epochs // num_print) == 0 or t == 0:
                     logging.info(
                         f"I: {i + 1}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}")
             optimizer.step()
-            loss_list.append(loss_val_item)
 
         if local_best_loss < best_loss:
             best_loss = local_best_loss
@@ -131,12 +124,21 @@ if __name__ == "__main__":
 
         time_elapsed = time.time() - start
         logging.info(
-            f"""
-            best loss at epoch {epochs}: {local_best_loss},
-            best loss so far: {best_loss} time elapsed: {time_elapsed:.4f} seconds
-            """
+            f"best loss at epoch {epochs}: {local_best_loss}, best loss so far: {best_loss}, time elapsed: {time_elapsed:.4f} seconds"
         )
-        save_npy(f"{u_path}/loss_{local_best_loss:.5f}/u", local_best_us)
+        u_path_epoch = u_path / f"loss_{local_best_loss:.5f}/u"
+        u_path_epoch.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
+        save_npy(u_path_epoch, local_best_us)
+
     logging.info(f"best loss: {best_loss} / initial loss: {initial_loss}")
     logging.info(f"best loss was saved to {u_path}/loss_{best_loss:.5f}/u")
     logging.info(f"hamiltonian was saved to {h_path}/H")
+
+    if args.symoblic_link is not None:
+        symb_path = args.symoblic_link
+        logging.info(f"Create symbolic link to {h_path.resolve()}")
+        logging.info(f"Link is {symb_path.resolve()}")
+        if symb_path.exists():
+            logging.info(f"Remove existing link {symb_path}")
+            symb_path.unlink()
+        os.symlink(h_path.resolve(), symb_path)
