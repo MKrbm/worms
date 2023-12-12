@@ -198,6 +198,8 @@ def run_worm(
     else:
         current_dir = os.getcwd()
         release_dir = os.path.join(current_dir, "build")
+    if type(L) is not list:
+        raise ValueError("L must be a list of integers.")
     # 2. Find the executable
     # release_dir, executable_name = find_executable(current_dir)
     executable_name = "./main_MPI"
