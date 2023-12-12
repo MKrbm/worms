@@ -47,6 +47,7 @@ if __name__ == "__main__":
     # L_list = [[i, i] for i in range(4, 11)]
     # L_list = [[i] for i in range(10, 30, 10)] + [[i + 5] for i in range(10, 30, 10)]
     L_list = [10, 25, 40, 55, 70, 85]
+    L_list = [[i] for i in L_list]
 
     # define the number of samples
     p = args.num_threads
@@ -92,8 +93,6 @@ if __name__ == "__main__":
             match = re.search(r'The result will be written in : "(.+?\.txt)"', output)
             try:
                 result_file_path = match.group(1)
-                # with open(result_file_path, 'r') as file:
-                #     file_content = file.read()
                 data = extract_info_from_file(
                     result_file_path, warning=True, allow_missing=False)
                 if data["as_error"] / data["as"] > 0.2:
