@@ -136,9 +136,9 @@ if __name__ == "__main__":
 
     if args.symoblic_link is not None:
         symb_path = args.symoblic_link
-        logging.info(f"Create symbolic link to {h_path.resolve()}")
         logging.info(f"Link is {symb_path.resolve()}")
         if symb_path.exists():
             logging.info(f"Remove existing link {symb_path}")
             symb_path.unlink()
+        logging.info(f"Create symbolic link to {h_path.resolve()}")
         os.symlink(h_path.resolve(), symb_path)
