@@ -29,3 +29,7 @@ About the visualizing.
   - For example, beta = 1, 0.5
   - We use three type of loss, mel, msel, none
 2. Then for some of the parameters from above, we're going to simulate for different system size and temperatures.
+  - Change temeprature for fixed system size
+  - Change system size for fixed temperature
+
+

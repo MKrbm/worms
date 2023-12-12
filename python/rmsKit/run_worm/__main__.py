@@ -40,13 +40,13 @@ if __name__ == "__main__":
 
     # define parameters list to be passed to the run_worm function
     # beta = np.linspace(0.5, 5, 3)
-    beta = np.array([0.2, 0.5, 1, 1.5, 2])
+    beta = np.array([1, 0.5])
     T_list = 1/beta
 
     # define the lattice sizes
     # L_list = [[i, i] for i in range(4, 11)]
     # L_list = [[i] for i in range(10, 30, 10)] + [[i + 5] for i in range(10, 30, 10)]
-    L_list = [10, 25, 40, 55, 70, 85]
+    L_list = [10, 11]
     L_list = [[i] for i in L_list]
 
     # define the number of samples
