@@ -16,11 +16,12 @@ run_job() {
   export MKL_NUM_THREADS=1
   echo "Running job with J=$J and H=$H"
   python -u new_optimize_loc.py \
-    -m HXYZ1D -loss mel -o Adam --lattice_type $lt -M 40 -e 2000 -lr 0.005 \
+    -m HXYZ1D -loss mel -o Adam --lattice_type $lt -M 5 -e 2000 -lr 0.005 \
     -Jz 1.0 -Jx $J -Jy $J -hx $H \
+		--symoblic_link $PROJECT_DIR/job/link/Jx_${J}_Jy_${J}_Jz_1_hx_${H}_hz_0_lt_${lt} \
     --stdout >> $PROJECT_DIR/job/optimize/J_${J}_H_${H}_output.log
 
-	python -u -m run_worm  -m HXYZ1D -f $PROJECT_DIR/python/rmsKit/array/torch/HXYZ1D_loc/Jx_${J}_Jy_${J}_Jz_1_hx_${H}_hz_0_lt_${lt}/ \
+	python -u -m run_worm  -m HXYZ1D -f $PROJECT_DIR/job/link/Jx_${J}_Jy_${J}_Jz_1_hx_${H}_hz_0_lt_${lt} \
 	-s 10000 --original \
 	>> $PROJECT_DIR/job/worm/J_${J}_H_${H}_output.log
 	# deactivate
