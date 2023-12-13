@@ -634,6 +634,13 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
 
   - 
 
+ - commit : 8f8ff1dfc6d91ab2a764220041ef667a65911b60
+  - branch : run_simulation
+
+  - **bugs**
+    - I found out result is inconsistent with previous result.
+      - Comparason commit : 86fbd568d695de1dbc824b8102190c43d7535fa6
+      - I need to figure out which is correct.
 # todo list
 - [ ] Implement mes.
 - [ ] Calculate optimized unitary for heisenberg ( in different parameter region )
