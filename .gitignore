@@ -167,3 +167,5 @@ dmypy.json
 
 # images
 *.png
+
+*output/
