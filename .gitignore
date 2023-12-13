@@ -163,5 +163,9 @@ dmypy.json
 # data
 *csv
 
+job/link/
+output_worm/
+result_worm/
+*output/
 # images
 *.png
