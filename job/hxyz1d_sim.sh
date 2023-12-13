@@ -50,7 +50,7 @@ run_job() {
 	calculate_parameters $task_id
 
 	LT=1
-	SWEEPS=1000
+	SWEEPS=1000000
 	EPOCH=2000
 	LR=0.005
 	M=2
@@ -62,10 +62,11 @@ run_job() {
 	cd "$project_dir/python/rmsKit" || return
 
 	# Add your environment setup if necessary
-	export OMP_NUM_THREADS=$n_cpu
-	export MKL_NUM_THREADS=$n_cpu
+	#export OMP_NUM_THREADS=$n_cpu
+	#export MKL_NUM_THREADS=$n_cpu
 
-
+	source /opt/materiapps-gcc/env.sh
+	source ~/worms/myenv/bin/activate
 
 	python -u new_optimize_loc.py -m HXYZ1D \
 		-loss mel -o Adam --lattice_type $LT -M $M -e $EPOCH -lr $LR -Jz $Jz -Jx $Jx -Jy $Jy -hx $H -n $n_cpu \
@@ -82,6 +83,7 @@ run_job() {
 	
 	echo "Finish job with Jx=$Jx, Jy=$Jy, Jz=$Jz and H=$H in CPU $n_cpu"
 
+	deactivate
 
 }
 
