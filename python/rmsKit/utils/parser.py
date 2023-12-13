@@ -9,10 +9,10 @@ models = [
     "FF2D",
 ]
 # minimum energy solver, quasi energy solver
-loss_val = ["mel", "none"]
+loss_val = ["mel", "none", "qsmel"]
 
 
-def get_parser(length=False, model=None):
+def get_parser(length: bool = False, model=None):
 
     parser = argparse.ArgumentParser(
         description="exact diagonalization of shastry_surtherland")
@@ -87,9 +87,8 @@ def get_parser(length=False, model=None):
         default=1,
     )
 
-    if length:
-        parser.add_argument('-L1', "--length1", help="length of side", type=int, required=True)
-        parser.add_argument('-L2', "--length2", help="length of side", type=int)
+    parser.add_argument('-L1', "--length1", help="length of side", type=int, required=length)
+    parser.add_argument('-L2', "--length2", help="length of side", type=int)
 
     return parser
 

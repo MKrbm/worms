@@ -71,6 +71,9 @@ int main(int argc, char **argv) {
 
   auto args = parser.parseArgs(argc, argv);
 
+  if (rank == 0) {
+    std::cout << "current working directory : " << tmp << std::endl;
+  }
   try {
     cfg.readFile("../config/model.cfg");
   } catch (const FileIOException &fioex) {
@@ -258,7 +261,8 @@ int main(int argc, char **argv) {
   } catch (...) {
     if (rank == 0) {
       std::cout << "Warning : please set ns_unit in model.cfg" << std::endl;
-      std::cout << "Warning : Ns_unit was not given. Automatically set to 1" << std::endl;
+      std::cout << "Warning : Ns_unit was not given. Automatically set to 1"
+                << std::endl;
     }
     ns_unit = 1;
   }
@@ -269,7 +273,8 @@ int main(int argc, char **argv) {
       wobs_paths.push_back(tmp);
     }
   } catch (const SettingNotFoundException &nfex) {
-    if (rank == 0) std::cout << "Warning : No worm observables was given" << std::endl;
+    if (rank == 0)
+      std::cout << "Warning : No worm observables was given" << std::endl;
   }
 
   if (args.has("z")) zero_worm = true;

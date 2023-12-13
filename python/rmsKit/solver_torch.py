@@ -2,12 +2,13 @@ import numpy as np
 import torch
 import os
 from lattice import save_npy, get_model
-from utils.parser import get_parser
+from utils.parser import get_parser, get_params_parser
 from utils import now, get_logger
 import logging
 
 
-args, params, hash_str = get_parser(length=True)
+parser = get_parser(length=True)
+args, params, hash_str = get_params_parser(parser)
 
 
 log_filename = f"optimizer_output/{now}_{hash_str}.log"
@@ -61,10 +62,10 @@ if __name__ == "__main__":
     os.makedirs(os.path.dirname(file), exist_ok=True)
     with open(file, "w") as dat_file:
         dat_file.write("index,value\n")
-        logging.info("index,value") if args.stdout else None
+        # logging.info("index,value") if args.stdout else None
         for i, e in enumerate(E):
             dat_file.write(f"{i},{e:.60g}\n")
-            logging.info(f"{i},{e:.5g}") if args.stdout else None
+            # logging.info(f"{i},{e:.5g}") if args.stdout else None
 
     file = f"{path}/statistics.csv"
     os.makedirs(os.path.dirname(file), exist_ok=True)
