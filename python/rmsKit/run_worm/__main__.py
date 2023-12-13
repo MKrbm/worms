@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     # define parameters list to be passed to the run_worm function
     # beta = np.linspace(0.5, 5, 3)
-    beta = np.array([1, 0.5])
+    beta = np.array([1, 4])
     T_list = 1/beta
 
     # define the lattice sizes
