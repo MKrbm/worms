@@ -12,6 +12,9 @@ echo "removing $PROJECT_DIR/job/worm/*"
 rm $PROJECT_DIR/job/worm/*
 
 echo "PROJECT_DIR: $PROJECT_DIR"
+# source /opt/materiapps-gcc/env.sh
+# source ~/worms/myenv/bin/activate
 
 # Use GNU Parallel to run jobs in parallel
 seq 0 $(($total_jobs - 1)) | parallel -j $NUM_THREAD run_job {} $PROJECT_DIR $N_CPU
+# deactivate
