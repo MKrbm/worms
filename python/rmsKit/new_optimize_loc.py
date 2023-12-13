@@ -6,6 +6,7 @@ import platform
 import logging
 from pathlib import Path
 import os
+import re
 
 from lattice import save_npy, get_model
 from utils.parser import get_parser, get_params_parser
@@ -44,11 +45,30 @@ if __name__ == "__main__":
 
     logging.info(f"device = {device}")
 
-    h_list, sps, model_name = get_model(args.model, params)
+    if args.loss == "qsmel":
+        if "1D" in args.model:
+            L = [args.length1]
+            loss_name = f"{params['lt']}_{L[0]}_{args.loss}_{args.optimizer}"
+        elif "2D" in args.model:
+            L = [args.length1, args.length2]
+        else:
+            raise ValueError("Invalid model name. Must contain 1D or 2D")
+        H, _, _ = get_model(args.model, params, L)
+        h_list = [H]
+        loss = rms_torch.SystemQUasiEnergyLoss(h_list, device=device)
+    elif args.loss == "mel":
+        h_list, _, _ = get_model(args.model, params)
+        loss = rms_torch.MinimumEnergyLoss(h_list, device=device)
+        loss_name = f"{params['lt']}_{args.loss}_{args.optimizer}"
+    elif args.loss == "none":
+        h_list, _, _ = get_model(args.model, params)
+        loss_name = f"{params['lt']}_{args.loss}"
 
+        # use system hamiltonian for qsmel
+
+    local_h_list, sps, model_name = get_model(args.model, params)
     custom_dir = Path("out/tensorboard")
     custom_dir.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
-    loss_name = f"{params['lt']}_{args.loss}_{args.optimizer}"
     setting_name = f"lr_{args.learning_rate}_epoch_{epochs}"
     base_name = Path(model_name) / loss_name / setting_name
     h_path = Path("array/torch") / model_name
@@ -58,9 +78,12 @@ if __name__ == "__main__":
 
     logging.info(f"Unitary will be saved to {u_path.resolve()}")
     logging.info(f"Hamiltonian saved to {h_path}/H/")
-    save_npy(h_path / "H", [-np.array(h) for h in h_list])  # minus for - beta * H
 
-    loss = rms_torch.MinimumEnergyLoss(h_list, device=device)
+    # save local hamiltonian
+    save_npy(h_path / "H", [-np.array(h) for h in local_h_list])  # minus for - beta * H
+
+    # save global hamiltonian
+
     optimizer_func: type[torch.optim.Optimizer] = rms_torch.LION
     if args.optimizer == "LION":
         optimizer_func = rms_torch.LION
@@ -142,3 +165,41 @@ if __name__ == "__main__":
             symb_path.unlink()
         logging.info(f"Create symbolic link to {h_path.resolve()}")
         os.symlink(h_path.resolve(), symb_path)
+
+    # Save the some information to the hamiltonian directory
+    # First read the existing info.txt file. If it exists, take best_loss and
+    # initial_loss from there
+    new_info = True
+    info_path = h_path / loss_name / "info.txt"
+    logging.info(f"Save information to {info_path.resolve()}")
+    if (info_path).exists():
+        with open(h_path / "info.txt", "r") as f:
+            info = f.read()
+            match = re.search(r"best loss: (.+?) / initial loss: (.+?)", info)
+            if match:
+                prev_best_loss = float(match.group(1))
+                prev_initial_loss = float(match.group(2))
+                if prev_initial_loss != initial_loss:
+                    logging.warning(
+                        f"initial loss in info.txt ({prev_initial_loss}) does not match with the current initial loss ({initial_loss})")
+                    logging.warning("Delete old info.txt and create a new one")
+                if prev_best_loss > best_loss:
+                    logging.info(
+                        f"New best loss is found. Update info.txt file. Loss was {best_loss} and now {best_loss}")
+                else:
+                    new_info = False
+                    logging.info(
+                        f"Best loss did not change. Do not update info.txt file. Loss was {prev_best_loss} and now {best_loss}")
+            else:
+                logging.warning(
+                    "Could not find best_loss and initial_loss from info.txt. Delete old info.txt and create a new one")
+    else:
+        logging.info("info.txt does not exist. Create a new one")
+
+    if new_info:
+        with open(info_path, "w") as f:
+            best_unitary_path = u_path / f"loss_{best_loss:.5f}" / "u"
+            hamiltonian_path = h_path / "H"
+            f.write(f"best loss: {best_loss} / initial loss: {initial_loss}\n")
+            f.write(f"best loss was saved to {best_unitary_path.resolve()}\n")
+            f.write(f"hamiltonian was saved to {hamiltonian_path.resolve()}\n")
