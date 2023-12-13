@@ -191,5 +191,6 @@ if __name__ == "__main__":
 
     Js = [3.0, 1.0]
     Hs = [0, 0]
+    logging.info("Run BLBQ1D test")
 
     mdfu, mdfh, dfe, dfs = _run_BLBQ1D(Js, Hs, L)
