@@ -62,10 +62,10 @@ if __name__ == "__main__":
     os.makedirs(os.path.dirname(file), exist_ok=True)
     with open(file, "w") as dat_file:
         dat_file.write("index,value\n")
-        logging.info("index,value") if args.stdout else None
+        # logging.info("index,value") if args.stdout else None
         for i, e in enumerate(E):
             dat_file.write(f"{i},{e:.60g}\n")
-            logging.info(f"{i},{e:.5g}") if args.stdout else None
+            # logging.info(f"{i},{e:.5g}") if args.stdout else None
 
     file = f"{path}/statistics.csv"
     os.makedirs(os.path.dirname(file), exist_ok=True)
