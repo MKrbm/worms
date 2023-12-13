@@ -9,6 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def extract_loss(dir_name):
     # Use regex to extract the loss value from the directory name
     match = re.search(r"loss_(\d+\.\d+)", dir_name)
@@ -48,7 +49,11 @@ def path_with_lowest_loss(parent_dir, return_ham=False, absolute_path=False, onl
 
     if return_ham:
         # find the file path include "/H/" in the dir_names
-        ham_path = [path for path in dir_names if "/H" in path][0]
+        ham_path = [path for path in dir_names if path.endswith("/H")][0]
+        print(ham_path)
+
+        logger.info("ham_path: {}".format(ham_path))
+
         if ham_path is None:
             raise ValueError("No hamiltonian file found.")
         elif len(ham_path) > 1:
@@ -177,20 +182,29 @@ def find_executable(grandparent_dir: str) -> Tuple[str, str]:
     return "", ""
 
 
-def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float, N: int, n: int = 1, project_dir: str = None, logging: bool = True):
+def run_worm(
+        model_name: str,
+        ham_path: str,
+        u_path: str,
+        L: List[int],
+        T: float,
+        N: int,
+        n: int = 1,
+        project_dir: str = None,
+        logging: bool = True):
     # 1. Get the current directory
     if project_dir is not None:
         release_dir = os.path.join(project_dir, "build")
     else:
         current_dir = os.getcwd()
         release_dir = os.path.join(current_dir, "build")
+    if type(L) is not list:
+        raise ValueError("L must be a list of integers.")
     # 2. Find the executable
     # release_dir, executable_name = find_executable(current_dir)
     executable_name = "./main_MPI"
 
     if not os.path.isdir(release_dir):
-        # print("current dir is: ", os.getcwd())
-        # print("release_dir : ", release_dir, " not found. Please check the path.")
         logger.error("release_dir : %s not found. Please check the path.", release_dir)
         logger.error("current dir is: %s", os.getcwd())
         return
@@ -199,8 +213,8 @@ def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float
     T = round(T, 5)
     cmd = [
         "mpirun",
-        "-n" if n > 1 else "",
-        str(n) if n > 1 else "",
+        "-n" if n >= 1 else "",
+        str(n) if n >= 1 else "",
         executable_name,
         "-m",
         model_name,
@@ -231,9 +245,14 @@ def run_worm(model_name: str, ham_path: str, u_path: str, L: List[int], T: float
             logger.error("current dir is: %s", os.getcwd())
             return
         # print("command: \n", command)
-        logger.info("command: %s", command)
+        logger.debug("command: %s", command)
 
-        out = subprocess.run(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True, env=env)
+        out = subprocess.run(
+            command,
+            stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE,
+            shell=True,
+            env=env)
 
         # Check if command executed successfully
         if out.returncode != 0:

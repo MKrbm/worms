@@ -5,12 +5,12 @@ project(worms VERSION 1.0.0 LANGUAGES CXX)
 
 # cmake will find modules from this path with include command
 # you don't need to run include if there is no option to download from github
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(MPI REQUIRED COMPONENTS CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON) # This is needed to prevent FetchContent from trying to download things when we don't want it to (e.g. when we're offline)
 
 # c and c++ compiler
 # set(CMAKE_C_COMPILER /usr/bin/aarch64-linux-gnu-gcc CACHE PATH "")

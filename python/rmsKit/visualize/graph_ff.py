@@ -6,10 +6,10 @@ current_script_path = os.path.dirname(os.path.abspath(__file__))
 # Add the parent directory to the sys.path.
 parent_directory = os.path.dirname(current_script_path)
 sys.path.append(parent_directory)
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from utils import get_seed_and_loss
+import pandas as pd  # noqa: E402
+import numpy as np  # noqa: E402
+import matplotlib.pyplot as plt  # noqa: E402
+from utils import get_seed_and_loss  # noqa: E402
 
 
 N = 5000000
@@ -67,8 +67,14 @@ for L in sorted(df.n_sites.unique()):
         # Plotting Energy vs Inverse Temperature (Beta) in ax1
         ax1.errorbar(1/df_dict["mel"]['temperature'], df_dict["mel"]['e'],
                      yerr=df_dict["mel"]['e_error'], fmt='o-', capsize=5, label=label_dict["mel"])
-        ax1.errorbar(1/df_dict["none"]['temperature'], df_dict["none"]['e'],
-                     yerr=df_dict["none"]['e_error'], fmt='s-', capsize=5, label=label_dict["none"], alpha=0.7)
+        ax1.errorbar(
+            1/df_dict["none"]['temperature'],
+            df_dict["none"]['e'],
+            yerr=df_dict["none"]['e_error'],
+            fmt='s-',
+            capsize=5,
+            label=label_dict["none"],
+            alpha=0.7)
         ax1.set_title('Energy per site vs Beta at L = {}'.format(L))
         ax1.set_ylabel('energy')
         try:
@@ -82,8 +88,14 @@ for L in sorted(df.n_sites.unique()):
         # Plotting AS vs Inverse Temperature in ax2
         ax2.errorbar(1/df_dict["mel"]['temperature'], df_dict["mel"]['as'],
                      yerr=df_dict["mel"]['as_error'], fmt='o-', capsize=5, label=label_dict["mel"])
-        ax2.errorbar(1/df_dict["none"]['temperature'], df_dict["none"]['as'],
-                     yerr=df_dict["none"]['as_error'], fmt='s-', capsize=5, label=label_dict["none"], alpha=0.7)
+        ax2.errorbar(
+            1/df_dict["none"]['temperature'],
+            df_dict["none"]['as'],
+            yerr=df_dict["none"]['as_error'],
+            fmt='s-',
+            capsize=5,
+            label=label_dict["none"],
+            alpha=0.7)
         ax2.set_title('Average Sign vs Beta at L = {}'.format(L))
         ax2.set_ylabel('Average Sign')
         ax2.legend()
@@ -91,8 +103,14 @@ for L in sorted(df.n_sites.unique()):
         # Plotting AS vs Inverse Temperature (Log Scale) in ax3
         ax3.errorbar(1/df_dict["mel"]['temperature'], df_dict["mel"]['as'],
                      yerr=df_dict["mel"]['as_error'], fmt='o-', capsize=5, label=label_dict["mel"])
-        ax3.errorbar(1/df_dict["none"]['temperature'], df_dict["none"]['as'],
-                     yerr=df_dict["none"]['as_error'], fmt='s-', capsize=5, label=label_dict["none"], alpha=0.7)
+        ax3.errorbar(
+            1/df_dict["none"]['temperature'],
+            df_dict["none"]['as'],
+            yerr=df_dict["none"]['as_error'],
+            fmt='s-',
+            capsize=5,
+            label=label_dict["none"],
+            alpha=0.7)
         ax3.set_title('Average Sign vs Beta (log scale) at L = {}'.format(L))
         ax3.set_xlabel('Inverse Temperature (Beta)')
         ax3.set_ylabel('Average Sign')
@@ -150,8 +168,14 @@ for t in sorted(df.temperature.unique()):
         # Plotting Energy vs Inverse Temperature (Beta) in ax1
         ax1.errorbar(df_dict["mel"]['n_sites'], df_dict["mel"]['e'],
                      yerr=df_dict["mel"]['e_error'], fmt='o-', capsize=5, label=label_dict["mel"])
-        ax1.errorbar(df_dict["none"]['n_sites'], df_dict["none"]['e'],
-                     yerr=df_dict["none"]['e_error'], fmt='s-', capsize=5, label=label_dict["none"], alpha=0.7)
+        ax1.errorbar(
+            df_dict["none"]['n_sites'],
+            df_dict["none"]['e'],
+            yerr=df_dict["none"]['e_error'],
+            fmt='s-',
+            capsize=5,
+            label=label_dict["none"],
+            alpha=0.7)
 
         ax1.set_title('Energy per site vs L at beta = {}'.format(t))
 
@@ -167,8 +191,14 @@ for t in sorted(df.temperature.unique()):
 
         ax2.errorbar(df_dict["mel"]['n_sites'], df_dict["mel"]['as'],
                      yerr=df_dict["mel"]['as_error'], fmt='o-', capsize=5, label=label_dict["mel"])
-        ax2.errorbar(df_dict["none"]['n_sites'], df_dict["none"]['as'],
-                     yerr=df_dict["none"]['as_error'], fmt='s-', capsize=5, label=label_dict["none"], alpha=0.7)
+        ax2.errorbar(
+            df_dict["none"]['n_sites'],
+            df_dict["none"]['as'],
+            yerr=df_dict["none"]['as_error'],
+            fmt='s-',
+            capsize=5,
+            label=label_dict["none"],
+            alpha=0.7)
 
         ax2.set_title('Average Sign vs L at beta = {}'.format(t))
         ax2.set_ylabel('Average Sign')
@@ -177,8 +207,14 @@ for t in sorted(df.temperature.unique()):
         # Plotting AS vs Inverse Temperature (Log Scale) in ax3
         ax3.errorbar(df_dict["mel"]['n_sites'], df_dict["mel"]['as'],
                      yerr=df_dict["mel"]['as_error'], fmt='o-', capsize=5, label=label_dict["mel"])
-        ax3.errorbar(df_dict["none"]['n_sites'], df_dict["none"]['as'],
-                     yerr=df_dict["none"]['as_error'], fmt='s-', capsize=5, label=label_dict["none"], alpha=0.7)
+        ax3.errorbar(
+            df_dict["none"]['n_sites'],
+            df_dict["none"]['as'],
+            yerr=df_dict["none"]['as_error'],
+            fmt='s-',
+            capsize=5,
+            label=label_dict["none"],
+            alpha=0.7)
 
         ax3.set_title('Average Sign vs L (log scale) at beta = {}'.format(t))
         ax3.set_xlabel('L')

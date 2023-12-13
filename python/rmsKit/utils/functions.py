@@ -46,7 +46,7 @@ def get_local_best_loss_from_tensorboard(tensorboard_dir):
         try:
             loss_value = float(dir_name.split("loss_")[-1])
             loss_values_and_dir_names.append(loss_value)
-        except:
+        except BaseException:
             pass  # directory name might not match expected format
     return sorted(loss_values_and_dir_names)
 
@@ -92,7 +92,8 @@ SUSCEPTIBILITY_MEAN = "chi"
 SUSCEPTIBILITY_ERROR = "chi_error"
 
 
-def extract_info_from_file(file_path, allow_missing: bool = False, warning: bool = True) -> Tuple[Dict, None]:
+def extract_info_from_file(file_path, allow_missing: bool = False,
+                           warning: bool = True) -> Tuple[Dict, None]:
     # Dictionary to store extracted info
     info_dict = {}
 
