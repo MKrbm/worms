@@ -1,5 +1,5 @@
 import numpy as np
-from ..core.constants import *
+from ..core.paulis.spin import *
 from ..core.utils import *
 import logging
 import utils

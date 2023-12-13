@@ -68,6 +68,5 @@ def list_unitaries(path, n_percent=None, n_top=None, thres=None):
             raise ValueError(
                 "Invalid threshold value. Please enter a valid number.")
 
-    # 3つのリストのうち要素数が最も少ないものを選択
     result = min(selected_folders, key=len)
     return result

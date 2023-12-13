@@ -40,6 +40,7 @@ if __name__ == "__main__":
     file = f"{path}/groundstate.csv"
     os.makedirs(os.path.dirname(file), exist_ok=True)
 
+    logging.info("groundstate file: {}".format(file))
     with open(file, "w") as dat_file:
         dat_file.write("index,value\n")
         for i, v in enumerate(V[:, 0]):
@@ -60,6 +61,7 @@ if __name__ == "__main__":
 
     file = f"{path}/eigenvalues.csv"
     os.makedirs(os.path.dirname(file), exist_ok=True)
+    logging.info("eigenvalues file: {}".format(file))
     with open(file, "w") as dat_file:
         dat_file.write("index,value\n")
         # logging.info("index,value") if args.stdout else None

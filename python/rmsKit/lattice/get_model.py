@@ -58,4 +58,29 @@ def get_model(model: str, params: Dict[str, Any], L: Union[List[int], None] = No
             model_name = f"{model}_loc/{params_str}"
             h_list, sps = lattice.HXYZ.local(params, d)
             return h_list, sps, model_name
+
+    elif "BLBQ1D" in model:
+        d = 1
+        p = dict(
+            J0=params["J0"],
+            J1=params["J1"],
+            hx=params["hx"],
+            hz=params["hz"],
+            lt=params["lt"],
+        )
+        a = ""
+        for k, v in p.items():
+            v = float(v)
+            a += f"{k}_{v:.4g}_"
+        params_str = a[:-1]
+
+        if L:
+            size_name = f"L_{L[0]}"
+            model_name = f"{model}_sys/{size_name}/{params_str}"
+            h_list, sps = lattice.BLBQ.system(L, p)
+            return h_list, sps, model_name
+        else:
+            model_name = f"{model}_loc/{params_str}"
+            h_list, sps = lattice.BLBQ.local(params, d)
+            return h_list, sps, model_name
     raise NotImplementedError(f"model {model} not implemented")
