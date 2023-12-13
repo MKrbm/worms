@@ -2,7 +2,7 @@ import sys
 import os
 import numpy as np
 import random
-from ..core.constants import *
+from ..core.paulis.spin import *
 from ..core.utils import *
 import logging
 import tensornetwork as tn
