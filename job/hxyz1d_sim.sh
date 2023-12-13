@@ -53,7 +53,7 @@ run_job() {
 	SWEEPS=1000000
 	EPOCH=2000
 	LR=0.005
-	M=2
+	M=20
 	symoblic_link="${project_dir}/job/link/Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_hx_${H}_hz_0_lt_${LT}"
 	echo "symoblic_link: $symoblic_link"
 	echo "project_dir: $project_dir"
@@ -62,10 +62,11 @@ run_job() {
 	cd "$project_dir/python/rmsKit" || return
 
 	# Add your environment setup if necessary
-	#export OMP_NUM_THREADS=$n_cpu
-	#export MKL_NUM_THREADS=$n_cpu
+	export OMP_NUM_THREADS=$n_cpu
+	export MKL_NUM_THREADS=$n_cpu
 
-
+	source /opt/materiapps-intel/env.sh
+	source ~/worms/myenv/bin/activate
 	python -u new_optimize_loc.py -m HXYZ1D \
 		-loss mel -o Adam --lattice_type $LT -M $M -e $EPOCH -lr $LR -Jz $Jz -Jx $Jx -Jy $Jy -hx $H -n $n_cpu \
 		--symoblic_link $symoblic_link \
