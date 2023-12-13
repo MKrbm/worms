@@ -173,7 +173,7 @@ if __name__ == "__main__":
     info_path = h_path / loss_name / "info.txt"
     logging.info(f"Save information to {info_path.resolve()}")
     if (info_path).exists():
-        with open(h_path / "info.txt", "r") as f:
+        with open(info_path) as f:
             info = f.read()
             match = re.search(r"best loss: (.+?) / initial loss: (.+?)", info)
             if match:
