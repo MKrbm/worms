@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from .runner.HXYZ import run_HXYZ1D
+from .runner.BLBQ import run_BLBQ1D
 
 
 def test_sim_res(df_u, df_h, df_e, df_s, eigs):
@@ -33,6 +34,7 @@ def test_sim_res(df_u, df_h, df_e, df_s, eigs):
         logging.warning("identity worm failed solver test")
         logging.warning("c_test: {}".format(df_h.c_test))
         logging.warning("e_test: {}".format(df_h.e_test))
+
 
 @contextlib.contextmanager
 def change_directory(directory):
@@ -95,16 +97,28 @@ def _run_HXYZ1D(Js: List[float],
     logging.debug("output_dir: {}".format(output_dir))
     return run_HXYZ1D(params, rmsKit_directory, output_dir)
 
-    # cmd = CMD_TEST.format("HXYZ1D.py", L, *Js, *Hs)
-    # with change_directory(FILE_DIR):
-    #     out = subprocess.run(
-    #         cmd,
-    #         stderr=subprocess.STDOUT,
-    #         stdout=subprocess.PIPE,
-    #         shell=True,
-    #         env=ENV)
-    # stdout = out.stdout.decode("utf-8")
-    # logging.info(stdout)
+
+def _run_BLBQ1D(Js: List[float],
+                Hs: List[float],
+                L: int) -> Tuple[pd.DataFrame,
+                                 pd.DataFrame,
+                                 pd.DataFrame,
+                                 pd.DataFrame]:
+    # run HXYZ1D
+    params = {
+        "L1": L,
+        "J0": Js[0],
+        "J1": Js[1],
+        "hz": Hs[0],
+        "hx": Hs[1],
+    }
+    rmsKit_directory = pathlib.Path(
+        __file__).resolve().parent.parent.as_posix()
+    output_dir = FILE_DIR / "output"
+    output_dir.mkdir(exist_ok=True)
+    output_dir = output_dir.as_posix()
+    logging.debug("output_dir: {}".format(output_dir))
+    return run_BLBQ1D(params, rmsKit_directory, output_dir)
 
 
 logging.basicConfig(
@@ -130,12 +144,12 @@ if __name__ == "__main__":
     logging.info("Compare solver_torch.py and HPhi")
     logging.info("Please make sure to install HPhi and set the environment variable HPHI_PATH before running this test.")  # noqa
 
-    J = 1.0
-    H = 0.0
-    Js = [J, J, J]
-    Hs = [H, 0]
-    logging.info("Js: {} / Hs: {}".format(Js, Hs))
-
+    # J = 1.0
+    # H = 0.0
+    # Js = [J, J, J]
+    # Hs = [H, 0]
+    # logging.info("Js: {} / Hs: {}".format(Js, Hs))
+    #
     # HPhi_in = """
     #     L={}
     #     model = "Spin"
@@ -151,23 +165,31 @@ if __name__ == "__main__":
     # mdfu, mdfh, dfe, dfs = _run_HXYZ1D(Js, Hs, L)
     #
     # test_sim_res(mdfu, mdfh, dfe, dfs, eigs)
+    #
+    # H = 0.3
+    # Hs = [H, 0]
+    # logging.info("Js: {} / Hs: {}".format(Js, Hs))
+    #
+    # HPhi_in = """
+    #     L={}
+    #     model = "Spin"
+    #     method = "FullDiag"
+    #     lattice = "chain"
+    #     J = {}
+    #     H = {}
+    #     2Sz = {{}} """.format(L, J, H)
+    #
+    # HPhi_in = dedent(HPhi_in)
+    # eigs = np.sort(call_HPhi(HPhi_in, L))
+    # mdfu, mdfh, dfe, dfs = _run_HXYZ1D(Js, Hs, L)
+    #
+    # test_sim_res(mdfu, mdfh, dfe, dfs, eigs)
 
-    H = 0.3
-    Hs = [H, 0]
-    logging.info("Js: {} / Hs: {}".format(Js, Hs))
+    # run BLBQ1D test
 
-    HPhi_in = """
-        L={}
-        model = "Spin"
-        method = "FullDiag"
-        lattice = "chain"
-        J = {}
-        H = {}
-        2Sz = {{}} """.format(L, J, H)
+    L = 5
 
-    HPhi_in = dedent(HPhi_in)
-    eigs = np.sort(call_HPhi(HPhi_in, L))
-    mdfu, mdfh, dfe, dfs = _run_HXYZ1D(Js, Hs, L)
+    Js = [3.0, 1.0]
+    Hs = [0, 0]
 
-    test_sim_res(mdfu, mdfh, dfe, dfs, eigs)
-
+    mdfu, mdfh, dfe, dfs = _run_BLBQ1D(Js, Hs, L)

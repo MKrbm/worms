@@ -27,40 +27,23 @@ def change_directory(directory):
         os.chdir(original_directory)
 
 
-def run_HXYZ1D(params: Dict,
-               rmsKit_directory,
-               output_dir) -> Tuple[pd.DataFrame,
-                                    pd.DataFrame,
-                                    pd.DataFrame,
-                                    pd.DataFrame]:
+def run(params: Dict,
+        rmsKit_directory: Path,
+        output_dir: Path,
+        model_name: str,
+        cmd_solver: str,
+        cmd_optimize: str,
+        ) -> Tuple[pd.DataFrame,
+                   pd.DataFrame,
+                   pd.DataFrame,
+                   pd.DataFrame]:
 
-    output_file = output_dir + f"{{}}_{NOW}_HXYZ1D.txt"
+    output_file = (output_dir / f"{{}}_{NOW}_{model_name}.txt").resolve().as_posix()
 
     with change_directory(rmsKit_directory):
         # Add the rmsKit directory to the path
-        cmd = [
-            "python",
-            "solver_torch.py",
-            "-m",
-            "HXYZ1D",
-            "-L1",
-            str(params["L1"]),
-            "-Jz",
-            str(params["Jz"]),
-            "-Jx",
-            str(params["Jx"]),
-            "-Jy",
-            str(params["Jy"]),
-            "-hx",
-            str(params["hx"]),
-            "-hz",
-            str(params["hz"]),
-            "--stdout",
-            # ">>",
-            # output_file_temp.format("exact"),
-        ]
 
-        command = " ".join(cmd)
+        command = cmd_solver
         out = subprocess.run(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
 
         stdout = out.stdout.decode("utf-8")
@@ -89,32 +72,9 @@ def run_HXYZ1D(params: Dict,
         df_stat = pd.read_csv(csv_path)
         df_eig = pd.read_csv(eig_csv_path)
 
-        # Add the rmsKit directory to the path
-        cmd = [
-            "python",
-            "new_optimize_loc.py",
-            "-m",
-            "HXYZ1D",
-            "-Jz",
-            str(params["Jz"]),
-            "-Jx",
-            str(params["Jx"]),
-            "-Jy",
-            str(params["Jy"]),
-            "-hx",
-            str(params["hx"]),
-            "-hz",
-            str(params["hz"]),
-            "-e 1000",
-            "-M 10",
-            "--stdout",
-        ]
-        # Get a copy of the current environment variables
-        env = os.environ.copy()
+        command = cmd_optimize
 
-        # Modify the MKL_THREADING_LAYER environment variable
-        # env["MKL_THREADING_LAYER"] = "GNU"
-        command = " ".join(cmd)
+        env = os.environ.copy()
         out = subprocess.run(
             command,
             stderr=subprocess.STDOUT,
@@ -163,7 +123,7 @@ def run_HXYZ1D(params: Dict,
         for b in beta:
             t = 1 / b
             output = run_worm(
-                "heisenberg1D",
+                model_name,
                 hamiltonian_path,
                 best_unitary_path,
                 L_list,
@@ -191,16 +151,12 @@ def run_HXYZ1D(params: Dict,
         merged_df["e_test"] = merged_df["e_diff"].abs() < 3 * merged_df["e_error"]
         merged_df["c_test"] = merged_df["c_diff"].abs() < 3 * merged_df["c_error"]
 
-        # print("Optimized unitary")
-        # print(merged_df[["beta", "e", "e_diff", "e_error", "e_diff_in_3sigma"]])
-        # print(merged_df[["beta", "c", "c_diff", "c_error", "c_diff_in_3sigma"]])
-
         merged_df_u = merged_df
 
         run_res = []
         for b in beta:
             t = 1 / b
-            output = run_worm("heisenberg1D", hamiltonian_path, "", L_list, t, N,
+            output = run_worm(model_name, hamiltonian_path, "", L_list, t, N,
                               project_dir=rmsKit_directory.parent.parent.resolve(), logging=False)
 
             with open(output_file.format("worm"), "w") as f:
@@ -224,6 +180,4 @@ def run_HXYZ1D(params: Dict,
 
         merged_df_h = merged_df
     # return optimized unitary, identity, eigenvalues, statistics
-    return merged_df_u, merged_df_h, df_eig, df_stat 
-
-
+    return merged_df_u, merged_df_h, df_eig, df_stat
