@@ -648,7 +648,10 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
 - branch : run_simulation
 
 
-- commit : 
+- commit : 87d9256b0a76d71899e2c089bad89d93ca3a42e2
+- branch : impl-test
+  - Implement AKLT, BLBQ, HXYZ1D (with some parameter)
+  - Confirm test passed for all.
 
 - **bugs**
   - I found out result is inconsistent with previous result.
