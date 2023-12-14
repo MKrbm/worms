@@ -102,8 +102,10 @@ def run(params: Dict,
                 hamiltonian_path = hamiltonian_match.group(1)
 
         if best_unitary_path is None:
+            logging.error("\n{}".format(stdout))
             raise ValueError("Best unitary path not found.")
         if hamiltonian_path is None:
+            logging.error("\n{}".format(stdout))
             raise ValueError("Hamiltonian path not found.")
 
         # get absolute path

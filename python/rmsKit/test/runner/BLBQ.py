@@ -27,6 +27,8 @@ def run_BLBQ1D(params: Dict,
         str(params["hx"]),
         "-hz",
         str(params["hz"]),
+        "-lt",
+        str(params["lt"]),
         "--stdout",
     ]
 
@@ -45,9 +47,12 @@ def run_BLBQ1D(params: Dict,
         str(params["hx"]),
         "-hz",
         str(params["hz"]),
+        "-lt",
+        str(params["lt"]),
         "--stdout",
-        "-e 1000",
-        "-M 10",
+        "-e 2000",
+        "-M 20",
+        "-lr 0.01",
         "--stdout",
     ]
     cmd_optimize = " ".join(cmd)
