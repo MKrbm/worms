@@ -6,6 +6,7 @@ from datetime import datetime
 import contextlib
 from typing import Union, List, Tuple
 import logging
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -198,7 +199,7 @@ def run_worm(
     else:
         current_dir = os.getcwd()
         release_dir = os.path.join(current_dir, "build")
-    if type(L) is not list:
+    if not isinstance(L, list):
         raise ValueError("L must be a list of integers.")
     # 2. Find the executable
     # release_dir, executable_name = find_executable(current_dir)
@@ -208,6 +209,9 @@ def run_worm(
         logger.error("release_dir : %s not found. Please check the path.", release_dir)
         logger.error("current dir is: %s", os.getcwd())
         return
+
+    h = np.load(ham_path + "/0.npy")
+    sps = np.round(np.sqrt(h.shape[0])).astype(np.int64)
 
     # 3. Prepare the command arguments
     T = round(T, 5)
@@ -226,6 +230,8 @@ def run_worm(
         u_path if u_path else "",
         "-N",
         str(N),
+        "--sps",
+        str(sps),
         "--output" if logging else "",
         "--split-sweeps"
     ]
