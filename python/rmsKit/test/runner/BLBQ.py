@@ -57,4 +57,4 @@ def run_BLBQ1D(params: Dict,
     ]
     cmd_optimize = " ".join(cmd)
 
-    return run.run(params, rmsKit_directory, output_dir, "BLBQ1D" , cmd_solver, cmd_optimize)
+    return run.run(params, rmsKit_directory, output_dir, "BLBQ1D", cmd_solver, cmd_optimize)

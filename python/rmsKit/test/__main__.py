@@ -182,11 +182,22 @@ if __name__ == "__main__":
     H = 0.3
     Hs = [H, 0]
     logging.info("Js: {} / Hs: {}".format(Js, Hs))
-
     mdfu, mdfh, dfe, dfs = _run_HXYZ1D(Js, Hs, L)
-
     if test_solver_worm(mdfu, mdfh, dfe, dfs):
         logging.info("HXYZ1D(hz = 0.3) test passed")
+
+    L = 9
+    Js = [-0.3, 0.5, 0.8]
+    Hs = [0.3, 0]
+    logging.info("Js: {}  Hs: {} / L = {}".format(Js, Hs, L))
+    mdfu, mdfh, dfe, dfs = _run_HXYZ1D(Js, Hs, L)
+    if test_solver_worm(mdfu, mdfh, dfe, dfs):
+        logging.info("HXYZ1D(-Jx -0.3 -Jy 0.8 -Jz 0.5 -hx 0.3 -hz 0) test passed")
+
+    # n: get the energy at beta = 1
+    e = dfs.loc[dfs["beta"] == 1, "energy_per_site"].values[0]
+    if not np.abs(e - -0.07947479512910453) < 1e-8:
+        logging.warning("energy at beta = 1 is incorrect: {} != -0.07947479512910453".format(e))
 
     # n: run BLBQ1D test
 
