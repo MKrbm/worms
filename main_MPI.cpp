@@ -158,7 +158,10 @@ int main(int argc, char **argv) {
   //* settings for monte-carlo
   const Setting &settings = root["mc_settings"];
 
-  size_t sweeps, therms, cutoff_l;
+  size_t sweeps;
+  size_t therms;
+  size_t cutoff_l;
+  size_t seed;
   double T = 0;
   bool fix_wdensity = false;
   try {
@@ -168,6 +171,7 @@ int main(int argc, char **argv) {
     cutoff_l = (long)config.lookup("cutoff_length");
     T = (double)config.lookup("temperature");
     fix_wdensity = config.lookup("fix_wdensity");
+    seed = static_cast<size_t>(config.lookup("seed"));
 
   } catch (...) {
     std::cout << "I/O error while reading mc_settings.default settings"
@@ -179,6 +183,7 @@ int main(int argc, char **argv) {
     cutoff_l = (long)config.lookup("cutoff_length");
     T = (double)config.lookup("temperature");
     fix_wdensity = config.lookup("fix_wdensity");
+    seed = static_cast<size_t>(config.lookup("seed"));
   }
 
   try {
@@ -353,7 +358,7 @@ int main(int argc, char **argv) {
   vector<batch_res> res;
   auto map_worm_obs =
       exe_worm_parallel(*spin_ptr, T, sweeps, therms, cutoff_l, fix_wdensity,
-                        rank, res, ac_res, obs, mapwobs);
+                        rank, res, ac_res, obs, mapwobs, seed);
 
   batch_res as = res[0];   // average sign
   batch_res ene = res[1];  // signed energy i.e. $\sum_i E_i S_i / N_MC$
