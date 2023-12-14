@@ -3,6 +3,7 @@ import os
 import re
 import logging
 from typing import Any, List, Union
+from pathlib import Path
 
 
 def proj_symm(x):
@@ -11,7 +12,9 @@ def proj_symm(x):
     return ((x + np.einsum("ijkl->jilk", x))/2).reshape(s*s, s*s)
 
 
-def save_npy(folder: str, hams: List[np._typing.NDArray[Any]]) -> None:
+def save_npy(folder: Union[str, Path], hams: List[np._typing.NDArray[Any]]) -> None:
+    if isinstance(folder, Path):
+        folder = folder.resolve().as_posix()
     if isinstance(hams, list):
         if not os.path.exists(folder):
             os.makedirs(folder)
@@ -30,9 +33,8 @@ def save_npy(folder: str, hams: List[np._typing.NDArray[Any]]) -> None:
 
 
 def list_unitaries(path, n_percent=None, n_top=None, thres=None):
-    loss_folders = [
-        entry.path for entry in os.scandir(path) if entry.is_dir() and entry.name.startswith("loss_")
-    ]
+    loss_folders = [entry.path for entry in os.scandir(
+        path) if entry.is_dir() and entry.name.startswith("loss_")]
 
     def get_folder_number(folder_name):
         match = re.search(r"loss_(\d+\.\d+)", folder_name)
@@ -66,6 +68,5 @@ def list_unitaries(path, n_percent=None, n_top=None, thres=None):
             raise ValueError(
                 "Invalid threshold value. Please enter a valid number.")
 
-    # 3つのリストのうち要素数が最も少ないものを選択
     result = min(selected_folders, key=len)
     return result

@@ -1,11 +1,7 @@
-import sys
-import os
 import numpy as np
-import random
-from ..core.constants import *
+from ..core.paulis.spin import *
 from ..core.utils import *
 import logging
-import tensornetwork as tn
 import utils
 from typing import List, Any, Tuple, Dict
 from numpy._typing import NDArray
@@ -34,7 +30,7 @@ def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
             sps = sps**L
         return [h], sps
 
-    raise NotImplementedError("Negative lattice type not implemented")
+    raise NotImplementedError("Negative lattice type not implemented") # TODO: implement different lattice types such as dimer and triangular
 
 
 def system(_L: list[int], params: dict) -> Tuple[NDArray[Any], int]:

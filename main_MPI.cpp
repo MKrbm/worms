@@ -6,26 +6,27 @@
 #include <argparse.hpp>
 #include <automodel.hpp>
 #include <autoobservable.hpp>
-#include <boost/filesystem.hpp>
 #include <exec_parallel.hpp>
+#include <filesystem>
 #include <funcs.hpp>
 #include <functional>
 #include <iostream>
 #include <jackknife.hpp>
 #include <libconfig.h++>
 #include <observable.hpp>
-#include <options.hpp>
 #include <string>
 
 #include "MainConfig.h"
 
-using namespace std;
-using namespace libconfig;
-namespace fs = boost::filesystem;
-double elapsed;
+namespace fs = std::filesystem;
+fs::path project_dir = fs::path(PROJECT_DIR);
+
+fs::path out_dir_name = fs::path("output_worm");
 
 int main(int argc, char **argv) {
-  int rank, size;
+  int rank;
+  int size;
+  double elapsed;
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -35,7 +36,7 @@ int main(int argc, char **argv) {
   alps::alea::reducer_setup setup = red_.get_setup();
 
   char tmp[256];
-  auto _ = getcwd(tmp, 256);
+  auto *_ = getcwd(tmp, 256);
 
   Config cfg;
   cfg.setAutoConvert(true);
@@ -70,15 +71,18 @@ int main(int argc, char **argv) {
 
   auto args = parser.parseArgs(argc, argv);
 
+  if (rank == 0) {
+    std::cout << "current working directory : " << tmp << std::endl;
+  }
   try {
     cfg.readFile("../config/model.cfg");
   } catch (const FileIOException &fioex) {
-    cerr << "I/O error while reading file." << endl;
+    cerr << "I/O error while reading file." << std::endl;
     return (EXIT_FAILURE);
   } catch (const ParseException &px) {
-    cerr << "error while parsing items" << endl;
+    cerr << "error while parsing items" << std::endl;
     cerr << "Maybe some list include multiple types (e.g. = [1.0, 1, 1])"
-         << endl;
+         << std::endl;
     return (EXIT_FAILURE);
   }
 
@@ -101,16 +105,22 @@ int main(int argc, char **argv) {
   const Setting &dofs_cfg = mcfg->lookup("dofs");
 
   double shift;
-  string file, basis, cell, ham_path, obs_path, u_path, out_file, output_folder;
-  out_file = "";
-  vector<string> wobs_paths;
-  bool repeat;  // true if repeat params and types.
-  bool zero_worm;
   size_t ns_unit;
+  string file;
+  string basis;
+  string cell;
+  string ham_path;
+  string obs_path;
+  string u_path;
+  fs::path out_file;
+  fs::path output_folder;
+  vector<string> wobs_paths;
   vector<size_t> shapes;
   vector<int> types;
   vector<double> params;
   vector<size_t> dofs;
+  bool repeat;  // true if repeat params and types.
+  bool zero_worm;
 
   for (int i = 0; i < shape_cfg.getLength(); i++) {
     int tmp = shape_cfg[i];
@@ -126,17 +136,17 @@ int main(int argc, char **argv) {
     types.push_back(types_cfg[i]);
   }
 
-  file = (string)mcfg->lookup("file").c_str();
-  basis = (string)mcfg->lookup("basis").c_str();
-  cell = (string)mcfg->lookup("cell").c_str();
-  ham_path = (string)mcfg->lookup("ham_path").c_str();
+  file = string(mcfg->lookup("file").c_str());
+  basis = string(mcfg->lookup("basis").c_str());
+  cell = string(mcfg->lookup("cell").c_str());
+  ham_path = string(mcfg->lookup("ham_path").c_str());
   try {
-    u_path = (string)mcfg->lookup("u_path").c_str();
+    u_path = string(mcfg->lookup("u_path").c_str());
   } catch (const SettingNotFoundException &nfex) {
     u_path = "";
   }
   try {
-    obs_path = (string)mcfg->lookup("obs_path").c_str();
+    obs_path = string(mcfg->lookup("obs_path").c_str());
   } catch (const SettingNotFoundException &nfex) {
     obs_path = "";
   }
@@ -148,7 +158,10 @@ int main(int argc, char **argv) {
   //* settings for monte-carlo
   const Setting &settings = root["mc_settings"];
 
-  size_t sweeps, therms, cutoff_l;
+  size_t sweeps;
+  size_t therms;
+  size_t cutoff_l;
+  size_t seed;
   double T = 0;
   bool fix_wdensity = false;
   try {
@@ -158,16 +171,19 @@ int main(int argc, char **argv) {
     cutoff_l = (long)config.lookup("cutoff_length");
     T = (double)config.lookup("temperature");
     fix_wdensity = config.lookup("fix_wdensity");
+    seed = static_cast<size_t>(config.lookup("seed"));
 
   } catch (...) {
-    cout << "I/O error while reading mc_settings.default settings" << endl;
-    cout << "read config file from default instead" << endl;
+    std::cout << "I/O error while reading mc_settings.default settings"
+              << std::endl;
+    std::cout << "read config file from default instead" << std::endl;
     const Setting &config = settings["default"];
     sweeps = (long)config.lookup("sweeps");
     therms = (long)config.lookup("therms");
     cutoff_l = (long)config.lookup("cutoff_length");
     T = (double)config.lookup("temperature");
     fix_wdensity = config.lookup("fix_wdensity");
+    seed = static_cast<size_t>(config.lookup("seed"));
   }
 
   try {
@@ -181,22 +197,24 @@ int main(int argc, char **argv) {
       obs_path = args.get<string>("obs");
     } catch (...) {
       if (rank == 0)
-        cout << "obs_path is not given. Elements of observables are set to zero"
-             << endl;
+        std::cout
+            << "obs_path is not given. Elements of observables are set to zero"
+            << std::endl;
       obs_path = "";
     }
     try {
       wobs_paths = vector<string>(1, args.get<string>("wobs"));
     } catch (...) {
       if (rank == 0)
-        cout << "wobs_path is not given. Elements of worm observables will set "
-                "to zero"
-             << endl;
+        std::cout
+            << "wobs_path is not given. Elements of worm observables will set "
+               "to zero"
+            << std::endl;
     }
   } catch (...) {
-    // cout << "I/O error while reading mc_settings.default settings" << endl;
+    // std::cout << "I/O error while reading mc_settings.default settings" <<
+    // std::endl;
   }
-
 
   // parser
   shapes[0] = args.safeGet<size_t>("L1", shapes[0]);
@@ -214,9 +232,9 @@ int main(int argc, char **argv) {
   }
   sweeps = (sweeps / 2) * 2;  // make sure sweeps is even number
 
-  if (args.has("output")) {
-    string folder = "../worm_result/";
-    string shape = "";
+  if (args.has("output") && rank == 0) {
+    fs::path base_output_folder = project_dir / out_dir_name;
+    string shape;
     if (shapes.size() == 1) {
       shape += ("L_" + to_string(shapes[0]));
     } else if (shapes.size() == 2) {
@@ -227,46 +245,29 @@ int main(int argc, char **argv) {
     }
     string setting_name =
         "T_" + to_string(T) + "/" + "N_" + to_string(sweeps * size);
-    output_folder =
-        folder + model_name + "/" + shape + "/" + setting_name;
+    // output_folder = folder + model_name + "/" + shape + "/" + setting_name;
+    output_folder = base_output_folder / model_name / shape / setting_name;
 
     hash<std::string> hasher;
     size_t hash = hasher(ham_path);
 
-    out_file = output_folder + "/" + getCurrentDateTime() + "_" +
-               to_string(hash) + ".txt";
+    // out_file = output_folder + "/" + getCurrentDateTime() + "_" +
+    // to_string(hash) + ".txt";
+    out_file =
+        output_folder / (getCurrentDateTime() + "_" + to_string(hash) + ".txt");
 
-  }
-
-  if (rank == 0) {
-
-    cout << "Output file: " << out_file << endl;
-    if (args.has("output")){
-      fs::path output_folder_fs(output_folder);
-      if (!fs::exists(output_folder_fs)) {
-        if (rank == 0) {
-          cout << "create directory : " << output_folder_fs << endl;
-        }
-        boost::filesystem::create_directories(output_folder_fs);
-      }
-      if (rank == 0) {
-        freopen(out_file.c_str(), "w", stdout);
-      }
+    if (fs::create_directories(out_file.parent_path())) {
+      std::cout << "create directory : " << out_file.parent_path() << std::endl;
     }
-
-    cout << "model name is \t : \t" << model_name << endl;
-    cout << "run on \t : \t" << size << " nodes" << endl;
-
   }
-  
-
 
   try {
     ns_unit = (size_t)mcfg->lookup("ns_unit");
   } catch (...) {
     if (rank == 0) {
-      cout << "Warning!!: please set ns_unit in model.cfg" << endl;
-      cout << "ns_unit is automatically set to 1" << endl;
+      std::cout << "Warning : please set ns_unit in model.cfg" << std::endl;
+      std::cout << "Warning : Ns_unit was not given. Automatically set to 1"
+                << std::endl;
     }
     ns_unit = 1;
   }
@@ -277,42 +278,42 @@ int main(int argc, char **argv) {
       wobs_paths.push_back(tmp);
     }
   } catch (const SettingNotFoundException &nfex) {
-    if (rank == 0) cout << "no worm observables" << endl;
+    if (rank == 0)
+      std::cout << "Warning : No worm observables was given" << std::endl;
   }
-
 
   if (args.has("z")) zero_worm = true;
 
   if (rank == 0) {
-    if (out_file != "") cout << "output file : " << out_file << endl;
+    if (!out_file.empty()) {
+      std::cout << "The result will be written in : " << fs::absolute(out_file)
+                << std::endl;
+      freopen(out_file.c_str(), "w", stdout);
+    }
   }
 
   if (rank == 0) {
-    cout << "zero_wom : " << (zero_worm ? "YES" : "NO") << endl;
-    cout << "repeat : " << (repeat ? "YES" : "NO") << endl;
-    cout << "params : " << params << endl;
-    cout << "alpha : " << alpha << endl;
-    cout << "temperature : " << T << endl;
+    std::cout << "model name is : " << model_name << std::endl;
+    std::cout << "run on  : " << size << " nodes" << std::endl;
+    std::cout << "zero_wom : " << (zero_worm ? "YES" : "NO") << std::endl;
+    std::cout << "repeat : " << (repeat ? "YES" : "NO") << std::endl;
+    std::cout << "params : " << params << std::endl;
+    std::cout << "alpha : " << alpha << std::endl;
+    std::cout << "temperature : " << T << std::endl;
   }
 
   //* finish argparse
   model::base_lattice lat(basis, cell, shapes, file, !rank);
   // model::base_model<bcl::heatbath>* spin;
   std::unique_ptr<model::base_model<bcl::heatbath>> spin_ptr;
-  if (u_path == "") {
+  if (u_path.empty()) {
     if (rank == 0)
-      cout << "unitary is not given. Identity matrix is used." << endl;
-    // spin = model::base_model<bcl::heatbath>(lat, dofs, ham_path, params,
-    // types, shift, zero_worm, repeat, !rank,
-    //      alpha);
+      std::cout << "unitary is not given. Identity matrix is used."
+                << std::endl;
     spin_ptr = std::make_unique<model::base_model<bcl::heatbath>>(
         lat, dofs, ham_path, params, types, shift, zero_worm, repeat, !rank,
         alpha);
   } else {
-    // model::base_model<bcl::heatbath> spin(lat, dofs, ham_path, u_path,
-    // params,
-    //                                       types, shift, zero_worm, repeat,
-    //                                       !rank, alpha);
     spin_ptr = std::make_unique<model::base_model<bcl::heatbath>>(
         lat, dofs, ham_path, u_path, params, types, shift, zero_worm, repeat,
         !rank, alpha);
@@ -336,14 +337,14 @@ int main(int argc, char **argv) {
 
   // output MC step info
   if (rank == 0)
-    cout << "----------------------------------------" << endl
-         << "therms(each process)    : " << therms << endl
-         << "sweeps(each process)    : " << sweeps << endl
-         << "sweeps(in total)        : " << sweeps * size << endl;
+    std::cout << "----------------------------------------" << std::endl
+              << "therms(each process)    : " << therms << std::endl
+              << "sweeps(each process)    : " << sweeps << std::endl
+              << "sweeps(in total)        : " << sweeps * size << std::endl;
 
   if (rank == 0) {
-    for (int i = 0; i < 40; i++) cout << "-";
-    cout << endl;
+    for (int i = 0; i < 40; i++) std::cout << "-";
+    std::cout << std::endl;
   }
 
   // n* check argument
@@ -357,7 +358,7 @@ int main(int argc, char **argv) {
   vector<batch_res> res;
   auto map_worm_obs =
       exe_worm_parallel(*spin_ptr, T, sweeps, therms, cutoff_l, fix_wdensity,
-                        rank, res, ac_res, obs, mapwobs);
+                        rank, res, ac_res, obs, mapwobs, seed);
 
   batch_res as = res[0];   // average sign
   batch_res ene = res[1];  // signed energy i.e. $\sum_i E_i S_i / N_MC$
@@ -372,7 +373,7 @@ int main(int argc, char **argv) {
   vector<pair<string, batch_res>> worm_obs;
   int i = 0;
   for (auto &obs : map_worm_obs) {
-    worm_obs.push_back(make_pair(obs.first, res[9 + i]));
+    worm_obs.emplace_back(obs.first, res[9 + i]);
     i++;
   }
 
@@ -391,7 +392,8 @@ int main(int argc, char **argv) {
     get<1>(obs).reduce(red_);
   }
 
-  double elapsed_max, elapsed_min;
+  double elapsed_max;
+  double elapsed_min;
   MPI_Allreduce(&elapsed, &elapsed_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
   MPI_Allreduce(&elapsed, &elapsed_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
 
@@ -414,7 +416,7 @@ int main(int argc, char **argv) {
     for (auto &obs : worm_obs) {
       auto mean = jackknife_reweight_div(get<1>(obs),
                                          phys_conf);  // calculate <WoS> / <S>
-      worm_obs_mean.push_back(make_pair(obs.first, mean));
+      worm_obs_mean.emplace_back(obs.first, mean);
     }
 
     // calculat heat capacity
@@ -432,42 +434,42 @@ int main(int argc, char **argv) {
     };
     pair<double, double> chi_mean = jackknife_reweight_any(dH, dH2, as, f);
 
-    cout << "Elapsed time         = " << elapsed_max << "(" << elapsed_min
-         << ") sec\n"
-         << "Speed                = " << (therms + sweeps) / elapsed_max
-         << " MCS/sec\n";
+    std::cout << "Elapsed time         = " << elapsed_max << "(" << elapsed_min
+              << ") sec\n"
+              << "Speed                = " << (therms + sweeps) / elapsed_max
+              << " MCS/sec\n";
 
-    cout << "beta                 = " << 1.0 / T << endl
-         << "Total Energy         = " << ene_mean.first << " +- "
-         << ene_mean.second << endl;
+    std::cout << "beta                 = " << 1.0 / T << std::endl
+              << "Total Energy         = " << ene_mean.first << " +- "
+              << ene_mean.second << std::endl;
 
-    cout << "Average sign         = " << as_mean.first << " +- "
-         << as_mean.second << endl
-         << "Energy per site      = " << ene_mean.first / n_sites << " +- "
-         << ene_mean.second / n_sites << endl
-         << "Specific heat        = " << c_mean.first / n_sites << " +- "
-         << c_mean.second / n_sites << endl
-         << "magnetization        = " << m_mean.first * T / n_sites << " +- "
-         << m_mean.second * T / n_sites << endl
-         << "susceptibility       = " << chi_mean.first * T / n_sites << " +- "
-         << chi_mean.second * T / n_sites << endl;
+    std::cout << "Average sign         = " << as_mean.first << " +- "
+              << as_mean.second << std::endl
+              << "Energy per site      = " << ene_mean.first / n_sites << " +- "
+              << ene_mean.second / n_sites << std::endl
+              << "Specific heat        = " << c_mean.first / n_sites << " +- "
+              << c_mean.second / n_sites << std::endl
+              << "magnetization        = " << m_mean.first * T / n_sites
+              << " +- " << m_mean.second * T / n_sites << std::endl
+              << "susceptibility       = " << chi_mean.first * T / n_sites
+              << " +- " << chi_mean.second * T / n_sites << std::endl;
 
     for (auto &obs : worm_obs_mean) {
       fillStringWithSpaces(obs.first, 11);
-      cout << obs.first << "          = " << obs.second.first << " +- "
-           << obs.second.second << endl;
+      std::cout << obs.first << "          = " << obs.second.first << " +- "
+                << obs.second.second << std::endl;
     }
 
-    cout << "----------------------------------------" << endl;
-    cout << "Integrated correlation time " << endl
-         << "H                    = " << ac_res.tau()[0] << endl
-         << "M^2                  = " << ac_res.tau()[1] << endl
-         << "S                    = " << ac_res.tau()[2] << endl;
-    cout << "----------------------------------------" << endl;
-    cout << "# of operators       = " << nop_mean.first << " +- "
-         << nop_mean.second << endl
-         << "# of neg sign op     = " << nnop_mean.first << " +- "
-         << nnop_mean.second << endl;
+    std::cout << "----------------------------------------" << std::endl;
+    std::cout << "Integrated correlation time " << std::endl
+              << "H                    = " << ac_res.tau()[0] << std::endl
+              << "M^2                  = " << ac_res.tau()[1] << std::endl
+              << "S                    = " << ac_res.tau()[2] << std::endl;
+    std::cout << "----------------------------------------" << std::endl;
+    std::cout << "# of operators       = " << nop_mean.first << " +- "
+              << nop_mean.second << std::endl
+              << "# of neg sign op     = " << nnop_mean.first << " +- "
+              << nnop_mean.second << std::endl;
   }
   MPI_Finalize();
 }

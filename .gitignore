@@ -9,10 +9,12 @@ __pycache__/
 
 **/CMakeFiles/**
 # C extensions
+*link
 *.so
 *.pdf
 myenv/
 Release.bak/
+*compile_commands.json
 *.jpeg
 !doc/**/*.jpeg
 *.zip
@@ -34,6 +36,8 @@ Release/
 julia_practice/
 julia_test/
 worm_result/
+result_worm/
+output_worm/
 
 # packages / libraries
 ALPSCore
@@ -162,5 +166,11 @@ dmypy.json
 # data
 *csv
 
+job/link/
+output_worm/
+result_worm/
+*output/
 # images
 *.png
+
+*output/
