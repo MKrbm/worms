@@ -29,12 +29,17 @@ calculate_parameters() {
     J1=$(printf "%.3f" "${J1_values[$j]}")
     hz=$(printf "%.3f" "${hz_values[$z]}")
     hx=$(printf "%.3f" "${hx_values[$x]}")
-
-    echo "J0=$J0, J1=$J1, hz=$hz, hx=$hx"
 }
 
-echo_total_jobs() {
+echo_jobs() {
     echo "Total number of jobs for BLBQ model: $total_jobs"
+
+		# for loop for all parameter to confirm which parameter will be used
+		for i in $(seq 0 $(($total_jobs - 1)))
+		do
+				calculate_parameters $i
+				echo "J0=${J0}, J1=${J1}, hz=${hz} and hx=${hx}"
+		done
 }
 
 # Core job function for BLBQ model
@@ -81,7 +86,7 @@ run_job() {
 # Initialize script
 echo "Sourcing script blbq-sim.sh"
 calculate_total_jobs
-echo_total_jobs
+echo_jobs
 echo "Total number of jobs: $total_jobs"
 export -f run_job
 export -f calculate_parameters
