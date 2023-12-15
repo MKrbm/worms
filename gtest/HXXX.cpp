@@ -5,8 +5,6 @@
 #include <funcs.hpp>
 #include <jackknife.hpp>
 #include <observable.hpp>
-#include <options.hpp>
-#include <state.hpp>
 #include <string>
 #include <utility>
 #include <vector>
