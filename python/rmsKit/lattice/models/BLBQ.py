@@ -12,7 +12,7 @@ def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
     J1 = params["J1"]
     hz = params["hz"]
     hx = params["hx"]
-    lt = params["lt"]  
+    lt = params["lt"]
     h_heis = (SzSz + SxSx + SySy)
     h_single = hz * Sz + hx * Sx
 

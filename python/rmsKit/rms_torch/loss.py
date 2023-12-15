@@ -30,13 +30,12 @@ class MinimumEnergyLoss(nn.Module):
                     "h should be of type np.ndarray or torch.Tensor.")
             E, V = torch.linalg.eigh(self.h_list[i])
 
+            logging.info(f"maximum energy of local hamiltonian {i}: {E[-1]:.3f}")
             logging.info(f"minimum energy of local hamiltonian {i}: {E[0]:.3f}")
-            print("E[0] : {}".format(E[0]))
             offset.append(E[-1])
             self.h_list[i][:] = self.h_list[i] - offset[i] * \
                 torch.eye(h_list[i].shape[1], device=device)
-            print("offset:", offset[i])
-            print(self.h_list[i])
+            logging.info(f"offset of local hamiltonian {i}: {offset[i]:.3f}")
             self.X.append(V[:, 0].to(device))
             self.shift_origin_offset.append(offset[i] - E[0])
 
