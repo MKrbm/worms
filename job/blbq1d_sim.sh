@@ -34,12 +34,12 @@ calculate_parameters() {
 echo_jobs() {
     echo "Total number of jobs for BLBQ model: $total_jobs"
 
-		# for loop for all parameter to confirm which parameter will be used
-		for i in $(seq 0 $(($total_jobs - 1)))
-		do
-				calculate_parameters $i
-				echo "J0=${J0}, J1=${J1}, hz=${hz} and hx=${hx}"
-		done
+    # for loop for all parameter to confirm which parameter will be used
+    for i in $(seq 0 $((total_jobs - 1)))
+    do
+        calculate_parameters "$i"
+        echo "J0=${J0}, J1=${J1}, hz=${hz} and hx=${hx}"
+    done
 }
 
 # Core job function for BLBQ model
@@ -48,14 +48,14 @@ run_job() {
     local project_dir=$2
     local n_cpu=$3
 
-    calculate_parameters $task_id
+    calculate_parameters "$task_id"
 
     LT=1
     SWEEPS=1000000
     EPOCH=2000
     M=20
-		model_name="BLBQ1D"
-		log_file="${project_dir}/job/worm/${model_name}_J0_${J0}_J1_${J1}_hz_${hz}_hx_${hx}_output.log"
+    model_name="BLBQ1D"
+    log_file="${project_dir}/job/worm/${model_name}_J0_${J0}_J1_${J1}_hz_${hz}_hx_${hx}_output.log"
     symbolic_link="${project_dir}/job/link/${model_name}_J0_${J0}_J1_${J1}_hz_${hz}_hx_${hx}_lt_${LT}"
     echo "Symbolic link for BLBQ1D model: $symbolic_link"
     echo "Project directory: $project_dir"
@@ -65,23 +65,24 @@ run_job() {
     # Add your environment setup if necessary
     export OMP_NUM_THREADS=$n_cpu
     export MKL_NUM_THREADS=$n_cpu
-		source /opt/materiapps-intel/env.sh
-		source ~/worms/myenv/bin/activate
+    source /opt/materiapps-intel/env.sh
+    source ~/worms/myenv/bin/activate
 
 
     # Assuming the environment is already activated and required modules loaded
     python -u new_optimize_loc.py -m $model_name -o Adam -lr 0.007\
-        -J0 $J0 -J1 $J1 -hx $hx -hz $hz -n $n_cpu \
-        --symoblic_link $symbolic_link \
-        --stdout >> $log_file
+        --epoch $EPOCH -M $M -lt $LT \
+        -J0 "$J0" -J1 "$J1" -hx "$hx" -hz "$hz" -n "$n_cpu" \
+        --symoblic_link "$symbolic_link" \
+        --stdout >> "$log_file"
 
-		echo "Finished optimization for BLBQ model with J0=${J0}, J1=${J1}, hz=${hz} and hx=${hx} in CPU ${n_cpu}"
+    echo "Finished optimization for BLBQ model with J0=${J0}, J1=${J1}, hz=${hz} and hx=${hx} in CPU ${n_cpu}"
 
 
-		python -u -m run_worm -m $model_name --path $symbolic_link -s $SWEEPS --original -n $n_cpu --stdout >> $log_file
+    python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS --original -n "$n_cpu" --stdout >> "$log_file"
 
-		python -u -m run_worm -m $model_name --path $symbolic_link -s $SWEEPS -n $n_cpu --stdout >> $log_file
-		
+    python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS -n "$n_cpu" --stdout >> "$log_file"
+
     echo "Finished BLBQ model job with J0=${J0}, J1=${J1}, hz=${hz} and hx=${hx} in CPU ${n_cpu}"
 }
 
