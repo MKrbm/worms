@@ -26,7 +26,7 @@ def get_model(model: str, params: Dict[str, Any], L: Union[List[int], None] = No
             raise NotImplementedError("get system hamiltonian not implemented")
         h_list, sps = lattice.FF.local(p)
         # h_list: List[NDArray[Any]] = [h.numpy() for h in _h_list]
-        params_str = f's_{sps}_r_{p["rank"]}_lt_{p["lt"]}_d_{p["dimension"]}_seed_{p["seed"]}'
+        params_str = f's_{sps}_r_{p["rank"]}_d_{p["dimension"]}_seed_{p["seed"]}'
         model_name = f"{model}_loc/{params_str}"
         return h_list, sps, model_name
     elif "HXYZ" in model:
@@ -41,13 +41,13 @@ def get_model(model: str, params: Dict[str, Any], L: Union[List[int], None] = No
             Jz=params["Jz"],
             hx=params["hx"],
             hz=params["hz"],
-            lt=params["lt"],
         )
         a = ""
         for k, v in p.items():
             v = float(v)
             a += f"{k}_{v:.4g}_"
         params_str = a[:-1]
+        p["lt"] = params["lt"],
 
         if L:
             size_name = f"L_{L[0]}x{L[1]}" if d == 2 else f"L_{L[0]}"
@@ -66,13 +66,13 @@ def get_model(model: str, params: Dict[str, Any], L: Union[List[int], None] = No
             J1=params["J1"],
             hx=params["hx"],
             hz=params["hz"],
-            lt=params["lt"],
         )
         a = ""
         for k, v in p.items():
             v = float(v)
             a += f"{k}_{v:.4g}_"
         params_str = a[:-1]
+        p["lt"] = params["lt"],
 
         if L:
             size_name = f"L_{L[0]}"

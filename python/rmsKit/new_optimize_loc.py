@@ -45,12 +45,14 @@ if __name__ == "__main__":
 
     logging.info(f"device = {device}")
 
+    optim_name = args.optimizer
     if args.loss == "qsmel":
         if "1D" in args.model:
             L = [args.length1]
-            loss_name = f"{params['lt']}_{L[0]}_{args.loss}_{args.optimizer}"
+            loss_dir = f"{params['lt']}_{L[0]}{args.loss}"
         elif "2D" in args.model:
             L = [args.length1, args.length2]
+            loss_dir = f"{params['lt']}_{L[0]}x{L[1]}{args.loss}"
         else:
             raise ValueError("Invalid model name. Must contain 1D or 2D")
         H, _, _ = get_model(args.model, params, L)
@@ -59,10 +61,11 @@ if __name__ == "__main__":
     elif args.loss == "mel":
         h_list, _, _ = get_model(args.model, params)
         loss = rms_torch.MinimumEnergyLoss(h_list, device=device)
-        loss_name = f"{params['lt']}_{args.loss}_{args.optimizer}"
+        loss_dir = f"{params['lt']}_{args.loss}"
     elif args.loss == "none":
         h_list, _, _ = get_model(args.model, params)
-        loss_name = f"{params['lt']}_{args.loss}"
+        loss_dir = f"{params['lt']}_{args.loss}"
+        optim_name = "none"
 
         # use system hamiltonian for qsmel
 
@@ -70,10 +73,10 @@ if __name__ == "__main__":
     custom_dir = Path("out/tensorboard")
     custom_dir.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
     setting_name = f"lr_{args.learning_rate}_epoch_{epochs}"
-    base_name = Path(model_name) / loss_name / setting_name
     h_path = Path("array/torch") / model_name
     h_path.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
-    u_path = h_path / loss_name / setting_name
+    h_path = h_path / loss_dir
+    u_path = h_path / optim_name / setting_name
     u_path.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
 
     logging.info(f"Unitary will be saved to {u_path.resolve()}")
@@ -170,7 +173,7 @@ if __name__ == "__main__":
     # First read the existing info.txt file. If it exists, take best_loss and
     # initial_loss from there
     new_info = True
-    info_path = h_path / loss_name / "info.txt"
+    info_path = h_path / "info.txt"
     logging.info(f"Save information to {info_path.resolve()}")
     if (info_path).exists():
         with open(info_path) as f:
