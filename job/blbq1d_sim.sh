@@ -4,8 +4,8 @@
 calculate_total_jobs() {
     J0_values=($(seq -3 0.2 3))  # Define J0 values
     J1_values=(1)  # Define J1 values
-    hz_values=(1)          # Define hz values
-    hx_values=(1)          # Define hx values
+    hz_values=(0)          # Define hz values
+    hx_values=(0 0.5 1)          # Define hx values
 
     num_J0=${#J0_values[@]}
     num_J1=${#J1_values[@]}
@@ -65,6 +65,8 @@ run_job() {
     # Add your environment setup if necessary
     export OMP_NUM_THREADS=$n_cpu
     export MKL_NUM_THREADS=$n_cpu
+		source /opt/materiapps-intel/env.sh
+		source ~/worms/myenv/bin/activate
 
 
     # Assuming the environment is already activated and required modules loaded
