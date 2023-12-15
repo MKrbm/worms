@@ -1,28 +1,39 @@
-import sys
-import os
-# Get the path of the current script's directory.
-current_script_path = os.path.dirname(os.path.abspath(__file__))
+"""Visualize the result of worm simulation.
 
-# Add the parent directory to the sys.path.
-parent_directory = os.path.dirname(current_script_path)
-sys.path.append(parent_directory)
-import pandas as pd  # noqa: E402
-import numpy as np  # noqa: E402
-import matplotlib.pyplot as plt  # noqa: E402
-from utils import get_seed_and_loss  # noqa: E402
+Plot the energy and average sign as a function of inverse temperature (beta) and lattice size (L).
+"""
+import sys
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from pathlib import Path
+sys.path.append(Path(__file__).resolve().parent.parent.as_posix())
+from rmsKit.utils import get_seed_and_loss  # noqa: E402
+
+IMAGE_PATH = Path("visualize/image")
+WORM_RESULT_PATH = Path("../worm_result")
+
+if not IMAGE_PATH.exists():
+    raise FileNotFoundError("{} does not exist.".format(IMAGE_PATH.resolve()))
 
 
 N = 5000000
 beta = 20
 
-
 model_name = "FF2D_quetta"
-df = get_seed_and_loss(f"../../worm_result/{model_name}")
+image_model_dir = IMAGE_PATH / model_name
+worm_result_path = WORM_RESULT_PATH / model_name
+df = get_seed_and_loss(worm_result_path)
 df = df[df.sweeps == N]
-model_name = "FF2D_zetta"
-df1 = get_seed_and_loss(f"../../worm_result/{model_name}")
+
+# model_name = "FF2D_quetta"
+# df = get_seed_and_loss(f"../worm_result/{model_name}")
+# df = df[df.sweeps == N]
+
+df1 = get_seed_and_loss("../worm_result/FF2D_zetta")
 df1 = df1[df1.sweeps == 4999872]
 df = pd.concat([df, df1])
+
 print(df.temperature)
 df = df[df["temperature"] >= 1 / beta]
 
@@ -119,11 +130,9 @@ for L in sorted(df.n_sites.unique()):
 
         fig.tight_layout()
 
-        if not os.path.exists(f"image/{model_name}/N_{N:.0e}/comp_T"):
-            os.makedirs(f"image/{model_name}/N_{N:.0e}/comp_T")
-        fig.savefig(
-            f"image/{model_name}/N_{N:.0e}/comp_T/L_{L}_r_{seed}.png")
-
+        image_path = image_model_dir / f"N_{N:.0e}/comp_T" / f"L_{L}_r_{seed}.png"
+        image_path.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(image_path)
         plt.close()
 
 for t in sorted(df.temperature.unique()):
@@ -224,9 +233,7 @@ for t in sorted(df.temperature.unique()):
 
         fig.tight_layout()
 
-        if not os.path.exists(f"image/{model_name}/N_{N:.0e}/comp_L"):
-            os.makedirs(f"image/{model_name}/N_{N:.0e}/comp_L")
-        fig.savefig(
-            f"image/{model_name}/N_{N:.0e}/comp_L/T_{t}_r_{seed}.png")
-
+        image_path = image_model_dir / f"N_{N:.0e}/comp_L" / f"T_{t}_r_{seed}.png"
+        image_path.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(image_path)
         plt.close()
