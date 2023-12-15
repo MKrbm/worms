@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # n: Calculate the total number of jobs for BLBQ model
+
 calculate_total_jobs() {
     J0_values=($(seq -3 0.2 3))  # Define J0 values
     J1_values=(1)  # Define J1 values
@@ -30,6 +31,8 @@ calculate_parameters() {
     hz=$(printf "%.3f" "${hz_values[$z]}")
     hx=$(printf "%.3f" "${hx_values[$x]}")
 }
+
+
 
 echo_jobs() {
     echo "Total number of jobs for BLBQ model: $total_jobs"
@@ -84,6 +87,11 @@ run_job() {
     python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS -n "$n_cpu" --stdout >> "$log_file"
 
     echo "Finished BLBQ model job with J0=${J0}, J1=${J1}, hz=${hz} and hx=${hx} in CPU ${n_cpu}"
+
+    echo "Cleaning up existing symbolic links $symbolic_link"
+    # Check if symbolic link already exists and remove it if it does
+    [ -L "$symbolic_link" ] && unlink "$symbolic_link"
+
 }
 
 # Initialize script
