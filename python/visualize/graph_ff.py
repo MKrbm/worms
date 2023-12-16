@@ -12,30 +12,24 @@ from rmsKit.utils import get_seed_and_loss  # noqa: E402
 
 IMAGE_PATH = Path("visualize/image")
 WORM_RESULT_PATH = Path("../worm_result")
-
+MODEL_NAME = "FF2D_quetta"
+N = 5000000
+BETA_THRES = 20
 if not IMAGE_PATH.exists():
     raise FileNotFoundError("{} does not exist.".format(IMAGE_PATH.resolve()))
 
 
-N = 5000000
-beta = 20
-
-model_name = "FF2D_quetta"
-image_model_dir = IMAGE_PATH / model_name
-worm_result_path = WORM_RESULT_PATH / model_name
+image_model_dir = IMAGE_PATH / MODEL_NAME
+worm_result_path = WORM_RESULT_PATH / MODEL_NAME
 df = get_seed_and_loss(worm_result_path)
 df = df[df.sweeps == N]
-
-# model_name = "FF2D_quetta"
-# df = get_seed_and_loss(f"../worm_result/{model_name}")
-# df = df[df.sweeps == N]
 
 df1 = get_seed_and_loss("../worm_result/FF2D_zetta")
 df1 = df1[df1.sweeps == 4999872]
 df = pd.concat([df, df1])
 
 print(df.temperature)
-df = df[df["temperature"] >= 1 / beta]
+df = df[df["temperature"] >= 1 / BETA_THRES]
 
 for L in sorted(df.n_sites.unique()):
     df_n = df[df.n_sites == L]
