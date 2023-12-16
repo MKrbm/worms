@@ -1,7 +1,7 @@
 import numpy as np
 from ..core.paulis.spin1 import SzSz, SxSx, SySy, Sz, Sx, I3
 import logging
-import utils
+from ..core import utils
 from typing import List, Any, Tuple, Dict
 from numpy._typing import NDArray
 unitary_algorithms = ["original"]

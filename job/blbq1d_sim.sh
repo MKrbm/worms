@@ -6,7 +6,7 @@ calculate_total_jobs() {
     J0_values=($(seq -3 0.2 3))  # Define J0 values
     J1_values=(1)  # Define J1 values
     hz_values=(0)          # Define hz values
-    hx_values=(0 0.5 1)          # Define hx values
+    hx_values=($(seq 0 0.1 1))          # Define hx values
 
     num_J0=${#J0_values[@]}
     num_J1=${#J1_values[@]}
@@ -59,7 +59,12 @@ run_job() {
     M=20
     model_name="BLBQ1D"
     log_file="${project_dir}/job/worm/${model_name}_J0_${J0}_J1_${J1}_hz_${hz}_hx_${hx}_output.log"
-    symbolic_link="${project_dir}/job/link/${model_name}_J0_${J0}_J1_${J1}_hz_${hz}_hx_${hx}_lt_${LT}"
+    link_dir="${project_dir}/job/link/${model_name}"
+    symbolic_link="${link_dir}/J0_${J0}_J1_${J1}_hz_${hz}_hx_${hx}_lt_${LT}"
+
+
+    # Create the link directory if it does not exist
+    [ ! -d "$link_dir" ] && mkdir -p "$link_dir" && echo "Created link directory $link_dir"
     echo "Symbolic link for BLBQ1D model: $symbolic_link"
     echo "Project directory: $project_dir"
 
@@ -88,8 +93,9 @@ run_job() {
     echo "Finished BLBQ model job with J0=${J0}, J1=${J1}, hz=${hz} and hx=${hx} in CPU ${n_cpu}"
 
     echo "Cleaning up existing symbolic links $symbolic_link"
+
     # Check if symbolic link already exists and remove it if it does
-    [ -L "$symbolic_link" ] && unlink "$symbolic_link"
+    # [ -L "$symbolic_link" ] && unlink "$symbolic_link"
 
 }
 

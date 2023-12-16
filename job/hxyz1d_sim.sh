@@ -57,7 +57,12 @@ run_job() {
     M=20
     model_name="HXYZ1D"
     log_file="${project_dir}/job/worm/${model_name}_Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_H_${H}_output.log"
-    symbolic_link="${project_dir}/job/link/${model_name}_Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_hx_${H}_hz_0_lt_${LT}"
+    link_dir="${project_dir}/job/link/${model_name}"
+    symbolic_link="${link_dir}/Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_hx_${H}_hz_0_lt_${LT}"
+
+    # Create the link directory if it does not exist
+    [ ! -d "$link_dir" ] && mkdir -p "$link_dir" && echo "Created link directory $link_dir"
+
     echo "Symbolic link for HXYZ1D model: $symbolic_link"
     echo "Project directory: $project_dir"
 
@@ -89,7 +94,7 @@ run_job() {
 
     echo "Cleaning up existing symbolic links $symbolic_link"
     # Check if symbolic link already exists and remove it if it does
-    [ -L "$symbolic_link" ] && unlink "$symbolic_link"
+    # [ -L "$symbolic_link" ] && unlink "$symbolic_link"
 
 }
 
