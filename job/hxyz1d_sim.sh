@@ -75,7 +75,7 @@ run_job() {
     source ~/worms/myenv/bin/activate
 
     # Running the simulation for HXYZ1D
-    python -u new_optimize_loc.py -m $model_name -o Adam -lr $LR -e $EPOCH -M $M -lt $LT \
+    python -u optimize_loc.py -m $model_name -o Adam -lr $LR -e $EPOCH -M $M -lt $LT \
         -Jz "$Jz" -Jx "$Jx" -Jy "$Jy" -hx "$H" -n "$n_cpu" --symoblic_link "$symbolic_link" \
         --stdout >> "$log_file"
 
