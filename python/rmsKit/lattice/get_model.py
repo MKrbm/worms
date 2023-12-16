@@ -1,4 +1,4 @@
-import lattice
+from .models import FF, HXYZ, BLBQ
 from typing import List, Tuple, Any, Dict, Union
 from numpy._typing import NDArray
 
@@ -18,13 +18,13 @@ def get_model(model: str, params: Dict[str, Any], L: Union[List[int], None] = No
             sps=sps,
             rank=2,
             dimension=d,
-            # lattice type (number of sites in unit cell)
+            # type (number of sites in unit cell)
             lt=1 if lt == "original" else int(lt),
             seed=1 if seed is None else seed,
         )
         if L:
             raise NotImplementedError("get system hamiltonian not implemented")
-        h_list, sps = lattice.FF.local(p)
+        h_list, sps = FF.local(p)
         # h_list: List[NDArray[Any]] = [h.numpy() for h in _h_list]
         params_str = f's_{sps}_r_{p["rank"]}_d_{p["dimension"]}_seed_{p["seed"]}'
         model_name = f"{model}_loc/{params_str}"
@@ -52,11 +52,11 @@ def get_model(model: str, params: Dict[str, Any], L: Union[List[int], None] = No
         if L:
             size_name = f"L_{L[0]}x{L[1]}" if d == 2 else f"L_{L[0]}"
             model_name = f"{model}_sys/{size_name}/{params_str}"
-            h_list, sps = lattice.HXYZ.system(L, p)
+            h_list, sps = HXYZ.system(L, p)
             return h_list, sps, model_name
         else:
             model_name = f"{model}_loc/{params_str}"
-            h_list, sps = lattice.HXYZ.local(params, d)
+            h_list, sps = HXYZ.local(params, d)
             return h_list, sps, model_name
 
     elif "BLBQ1D" in model:
@@ -77,10 +77,10 @@ def get_model(model: str, params: Dict[str, Any], L: Union[List[int], None] = No
         if L:
             size_name = f"L_{L[0]}"
             model_name = f"{model}_sys/{size_name}/{params_str}"
-            h_list, sps = lattice.BLBQ.system(L, p)
+            h_list, sps = BLBQ.system(L, p)
             return h_list, sps, model_name
         else:
             model_name = f"{model}_loc/{params_str}"
-            h_list, sps = lattice.BLBQ.local(params, d)
+            h_list, sps = BLBQ.local(params, d)
             return h_list, sps, model_name
     raise NotImplementedError(f"model {model} not implemented")

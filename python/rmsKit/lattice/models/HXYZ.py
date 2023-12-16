@@ -1,8 +1,7 @@
 import numpy as np
 from ..core.paulis.spin import *
-from ..core.utils import *
+from ..core import utils
 import logging
-import utils
 from typing import List, Any, Tuple, Dict
 from numpy._typing import NDArray
 unitary_algorithms = ["original", "2site", "3siteDiag"]
