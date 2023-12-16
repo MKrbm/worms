@@ -7,7 +7,7 @@ source hxyz1d_sim.sh
 
 P=2
 PROJECT_DIR=$(dirname "$(pwd)")
-NUM_THREAD=40  # Adjust this to the number of parallel jobs you want to run
+NUM_THREAD=2  # Adjust this to the number of parallel jobs you want to run
 
 # Cleanup existing job data
 echo "removing $PROJECT_DIR/job/worm/*"
