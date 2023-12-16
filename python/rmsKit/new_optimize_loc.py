@@ -10,7 +10,7 @@ import re
 
 from lattice import save_npy, get_model
 from utils.parser import get_parser, get_params_parser
-from utils import now, get_logger
+from utils import NOW, get_logger, stoquastic
 
 parser = get_parser()
 
@@ -23,6 +23,8 @@ parser.add_argument(
 )
 args, params, hash_str = get_params_parser(parser)
 
+CHECK = True
+
 if __name__ == "__main__":
 
     sps = args.sps
@@ -31,7 +33,7 @@ if __name__ == "__main__":
 
     log_dir = Path("optimizer_output")
     log_dir.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
-    log_filename = log_dir / f"{now}_{hash_str}.log"
+    log_filename = log_dir / f"{NOW}_{hash_str}.log"
     logger = get_logger(log_filename.resolve().as_posix(), level=logging.INFO, stdout=args.stdout)
 
     if args.platform == "gpu":
@@ -84,6 +86,7 @@ if __name__ == "__main__":
 
     # save local hamiltonian
     save_npy(h_path / "H", [-np.array(h) for h in local_h_list])  # minus for - beta * H
+    print(local_h_list[0])
 
     # save global hamiltonian
 
@@ -104,7 +107,10 @@ if __name__ == "__main__":
 
     model = rms_torch.UnitaryRieman(
         h_list[0].shape[1], sps, device=device).to(device)
+    model_test = rms_torch.UnitaryRieman(
+        h_list[0].shape[1], sps, device=device).to(device)
     model.reset_params(torch.eye(sps))
+    model_test.reset_params(torch.eye(sps))
 
     initial_loss = loss(model()).item()
     logging.info(f"initial loss = {initial_loss}")
@@ -130,8 +136,9 @@ if __name__ == "__main__":
             loss_val_item = loss_val.item()
             if loss_val_item < local_best_loss:
                 with torch.no_grad():
-                    local_best_loss = loss_val_item
-                    local_best_us = [p.data.detach().cpu().numpy() for p in model.parameters()]
+                    local_best_loss = np.copy(loss_val_item)
+                    local_best_us = [np.copy(p.data.detach().cpu().numpy()) for p in model.parameters()]
+
             loss_val.backward()
             for p in model.parameters():
                 grad = p.grad
@@ -140,21 +147,40 @@ if __name__ == "__main__":
                 else:
                     raise RuntimeError("No gradient for parameter")
                 if (t+1) % (epochs // num_print) == 0 or t == 0:
-                    logging.info(
-                        f"I: {i + 1}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}")
+                    # logging.info(
+                    # f"I: {i + 1}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss:
+                    # {loss_val.item()}")
+                    print(
+                        f"I: {i + 1}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}",
+                        file=logger.handlers[0].stream,
+                    )
             optimizer.step()
 
         if local_best_loss < best_loss:
-            best_loss = local_best_loss
+            best_loss = np.copy(local_best_loss)
             best_us = [np.copy(u) for u in local_best_us]
 
         time_elapsed = time.time() - start
         logging.info(
             f"best loss at epoch {epochs}: {local_best_loss}, best loss so far: {best_loss}, time elapsed: {time_elapsed:.4f} seconds"
         )
+
         u_path_epoch = u_path / f"loss_{local_best_loss:.5f}/u"
         u_path_epoch.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
         save_npy(u_path_epoch, local_best_us)
+
+    model.reset_params(torch.from_numpy(best_us[0]))
+    out = model()
+    if (abs(best_loss - loss(out).item())) > 1e-8:
+        logging.error(
+            """
+            The best loss and the actual loss do not match.
+            Something is wrong with the optimization.
+            best_loss: {} and actual loss: {}
+            """.format(best_loss, loss(out).item()))
+    else:
+        u_path_epoch = u_path / f"loss_{best_loss:.5f}/u"
+        save_npy(u_path_epoch, best_us)
 
     logging.info(f"best loss: {best_loss} / initial loss: {initial_loss}")
     logging.info(f"best loss was saved to {u_path}/loss_{best_loss:.5f}/u")
@@ -178,10 +204,13 @@ if __name__ == "__main__":
     if (info_path).exists():
         with open(info_path) as f:
             info = f.read()
-            match = re.search(r"best loss: (.+?) / initial loss: (.+?)", info)
+            match = re.search(r"best loss: (.+?) \/ initial loss: (.+)", info)
             if match:
                 prev_best_loss = float(match.group(1))
                 prev_initial_loss = float(match.group(2))
+                logging.info(
+                    "Previous best loss: {} and previous initial loss: {}".format(
+                        prev_best_loss, prev_initial_loss))
                 if prev_initial_loss != initial_loss:
                     logging.warning(
                         f"initial loss in info.txt ({prev_initial_loss}) does not match with the current initial loss ({initial_loss})")
