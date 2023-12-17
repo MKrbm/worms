@@ -201,27 +201,28 @@ def run_worm(
             raise ValueError("ham_path :{} must be a existing directory.".format(ham_path))
         else:
             if ham_path.name != "H":
-                raise ValueError("ham_path :{} must be a directory with name 'H'.".format(ham_path))
-    if u_path is not None and not isinstance(u_path, Path):
+                raise ValueError(
+                    "ham_path : {} must be a directory with name 'H'.".format(ham_path))
+    if u_path and not isinstance(u_path, Path):
         u_path = Path(u_path)
         if not u_path.is_dir():
-            raise ValueError("u_path :{} must be a existing directory.".format(u_path))
+            raise ValueError("u_path : {} must be a existing directory.".format(u_path))
         else:
             if u_path.name != "u":
-                raise ValueError("u_path :{} must be a directory with name 'u'.".format(u_path))
+                raise ValueError("u_path : {} must be a directory with name 'u'.".format(u_path))
     if project_dir is not None and not isinstance(project_dir, Path):
         project_dir = Path(project_dir)
 
     # 1. Get the current directory
     if project_dir is not None:
         if not project_dir.is_dir():
-            raise ValueError("project_dir :{} must be a existing directory.".format(project_dir))
+            raise ValueError("project_dir : {} must be a existing directory.".format(project_dir))
         release_dir = project_dir / "build"
     else:
         release_dir = Path(os.getcwd()) / "build"
 
     if not release_dir.is_dir():
-        raise ValueError("release_dir :{} must be a existing directory.".format(release_dir))
+        raise ValueError("release_dir : {} must be a existing directory.".format(release_dir))
 
     if not isinstance(L, list):
         raise ValueError("L must be a list of integers.")
