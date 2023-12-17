@@ -58,12 +58,17 @@ if __name__ == "__main__":
             "Warning: M is not divisible by p. The number of sweeps will be rounded down.")
         M = (M // p) * p
 
-    min_path, min_loss, ham_path = utils.path_with_lowest_loss(
-        args.path, return_ham=True, absolute_path=True)
-    ("ham_path: ", ham_path)
-    # logger.info("min_path: ", min_path)
-    # logger.info("min_loss: ", min_loss)
-    # logger.info("ham_path: ", ham_path)
+    # min_path, min_loss, ham_path = utils.path_with_lowest_loss(
+    #     args.path, return_ham=True, absolute_path=True)
+    search_path = Path(args.path)
+    if search_path.is_symlink():
+        search_path = search_path.resolve()
+        logging.warning("The given path is a symbolic link.")
+        logging.warning("The path will be resolved to {}".format(search_path))
+
+    min_loss, init_loss, min_path, ham_path = utils.path.get_worm_path(
+        search_path, get_unitary=True)
+
     logger.info("min_path: {}".format(min_path))
     logger.info("min_loss: {}".format(min_loss))
     logger.info("ham_path: {}".format(ham_path))
