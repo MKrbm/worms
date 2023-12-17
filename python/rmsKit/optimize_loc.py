@@ -1,3 +1,14 @@
+"""Optimize the local unitary matrix for the given model to reduce the negative sign problem.
+
+Currently availabe models are:
+    1D: HXYZ, BLBQ, Frustration-Free(FF)
+    2D: HXYZ, FF
+
+Available loss functions are:
+    mel: minimum energy loss. The basic loss function.
+    qsmel: quasi-system minimum energy loss. This consider the system hamiltonian with given system size.
+    none: no loss function. Just return the hamiltonian
+"""
 import torch
 import numpy as np
 import rms_torch
@@ -137,7 +148,8 @@ if __name__ == "__main__":
             if loss_val_item < local_best_loss:
                 with torch.no_grad():
                     local_best_loss = np.copy(loss_val_item)
-                    local_best_us = [np.copy(p.data.detach().cpu().numpy()) for p in model.parameters()]
+                    local_best_us = [np.copy(p.data.detach().cpu().numpy())
+                                     for p in model.parameters()]
 
             loss_val.backward()
             for p in model.parameters():
@@ -147,9 +159,6 @@ if __name__ == "__main__":
                 else:
                     raise RuntimeError("No gradient for parameter")
                 if (t+1) % (epochs // num_print) == 0 or t == 0:
-                    # logging.info(
-                    # f"I: {i + 1}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss:
-                    # {loss_val.item()}")
                     print(
                         f"I: {i + 1}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}",
                         file=logger.handlers[0].stream,

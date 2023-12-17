@@ -36,7 +36,7 @@ def run_BLBQ1D(params: Dict,
 
     cmd = [
         "python",
-        "new_optimize_loc.py",
+        "optimize_loc.py",
         "-m",
         "BLBQ1D",
         "-J0",

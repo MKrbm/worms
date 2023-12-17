@@ -3,6 +3,7 @@ import numpy as np
 import os
 import logging
 import re
+import pandas as pd
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 import utils  # noqa: E402
@@ -58,12 +59,32 @@ if __name__ == "__main__":
             "Warning: M is not divisible by p. The number of sweeps will be rounded down.")
         M = (M // p) * p
 
-    min_path, min_loss, ham_path = utils.path_with_lowest_loss(
-        args.path, return_ham=True, absolute_path=True)
-    ("ham_path: ", ham_path)
-    # logger.info("min_path: ", min_path)
-    # logger.info("min_loss: ", min_loss)
-    # logger.info("ham_path: ", ham_path)
+    # min_path, min_loss, ham_path = utils.path_with_lowest_loss(
+    #     args.path, return_ham=True, absolute_path=True)
+    search_path = Path(args.path)
+    if search_path.is_symlink():
+        search_path = search_path.resolve()
+        logging.warning("The given path is a symbolic link.")
+        logging.warning("The path will be resolved to {}".format(search_path))
+
+    min_loss, init_loss, min_path, ham_path, info_txt_path = utils.path.get_worm_path(
+        search_path, return_info_path=True)
+
+    simu_setting = "sweeps_{}_p_{}".format(M, p)
+    if args.original:
+        simu_setting += "_original"
+
+    loss_func = info_txt_path.parent.name
+    save_path = info_txt_path.parent / "summary" / simu_setting
+    # n: create the directory if it does not exist
+    save_path.mkdir(parents=True, exist_ok=True)
+
+    # n : find first save_path_{i} that does not exist
+    i = 0
+    while (save_path / "{}.csv".format(i)).exists():
+        i += 1
+    save_path = save_path / "{}.csv".format(i)
+
     logger.info("min_path: {}".format(min_path))
     logger.info("min_loss: {}".format(min_loss))
     logger.info("ham_path: {}".format(ham_path))
@@ -76,6 +97,7 @@ if __name__ == "__main__":
     logger.info("T_list: {}".format(T_list))
 
     # run the simulation
+    data_list = []
     for L in L_list:
         for T in T_list:
             subprocess_out = utils.run_worm(
@@ -93,12 +115,18 @@ if __name__ == "__main__":
             match = re.search(r'The result will be written in : "(.+?\.txt)"', output)
             try:
                 result_file_path = match.group(1)
+                logger.info("result_file_path: {}".format(result_file_path))
                 data = extract_info_from_file(
                     result_file_path, warning=True, allow_missing=False)
+
+                # n: Store the result in the simu_res.txt file
+                data["loss_func"] = loss_func
+                data_list.append(data)
+
+                # n: check if the simulation is reliable
                 if data["as_error"] / data["as"] > 0.2:
                     logger.info(
                         "Simulation is not reliable. The simulation for the following temperature will be ignored.")
-                    logger.info("data: {}".format(data))
                     continue
                 else:
                     logger.info(
@@ -110,3 +138,8 @@ if __name__ == "__main__":
                     "No result file found. This may be due to an error in the logging in main_MPI.")
                 logger.error("subprocess_out: {}".format(output))
                 continue
+
+    # save the result
+    df = pd.DataFrame(data_list)
+    df.to_csv(save_path, index=False)
+    logging.info("save_path: {}".format(save_path))
