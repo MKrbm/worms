@@ -369,7 +369,9 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
   std::string u_path_npy;
   get_npy_path(std::move(u_path), u_path_list);
   if (u_path_list.size() != 1) {
-    throw std::runtime_error("there must be one and only one u_path");
+    std::string err_msg = "there must be one and only one u_path";
+    err_msg += "given u_path is : " + u_path;
+    throw std::runtime_error(err_msg);
   }
   u_path_npy = u_path_list[0];
 
