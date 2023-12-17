@@ -68,9 +68,15 @@ run_job() {
 
     cd "$project_dir/python/rmsKit" || return
 
-    # Add your environment setup if necessary
-    export OMP_NUM_THREADS=$n_cpu
-    export MKL_NUM_THREADS=$n_cpu
+    # if n_cpu is positive, then use that number of CPUs
+    if [ "$n_cpu" -gt 0 ]; then
+        echo "Using $n_cpu CPUs"
+        export OMP_NUM_THREADS=$n_cpu
+        export MKL_NUM_THREADS=$n_cpu
+    else
+        echo "Using all available CPUs"
+    fi
+
     source /opt/materiapps-intel/env.sh
     source ~/worms/myenv/bin/activate
 

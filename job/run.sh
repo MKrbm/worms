@@ -2,8 +2,8 @@
 
 #n: Source the shared script
 
-# source hxyz1d_sim.sh
-source blbq1d_sim.sh
+source hxyz1d_sim.sh
+# source blbq1d_sim.sh
 
 P=2
 PROJECT_DIR=$(dirname "$(pwd)")
