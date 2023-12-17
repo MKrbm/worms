@@ -73,26 +73,12 @@ def extract_info_from_txt(file_path: Path) -> Dict[str, Path]:
     return res
 
 
-def get_worm_path(search_path: Path, get_unitary: bool = True):
+def get_worm_path(search_path: Path, return_info_path: bool = False):
     """Extract the path to model hamiltonian and optimized unitary from the given path."""
     if not search_path.exists():
         raise ValueError("The given search path does not exist.")
     if not search_path.is_dir():
         raise ValueError("The given path is not a directory.")
-
-    # Find the path to the model hamiltonian
-    directories_named_H = list(search_path.rglob('H/'))
-    if len(directories_named_H) == 0:
-        raise ValueError("No directory for hamiltonian found under the given path.")
-    if len(directories_named_H) > 1:
-        logger.warning("""
-                       Multiple directories named 'H' found under the given path.
-                       The {} will be used.
-            """.format(directories_named_H[0]))
-    hamiltonian_path = directories_named_H[0]
-
-    if not get_unitary:
-        return hamiltonian_path
 
     # Get info.txt files under the hamiltonian path
     info_txt_files = find_info_txt_files(search_path)
@@ -103,28 +89,21 @@ def get_worm_path(search_path: Path, get_unitary: bool = True):
                        Multiple info.txt files found under the search path.
                        The {} will be used.
             """.format(info_txt_files[0]))
-    info_txt_file = info_txt_files[0]
+    info_txt_file = Path(info_txt_files[0])
     extracted_info = extract_info_from_txt(info_txt_file)
 
     # Get the path to the optimized unitary
     unitary_path = extracted_info["unitary_path"]
     if not Path(unitary_path).exists():
         raise ValueError("The path to the optimized unitary does not exist.")
-    hamiltonian_path_ = extracted_info["hamiltonian_path"]
-    if not Path(hamiltonian_path_).exists():
+    hamiltonian_path = extracted_info["hamiltonian_path"]
+    if not Path(hamiltonian_path).exists():
         raise ValueError("The path to the model hamiltonian does not exist.")
-
-    if hamiltonian_path_.resolve().as_posix() != hamiltonian_path.resolve().as_posix():
-        logger.warning(
-            """ The path to the model hamiltonian extracted from the info.txt file : \n{} 
-            does not match the path to the model hamiltonian found under the given path : \n{}
-            The path extracted from the info.txt file will be used.
-            """.format(
-                hamiltonian_path_,
-                hamiltonian_path))
-        hamiltonian_path = hamiltonian_path_
 
     loss = extracted_info["best_loss"]
     initial_loss = extracted_info["initial_loss"]
 
-    return loss, initial_loss, unitary_path, hamiltonian_path
+    if return_info_path:
+        return loss, initial_loss, unitary_path, hamiltonian_path, info_txt_file
+    else:
+        return loss, initial_loss, unitary_path, hamiltonian_path

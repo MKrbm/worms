@@ -79,7 +79,7 @@ def get_files_in_order(folder_path):
 TOTAL_SWEEPS = "sweeps"
 U_PATH = "u_path"
 NUMBER_OF_SITES = "n_sites"
-TEMPERATURE = "temperature"
+TEMPERATURE = "T"
 ALPHA = "alpha"
 ENERGY_P_SITE_MEAN = "e"
 ENERGY_P_SITE_ERROR = "e_error"
@@ -103,7 +103,7 @@ def extract_info_from_file(file_path, allow_missing: bool = False,
     with open(file_path, 'r') as file:
         content = file.readlines()
         for line in content:
-            if TEMPERATURE in line:
+            if "temperature" in line:
                 info_dict[TEMPERATURE] = float(line.split(":")[1].strip())
             elif "hamiltonian is read from" in line:
                 info_dict[HAM_PATH] = line.split("from")[1].strip()
