@@ -187,7 +187,7 @@ def find_executable(grandparent_dir: str) -> Tuple[str, str]:
 def run_worm(
         model_name: str,
         ham_path: Path,
-        u_path: Path,
+        u_path: Union[Path, None],
         L: List[int],
         T: float,
         N: int,
@@ -197,15 +197,20 @@ def run_worm(
 
     if not isinstance(ham_path, Path):
         ham_path = Path(ham_path)
-    if not isinstance(u_path, Path):
+        if not ham_path.is_dir():
+            raise ValueError("ham_path :{} must be a existing directory.".format(ham_path))
+        else:
+            if ham_path.name != "H":
+                raise ValueError("ham_path :{} must be a directory with name 'H'.".format(ham_path))
+    if u_path is not None and not isinstance(u_path, Path):
         u_path = Path(u_path)
+        if not u_path.is_dir():
+            raise ValueError("u_path :{} must be a existing directory.".format(u_path))
+        else:
+            if u_path.name != "u":
+                raise ValueError("u_path :{} must be a directory with name 'u'.".format(u_path))
     if project_dir is not None and not isinstance(project_dir, Path):
         project_dir = Path(project_dir)
-
-    if not ham_path.is_dir():
-        raise ValueError("ham_path :{} must be a existing directory.".format(ham_path))
-    if not u_path.is_dir():
-        raise ValueError("u_path :{} must be a existing directory.".format(u_path))
 
     # 1. Get the current directory
     if project_dir is not None:

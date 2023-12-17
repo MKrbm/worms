@@ -96,6 +96,7 @@ if __name__ == "__main__":
             search_path.resolve().as_posix()))
     logger.info("L_list: {}".format(L_list))
     logger.info("T_list: {}".format(T_list))
+    logger.info("Summary will be saved to : {}".format(save_path))
 
     # run the simulation
     data_list = []
@@ -143,4 +144,4 @@ if __name__ == "__main__":
     # save the result
     df = pd.DataFrame(data_list)
     df.to_csv(save_path, index=False)
-    logging.info("save_path: {}".format(save_path))
+    logging.info("Summary saved to : {}".format(save_path))
