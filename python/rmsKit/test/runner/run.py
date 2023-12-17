@@ -40,6 +40,7 @@ def run(params: Dict,
 
     output_file = (output_dir / f"{{}}_{NOW}_{model_name}.txt").resolve().as_posix()
 
+    logger.info("command: {}".format(cmd_solver))
     with change_directory(rmsKit_directory):
         # Add the rmsKit directory to the path
 
@@ -47,7 +48,6 @@ def run(params: Dict,
         out = subprocess.run(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
 
         stdout = out.stdout.decode("utf-8")
-        # print(stdout)
         # redirect stdout to output_file
         with open(output_file.format("exact"), "w") as f:
             f.write(stdout)
@@ -59,6 +59,7 @@ def run(params: Dict,
         csv_path: str = ""
         eig_csv_path: str = ""
 
+        # print(stdout)
         lines = stdout.split('\n')
         for line in lines:
             # print(line, end='')  # Optional: print the output line by line
