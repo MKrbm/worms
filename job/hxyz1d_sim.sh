@@ -34,12 +34,12 @@ calculate_parameters() {
 
 # Echo all jobs to confirm the parameters
 echo_jobs() {
-    echo "Total number of jobs for HXYZ1D model: $total_jobs"
 
     for i in $(seq 0 $((total_jobs - 1))); do
         calculate_parameters "$i"
         echo "Jx=${Jx}, Jy=${Jy}, Jz=${Jz}, H=${H}"
     done
+    echo "Total number of jobs for HXYZ1D model: $total_jobs"
 }
 
 # Core job function for HXYZ1D model
@@ -105,9 +105,9 @@ run_job() {
 }
 
 # Initialization
-echo "Sourcing script hxyz1d.sh"
 calculate_total_jobs
 echo_jobs
+echo "Sourcing script hxyz1d.sh"
 export -f run_job
 export -f calculate_parameters
 export -f calculate_total_jobs
