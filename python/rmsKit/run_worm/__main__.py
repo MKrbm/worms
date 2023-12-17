@@ -76,6 +76,7 @@ if __name__ == "__main__":
 
     loss_func = info_txt_path.parent.name
     save_path = info_txt_path.parent / "summary" / simu_setting
+
     # n: create the directory if it does not exist
     save_path.mkdir(parents=True, exist_ok=True)
 
