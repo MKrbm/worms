@@ -658,6 +658,7 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
 - branch : impl-test
   - Implement HXYZ2D model.
   - Confirm test passed for all.
+  - Next MG model will be implemented.
 
 - **bugs**
   - I found out result is inconsistent with previous result.
