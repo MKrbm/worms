@@ -654,7 +654,7 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
   - Confirm test passed for all.
 
 
-- commit : bc414d1f81775f8d86b60bd749dbb7b3f0ec9d5f
+- commit : 5613aa520a1c42c57217f1f7573050eac779c9f1
 - branch : impl-test
   - Implement HXYZ2D model.
   - Confirm test passed for all.
