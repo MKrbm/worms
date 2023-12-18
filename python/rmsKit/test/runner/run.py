@@ -33,6 +33,8 @@ def run(params: Dict,
         model_name: str,
         cmd_solver: str,
         cmd_optimize: str,
+        N: int,
+        beta: List[float],
         ) -> Tuple[pd.DataFrame,
                    pd.DataFrame,
                    pd.DataFrame,
@@ -115,11 +117,9 @@ def run(params: Dict,
 
         # run normal worm
 
-        L_list = [params["L1"]]
-        rmsKit_directory = Path(rmsKit_directory)
+        L_list = [params["L1"], params["L2"]] if "L2" in params else [params["L1"]]
 
-        N = 10**6
-        beta = [0.1, 0.5, 1]
+        rmsKit_directory = Path(rmsKit_directory)
 
         run_res = []
 

@@ -1,5 +1,5 @@
 from .runner.BLBQ import run_BLBQ1D
-from .runner.HXYZ import run_HXYZ1D
+from .runner.HXYZ import run_HXYZ
 import logging
 import os
 from pathlib import Path
@@ -109,7 +109,33 @@ def _run_HXYZ1D(Js: List[float],
     output_dir.mkdir(exist_ok=True)
     output_dir = output_dir.as_posix()
     logging.debug("output_dir: {}".format(output_dir))
-    return run_HXYZ1D(params, rmsKit_directory, output_dir)
+    return run_HXYZ(params, rmsKit_directory, output_dir)
+
+
+def _run_HXYZ2D(Js: List[float],
+                Hs: List[float],
+                L1: int, L2: int) -> Tuple[pd.DataFrame,
+                                           pd.DataFrame,
+                                           pd.DataFrame,
+                                           pd.DataFrame]:
+    # run HXYZ1D
+    params = {
+        "L1": L1,
+        "L2": L2,
+        "Jz": Js[0],
+        "Jx": Js[1],
+        "Jy": Js[2],
+        "hz": Hs[0],
+        "hx": Hs[1],
+    }
+
+    rmsKit_directory = Path(
+        __file__).resolve().parent.parent.as_posix()
+    output_dir = FILE_DIR / "output"
+    output_dir.mkdir(exist_ok=True)
+    output_dir = output_dir.as_posix()
+    logging.debug("output_dir: {}".format(output_dir))
+    return run_HXYZ(params, rmsKit_directory, output_dir)
 
 
 def _run_BLBQ1D(Js: List[float],
@@ -205,8 +231,38 @@ if __name__ == "__main__":
         if not np.abs(e - -0.07947479512910453) < 1e-8:
             logging.warning("energy at beta = 1 is incorrect: {} != -0.07947479512910453".format(e))
 
+    # n: run HXYZ2D test
+    elif model == "HXYZ2D":
+
+        logging.info("Run HXYZ1D2 test")
+        L = [3, 3]
+        Js = [1, 1, 1]
+        Hs = [0, 0]
+        logging.info("Js: {} / Hs: {}".format(Js, Hs))
+
+        mdfu, mdfh, dfe, dfs = _run_HXYZ2D(Js, Hs, L[0], L[1])
+
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("HXYZ1D2(J=1.0) test passed")
+
+        L = [2, 4]
+        Js = [-0.3, 0.5, 0.8]
+        Hs = [0.3, 0]
+        logging.info("Js: {}  Hs: {} / L = {}".format(Js, Hs, L))
+        mdfu, mdfh, dfe, dfs = _run_HXYZ2D(Js, Hs, L[0], L[1])
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("HXYZ1D2(-Jx -0.3 -Jy 0.8 -Jz 0.5 -hx 0.3 -hz 0) test passed")
+
+        L = [3, 4]
+        Js = [-0.7, 0.5, 0.8]
+        Hs = [0.3, 0.2]
+        logging.info("Js: {}  Hs: {} / L = {}".format(Js, Hs, L))
+        mdfu, mdfh, dfe, dfs = _run_HXYZ2D(Js, Hs, L[0], L[1])
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("HXYZ1D2(-Jx -0.7 -Jy 0.8 -Jz 0.5 -hx 0.3 -hz 0.2) test passed")
+
+    # n: run BLBQ1D test
     elif model == "BLBQ1D":
-        # n: run BLBQ1D test
 
         L = 6
 

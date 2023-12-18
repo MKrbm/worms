@@ -46,22 +46,25 @@ def system(_L: list[int], params: dict) -> Tuple[NDArray[Any], int]:
             raise RuntimeError("something wrong")
         _H = utils.sum_ham(H_list[0], bonds, L, sps)
         return _H, sps
-    
-    elif len(_L) == 2:
-        Lx, Ly = _L
-        logging.info(f"Lx      : {Lx}")
-        logging.info(f"Ly      : {Ly}")
-        logging.info(f"params : {params}")
-        H_list, sps = local(params, D=2)
 
-        bonds = []
-        for i in range(Lx):
-            for j in range(Ly):
-                bonds.append([[i, j], [(i + 1) % Lx, j]])
-                bonds.append([[i, j], [i, (j + 1) % Ly]])
+    elif len(_L) == 2:
+        H_list, sps = local(params, D=2)
+        L1 = _L[0]
+        L2 = _L[1]
+        logging.info(f"L      : {L1}x{L2}")
+        logging.info(f"params : {params}")
+        S = np.arange(L1 * L2)
+        x = S % L1
+        y = S // L1
+        T_x = (x + 1) % L1 + y * L1
+        T_y = x + ((y + 1) % L2) * L1
+        bonds = [[i, T_x[i]]
+                 for i in range(L1*L2)] + [[i, T_y[i]] for i in range(L1*L2)]
+        _H = utils.sum_ham(H_list[0], bonds, L1 * L2, sps)
+
         if len(H_list) != 1:
             raise RuntimeError("something wrong")
-        _H = utils.sum_ham(H_list[0], bonds, Lx * Ly, sps)
+
         return _H, sps
 
     raise NotImplementedError("2D not implemented")
