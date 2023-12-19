@@ -3,8 +3,8 @@
 # n: Calculate the total number of jobs for HXYZ1D model
 
 calculate_total_jobs() {
-    Jx_values=($(seq -2 0.4 2))
-    Jy_values=($(seq -2 0.4 2))
+    Jx_values=($(seq -2 0.2 2))
+    Jy_values=($(seq -2 0.2 2))
     Jz_values=(1)  # Only one Jz value in this case
     H_values=(0 0.5 1)
 
