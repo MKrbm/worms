@@ -3,8 +3,8 @@
 # n: Calculate the total number of jobs for HXYZ1D model
 
 calculate_total_jobs() {
-    Jx_values=($(seq -2 0.4 2))
-    Jy_values=($(seq -2 0.4 2))
+    Jx_values=($(seq -2 0.2 2))
+    Jy_values=($(seq -2 0.2 2))
     Jz_values=(1)  # Only one Jz value in this case
     H_values=(0 0.5 1)
 
@@ -87,13 +87,17 @@ run_job() {
 
     echo "Finished optimization for HXYZ1D model with Jx=${Jx}, Jy=${Jy}, Jz=${Jz}, H=${H} in CPU ${n_cpu}"
 
-	python -u -m run_worm -m HXYZ1D \
-		-f "$symbolic_link" -s $SWEEPS --original -n "$n_cpu" \
-		>> "$project_dir"/job/worm/Jx_"${Jx}"_Jy_"${Jy}"_Jz_"${Jz}"_H_"${H}"_output.log
+	# python -u -m run_worm -m HXYZ1D \
+	# 	-f "$symbolic_link" -s $SWEEPS --original -n "$n_cpu" \
+	# 	>> "$project_dir"/job/worm/Jx_"${Jx}"_Jy_"${Jy}"_Jz_"${Jz}"_H_"${H}"_output.log
+	#
+	# python -u -m run_worm -m HXYZ1D \
+	# 	-f "$symbolic_link" -s $SWEEPS -n "$n_cpu" \
+	# 	>> "$project_dir"/job/worm/Jx_"${Jx}"_Jy_"${Jy}"_Jz_"${Jz}"_H_"${H}"_output.log
 
-	python -u -m run_worm -m HXYZ1D \
-		-f "$symbolic_link" -s $SWEEPS -n "$n_cpu" \
-		>> "$project_dir"/job/worm/Jx_"${Jx}"_Jy_"${Jy}"_Jz_"${Jz}"_H_"${H}"_output.log
+    python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS --original -n "$n_cpu" --stdout >> "$log_file"
+
+    python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS -n "$n_cpu" --stdout >> "$log_file"
 
     echo "Finished HXYZ1D model job with Jx=${Jx}, Jy=${Jy}, Jz=${Jz}, H=${H} in CPU ${n_cpu}"
 
