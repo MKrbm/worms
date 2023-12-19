@@ -47,7 +47,7 @@ if __name__ == "__main__":
     # define the lattice sizes
     # L_list = [[i, i] for i in range(4, 11)]
     # L_list = [[i] for i in range(10, 30, 10)] + [[i + 5] for i in range(10, 30, 10)]
-    L_list = [10, 15]
+    L_list = [10, 11]
     L_list = [[i] for i in L_list]
 
     # define the number of samples
