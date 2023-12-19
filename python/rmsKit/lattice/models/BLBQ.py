@@ -1,7 +1,7 @@
 import numpy as np
 from ..core.paulis.spin1 import SzSz, SxSx, SySy, Sz, Sx, I3
 import logging
-import utils
+from .. import utils
 from typing import List, Any, Tuple, Dict
 from numpy._typing import NDArray
 unitary_algorithms = ["original"]
@@ -12,7 +12,7 @@ def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
     J1 = params["J1"]
     hz = params["hz"]
     hx = params["hx"]
-    lt = params["lt"]  
+    lt = params["lt"]
     h_heis = (SzSz + SxSx + SySy)
     h_single = hz * Sz + hx * Sx
 

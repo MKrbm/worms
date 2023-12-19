@@ -6,6 +6,8 @@ from datetime import datetime
 import contextlib
 from typing import Union, List, Tuple
 import logging
+import numpy as np
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -184,30 +186,52 @@ def find_executable(grandparent_dir: str) -> Tuple[str, str]:
 
 def run_worm(
         model_name: str,
-        ham_path: str,
-        u_path: str,
+        ham_path: Path,
+        u_path: Union[Path, None],
         L: List[int],
         T: float,
         N: int,
         n: int = 1,
-        project_dir: str = None,
+        project_dir: Path = None,
         logging: bool = True):
+
+    if not isinstance(ham_path, Path):
+        ham_path = Path(ham_path)
+        if not ham_path.is_dir():
+            raise ValueError("ham_path :{} must be a existing directory.".format(ham_path))
+        else:
+            if ham_path.name != "H":
+                raise ValueError(
+                    "ham_path : {} must be a directory with name 'H'.".format(ham_path))
+    if u_path and not isinstance(u_path, Path):
+        u_path = Path(u_path)
+        if not u_path.is_dir():
+            raise ValueError("u_path : {} must be a existing directory.".format(u_path))
+        else:
+            if u_path.name != "u":
+                raise ValueError("u_path : {} must be a directory with name 'u'.".format(u_path))
+    if project_dir is not None and not isinstance(project_dir, Path):
+        project_dir = Path(project_dir)
+
     # 1. Get the current directory
     if project_dir is not None:
-        release_dir = os.path.join(project_dir, "build")
+        if not project_dir.is_dir():
+            raise ValueError("project_dir : {} must be a existing directory.".format(project_dir))
+        release_dir = project_dir / "build"
     else:
-        current_dir = os.getcwd()
-        release_dir = os.path.join(current_dir, "build")
-    if type(L) is not list:
+        release_dir = Path(os.getcwd()) / "build"
+
+    if not release_dir.is_dir():
+        raise ValueError("release_dir : {} must be a existing directory.".format(release_dir))
+
+    if not isinstance(L, list):
         raise ValueError("L must be a list of integers.")
+
     # 2. Find the executable
-    # release_dir, executable_name = find_executable(current_dir)
     executable_name = "./main_MPI"
 
-    if not os.path.isdir(release_dir):
-        logger.error("release_dir : %s not found. Please check the path.", release_dir)
-        logger.error("current dir is: %s", os.getcwd())
-        return
+    h = np.load(ham_path / "0.npy")
+    sps = np.round(np.sqrt(h.shape[0])).astype(np.int64)
 
     # 3. Prepare the command arguments
     T = round(T, 5)
@@ -221,11 +245,13 @@ def run_worm(
         "-T",
         str(T),
         "-ham",
-        ham_path,
+        ham_path.resolve().as_posix(),
         "-unitary" if u_path else "",
-        u_path if u_path else "",
+        u_path.resolve().as_posix() if u_path else "",
         "-N",
         str(N),
+        "--sps",
+        str(sps),
         "--output" if logging else "",
         "--split-sweeps"
     ]

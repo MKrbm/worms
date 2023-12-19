@@ -6,6 +6,9 @@ import os
 import glob
 from collections import deque
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def sum_ham(h: np.ndarray, bonds: List, L: int, sps: int, stoquastic_=False, out=None):
@@ -76,7 +79,7 @@ def get_files_in_order(folder_path):
 TOTAL_SWEEPS = "sweeps"
 U_PATH = "u_path"
 NUMBER_OF_SITES = "n_sites"
-TEMPERATURE = "temperature"
+TEMPERATURE = "T"
 ALPHA = "alpha"
 ENERGY_P_SITE_MEAN = "e"
 ENERGY_P_SITE_ERROR = "e_error"
@@ -100,7 +103,7 @@ def extract_info_from_file(file_path, allow_missing: bool = False,
     with open(file_path, 'r') as file:
         content = file.readlines()
         for line in content:
-            if TEMPERATURE in line:
+            if "temperature" in line:
                 info_dict[TEMPERATURE] = float(line.split(":")[1].strip())
             elif "hamiltonian is read from" in line:
                 info_dict[HAM_PATH] = line.split("from")[1].strip()
@@ -218,17 +221,89 @@ def files_to_dataframe(file_list, **kwargs):
 
 
 def get_loss(df):
+    """Get the loss from the file path."""
     df['loss'] = df['u_path'].str.extract(
         r'loss_([+|-]?[0-9]*\.[0-9]+|[0-9]+\.[0-9]*$)').astype(float)
     return df
 
 
+def result_to_dataframe(base_folder, allow_missing=True, warning=False):
+    """Get the result from the base folder."""
+    df = files_to_dataframe(bfs_search_and_get_files(
+        base_folder), allow_missing=allow_missing, warning=warning)
+    return df
+
+
 def get_seed_and_loss(file_path):
+    """Get the seed and loss from the file path.
+
+    Use get_loss to get the loss from the file path.
+    """
     df = files_to_dataframe(bfs_search_and_get_files(
         file_path), allow_missing=True, warning=False)
 #     df = df[df.model_name.str.contains("FF_1D")]
     df['seed'] = df['ham_path'].str.extract(r'seed_(\d+)').astype(int)
     return get_loss(df)
+
+
+def extract_parameters_from_path(path: str) -> Dict[str, float]:
+    """This function extracts the parameters and their values from the path.
+
+    Here suppose path includes the parameters in the following format:
+    {parent}/{model_name}_{par1}_{par1_value}_{par2}_{par2_value} /{setting_name}
+    or
+    {parent}/{par1}_{par1_value}_{par2}_{par2_value} /{setting_name}
+    """
+    # Split the path and get the relevant part with parameters
+    parts = path.split('/')
+    params_part = parts[-3]  # The third from the last part contains the parameters
+    params_split = params_part.split('_')
+
+    params = dict()
+    if len(params_split) % 2 != 0:
+        """
+        When model data is included
+        """
+        params["modelname"] = params_split[0]
+        params_split = params_split[1:]
+        for i in range(0, len(params_split), 2):
+            try:
+                params[params_split[i]] = float(params_split[i + 1])
+            except ValueError as e:
+                print("""
+                The parameter value is not a float: {}
+                Error : {}
+                return None
+                """.format(params_split[i + 1], e))
+                return None
+
+    else:
+        for i in range(0, len(params_split), 2):
+            try:
+                params[params_split[i]] = float(params_split[i + 1])
+            except ValueError as e:
+                print("""
+                The parameter value is not a float: {}
+                Error : {}
+                return None
+                """.format(params_split[i + 1], e))
+                return None
+
+    return params
+
+
+def param_dict_normalize(param_dicts: List[Dict[str, float]]) -> pd.DataFrame:
+    """Assuming 'param_dicts' is a list of dictionaries returned from extract_parameters_from_path.
+
+    I found this function is almost doing the same thing as pd.json_normalize
+    """
+    params_df = pd.json_normalize(param_dicts)
+    if params_df.isnull().sum().iloc[1:].sum():
+        for col in params_df.columns:
+            if params_df[col].isnull().sum():
+                logger.warning(f"Warning: {col} has null values")
+        raise ValueError("Parameters are missing")
+    return params_df
 
 
 def get_canonical_form(A):

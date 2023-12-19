@@ -30,19 +30,18 @@ class MinimumEnergyLoss(nn.Module):
                     "h should be of type np.ndarray or torch.Tensor.")
             E, V = torch.linalg.eigh(self.h_list[i])
 
+            logging.info(f"maximum energy of local hamiltonian {i}: {E[-1]:.3f}")
             logging.info(f"minimum energy of local hamiltonian {i}: {E[0]:.3f}")
-            print("E[0] : {}".format(E[0]))
             offset.append(E[-1])
             self.h_list[i][:] = self.h_list[i] - offset[i] * \
                 torch.eye(h_list[i].shape[1], device=device)
-            print("offset:", offset[i])
-            print(self.h_list[i])
+            logging.info(f"offset of local hamiltonian {i}: {offset[i]:.3f}")
             self.X.append(V[:, 0].to(device))
             self.shift_origin_offset.append(offset[i] - E[0])
 
     def forward(self, U: torch.Tensor) -> torch.Tensor:
-        """
-        Return loss value for the minimum eigen loss. (Or minimum eigen local loss)
+        """Return loss value for the minimum eigen loss. (Or minimum eigen local loss).
+
         Local Hamiltonian will be shifted so that miminum value will be 0
         """
         # add minimum energy of each local hamiltonian for calculating the total energy
@@ -53,6 +52,10 @@ class MinimumEnergyLoss(nn.Module):
         return torch.abs(loss)
 
     def minimum_energy_loss(self, H: torch.Tensor, U: torch.Tensor) -> torch.Tensor:
+        """Calculate the minimum energy of a system using the reverse iteration method.
+
+        The first ground state is calculated using the eigendecomposition of the Hamiltonian.
+        """
         result_abs = self.get_stoquastic(H, U)
         try:
             E = torch.linalg.eigvalsh(result_abs)
@@ -60,19 +63,21 @@ class MinimumEnergyLoss(nn.Module):
             # If there are some errors during the eigen decomposition.
             result_abs = (result_abs + result_abs.T)/2
             E = torch.linalg.eigvalsh(result_abs)
+
         return - E[0]
 
     def stoquastic(self, A: torch.Tensor):
-        """
-        Change the sign of all non-diagonal elements into negative.
+        """Change the sign of all non-diagonal elements into negative.
+
         If A is already negative definite matrix,
-        then just take negative absolute value do the same operation.
+        then just taking negative absolute value sufficies.
         """
         return -torch.abs(A)
 
     def get_stoquastic(self, h: torch.Tensor, U: torch.Tensor) -> torch.Tensor:
-        """
-        Return the stoquastic matrix of a given matrix.
+        """Return the stoquastic matrix of a given matrix.
+
+        First, calculate the matrix A = U @ h @ U.T. Then apply stoquastic function.
         """
         A = U @ h @ U.T
         return self.stoquastic(A)

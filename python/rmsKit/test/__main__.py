@@ -1,39 +1,58 @@
+from .runner.BLBQ import run_BLBQ1D
+from .runner.HXYZ import run_HXYZ
+from .runner.MG import run_MG1D
 import logging
 import os
-import pathlib
-import subprocess
+from pathlib import Path
 from textwrap import dedent
+import subprocess
 import contextlib
 from typing import List, Any, Tuple
 import numpy as np
 import pandas as pd
+import sys
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from utils.parser import get_parser, get_params_parser  # noqa: E402
 
-from .runner.HXYZ import run_HXYZ1D
-from .runner.BLBQ import run_BLBQ1D
+parser = get_parser()
+model = parser.parse_args().model
 
 
 def test_sim_res(df_u, df_h, df_e, df_s, eigs):
 
+    test_fail = True
+
     diff = np.abs(np.sort(eigs) - np.sort(df_e.value)).mean()
-    if diff < 1e-8:
-        logging.info("HPhi test passed")
-    else:
+    if not diff < 1e-8:
         logging.warning("HPhi test failed")
         logging.warning("diff: {}".format(diff))
+        test_fail = False
 
-    if np.all(df_u.c_test) & np.all(df_u.e_test):
-        logging.info("optimized unitary worm passed solver test")
-    else:
+    # test solver
+    return test_solver_worm(df_u, df_h, df_e, df_s) and test_fail
+
+
+def test_solver_worm(df_u, df_h, df_e, df_s):
+
+    test_fail = True
+
+    if not np.all(df_u.c_test) & np.all(df_u.e_test):
         logging.warning("optimized unitary worm failed solver test")
-        logging.warning("c_test: {}".format(df_u.c_test))
-        logging.warning("e_test: {}".format(df_u.e_test))
-
-    if np.all(df_h.c_test) & np.all(df_h.e_test):
-        logging.info("identity worm passed solver test")
+        logging.warning("C: \n{}".format(df_u[["beta","specific_heat", "c", "c_error", "c_test"]]))
+        logging.warning("E: \n{}".format(df_u[["beta", "energy_per_site", "e", "e_error", "e_test"]]))
+        test_fail = False
     else:
+        logging.info("E: \n{}".format(df_u[["beta","energy_per_site", "e", "e_error", "e_test"]]))
+
+    if not np.all(df_h.c_test) & np.all(df_h.e_test):
         logging.warning("identity worm failed solver test")
-        logging.warning("c_test: {}".format(df_h.c_test))
-        logging.warning("e_test: {}".format(df_h.e_test))
+        logging.warning("C: \n{}".format(df_h[["beta","specific_heat", "c", "c_error", "c_test"]]))
+        logging.warning("E: \n{}".format(df_h[["beta","energy_per_site", "e", "e_error", "e_test"]]))
+        test_fail = False
+    else:
+        logging.info("E: \n{}".format(df_h[["beta","energy_per_site", "e", "e_error", "e_test"]]))
+
+    return test_fail
 
 
 @contextlib.contextmanager
@@ -89,21 +108,45 @@ def _run_HXYZ1D(Js: List[float],
         "hz": Hs[0],
         "hx": Hs[1],
     }
-    rmsKit_directory = pathlib.Path(
+    rmsKit_directory = Path(
         __file__).resolve().parent.parent.as_posix()
     output_dir = FILE_DIR / "output"
     output_dir.mkdir(exist_ok=True)
     output_dir = output_dir.as_posix()
     logging.debug("output_dir: {}".format(output_dir))
-    return run_HXYZ1D(params, rmsKit_directory, output_dir)
+    return run_HXYZ(params, rmsKit_directory, output_dir)
+
+
+def _run_HXYZ2D(Js: List[float],
+                Hs: List[float],
+                L1: int, L2: int) -> Tuple[pd.DataFrame,
+                                           pd.DataFrame,
+                                           pd.DataFrame,
+                                           pd.DataFrame]:
+    # run HXYZ1D
+    params = {
+        "L1": L1,
+        "L2": L2,
+        "Jz": Js[0],
+        "Jx": Js[1],
+        "Jy": Js[2],
+        "hz": Hs[0],
+        "hx": Hs[1],
+    }
+
+    rmsKit_directory = Path(
+        __file__).resolve().parent.parent.as_posix()
+    output_dir = FILE_DIR / "output"
+    output_dir.mkdir(exist_ok=True)
+    output_dir = output_dir.as_posix()
+    logging.debug("output_dir: {}".format(output_dir))
+    return run_HXYZ(params, rmsKit_directory, output_dir)
 
 
 def _run_BLBQ1D(Js: List[float],
                 Hs: List[float],
-                L: int) -> Tuple[pd.DataFrame,
-                                 pd.DataFrame,
-                                 pd.DataFrame,
-                                 pd.DataFrame]:
+                L: int,
+                lt: int) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     # run HXYZ1D
     params = {
         "L1": L,
@@ -111,8 +154,9 @@ def _run_BLBQ1D(Js: List[float],
         "J1": Js[1],
         "hz": Hs[0],
         "hx": Hs[1],
+        "lt": lt,
     }
-    rmsKit_directory = pathlib.Path(
+    rmsKit_directory = Path(
         __file__).resolve().parent.parent.as_posix()
     output_dir = FILE_DIR / "output"
     output_dir.mkdir(exist_ok=True)
@@ -121,13 +165,33 @@ def _run_BLBQ1D(Js: List[float],
     return run_BLBQ1D(params, rmsKit_directory, output_dir)
 
 
+def _run_MG1D(Js: List[float],
+              L: int,
+              lt: int) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    # run HXYZ1D
+    params = {
+        "L1": L,
+        "J1": Js[0],
+        "J2": Js[1],
+        "J3": Js[2],
+        "lt": lt,
+    }
+    rmsKit_directory = Path(
+        __file__).resolve().parent.parent.as_posix()
+    output_dir = FILE_DIR / "output"
+    output_dir.mkdir(exist_ok=True)
+    output_dir = output_dir.as_posix()
+    logging.debug("output_dir: {}".format(output_dir))
+    return run_MG1D(params, rmsKit_directory, output_dir)
+
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
-FILE_DIR = pathlib.Path(__file__).resolve().parent
-HPHI_PATH = pathlib.Path("HPhi")
+FILE_DIR = Path(__file__).resolve().parent
+HPHI_PATH = Path("HPhi")
 STAT_IN = HPHI_PATH / "stat.in"
 OUT_HPHI = HPHI_PATH / "output" / "Eigenvalue.dat"
 
@@ -139,58 +203,160 @@ os.chdir(FILE_DIR)
 if __name__ == "__main__":
 
     # HXYZ1D
-    L = 5
-    logging.info("Run HXYZ1D test")
-    logging.info("Compare solver_torch.py and HPhi")
-    logging.info("Please make sure to install HPhi and set the environment variable HPHI_PATH before running this test.")  # noqa
+    if model == "HXYZ1D":
+        L = 5
+        logging.info("Run HXYZ1D test")
+        logging.info("Compare solver_torch.py and HPhi")
+        logging.info("Please make sure to install HPhi and set the environment variable HPHI_PATH before running this test.")  # noqa
 
-    # J = 1.0
-    # H = 0.0
-    # Js = [J, J, J]
-    # Hs = [H, 0]
-    # logging.info("Js: {} / Hs: {}".format(Js, Hs))
-    #
-    # HPhi_in = """
-    #     L={}
-    #     model = "Spin"
-    #     method = "FullDiag"
-    #     lattice = "chain"
-    #     Jx = {}
-    #     Jy = {}
-    #     Jz = {}
-    #     H = {}
-    #     2Sz = {{}} """.format(L, Js[0], Js[1], Js[2], H)
-    # HPhi_in = dedent(HPhi_in)
-    # eigs = np.sort(call_HPhi(HPhi_in, L))
-    # mdfu, mdfh, dfe, dfs = _run_HXYZ1D(Js, Hs, L)
-    #
-    # test_sim_res(mdfu, mdfh, dfe, dfs, eigs)
-    #
-    # H = 0.3
-    # Hs = [H, 0]
-    # logging.info("Js: {} / Hs: {}".format(Js, Hs))
-    #
-    # HPhi_in = """
-    #     L={}
-    #     model = "Spin"
-    #     method = "FullDiag"
-    #     lattice = "chain"
-    #     J = {}
-    #     H = {}
-    #     2Sz = {{}} """.format(L, J, H)
-    #
-    # HPhi_in = dedent(HPhi_in)
-    # eigs = np.sort(call_HPhi(HPhi_in, L))
-    # mdfu, mdfh, dfe, dfs = _run_HXYZ1D(Js, Hs, L)
-    #
-    # test_sim_res(mdfu, mdfh, dfe, dfs, eigs)
+        J = 1.0
+        H = 0.0
+        Js = [J, J, J]
+        Hs = [H, 0]
+        logging.info("Js: {} / Hs: {}".format(Js, Hs))
 
-    # run BLBQ1D test
+        '''
+        HPhi_in = """
+            L={}
+            model = "Spin"
+            method = "FullDiag"
+            lattice = "chain"
+            Jx = {}
+            Jy = {}
+            Jz = {}
+            H = {}
+            2Sz = {{}} """.format(L, Js[0], Js[1], Js[2], H)
+        HPhi_in = dedent(HPhi_in)
+        eigs = np.sort(call_HPhi(HPhi_in, L))
+        '''
 
-    L = 5
+        mdfu, mdfh, dfe, dfs = _run_HXYZ1D(Js, Hs, L)
 
-    Js = [3.0, 1.0]
-    Hs = [0, 0]
-    logging.info("Run BLBQ1D test")
+        # f: test_sim_res(mdfu, mdfh, dfe, dfs, eigs)
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("HXYZ1D(J=1.0) test passed")
 
-    mdfu, mdfh, dfe, dfs = _run_BLBQ1D(Js, Hs, L)
+        H = 0.3
+        Hs = [H, 0]
+        logging.info("Js: {} / Hs: {}".format(Js, Hs))
+        mdfu, mdfh, dfe, dfs = _run_HXYZ1D(Js, Hs, L)
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("HXYZ1D(hz = 0.3) test passed")
+
+        L = 9
+        Js = [-0.3, 0.5, 0.8]
+        Hs = [0.3, 0]
+        logging.info("Js: {}  Hs: {} / L = {}".format(Js, Hs, L))
+        mdfu, mdfh, dfe, dfs = _run_HXYZ1D(Js, Hs, L)
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("HXYZ1D(-Jx -0.3 -Jy 0.8 -Jz 0.5 -hx 0.3 -hz 0) test passed")
+
+        # n: get the energy at beta = 1
+        e = dfs.loc[dfs["beta"] == 1, "energy_per_site"].values[0]
+        if not np.abs(e - (-0.07947479512910453)) < 1e-8:
+            logging.warning("energy at beta = 1 is incorrect: {} != -0.07947479512910453".format(e))
+
+    # n: run HXYZ2D test
+    elif model == "HXYZ2D":
+
+        logging.info("Run HXYZ1D2 test")
+        L = [3, 3]
+        Js = [1, 1, 1]
+        Hs = [0, 0]
+        logging.info("Js: {} / Hs: {}".format(Js, Hs))
+
+        mdfu, mdfh, dfe, dfs = _run_HXYZ2D(Js, Hs, L[0], L[1])
+
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("HXYZ1D2(J=1.0) test passed")
+
+        L = [2, 4]
+        Js = [-0.3, 0.5, 0.8]
+        Hs = [0.3, 0]
+        logging.info("Js: {}  Hs: {} / L = {}".format(Js, Hs, L))
+        mdfu, mdfh, dfe, dfs = _run_HXYZ2D(Js, Hs, L[0], L[1])
+        e = dfs.loc[dfs["beta"] == 1, "energy_per_site"].values[0]
+        if not np.abs(e - (-0.18543629571195416)) < 1e-8:  # Check if exact solver is correct
+            logging.warning("energy at beta = 1 is incorrect: {} != -0.07947479512910453".format(e))
+
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("HXYZ1D2(-Jx -0.3 -Jy 0.8 -Jz 0.5 -hx 0.3 -hz 0) test passed")
+
+        L = [3, 4]
+        Js = [-0.7, 0.5, 0.8]
+        Hs = [0.3, 0.2]
+        logging.info("Js: {}  Hs: {} / L = {}".format(Js, Hs, L))
+        mdfu, mdfh, dfe, dfs = _run_HXYZ2D(Js, Hs, L[0], L[1])
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("HXYZ1D2(-Jx -0.7 -Jy 0.8 -Jz 0.5 -hx 0.3 -hz 0.2) test passed")
+
+    # n: run MG1D test
+    elif model == "MG1D":
+
+        L = 4
+
+        # MG point
+        Js = [0.5, 1, 1]
+        logging.info("Run MG1D test")
+
+        mdfu, mdfh, dfe, dfs = _run_MG1D(Js, L, 2)
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("MG1D test1 passed")
+
+        e0 = np.min(dfe.value)
+        analytic_e0 = -  L * 2 * (3/4) * (1/2)
+        if np.abs(e0 - analytic_e0) < 1e-8:
+            logging.info("ground state energy at MG point is correct : {} = - L * 3 / 4".format(e0))
+        else:
+            logging.warning(
+                "ground state energy at MG point is incorrect : {} != - L * 3 / 4".format(e0))
+
+        Js = [1, 3/2, -1/2]
+
+        logging.info("Js: {}".format(Js))
+
+        mdfu, mdfh, dfe, dfs = _run_MG1D(Js, L, 2)
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("MG1D test2 passed")
+
+    # n: run BLBQ1D test
+    elif model == "BLBQ1D":
+
+        L = 6
+
+        # n: AKLT model
+        Js = [1, 1/3]
+        Hs = [0, 0]
+        logging.info("Run BLBQ1D test")
+
+        mdfu, mdfh, dfe, dfs = _run_BLBQ1D(Js, Hs, L, 1)
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("BLBQ1D(AKLT) test passed")
+
+        e0 = np.min(dfe.value)
+        analytic_e0 = -  L * (2/3)
+        if np.abs(e0 - analytic_e0) < 1e-8:
+            logging.info("ground state energy at AKLT point is correct : {} = - L * 2/3".format(e0))
+        else:
+            logging.warning(
+                "ground state energy at AKLT point is incorrect : {} != - L * 2/3".format(e0))
+
+        # n: alpha = 1
+        Js = [1, 1]
+        Hs = [0, 0]
+
+        mdfu, mdfh, dfe, dfs = _run_BLBQ1D(Js, Hs, L, 1)
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("BLBQ1D(alpha=1) test passed")
+
+        L = 3
+        mdfu2, mdfh2, dfe2, dfs2 = _run_BLBQ1D(Js, Hs, L, 2)
+        if np.linalg.norm(np.sort(dfe2.value) - np.sort(dfe.value)) < 1e-8:
+            logging.info("ground state energy at lt=1 and L = 6 is consistent with lt=2 and L=3")
+        else:
+            logging.warning(
+                "It is expected that the ground state energy at lt=1 and L = 6 is different from lt=2 and L=3")
+            logging.warning("\n{} \n{}".format(dfe2.value,  dfe.value))
+
+        if test_solver_worm(mdfu2, mdfh2, dfe2, dfs2):
+            logging.info("BLBQ1D(alpha=1 / lt = 2) test passed")

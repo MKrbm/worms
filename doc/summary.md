@@ -647,6 +647,19 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
 - commit : 8f8ff1dfc6d91ab2a764220041ef667a65911b60
 - branch : run_simulation
 
+
+- commit : 87d9256b0a76d71899e2c089bad89d93ca3a42e2
+- branch : impl-test
+  - Implement AKLT, BLBQ, HXYZ1D (with some parameter)
+  - Confirm test passed for all.
+
+
+- commit : 5613aa520a1c42c57217f1f7573050eac779c9f1
+- branch : impl-test
+  - Implement HXYZ2D model.
+  - Confirm test passed for all.
+  - Next MG model will be implemented.
+
 - **bugs**
   - I found out result is inconsistent with previous result.
     - Comparason commit : 86fbd568d695de1dbc824b8102190c43d7535fa6

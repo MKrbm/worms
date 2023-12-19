@@ -7,7 +7,6 @@
 #include <automodel.hpp>
 #include <autoobservable.hpp>
 #include <exec_parallel.hpp>
-#include <options.hpp>
 #include <argparse.hpp>
 #include <observable.hpp>
 #include <funcs.hpp>

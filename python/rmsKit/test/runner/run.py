@@ -33,6 +33,8 @@ def run(params: Dict,
         model_name: str,
         cmd_solver: str,
         cmd_optimize: str,
+        N: int,
+        beta: List[float],
         ) -> Tuple[pd.DataFrame,
                    pd.DataFrame,
                    pd.DataFrame,
@@ -40,6 +42,8 @@ def run(params: Dict,
 
     output_file = (output_dir / f"{{}}_{NOW}_{model_name}.txt").resolve().as_posix()
 
+    logger.info("command sovler: {}".format(cmd_solver))
+    logger.info("command optimization: {}".format(cmd_optimize))
     with change_directory(rmsKit_directory):
         # Add the rmsKit directory to the path
 
@@ -47,7 +51,6 @@ def run(params: Dict,
         out = subprocess.run(command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
 
         stdout = out.stdout.decode("utf-8")
-        # print(stdout)
         # redirect stdout to output_file
         with open(output_file.format("exact"), "w") as f:
             f.write(stdout)
@@ -59,6 +62,7 @@ def run(params: Dict,
         csv_path: str = ""
         eig_csv_path: str = ""
 
+        # print(stdout)
         lines = stdout.split('\n')
         for line in lines:
             # print(line, end='')  # Optional: print the output line by line
@@ -102,8 +106,10 @@ def run(params: Dict,
                 hamiltonian_path = hamiltonian_match.group(1)
 
         if best_unitary_path is None:
+            logging.error("\n{}".format(stdout))
             raise ValueError("Best unitary path not found.")
         if hamiltonian_path is None:
+            logging.error("\n{}".format(stdout))
             raise ValueError("Hamiltonian path not found.")
 
         # get absolute path
@@ -112,11 +118,9 @@ def run(params: Dict,
 
         # run normal worm
 
-        L_list = [params["L1"]]
-        rmsKit_directory = Path(rmsKit_directory)
+        L_list = [params["L1"], params["L2"]] if "L2" in params else [params["L1"]]
 
-        N = 10**6
-        beta = [0.1, 0.5, 1]
+        rmsKit_directory = Path(rmsKit_directory)
 
         run_res = []
 

@@ -46,6 +46,7 @@ int main(int argc, char **argv) {
                                   "Apache License 2.0");
 
   parser.addArgument({"-L1"}, "set shape[0]");
+  parser.addArgument({"--sps"}, "set spin degree of freedom");
   parser.addArgument({"-L2"}, "set shape[1]");
   parser.addArgument({"-L3"}, "set shape[2]");
   parser.addArgument({"-N"}, "# of montecarlo steps (sweeps)");
@@ -162,6 +163,7 @@ int main(int argc, char **argv) {
   size_t therms;
   size_t cutoff_l;
   size_t seed;
+  size_t sps;
   double T = 0;
   bool fix_wdensity = false;
   try {
@@ -217,6 +219,8 @@ int main(int argc, char **argv) {
   }
 
   // parser
+  sps = args.safeGet<size_t>("sps", dofs[0]);
+  std::fill(dofs.begin(), dofs.end(), sps);
   shapes[0] = args.safeGet<size_t>("L1", shapes[0]);
   shapes[1] = args.safeGet<size_t>("L2", shapes[1]);
   shapes[2] = args.safeGet<size_t>("L3", shapes[2]);

@@ -1,19 +1,19 @@
 #!/bin/bash
 
-# Calculate the total number of jobs
-# Calculate the total number of jobs
+# n: Calculate the total number of jobs for HXYZ1D model
+
 calculate_total_jobs() {
     Jx_values=($(seq -2 0.4 2))
     Jy_values=($(seq -2 0.4 2))
-    Jz_values=(1)  # Define Jz values
+    Jz_values=(1)  # Only one Jz value in this case
     H_values=(0 0.5 1)
 
     num_Jx=${#Jx_values[@]}
     num_Jy=${#Jy_values[@]}
-    num_Jz=${#Jz_values[@]}  # Number of Jz values
+    num_Jz=${#Jz_values[@]}
     num_H=${#H_values[@]}
 
-    total_jobs=$((num_Jx * num_Jy * num_Jz * num_H))  # Updated total jobs calculation
+    total_jobs=$((num_Jx * num_Jy * num_Jz * num_H))
 }
 
 # Function to calculate Jx, Jy, Jz, and H from a single integer input
@@ -26,69 +26,88 @@ calculate_parameters() {
     z=$((task_id % (num_Jz * num_H) / num_H))
     k=$((task_id % num_H))
 
-    # Round off to three decimal places
     Jx=$(printf "%.3f" "${Jx_values[$i]}")
     Jy=$(printf "%.3f" "${Jy_values[$j]}")
     Jz=$(printf "%.3f" "${Jz_values[$z]}")
-		H=$(printf "%.3f" "${H_values[$k]}")
-
-		echo "Jx=$Jx, Jy=$Jy, Jz=$Jz, H=$H"
+    H=$(printf "%.3f" "${H_values[$k]}")
 }
 
-echo_total_jobs() {
-    echo "Total number of jobs: $total_jobs"
+# Echo all jobs to confirm the parameters
+echo_jobs() {
+
+    for i in $(seq 0 $((total_jobs - 1))); do
+        calculate_parameters "$i"
+        echo "Jx=${Jx}, Jy=${Jy}, Jz=${Jz}, H=${H}"
+    done
+    echo "Total number of jobs for HXYZ1D model: $total_jobs"
 }
 
-# Core job function
+# Core job function for HXYZ1D model
 run_job() {
-		
+    local task_id=$1
+    local project_dir=$2
+    local n_cpu=$3
 
-	local task_id=$1
-	local project_dir=$2
-	local n_cpu=$3
+    calculate_parameters "$task_id"
 
-	calculate_parameters $task_id
+    LT=1
+    SWEEPS=1000000
+    EPOCH=2000
+    LR=0.005
+    M=20
+    model_name="HXYZ1D"
+    log_file="${project_dir}/job/worm/${model_name}_Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_H_${H}_output.log"
+    link_dir="${project_dir}/job/link/${model_name}"
+    symbolic_link="${link_dir}/Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_hx_${H}_hz_0_lt_${LT}"
 
-	LT=1
-	SWEEPS=1000000
-	EPOCH=2000
-	LR=0.005
-	M=20
-	symoblic_link="${project_dir}/job/link/Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_hx_${H}_hz_0_lt_${LT}"
-	echo "symoblic_link: $symoblic_link"
-	echo "project_dir: $project_dir"
+    # Create the link directory if it does not exist
+    [ ! -d "$link_dir" ] && mkdir -p "$link_dir" && echo "Created link directory $link_dir"
 
+    echo "Symbolic link for HXYZ1D model: $symbolic_link"
+    echo "Project directory: $project_dir"
 
-	cd "$project_dir/python/rmsKit" || return
+    cd "$project_dir/python/rmsKit" || return
 
-	# Add your environment setup if necessary
-	export OMP_NUM_THREADS=$n_cpu
-	export MKL_NUM_THREADS=$n_cpu
+    # if n_cpu is positive, then use that number of CPUs
+    if [ "$n_cpu" -gt 0 ]; then
+        echo "Using $n_cpu CPUs"
+        export OMP_NUM_THREADS=$n_cpu
+        export MKL_NUM_THREADS=$n_cpu
+    else
+        echo "Using all available CPUs"
+    fi
 
-	source /opt/materiapps-intel/env.sh
-	source ~/worms/myenv/bin/activate
-	python -u new_optimize_loc.py -m HXYZ1D \
-		-loss mel -o Adam --lattice_type $LT -M $M -e $EPOCH -lr $LR -Jz $Jz -Jx $Jx -Jy $Jy -hx $H -n $n_cpu \
-		--symoblic_link $symoblic_link \
-		--stdout >> $project_dir/job/worm/Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_H_${H}_output.log
+    source /opt/materiapps-intel/env.sh
+    source ~/worms/myenv/bin/activate
+
+    # Running the simulation for HXYZ1D
+    python -u optimize_loc.py -m $model_name -o Adam -lr $LR -e $EPOCH -M $M -lt $LT \
+        -Jz "$Jz" -Jx "$Jx" -Jy "$Jy" -hx "$H" -n "$n_cpu" --symoblic_link "$symbolic_link" \
+        --stdout >> "$log_file"
+
+    echo "Finished optimization for HXYZ1D model with Jx=${Jx}, Jy=${Jy}, Jz=${Jz}, H=${H} in CPU ${n_cpu}"
 
 	python -u -m run_worm -m HXYZ1D \
-		-f $symoblic_link -s $SWEEPS --original -n $n_cpu \
-		>> $project_dir/job/worm/Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_H_${H}_output.log
+		-f "$symbolic_link" -s $SWEEPS --original -n "$n_cpu" \
+		>> "$project_dir"/job/worm/Jx_"${Jx}"_Jy_"${Jy}"_Jz_"${Jz}"_H_"${H}"_output.log
 
 	python -u -m run_worm -m HXYZ1D \
-		-f $symoblic_link -s $SWEEPS -n $n_cpu \
-		>> $project_dir/job/worm/Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_H_${H}_output.log
-	
-	echo "Finish job with Jx=$Jx, Jy=$Jy, Jz=$Jz and H=$H in CPU $n_cpu"
+		-f "$symbolic_link" -s $SWEEPS -n "$n_cpu" \
+		>> "$project_dir"/job/worm/Jx_"${Jx}"_Jy_"${Jy}"_Jz_"${Jz}"_H_"${H}"_output.log
 
+    echo "Finished HXYZ1D model job with Jx=${Jx}, Jy=${Jy}, Jz=${Jz}, H=${H} in CPU ${n_cpu}"
+
+
+    echo "Cleaning up existing symbolic links $symbolic_link"
+    # Check if symbolic link already exists and remove it if it does
+    # [ -L "$symbolic_link" ] && unlink "$symbolic_link"
 
 }
 
-# echo_total_jobs
-echo "Sourcing script hxzy1d_sim.sh"
+# Initialization
 calculate_total_jobs
-echo_total_jobs
-export -f run_job 
+echo_jobs
+echo "Sourcing script hxyz1d.sh"
+export -f run_job
 export -f calculate_parameters
 export -f calculate_total_jobs
