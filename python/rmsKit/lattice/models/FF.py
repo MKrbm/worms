@@ -4,7 +4,7 @@ import os
 import numpy as np
 import random
 from ..core.paulis.spin import *
-from ..core import utils
+from .. import utils
 import logging
 import tensornetwork as tn
 from typing import List, Any, Tuple, Dict

@@ -11,7 +11,6 @@ file_path = Path(__file__)
 rmsKit_directory = path_utils.extract_to_rmskit(file_path)
 os.chdir(rmsKit_directory)
 
-
 path = Path("array/torch/BLBQ1D_loc/J0_3_J1_1_hx_0_hz_0/1_mel/")
 print("search path: {}".format(path.resolve().as_posix()))
 print(path_utils.get_worm_path(path))

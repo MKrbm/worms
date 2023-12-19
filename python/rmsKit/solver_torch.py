@@ -3,7 +3,7 @@ import torch
 import os
 from lattice import save_npy, get_model
 from utils.parser import get_parser, get_params_parser
-from utils import now, get_logger
+from utils import NOW, get_logger
 import logging
 
 
@@ -11,7 +11,7 @@ parser = get_parser(length=True)
 args, params, hash_str = get_params_parser(parser)
 
 
-log_filename = f"optimizer_output/{now}_{hash_str}.log"
+log_filename = f"optimizer_output/{NOW}_{hash_str}.log"
 logger = get_logger(log_filename, level=logging.INFO, stdout=args.stdout)
 
 if __name__ == "__main__":

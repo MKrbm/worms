@@ -4,14 +4,14 @@ from typing import Dict, Tuple
 import pandas as pd
 
 
-def run_BLBQ1D(params: Dict,
-               rmsKit_directory,
-               output_dir) -> Tuple[pd.DataFrame,
-                                    pd.DataFrame,
-                                    pd.DataFrame,
-                                    pd.DataFrame]:
+def run_MG1D(params: Dict,
+             rmsKit_directory,
+             output_dir) -> Tuple[pd.DataFrame,
+                                  pd.DataFrame,
+                                  pd.DataFrame,
+                                  pd.DataFrame]:
 
-    model_name = "BLBQ1D"
+    model_name = "MG1D"
     output_dir = Path(output_dir)
     cmd = [
         "python",
@@ -20,14 +20,12 @@ def run_BLBQ1D(params: Dict,
         model_name,
         "-L1",
         str(params["L1"]),
-        "-J0",
-        str(params["J0"]),
         "-J1",
         str(params["J1"]),
-        "-hx",
-        str(params["hx"]),
-        "-hz",
-        str(params["hz"]),
+        "-J2",
+        str(params["J2"]),
+        "-J3",
+        str(params["J3"]),
         "-lt",
         str(params["lt"]),
         "--stdout",
@@ -40,20 +38,19 @@ def run_BLBQ1D(params: Dict,
         "optimize_loc.py",
         "-m",
         model_name,
-        "-J0",
-        str(params["J0"]),
         "-J1",
         str(params["J1"]),
-        "-hx",
-        str(params["hx"]),
-        "-hz",
-        str(params["hz"]),
+        "-J2",
+        str(params["J2"]),
+        "-J3",
+        str(params["J3"]),
         "-lt",
         str(params["lt"]),
         "--stdout",
         "-e 2000",
         "-M 20",
-        "-lr 0.01",
+        "-lr 0.001",
+        "-o Adam",
         "--stdout",
     ]
     cmd_optimize = " ".join(cmd)

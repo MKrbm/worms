@@ -653,6 +653,18 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
   - Implement AKLT, BLBQ, HXYZ1D (with some parameter)
   - Confirm test passed for all.
 
+
+- commit : 5613aa520a1c42c57217f1f7573050eac779c9f1
+- branch : impl-test
+  - Implement HXYZ2D model.
+  - Confirm test passed for all.
+  - Next MG model will be implemented.
+
+- commit : dd56ddeac1857a9d95e6a92c7113041078326ef9
+- branch : impl-test
+  - Implement MG model.
+  - Confirm test passed for all.
+
 - **bugs**
   - I found out result is inconsistent with previous result.
     - Comparason commit : 86fbd568d695de1dbc824b8102190c43d7535fa6

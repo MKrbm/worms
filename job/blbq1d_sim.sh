@@ -35,7 +35,6 @@ calculate_parameters() {
 
 
 echo_jobs() {
-    echo "Total number of jobs for BLBQ model: $total_jobs"
 
     # for loop for all parameter to confirm which parameter will be used
     for i in $(seq 0 $((total_jobs - 1)))
@@ -43,6 +42,7 @@ echo_jobs() {
         calculate_parameters "$i"
         echo "J0=${J0}, J1=${J1}, hz=${hz} and hx=${hx}"
     done
+    echo "Total number of jobs for BLBQ model: $total_jobs"
 }
 
 # Core job function for BLBQ model
@@ -70,9 +70,14 @@ run_job() {
 
     cd "$project_dir/python/rmsKit" || return
 
-    # Add your environment setup if necessary
-    export OMP_NUM_THREADS=$n_cpu
-    export MKL_NUM_THREADS=$n_cpu
+    # if n_cpu is positive, then use that number of CPUs
+    if [ "$n_cpu" -gt 0 ]; then
+        echo "Using $n_cpu CPUs"
+        export OMP_NUM_THREADS=$n_cpu
+        export MKL_NUM_THREADS=$n_cpu
+    else
+        echo "Using all available CPUs"
+    fi
     source /opt/materiapps-intel/env.sh
     source ~/worms/myenv/bin/activate
 
@@ -100,10 +105,9 @@ run_job() {
 }
 
 # Initialize script
-echo "Sourcing script blbq-sim.sh"
 calculate_total_jobs
 echo_jobs
-echo "Total number of jobs: $total_jobs"
+echo "Sourcing script blbq-sim.sh"
 export -f run_job
 export -f calculate_parameters
 export -f calculate_total_jobs

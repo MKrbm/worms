@@ -4,21 +4,24 @@ from typing import Dict, Tuple
 import pandas as pd
 
 
-def run_HXYZ1D(params: Dict,
-               rmsKit_directory,
-               output_dir) -> Tuple[pd.DataFrame,
-                                    pd.DataFrame,
-                                    pd.DataFrame,
-                                    pd.DataFrame]:
+def run_HXYZ(params: Dict,
+             rmsKit_directory,
+             output_dir) -> Tuple[pd.DataFrame,
+                                  pd.DataFrame,
+                                  pd.DataFrame,
+                                  pd.DataFrame]:
 
     output_dir = Path(output_dir)
+    model_name = "HXYZ1D" if "L2" not in params else "HXYZ2D"
     cmd = [
         "python",
         "solver_torch.py",
         "-m",
-        "HXYZ1D",
+        model_name,
         "-L1",
         str(params["L1"]),
+        "-L2" if "L2" in params else "",
+        str(params["L2"]) if "L2" in params else "",
         "-Jz",
         str(params["Jz"]),
         "-Jx",
@@ -38,7 +41,7 @@ def run_HXYZ1D(params: Dict,
         "python",
         "optimize_loc.py",
         "-m",
-        "HXYZ1D",
+        model_name,
         "-Jz",
         str(params["Jz"]),
         "-Jx",
@@ -56,4 +59,12 @@ def run_HXYZ1D(params: Dict,
 
     cmd_optimize = " ".join(cmd)
 
-    return run.run(params, rmsKit_directory, output_dir, "HXYZ1D" , cmd_solver, cmd_optimize)
+    return run.run(
+        params,
+        rmsKit_directory,
+        output_dir,
+        model_name,
+        cmd_solver,
+        cmd_optimize,
+        N=10**6,
+        beta=[0.1, 0.5, 1])
