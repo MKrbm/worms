@@ -1,4 +1,8 @@
-"""This module contains the functions to generate the Hamiltonian of the Majundar-Ghosh model."""
+"""This module contains the functions to generate the Hamiltonian of the Majundar-Ghosh model.
+
+More generally, this model is part of J1-J2-J3 (Triangular) model. When J1=1, J2=J3 = 1/2, the model is the Majundar-Ghosh model.
+sps = 2 ** 2 = 4
+"""
 import numpy as np
 from ..core.paulis.spin import Sx, Sz, I2, SxSx, SySy, SzSz
 from .. import utils
@@ -11,69 +15,52 @@ unitary_algorithms = ["original", "2site", "3siteDiag"]
 def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
     """Generate the local Hamiltonian of the Majundar-Ghosh model.
 
-    Minimum lt is 2, and in this case, the system become a 1D chain.
+    Available lt is 2, and in this case, the system become a 1D chain.
 
+    Originally, MG model is spin 1/2 model, but here we only consider lt > 2, which means the system is larger than spin 1.
+    sps > 4
     """
-    Jz = params["Jz"]
-    Jx = params["Jx"]
-    Jy = params["Jy"]
-    hz = params["hz"]
-    hx = params["hx"]
-    lt = params["lt"]  # lattice type
-    h_bond = Jz * SzSz + Jx * SxSx + Jy * SySy
-    h_single = hz * Sz + hx * Sx
+    if D != 1:
+        raise ValueError("J1-J2-J3 is 1D model")
+    J1 = params["J1"]
+    J2 = params["J2"]
+    J3 = params["J3"]
+    lt = params["lt"]
+    h_bond = SzSz + SxSx + SySy
     if lt == 2:
         # n: MG model has 3 bonds per site.
-        h = h_bond + (np.kron(h_single, I2) + np.kron(I2, h_single)) / 3
+        _h = utils.sum_ham(h_bond, [[0, 2]], 4, 2) * J1
+        _h += utils.sum_ham(h_bond, [[1, 3]], 4, 2) * J1
+        _h += utils.sum_ham(h_bond, [[1, 2]], 4, 2) * J3
+        _h += utils.sum_ham(h_bond, [[0, 1], [2, 3]], 4, 2) * J2 / 2
+        h = _h
+        sps = 4
+    else:
+        raise ValueError("lt != 2 is not implemented")
 
-    if lt > 0:
-        h = h_bond + (np.kron(h_single, I2) + np.kron(I2, h_single)) / \
-            (2 * D)  # n* there is 4 bond per site
-        sps = 2
-        if lt > 1:
-            L = lt
-            _h = utils.sum_ham(h / 2, [[i, i+1] for i in range(2*L-1)], 2 * L, sps)
-            _h += utils.sum_ham(h / 2, [[L-1, L]], 2 * L, sps)
-            h = _h
-            sps = sps**L
-        return [h], sps
-
-    # TODO: implement different lattice types such as dimer and triangular
-    raise NotImplementedError("Negative lattice type not implemented")
+    return [h], sps
 
 
 def system(_L: list[int], params: dict) -> Tuple[NDArray[Any], int]:
     """Generate the Hamiltonian of the Majundar-Ghosh model."""
     if len(_L) == 1:
         L = _L[0]
+        P = {
+            "J1": params["J1"],
+            "J2": params["J2"],
+            "J3": params["J3"],
+            "lt": params["lt"],
+        }
+        logging.info(f"params : {P}")
         logging.info(f"L      : {L}")
-        logging.info(f"params : {params}")
         H_list, sps = local(params, D=1)
-
         bonds = [[i, (i + 1) % L] for i in range(L)]
+
         if len(H_list) != 1:
             raise RuntimeError("something wrong")
+
         _H = utils.sum_ham(H_list[0], bonds, L, sps)
         return _H, sps
 
-    elif len(_L) == 2:
-        H_list, sps = local(params, D=2)
-        L1 = _L[0]
-        L2 = _L[1]
-        logging.info(f"L      : {L1}x{L2}")
-        logging.info(f"params : {params}")
-        S = np.arange(L1 * L2)
-        x = S % L1
-        y = S // L1
-        T_x = (x + 1) % L1 + y * L1
-        T_y = x + ((y + 1) % L2) * L1
-        bonds = [[i, T_x[i]]
-                 for i in range(L1*L2)] + [[i, T_y[i]] for i in range(L1*L2)]
-        _H = utils.sum_ham(H_list[0], bonds, L1 * L2, sps)
-
-        if len(H_list) != 1:
-            raise RuntimeError("something wrong")
-
-        return _H, sps
-
-    raise NotImplementedError("2D not implemented")
+    else:
+        raise ValueError("J1-J2-J3(MG) is 1D model")
