@@ -1,5 +1,6 @@
 from .runner.BLBQ import run_BLBQ1D
 from .runner.HXYZ import run_HXYZ
+from .runner.MG import run_MG1D
 import logging
 import os
 from pathlib import Path
@@ -37,15 +38,19 @@ def test_solver_worm(df_u, df_h, df_e, df_s):
 
     if not np.all(df_u.c_test) & np.all(df_u.e_test):
         logging.warning("optimized unitary worm failed solver test")
-        logging.warning("C: \n{}".format(df_u[["specific_heat", "c", "c_error", "c_test"]]))
-        logging.warning("E: \n{}".format(df_u[["energy_per_site", "e", "e_error", "e_test"]]))
+        logging.warning("C: \n{}".format(df_u[["beta","specific_heat", "c", "c_error", "c_test"]]))
+        logging.warning("E: \n{}".format(df_u[["beta", "energy_per_site", "e", "e_error", "e_test"]]))
         test_fail = False
+    else:
+        logging.info("E: \n{}".format(df_u[["beta","energy_per_site", "e", "e_error", "e_test"]]))
 
     if not np.all(df_h.c_test) & np.all(df_h.e_test):
         logging.warning("identity worm failed solver test")
-        logging.warning("C: \n{}".format(df_h[["specific_heat", "c", "c_error", "c_test"]]))
-        logging.warning("E: \n{}".format(df_h[["energy_per_site", "e", "e_error", "e_test"]]))
+        logging.warning("C: \n{}".format(df_h[["beta","specific_heat", "c", "c_error", "c_test"]]))
+        logging.warning("E: \n{}".format(df_h[["beta","energy_per_site", "e", "e_error", "e_test"]]))
         test_fail = False
+    else:
+        logging.info("E: \n{}".format(df_h[["beta","energy_per_site", "e", "e_error", "e_test"]]))
 
     return test_fail
 
@@ -160,6 +165,26 @@ def _run_BLBQ1D(Js: List[float],
     return run_BLBQ1D(params, rmsKit_directory, output_dir)
 
 
+def _run_MG1D(Js: List[float],
+              L: int,
+              lt: int) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    # run HXYZ1D
+    params = {
+        "L1": L,
+        "J1": Js[0],
+        "J2": Js[1],
+        "J3": Js[2],
+        "lt": lt,
+    }
+    rmsKit_directory = Path(
+        __file__).resolve().parent.parent.as_posix()
+    output_dir = FILE_DIR / "output"
+    output_dir.mkdir(exist_ok=True)
+    output_dir = output_dir.as_posix()
+    logging.debug("output_dir: {}".format(output_dir))
+    return run_MG1D(params, rmsKit_directory, output_dir)
+
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -264,6 +289,35 @@ if __name__ == "__main__":
         mdfu, mdfh, dfe, dfs = _run_HXYZ2D(Js, Hs, L[0], L[1])
         if test_solver_worm(mdfu, mdfh, dfe, dfs):
             logging.info("HXYZ1D2(-Jx -0.7 -Jy 0.8 -Jz 0.5 -hx 0.3 -hz 0.2) test passed")
+
+    # n: run MG1D test
+    elif model == "MG1D":
+
+        L = 4
+
+        # MG point
+        Js = [0.5, 1, 1]
+        logging.info("Run MG1D test")
+
+        mdfu, mdfh, dfe, dfs = _run_MG1D(Js, L, 2)
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("MG1D test1 passed")
+
+        e0 = np.min(dfe.value)
+        analytic_e0 = -  L * 2 * (3/4) * (1/2)
+        if np.abs(e0 - analytic_e0) < 1e-8:
+            logging.info("ground state energy at MG point is correct : {} = - L * 3 / 4".format(e0))
+        else:
+            logging.warning(
+                "ground state energy at MG point is incorrect : {} != - L * 3 / 4".format(e0))
+
+        Js = [1, 3/2, -1/2]
+
+        logging.info("Js: {}".format(Js))
+
+        mdfu, mdfh, dfe, dfs = _run_MG1D(Js, L, 2)
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("MG1D test2 passed")
 
     # n: run BLBQ1D test
     elif model == "BLBQ1D":

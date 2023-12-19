@@ -42,7 +42,8 @@ def run(params: Dict,
 
     output_file = (output_dir / f"{{}}_{NOW}_{model_name}.txt").resolve().as_posix()
 
-    logger.info("command: {}".format(cmd_solver))
+    logger.info("command sovler: {}".format(cmd_solver))
+    logger.info("command optimization: {}".format(cmd_optimize))
     with change_directory(rmsKit_directory):
         # Add the rmsKit directory to the path
 
