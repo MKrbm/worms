@@ -3,8 +3,8 @@
 # n: Calculate the total number of jobs for HXYZ1D model
 
 calculate_total_jobs() {
-    Jx_values=($(seq -2 0.4 2))
-    Jy_values=($(seq -2 0.4 2))
+    Jx_values=($(seq -2 0.2 2))
+    Jy_values=($(seq -2 0.2 2))
     Jz_values=(1)  # Only one Jz value in this case
     H_values=(0 0.5 1)
 
@@ -56,7 +56,9 @@ run_job() {
     LR=0.005
     M=20
     model_name="HXYZ1D"
-    log_file="${project_dir}/job/worm/${model_name}_Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_H_${H}_output.log"
+    log_dir="${project_dir}/job/log/${model_name}"
+    [ ! -d "$log_dir" ] && mkdir -p "$log_dir" && echo "Created log directory $log_dir"
+    log_file="${log_dir}/J0_${J0}_J1_${J1}_hz_${hz}_hx_${hx}_output.log"
     link_dir="${project_dir}/job/link/${model_name}"
     symbolic_link="${link_dir}/Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_hx_${H}_hz_0_lt_${LT}"
 
@@ -87,13 +89,17 @@ run_job() {
 
     echo "Finished optimization for HXYZ1D model with Jx=${Jx}, Jy=${Jy}, Jz=${Jz}, H=${H} in CPU ${n_cpu}"
 
-	python -u -m run_worm -m HXYZ1D \
-		-f "$symbolic_link" -s $SWEEPS --original -n "$n_cpu" \
-		>> "$project_dir"/job/worm/Jx_"${Jx}"_Jy_"${Jy}"_Jz_"${Jz}"_H_"${H}"_output.log
+	# python -u -m run_worm -m HXYZ1D \
+	# 	-f "$symbolic_link" -s $SWEEPS --original -n "$n_cpu" \
+	# 	>> "$project_dir"/job/worm/Jx_"${Jx}"_Jy_"${Jy}"_Jz_"${Jz}"_H_"${H}"_output.log
+	#
+	# python -u -m run_worm -m HXYZ1D \
+	# 	-f "$symbolic_link" -s $SWEEPS -n "$n_cpu" \
+	# 	>> "$project_dir"/job/worm/Jx_"${Jx}"_Jy_"${Jy}"_Jz_"${Jz}"_H_"${H}"_output.log
 
-	python -u -m run_worm -m HXYZ1D \
-		-f "$symbolic_link" -s $SWEEPS -n "$n_cpu" \
-		>> "$project_dir"/job/worm/Jx_"${Jx}"_Jy_"${Jy}"_Jz_"${Jz}"_H_"${H}"_output.log
+    python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS --original -n "$n_cpu" --stdout >> "$log_file"
+
+    python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS -n "$n_cpu" --stdout >> "$log_file"
 
     echo "Finished HXYZ1D model job with Jx=${Jx}, Jy=${Jy}, Jz=${Jz}, H=${H} in CPU ${n_cpu}"
 
