@@ -23,6 +23,8 @@ if __name__ == "__main__":
     L_list.append(args.length1)
     L_list.append(args.length2) if args.length2 is not None else None
     N = np.prod(L_list)
+    if args.model == "SS2D":
+        N = 4*N
 
     Hnp, sps, path = get_model(args.model, params, L=L_list)
     H = torch.from_numpy(Hnp).to(device)

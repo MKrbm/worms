@@ -41,17 +41,17 @@ def system(_L: list[int], params: dict) -> Tuple[NDArray[Any], int]:
     """Generate the Hamiltonian of the Shastry-Sutherland model.
 
     Note that here we use diagonal basis.
-    Number of sites will be 2 * 2 * L1 * L2.
-    First 2 is because there are two sites in each unit cell.
-    The second 2 is because there are two spins in each site.
+    # Number of sites will be L1 * L2, and each site as 4 states.
+    Number of sites will be 4 * L1 * L2.
+    Also both L1 and L2 must be even.
     """
 
     if len(_L) == 2:
         H_list, sps = local(params, D=2)
-        L1 = _L[0]
-        L2 = _L[1]
-        if (L1 % 2 != 0) or (L2 % 2 != 0):
-            raise ValueError("L1 and L2 must be even")
+        L1 = _L[0] * 2
+        L2 = _L[1] * 2
+        # if (L1 % 2 != 0) or (L2 % 2 != 0):
+        #     raise ValueError("L1 and L2 must be even")
         S = np.arange(L1 * L2)
         x = S % L1
         y = S // L1
@@ -67,19 +67,17 @@ def system(_L: list[int], params: dict) -> Tuple[NDArray[Any], int]:
         bonds2 = []
         for i in range(L1):
             for j in range(L2):
+                idx = i+j*L1
+                if (i+j) % 2 == 0:
+                    bonds1.append([idx, T_x[idx]])
+                    bonds2.append([idx, T_y[idx]])
+                else:
+                    bonds1.append([idx, T_y[idx]])
+                    bonds2.append([idx, T_x[idx]])
 
-                idx = (i + j * L1)
-                idx2 = (i+(j+1)*L1) % (L1*L2)
-                idx3 = ((i+1) % L1+j*L1) % (L1*L2)
-                idx4 = ((i+1) % L1+(j+1)*L1) % (L1*L2)
 
-                bonds1.append([2*idx, 2*idx+1])
-                bonds2.append([2*idx, 2*idx2+1])
-                bonds1.append([2*idx+1, 2*idx3])
-                bonds2.append([2*idx+1, 2*idx4])
-
-        _H = utils.sum_ham(H_list[0], bonds1, L1 * L2 * 2, sps)
-        _H += utils.sum_ham(H_list[1], bonds2, L1 * L2 * 2, sps)
+        _H = utils.sum_ham(H_list[0], bonds1, L1 * L2, sps)
+        _H += utils.sum_ham(H_list[1], bonds2, L1 * L2, sps)
 
         logging.info(f"L      : {L1}x{L2}")
         logging.info(f"params : {params}")
