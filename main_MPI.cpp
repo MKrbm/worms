@@ -162,7 +162,7 @@ int main(int argc, char **argv) {
   size_t sweeps;
   size_t therms;
   size_t cutoff_l;
-  size_t seed;
+  int seed;
   size_t sps;
   double T = 0;
   bool fix_wdensity = false;
@@ -173,7 +173,7 @@ int main(int argc, char **argv) {
     cutoff_l = (long)config.lookup("cutoff_length");
     T = (double)config.lookup("temperature");
     fix_wdensity = config.lookup("fix_wdensity");
-    seed = static_cast<size_t>(config.lookup("seed"));
+    seed = static_cast<int>(config.lookup("seed"));
 
   } catch (...) {
     std::cout << "I/O error while reading mc_settings.default settings"
@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
     cutoff_l = (long)config.lookup("cutoff_length");
     T = (double)config.lookup("temperature");
     fix_wdensity = config.lookup("fix_wdensity");
-    seed = static_cast<size_t>(config.lookup("seed"));
+    seed = static_cast<int>(config.lookup("seed"));
   }
 
   try {

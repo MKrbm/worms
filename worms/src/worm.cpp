@@ -32,11 +32,14 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_,
   srand(rank);
 #ifdef NDEBUG
   unsigned rseed = static_cast<unsigned>(time(0)) + rand() * (rank + 1);
+  unsigned engine_seed;
   if (seed < 0) {
-    seed = rseed;
+    engine_seed = rseed;
+  } else {
+    engine_seed = seed;
   }
-  std::cout << "Simulation random seed was set to : " << seed << std::endl;
-  rand_src = engine_type(seed);
+  std::cout << "Random seed for process << rank << is set to : " << engine_seed << std::endl;
+  rand_src = engine_type(engine_seed);
 
 #else
   if (seed < 0) {
