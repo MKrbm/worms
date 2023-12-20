@@ -1,24 +1,27 @@
 #pragma once
-#include "localoperator.hpp"
-#include "model.hpp"
+#include <stdio.h>
+
 #include <array>
 #include <bcl.hpp>
 #include <iostream>
-#include <stdio.h>
 #include <string>
 #include <tuple>
 #include <vector>
+
+#include "localoperator.hpp"
+#include "model.hpp"
 
 namespace model {
 size_t num_type(std::vector<size_t> bond_type);
 
 class base_lattice;
-template <class MC = bcl::heatbath> class base_model;
+template <class MC = bcl::heatbath>
+class base_model;
 
 struct BondTargetType {
   size_t bt;
-  bool start;    //* true if the target site is start of the bond.
-  size_t target; //* target site.
+  bool start;     //* true if the target site is start of the bond.
+  size_t target;  //* target site.
   BondTargetType(size_t bt, bool start, size_t target)
       : bt(bt), start(start), target(target) {}
 
@@ -30,19 +33,19 @@ struct BondTargetType {
     return os;
   }
 };
-} // namespace model
+}  // namespace model
 
 class model::base_lattice {
-private:
+ private:
   VS bond_t_legsize;
 
-protected:
+ protected:
   vector<VVS> type2bonds;
   VS bond_t_size;
 
-public:
+ public:
   const size_t L;
-  const size_t Nb; // number of bonds.
+  const size_t Nb;  // number of bonds.
   const size_t N_op;
   const VVS bonds;
   const VS bond_type;
@@ -58,9 +61,11 @@ public:
                std::string cell_name = "simple1d", VS shapes = {6},
                std::string file = "../config/lattice_xml.txt",
                bool print = false);
-  static std::tuple<size_t, VVS, VS, VS>
-  initilizer_xml(std::string basis_name, std::string cell_name, VS shapes,
-                 std::string file, bool print);
+  static std::tuple<size_t, VVS, VS, VS> initilizer_xml(std::string basis_name,
+                                                        std::string cell_name,
+                                                        VS shapes,
+                                                        std::string file,
+                                                        bool print);
 };
 
 /*
@@ -77,19 +82,20 @@ params
 bond.
 
 */
-template <class MC> class model::base_model : public model::base_lattice {
-private:
+template <class MC>
+class model::base_model : public model::base_lattice {
+ private:
   VD shifts;
   double origin_shift;
 
-public:
-  VS _sps_sites; // degree of freedom
+ public:
+  VS _sps_sites;  // degree of freedom
   using MCT = MC;
-  const size_t leg_size = 2; // accepts only bond operators
+  const size_t leg_size = 2;  // accepts only bond operators
   std::vector<local_operator<MCT>> loperators;
   std::vector<double> s_flip_max_weights;
   double alpha;
-  bool zw; // zero worm
+  bool zw;  // zero worm
 
   //* default constructor with no arguments
   /*
@@ -101,8 +107,7 @@ public:
 
   base_model(model::base_lattice lat, VS dofs, std::string ham_path,
              std::string u_path, VD params, VI types, double shift,
-             bool zero_worm, bool repeat, bool print = true,
-             double alpha = 0);
+             bool zero_worm, bool repeat, bool print = true, double alpha = 0);
 
   //* simple constructor
   base_model(model::base_lattice lat, VS dofs,

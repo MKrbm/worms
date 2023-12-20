@@ -8,7 +8,8 @@ models = [
     "FF1D",
     "FF2D",
     "BLBQ1D",
-    "MG1D"
+    "MG1D",
+    "SS2D",
 ]
 # minimum energy solver, quasi energy solver
 loss_val = ["mel", "none", "qsmel"]
