@@ -390,7 +390,7 @@ if __name__ == "__main__":
 
     elif model == "SS2D":
 
-        L = [2, 2]
+        L = [1, 1]
         logging.info("Run SS2D test")
 
         # n: Extreme Dimer case
@@ -412,7 +412,7 @@ if __name__ == "__main__":
         #         "ground state energy at Shastry-Sutherland point is incorrect : {} != - L * 3 / 4".format(e0))
 
 
-        # n: Shastry-Sutherland model (Yet dimer basis is gs)
+        # n: Shastry-Sutherland model (singlet-product phase)
         Js = [1.0, 0.2, 0]
         logging.info("Run SS2D test")
 
@@ -422,10 +422,24 @@ if __name__ == "__main__":
             logging.info("SS2D(yet dimer basis is gs) test passed")
 
         e0 = np.min(dfe.value)
-        analytic_e0 = -  L[0] * L[1] * (3/4)
+        N = 4 * L[0] * L[1]
+        analytic_e0 = -  N * (3/4)
         if np.abs(e0 - analytic_e0) < 1e-8:
             logging.info(
-                "ground state energy at Shastry-Sutherland point is correct : {} = - L * 3 / 4".format(e0))
+                "ground state energy at Shastry-Sutherland point is correct : {} = - N * 3".format(e0))
         else:
             logging.warning(
-                "ground state energy at Shastry-Sutherland point is incorrect : {} != - L * 3 / 4".format(e0))
+                "ground state energy at Shastry-Sutherland point is incorrect : {} != - N * 3".format(e0))
+
+
+
+
+        # n: Shastry-Sutherland model (plaquette phase)
+        Js = [1.0, 1, 0]
+        logging.info("Run SS2D test")
+
+        logging.info("Js: {}".format(Js))
+        mdfu, mdfh, dfe, dfs = _run_SS2D(Js,  L[0], L[1])
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("SS2D(yet dimer basis is gs) test passed")
+
