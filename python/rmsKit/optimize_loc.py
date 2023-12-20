@@ -226,7 +226,7 @@ if __name__ == "__main__":
                     logging.warning("Delete old info.txt and create a new one")
                 if prev_best_loss > best_loss:
                     logging.info(
-                        f"New best loss is found. Update info.txt file. Loss was {best_loss} and now {best_loss}")
+                        f"New best loss is found. Update info.txt file. Loss was {prev_best_loss} and now {best_loss}")
                 else:
                     new_info = False
                     logging.info(
