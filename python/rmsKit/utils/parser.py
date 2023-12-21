@@ -15,10 +15,10 @@ models = [
 loss_val = ["mel", "none", "qsmel"]
 
 
-def get_parser(length: bool = False, model=None):
+def get_parser(length: bool = False, model=None, Description=None):
 
     parser = argparse.ArgumentParser(
-        description="exact diagonalization of shastry_surtherland")
+        description=Description)
     if model is None:
         parser.add_argument("-m", "--model", help="model (model) Name",
                             required=True, choices=models)

@@ -1,3 +1,4 @@
+from utils.parser import models as MODELS
 from .runner.BLBQ import run_BLBQ1D
 from .runner.HXYZ import run_HXYZ
 from .runner.MG import run_MG1D
@@ -12,10 +13,12 @@ from typing import List, Any, Tuple
 import numpy as np
 import pandas as pd
 import sys
+import argparse
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from utils.parser import get_parser, get_params_parser  # noqa: E402
-
-parser = get_parser()
+parser = argparse.ArgumentParser(description="Test exact diagonalization solver, worm algorithm by comparing with analytical results")  
+MODELS.append("all")
+parser.add_argument("-m", "--model", help="model (model) Name",
+                    required=True, choices=MODELS)
 model = parser.parse_args().model
 
 
@@ -230,7 +233,7 @@ os.chdir(FILE_DIR)
 if __name__ == "__main__":
 
     # HXYZ1D
-    if model == "HXYZ1D":
+    if model == "HXYZ1D" or model == "all":
         L = 5
         logging.info("Run HXYZ1D test")
         logging.info("Compare solver_torch.py and HPhi")
@@ -284,7 +287,7 @@ if __name__ == "__main__":
             logging.warning("energy at beta = 1 is incorrect: {} != -0.07947479512910453".format(e))
 
     # n: run HXYZ2D test
-    elif model == "HXYZ2D":
+    if model == "HXYZ2D" or model == "all":
 
         logging.info("Run HXYZ1D2 test")
         L = [3, 3]
@@ -318,7 +321,7 @@ if __name__ == "__main__":
             logging.info("HXYZ1D2(-Jx -0.7 -Jy 0.8 -Jz 0.5 -hx 0.3 -hz 0.2) test passed")
 
     # n: run MG1D test
-    elif model == "MG1D":
+    if model == "MG1D" or model == "all":
 
         L = 4
 
@@ -347,7 +350,7 @@ if __name__ == "__main__":
             logging.info("MG1D test2 passed")
 
     # n: run BLBQ1D test
-    elif model == "BLBQ1D":
+    if model == "BLBQ1D" or model == "all":
 
         L = 6
 
@@ -388,7 +391,7 @@ if __name__ == "__main__":
         if test_solver_worm(mdfu2, mdfh2, dfe2, dfs2):
             logging.info("BLBQ1D(alpha=1 / lt = 2) test passed")
 
-    elif model == "SS2D":
+    if model == "SS2D" or model == "all":
 
         L = [1, 1]
         logging.info("Run SS2D test")
@@ -411,7 +414,6 @@ if __name__ == "__main__":
         #     logging.warning(
         #         "ground state energy at Shastry-Sutherland point is incorrect : {} != - L * 3 / 4".format(e0))
 
-
         # n: Shastry-Sutherland model (singlet-product phase)
         Js = [1.0, 0.2, 0]
         logging.info("Run SS2D test")
@@ -431,9 +433,6 @@ if __name__ == "__main__":
             logging.warning(
                 "ground state energy at Shastry-Sutherland point is incorrect : {} != - N * 3".format(e0))
 
-
-
-
         # n: Shastry-Sutherland model (plaquette phase)
         Js = [1.0, 1, 0]
         logging.info("Run SS2D test")
@@ -442,4 +441,3 @@ if __name__ == "__main__":
         mdfu, mdfh, dfe, dfs = _run_SS2D(Js,  L[0], L[1])
         if test_solver_worm(mdfu, mdfh, dfe, dfs):
             logging.info("SS2D(yet dimer basis is gs) test passed")
-
