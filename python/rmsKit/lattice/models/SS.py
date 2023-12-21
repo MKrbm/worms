@@ -14,7 +14,7 @@ def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
     """Generate the local Hamiltonian of the Shastry-Sutherland model."""
     J0 = params["J0"]
     J1 = params["J1"]
-    # TODO: J2 = params["J2"]
+    J2 = params["J2"]
     # TODO: hx = params["hx"]
     lt = params["lt"]  # lattice type
     if lt != 1:
@@ -27,9 +27,11 @@ def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
 
     # n: for bond type 1.
     H1 = utils.sum_ham(J1*lh, [[1, 2], [1, 3]], 4, 2)
+    H1 += utils.sum_ham(J2*lh, [[0, 2], [0, 3]], 4, 2)
     H1 += utils.sum_ham(J0*lh/4, [[0, 1], [2, 3]], 4, 2)
 
     H2 = utils.sum_ham(J1*lh, [[0, 2], [1, 2]], 4, 2)
+    H2 += utils.sum_ham(J2*lh, [[0, 3], [1, 3]], 4, 2)
     H2 += utils.sum_ham(J0*lh/4, [[0, 1], [2, 3]], 4, 2)
 
     sps = 4

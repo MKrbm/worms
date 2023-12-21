@@ -15,7 +15,8 @@ import pandas as pd
 import sys
 import argparse
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-parser = argparse.ArgumentParser(description="Test exact diagonalization solver, worm algorithm by comparing with analytical results")  
+parser = argparse.ArgumentParser(
+    description="Test exact diagonalization solver, worm algorithm by comparing with analytical results")
 MODELS.append("all")
 parser.add_argument("-m", "--model", help="model (model) Name",
                     required=True, choices=MODELS)
@@ -397,35 +398,46 @@ if __name__ == "__main__":
         logging.info("Run SS2D test")
 
         # n: Extreme Dimer case
-
-        # Js = [1.0, 0., 0]
-        #
-        # logging.info("Js: {}".format(Js))
-        # mdfu, mdfh, dfe, dfs = _run_SS2D(Js,  L[0], L[1])
-        # if test_solver_worm(mdfu, mdfh, dfe, dfs):
-        #     logging.info("SS2D(Disentangled, dimer basis is gs) test passed")
-        #
-        # e0 = np.min(dfe.value)
-        # analytic_e0 = -  L[0] * L[1] * (3/4)
-        # if np.abs(e0 - analytic_e0) < 1e-8:
-        #     logging.info(
-        #         "ground state energy at Shastry-Sutherland point is correct : {} = - L * 3 / 4".format(e0))
-        # else:
-        #     logging.warning(
-        #         "ground state energy at Shastry-Sutherland point is incorrect : {} != - L * 3 / 4".format(e0))
-
-        # n: Shastry-Sutherland model (singlet-product phase)
-        Js = [1.0, 0.2, 0]
-        logging.info("Run SS2D test")
-
+        Js = [1.0, 0., 0]
         logging.info("Js: {}".format(Js))
         mdfu, mdfh, dfe, dfs = _run_SS2D(Js,  L[0], L[1])
         if test_solver_worm(mdfu, mdfh, dfe, dfs):
-            logging.info("SS2D(yet dimer basis is gs) test passed")
+            logging.info("SS2D(Disentangled, dimer basis is gs) test passed")
+
+        e0 = np.min(dfe.value)
+        analytic_e0 = -  L[0] * L[1] * (3/4)
+        if np.abs(e0 - analytic_e0) < 1e-8:
+            logging.info(
+                "ground state energy at Shastry-Sutherland point is correct : {} = - L * 3 / 4".format(e0))
+        else:
+            logging.warning(
+                "ground state energy at Shastry-Sutherland point is incorrect : {} != - L * 3 / 4".format(e0))
+
+        # n: Shastry-Sutherland model (singlet-product phase)
+        Js = [1.0, 0.2, 0]
+        logging.info("Js: {}".format(Js))
+        mdfu, mdfh, dfe, dfs = _run_SS2D(Js,  L[0], L[1])
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("SS2D(Singlet-product basis) test passed")
 
         e0 = np.min(dfe.value)
         N = 4 * L[0] * L[1]
         analytic_e0 = -  N * (3/4)
+        if np.abs(e0 - analytic_e0) < 1e-8:
+            logging.info(
+                "ground state energy at Shastry-Sutherland point is correct : {} = - N * 3".format(e0))
+        else:
+            logging.warning(
+                "ground state energy at Shastry-Sutherland point is incorrect : {} != - N * 3".format(e0))
+
+        # n: Shastry-Sutherland model (also singlet-product phase)
+        Js = [1.0, 0.2, 0.4]
+        logging.info("Js: {}".format(Js))
+        mdfu, mdfh, dfe, dfs = _run_SS2D(Js,  L[0], L[1])
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("SS2D(Singlet-product basis) test passed")
+
+        e0 = np.min(dfe.value)
         if np.abs(e0 - analytic_e0) < 1e-8:
             logging.info(
                 "ground state energy at Shastry-Sutherland point is correct : {} = - N * 3".format(e0))
