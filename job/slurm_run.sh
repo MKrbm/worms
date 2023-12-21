@@ -20,6 +20,8 @@ SLURM_ARRAY_TASK_ID=$SLURM_ARRAY_TASK_ID
 n_job_per_run=11  # Adjust this for the number of jobs per run
 
 # Run the job (for loop)
+rm "$PROJECT_DIR"/job/log/*
+
 for i in $(seq 0 $((n_job_per_run - 1))); do
     job_id=$((SLURM_ARRAY_TASK_ID * n_job_per_run + i)) 
     echo "Running job $job_id"

@@ -1,6 +1,8 @@
+from utils.parser import models as MODELS
 from .runner.BLBQ import run_BLBQ1D
 from .runner.HXYZ import run_HXYZ
 from .runner.MG import run_MG1D
+from .runner.SS import run_SS2D
 import logging
 import os
 from pathlib import Path
@@ -11,10 +13,12 @@ from typing import List, Any, Tuple
 import numpy as np
 import pandas as pd
 import sys
+import argparse
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from utils.parser import get_parser, get_params_parser  # noqa: E402
-
-parser = get_parser()
+parser = argparse.ArgumentParser(description="Test exact diagonalization solver, worm algorithm by comparing with analytical results")  
+MODELS.append("all")
+parser.add_argument("-m", "--model", help="model (model) Name",
+                    required=True, choices=MODELS)
 model = parser.parse_args().model
 
 
@@ -38,19 +42,21 @@ def test_solver_worm(df_u, df_h, df_e, df_s):
 
     if not np.all(df_u.c_test) & np.all(df_u.e_test):
         logging.warning("optimized unitary worm failed solver test")
-        logging.warning("C: \n{}".format(df_u[["beta","specific_heat", "c", "c_error", "c_test"]]))
-        logging.warning("E: \n{}".format(df_u[["beta", "energy_per_site", "e", "e_error", "e_test"]]))
+        logging.warning("C: \n{}".format(df_u[["beta", "specific_heat", "c", "c_error", "c_test"]]))
+        logging.warning("E: \n{}".format(
+            df_u[["beta", "energy_per_site", "e", "e_error", "e_test"]]))
         test_fail = False
     else:
-        logging.info("E: \n{}".format(df_u[["beta","energy_per_site", "e", "e_error", "e_test"]]))
+        logging.info("E: \n{}".format(df_u[["beta", "energy_per_site", "e", "e_error", "e_test"]]))
 
     if not np.all(df_h.c_test) & np.all(df_h.e_test):
         logging.warning("identity worm failed solver test")
-        logging.warning("C: \n{}".format(df_h[["beta","specific_heat", "c", "c_error", "c_test"]]))
-        logging.warning("E: \n{}".format(df_h[["beta","energy_per_site", "e", "e_error", "e_test"]]))
+        logging.warning("C: \n{}".format(df_h[["beta", "specific_heat", "c", "c_error", "c_test"]]))
+        logging.warning("E: \n{}".format(
+            df_h[["beta", "energy_per_site", "e", "e_error", "e_test"]]))
         test_fail = False
     else:
-        logging.info("E: \n{}".format(df_h[["beta","energy_per_site", "e", "e_error", "e_test"]]))
+        logging.info("E: \n{}".format(df_h[["beta", "energy_per_site", "e", "e_error", "e_test"]]))
 
     return test_fail
 
@@ -185,6 +191,30 @@ def _run_MG1D(Js: List[float],
     return run_MG1D(params, rmsKit_directory, output_dir)
 
 
+def _run_SS2D(Js: List[float],
+              L1: int, L2: int) -> Tuple[pd.DataFrame,
+                                         pd.DataFrame,
+                                         pd.DataFrame,
+                                         pd.DataFrame]:
+    # run HXYZ1D
+    params = {
+        "L1": L1,
+        "L2": L2,
+        "J0": Js[0],
+        "J1": Js[1],
+        "J2": Js[2],
+        "lt": 1,
+    }
+
+    rmsKit_directory = Path(
+        __file__).resolve().parent.parent.as_posix()
+    output_dir = FILE_DIR / "output"
+    output_dir.mkdir(exist_ok=True)
+    output_dir = output_dir.as_posix()
+    logging.debug("output_dir: {}".format(output_dir))
+    return run_SS2D(params, rmsKit_directory, output_dir)
+
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -203,7 +233,7 @@ os.chdir(FILE_DIR)
 if __name__ == "__main__":
 
     # HXYZ1D
-    if model == "HXYZ1D":
+    if model == "HXYZ1D" or model == "all":
         L = 5
         logging.info("Run HXYZ1D test")
         logging.info("Compare solver_torch.py and HPhi")
@@ -257,7 +287,7 @@ if __name__ == "__main__":
             logging.warning("energy at beta = 1 is incorrect: {} != -0.07947479512910453".format(e))
 
     # n: run HXYZ2D test
-    elif model == "HXYZ2D":
+    if model == "HXYZ2D" or model == "all":
 
         logging.info("Run HXYZ1D2 test")
         L = [3, 3]
@@ -291,7 +321,7 @@ if __name__ == "__main__":
             logging.info("HXYZ1D2(-Jx -0.7 -Jy 0.8 -Jz 0.5 -hx 0.3 -hz 0.2) test passed")
 
     # n: run MG1D test
-    elif model == "MG1D":
+    if model == "MG1D" or model == "all":
 
         L = 4
 
@@ -320,7 +350,7 @@ if __name__ == "__main__":
             logging.info("MG1D test2 passed")
 
     # n: run BLBQ1D test
-    elif model == "BLBQ1D":
+    if model == "BLBQ1D" or model == "all":
 
         L = 6
 
@@ -360,3 +390,54 @@ if __name__ == "__main__":
 
         if test_solver_worm(mdfu2, mdfh2, dfe2, dfs2):
             logging.info("BLBQ1D(alpha=1 / lt = 2) test passed")
+
+    if model == "SS2D" or model == "all":
+
+        L = [1, 1]
+        logging.info("Run SS2D test")
+
+        # n: Extreme Dimer case
+
+        # Js = [1.0, 0., 0]
+        #
+        # logging.info("Js: {}".format(Js))
+        # mdfu, mdfh, dfe, dfs = _run_SS2D(Js,  L[0], L[1])
+        # if test_solver_worm(mdfu, mdfh, dfe, dfs):
+        #     logging.info("SS2D(Disentangled, dimer basis is gs) test passed")
+        #
+        # e0 = np.min(dfe.value)
+        # analytic_e0 = -  L[0] * L[1] * (3/4)
+        # if np.abs(e0 - analytic_e0) < 1e-8:
+        #     logging.info(
+        #         "ground state energy at Shastry-Sutherland point is correct : {} = - L * 3 / 4".format(e0))
+        # else:
+        #     logging.warning(
+        #         "ground state energy at Shastry-Sutherland point is incorrect : {} != - L * 3 / 4".format(e0))
+
+        # n: Shastry-Sutherland model (singlet-product phase)
+        Js = [1.0, 0.2, 0]
+        logging.info("Run SS2D test")
+
+        logging.info("Js: {}".format(Js))
+        mdfu, mdfh, dfe, dfs = _run_SS2D(Js,  L[0], L[1])
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("SS2D(yet dimer basis is gs) test passed")
+
+        e0 = np.min(dfe.value)
+        N = 4 * L[0] * L[1]
+        analytic_e0 = -  N * (3/4)
+        if np.abs(e0 - analytic_e0) < 1e-8:
+            logging.info(
+                "ground state energy at Shastry-Sutherland point is correct : {} = - N * 3".format(e0))
+        else:
+            logging.warning(
+                "ground state energy at Shastry-Sutherland point is incorrect : {} != - N * 3".format(e0))
+
+        # n: Shastry-Sutherland model (plaquette phase)
+        Js = [1.0, 1, 0]
+        logging.info("Run SS2D test")
+
+        logging.info("Js: {}".format(Js))
+        mdfu, mdfh, dfe, dfs = _run_SS2D(Js,  L[0], L[1])
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("SS2D(yet dimer basis is gs) test passed")

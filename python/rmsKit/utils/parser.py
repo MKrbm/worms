@@ -8,16 +8,17 @@ models = [
     "FF1D",
     "FF2D",
     "BLBQ1D",
-    "MG1D"
+    "MG1D",
+    "SS2D",
 ]
 # minimum energy solver, quasi energy solver
 loss_val = ["mel", "none", "qsmel"]
 
 
-def get_parser(length: bool = False, model=None):
+def get_parser(length: bool = False, model=None, Description=None):
 
     parser = argparse.ArgumentParser(
-        description="exact diagonalization of shastry_surtherland")
+        description=Description)
     if model is None:
         parser.add_argument("-m", "--model", help="model (model) Name",
                             required=True, choices=models)

@@ -1,4 +1,4 @@
-from .models import FF, HXYZ, BLBQ, MG
+from .models import FF, HXYZ, BLBQ, MG, SS
 from typing import List, Tuple, Any, Dict, Union
 from numpy._typing import NDArray
 
@@ -106,6 +106,31 @@ def get_model(model: str, params: Dict[str, Any], L: Union[List[int], None] = No
         else:
             model_name = f"{model}_loc/{params_str}"
             h_list, sps = MG.local(params, d)
+            return h_list, sps, model_name
+
+    elif "SS2D" in model:
+        p = dict(
+            J0=params["J0"],
+            J1=params["J1"],
+            J2=params["J2"],
+        )
+        a = ""
+        for k, v in p.items():
+            v = float(v)
+            a += f"{k}_{v:.4g}_"
+        params_str = a[:-1]
+        p["lt"] = params["lt"]
+
+        if L:
+            if len(L) != 2:
+                raise ValueError("SS only accept 2D lattice")
+            size_name = f"L_{L[0]}x{L[1]}"
+            model_name = f"{model}_sys/{size_name}/{params_str}"
+            h_list, sps = SS.system(L, p)
+            return h_list, sps, model_name
+        else:
+            model_name = f"{model}_loc/{params_str}"
+            h_list, sps = SS.local(params, 2)
             return h_list, sps, model_name
 
     raise NotImplementedError(f"model {model} not implemented")

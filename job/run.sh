@@ -4,11 +4,12 @@
 
 # source hxyz1d_sim.sh
 # source blbq1d_sim.sh
-source mg1d_sim.sh
+# source mg1d_sim.sh
+source ss2d_sim.sh
 
-P=2
+P=5
 PROJECT_DIR=$(dirname "$(pwd)")
-NUM_THREAD=2  # Adjust this to the number of parallel jobs you want to run
+NUM_THREAD=1  # Adjust this to the number of parallel jobs you want to run
 
 # Cleanup existing job data
 echo removing "$PROJECT_DIR/job/worm/*"

@@ -56,7 +56,9 @@ run_job() {
     LR=0.005
     M=20
     model_name="HXYZ1D"
-    log_file="${project_dir}/job/worm/${model_name}_Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_H_${H}_output.log"
+    log_dir="${project_dir}/job/log/${model_name}"
+    [ ! -d "$log_dir" ] && mkdir -p "$log_dir" && echo "Created log directory $log_dir"
+    log_file="${log_dir}/J0_${J0}_J1_${J1}_hz_${hz}_hx_${hx}_output.log"
     link_dir="${project_dir}/job/link/${model_name}"
     symbolic_link="${link_dir}/Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_hx_${H}_hz_0_lt_${LT}"
 
