@@ -89,24 +89,13 @@ run_job() {
 
     echo "Finished optimization for HXYZ1D model with Jx=${Jx}, Jy=${Jy}, Jz=${Jz}, H=${H} in CPU ${n_cpu}"
 
-	# python -u -m run_worm -m HXYZ1D \
-	# 	-f "$symbolic_link" -s $SWEEPS --original -n "$n_cpu" \
-	# 	>> "$project_dir"/job/worm/Jx_"${Jx}"_Jy_"${Jy}"_Jz_"${Jz}"_H_"${H}"_output.log
-	#
-	# python -u -m run_worm -m HXYZ1D \
-	# 	-f "$symbolic_link" -s $SWEEPS -n "$n_cpu" \
-	# 	>> "$project_dir"/job/worm/Jx_"${Jx}"_Jy_"${Jy}"_Jz_"${Jz}"_H_"${H}"_output.log
-
     python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS --original -n "$n_cpu" --stdout >> "$log_file"
+
+    echo "Finished running worm with original hamiltonian"
 
     python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS -n "$n_cpu" --stdout >> "$log_file"
 
-    echo "Finished HXYZ1D model job with Jx=${Jx}, Jy=${Jy}, Jz=${Jz}, H=${H} in CPU ${n_cpu}"
-
-
-    echo "Cleaning up existing symbolic links $symbolic_link"
-    # Check if symbolic link already exists and remove it if it does
-    # [ -L "$symbolic_link" ] && unlink "$symbolic_link"
+    echo "Finished running worm with optimized hamiltonian"
 
 }
 

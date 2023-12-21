@@ -83,11 +83,11 @@ run_job() {
 
     python -u -m run_worm -m $model_name --path "$symbolic_link" -s "$SWEEPS" --original -n "$n_cpu" --stdout >> "$log_file"
 
+    echo "Finished running worm with original hamiltonian"
+
     python -u -m run_worm -m $model_name --path "$symbolic_link" -s "$SWEEPS" -n "$n_cpu" --stdout >> "$log_file"
 
-    echo "Finished SS2D model job with J0=${J0}, J1=${J1}, J2=${J2} in CPU ${n_cpu}"
-
-    # Cleaning up symbolic links, if necessary
+    echo "Finished running worm with optimized hamiltonian"
 }
 
 # Initialization
