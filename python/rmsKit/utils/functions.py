@@ -1,3 +1,4 @@
+from typing import Dict
 import pandas as pd
 import numpy as np
 from typing import List, Dict, Any, Tuple
@@ -256,7 +257,7 @@ def extract_parameters_from_path(path: str) -> Dict[str, float]:
     """
     # Split the path and get the relevant part with parameters
     parts = path.split('/')
-    params_part = parts[-3]  # The third from the last part contains the parameters
+    params_part = parts[-4]  # The third from the last part contains the parameters
     params_split = params_part.split('_')
 
     params = dict()
@@ -270,11 +271,12 @@ def extract_parameters_from_path(path: str) -> Dict[str, float]:
             try:
                 params[params_split[i]] = float(params_split[i + 1])
             except ValueError as e:
-                print("""
+                logging.error("""
                 The parameter value is not a float: {}
+                path : {}
                 Error : {}
                 return None
-                """.format(params_split[i + 1], e))
+                """.format(params_split[i + 1], path, e))
                 return None
 
     else:
@@ -282,11 +284,12 @@ def extract_parameters_from_path(path: str) -> Dict[str, float]:
             try:
                 params[params_split[i]] = float(params_split[i + 1])
             except ValueError as e:
-                print("""
+                logging.error("""
                 The parameter value is not a float: {}
+                path : {}
                 Error : {}
                 return None
-                """.format(params_split[i + 1], e))
+                """.format(params_split[i + 1], path, e))
                 return None
 
     return params
