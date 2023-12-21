@@ -12,6 +12,7 @@ class MinimumEnergyLoss(nn.Module):
         self,
         h_list: List[Union[np.ndarray, torch.Tensor]],
         device: torch.device = torch.device("cpu"),
+        decay: float = 0.1, #n : after "decay" step, the regularization term will e^(-1) times smaller
     ):
         super(MinimumEnergyLoss, self).__init__()
 
@@ -19,6 +20,10 @@ class MinimumEnergyLoss(nn.Module):
         self.shift_origin_offset = []
         self.h_list = []
         self.X = []
+        self.weight = 1 if decay > 0 else 0
+        if decay < 0:
+            raise ValueError("decay should be positive.")
+        self.weight_decay = decay
         for i in range(len(h_list)):
             if isinstance(h_list[i], np.ndarray):
                 self.h_list.append(torch.from_numpy(
@@ -49,6 +54,8 @@ class MinimumEnergyLoss(nn.Module):
         loss = torch.zeros(1, device=U.device)
         for i in range(len(self.h_list)):
             loss += self.minimum_energy_loss(self.h_list[i], U) - self.shift_origin_offset[i]
+
+        self.weight = self.weight * np.exp(-1 / self.weight_decay)
         return torch.abs(loss)
 
     def minimum_energy_loss(self, H: torch.Tensor, U: torch.Tensor) -> torch.Tensor:
@@ -56,7 +63,11 @@ class MinimumEnergyLoss(nn.Module):
 
         The first ground state is calculated using the eigendecomposition of the Hamiltonian.
         """
-        result_abs = self.get_stoquastic(H, U)
+        A = U @ H @ U.T
+        result_abs = self.get_stoquastic(A)
+
+        # n: corresponds to caluclate eneergy of maximum superposition state
+        negativity = torch.abs(A - result_abs).mean() / H.shape[0] 
         try:
             E = torch.linalg.eigvalsh(result_abs)
         except RuntimeError:
@@ -64,7 +75,7 @@ class MinimumEnergyLoss(nn.Module):
             result_abs = (result_abs + result_abs.T)/2
             E = torch.linalg.eigvalsh(result_abs)
 
-        return - E[0]
+        return - E[0] + self.weight * negativity
 
     def stoquastic(self, A: torch.Tensor):
         """Change the sign of all non-diagonal elements into negative.
@@ -74,12 +85,11 @@ class MinimumEnergyLoss(nn.Module):
         """
         return -torch.abs(A)
 
-    def get_stoquastic(self, h: torch.Tensor, U: torch.Tensor) -> torch.Tensor:
+    def get_stoquastic(self, A: torch.Tensor) -> torch.Tensor:
         """Return the stoquastic matrix of a given matrix.
 
         First, calculate the matrix A = U @ h @ U.T. Then apply stoquastic function.
         """
-        A = U @ h @ U.T
         return self.stoquastic(A)
 
 
@@ -123,7 +133,7 @@ class SystemQUasiEnergyLoss(MinimumEnergyLoss):
             raise ValueError("nr should be positive integer.")
 
         SUx = torch.abs(U @ X)
-        SUH = self.get_stoquastic(H, U)
+        SUH = self.get_stoquastic(U @ H @ U.T)
         y = SUx
         for _ in range(10):
             y = SUH @ y

@@ -73,7 +73,7 @@ if __name__ == "__main__":
         loss = rms_torch.SystemQUasiEnergyLoss(h_list, device=device)
     elif args.loss == "mel":
         h_list, _, _ = get_model(args.model, params)
-        loss = rms_torch.MinimumEnergyLoss(h_list, device=device)
+        loss = rms_torch.MinimumEnergyLoss(h_list, device=device, decay=epochs/10)
         loss_dir = f"{params['lt']}_{args.loss}"
     elif args.loss == "none":
         h_list, _, _ = get_model(args.model, params)
