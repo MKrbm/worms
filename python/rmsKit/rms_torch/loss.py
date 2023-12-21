@@ -12,7 +12,8 @@ class MinimumEnergyLoss(nn.Module):
         self,
         h_list: List[Union[np.ndarray, torch.Tensor]],
         device: torch.device = torch.device("cpu"),
-        decay: float = 0.1, #n : after "decay" step, the regularization term will e^(-1) times smaller
+        decay: float = 0.1,
+        # n : after "decay" step, the regularization term will e^(-1) times smaller
     ):
         super(MinimumEnergyLoss, self).__init__()
 
@@ -67,7 +68,7 @@ class MinimumEnergyLoss(nn.Module):
         result_abs = self.get_stoquastic(A)
 
         # n: corresponds to caluclate eneergy of maximum superposition state
-        negativity = torch.abs(A - result_abs).mean() / H.shape[0] 
+        negativity = torch.abs(A - result_abs).mean() / H.shape[0]
         try:
             E = torch.linalg.eigvalsh(result_abs)
         except RuntimeError:
