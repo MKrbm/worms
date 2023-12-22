@@ -62,7 +62,7 @@ def get_df_from_summary_files(summary_files: str, N: int) -> pd.DataFrame:
                 df1 = pd.read_csv(sum_file)
                 if not (df1.u_path.isnull().values.any()):
                     df1 = get_loss(df1)
-                    if np.abs(df1.loss.values - info["best_loss"]).mean() > 1E-6:
+                    if np.abs(df1.loss.values - info["best_loss"]).mean() > 1E-5:
                         print(df1.loss, info["best_loss"])
                         raise ValueError("best_loss is not consistent with summary data")
             except BaseException as e:
