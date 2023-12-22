@@ -52,7 +52,7 @@ run_job() {
     model_name="MG1D"
     log_dir="${project_dir}/job/log/${model_name}"
     [ ! -d "$log_dir" ] && mkdir -p "$log_dir" && echo "Created log directory $log_dir"
-    log_file="${log_dir}/J0_${J0}_J1_${J1}_hz_${hz}_hx_${hx}_output.log"
+    log_file="${log_dir}/J1_${J1}_J2_${J2}_J3_${J3}.log"
     link_dir="${project_dir}/job/link/${model_name}"
     symbolic_link="${link_dir}/J1_${J1}_J2_${J2}_J3_${J3}"
 
