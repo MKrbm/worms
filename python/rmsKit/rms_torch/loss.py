@@ -17,6 +17,9 @@ class MinimumEnergyLoss(nn.Module):
     ):
         super(MinimumEnergyLoss, self).__init__()
 
+        logging.info("Initializing MinimumEnergyLoss")
+        logging.info(f"\tnumber of local hamiltonians: {len(h_list)}")
+        logging.info(f"\tdecay time: {decay}")
         offset = []
         self.shift_origin_offset = []
         self.h_list = []
@@ -26,6 +29,7 @@ class MinimumEnergyLoss(nn.Module):
             raise ValueError("decay should be positive.")
         self.weight_decay = decay
         for i in range(len(h_list)):
+            logging.info("\tInitializing local hamiltonian \n{}".format(h_list[i]))
             if isinstance(h_list[i], np.ndarray):
                 self.h_list.append(torch.from_numpy(
                     h_list[i]).to(torch.float64).to(device))
@@ -36,12 +40,12 @@ class MinimumEnergyLoss(nn.Module):
                     "h should be of type np.ndarray or torch.Tensor.")
             E, V = torch.linalg.eigh(self.h_list[i])
 
-            logging.info(f"maximum energy of local hamiltonian {i}: {E[-1]:.3f}")
-            logging.info(f"minimum energy of local hamiltonian {i}: {E[0]:.3f}")
+            logging.info(f"\tmaximum energy of local hamiltonian {i}: {E[-1]:.3f}")
+            logging.info(f"\tminimum energy of local hamiltonian {i}: {E[0]:.3f}")
             offset.append(E[-1])
             self.h_list[i][:] = self.h_list[i] - offset[i] * \
                 torch.eye(h_list[i].shape[1], device=device)
-            logging.info(f"offset of local hamiltonian {i}: {offset[i]:.3f}")
+            logging.info(f"\toffset of local hamiltonian {i}: {offset[i]:.3f}")
             self.X.append(V[:, 0].to(device))
             self.shift_origin_offset.append(offset[i] - E[0])
 
@@ -57,6 +61,7 @@ class MinimumEnergyLoss(nn.Module):
             loss += self.minimum_energy_loss(self.h_list[i], U) - self.shift_origin_offset[i]
 
         self.weight = self.weight * np.exp(-1 / self.weight_decay)
+        # print(f"weight: {self.weight}")
         return torch.abs(loss)
 
     def minimum_energy_loss(self, H: torch.Tensor, U: torch.Tensor) -> torch.Tensor:
@@ -92,6 +97,14 @@ class MinimumEnergyLoss(nn.Module):
         First, calculate the matrix A = U @ h @ U.T. Then apply stoquastic function.
         """
         return self.stoquastic(A)
+
+    def initializer(self, U: torch.Tensor) -> None:
+        """Initialize the unitary matrix.
+
+        If the loss is mel, just initialze decay weight to 1 if decay > 0.
+        """
+        self.weight = 1 if self.weight_decay > 0 else 0
+        return
 
 
 class SystemQUasiEnergyLoss(MinimumEnergyLoss):
