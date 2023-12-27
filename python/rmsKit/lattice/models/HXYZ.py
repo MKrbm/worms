@@ -1,12 +1,7 @@
-import sys
-import os
 import numpy as np
-import random
-from ..core.constants import *
-from ..core.utils import *
+from ..core.paulis.spin import *
+from .. import utils
 import logging
-import tensornetwork as tn
-import utils
 from typing import List, Any, Tuple, Dict
 from numpy._typing import NDArray
 unitary_algorithms = ["original", "2site", "3siteDiag"]
@@ -34,6 +29,7 @@ def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
             sps = sps**L
         return [h], sps
 
+    # TODO: implement different lattice types such as dimer and triangular
     raise NotImplementedError("Negative lattice type not implemented")
 
 
@@ -51,25 +47,24 @@ def system(_L: list[int], params: dict) -> Tuple[NDArray[Any], int]:
         _H = utils.sum_ham(H_list[0], bonds, L, sps)
         return _H, sps
 
-        # else: # 2D
-        #     raise ValueError(f"ua = {ua} not supported")
-        # L = _L[0] * _L[1]
-        # logging.info(f"L      : {L} (3 site per unit cell)")
-        # logging.info(f"params : {params}")
-        # H_list, sps = local(ua, params, 2)  # 2 dimensional
-        #
-        # if ua == "original":
-        #     s = np.arange(L)
-        #     x = s % _L[0]
-        #     y = s // _L[0]
-        #     T_x = (x + 1) % _L[0] + y * _L[0]
-        #     T_y = x + ((y + 1) % _L[1]) * _L[0]
-        #     bonds = [[i, T_x[i]] for i in range(L)] + [[i, T_y[i]] for i in range(L)]
-        #     print(bonds)
-        #     if len(H_list) != 1:
-        #         raise RuntimeError("something wrong")
-        #     _H = rms.sum_ham(H_list[0], bonds, L, 2)
-        #     return _H
-        # else:
-        #     raise ValueError(f"ua = {ua} not supported")
+    elif len(_L) == 2:
+        H_list, sps = local(params, D=2)
+        L1 = _L[0]
+        L2 = _L[1]
+        logging.info(f"L      : {L1}x{L2}")
+        logging.info(f"params : {params}")
+        S = np.arange(L1 * L2)
+        x = S % L1
+        y = S // L1
+        T_x = (x + 1) % L1 + y * L1
+        T_y = x + ((y + 1) % L2) * L1
+        bonds = [[i, T_x[i]]
+                 for i in range(L1*L2)] + [[i, T_y[i]] for i in range(L1*L2)]
+        _H = utils.sum_ham(H_list[0], bonds, L1 * L2, sps)
+
+        if len(H_list) != 1:
+            raise RuntimeError("something wrong")
+
+        return _H, sps
+
     raise NotImplementedError("2D not implemented")

@@ -1,9 +1,10 @@
 # kagome heisenberg model
 
-import sys, os
+import sys
+import os
 import numpy as np
-from ..core.constants import *
-from ..core.utils import *
+from ..core.paulis.spin import *
+from .. import utils
 import utils
 import logging
 
@@ -42,8 +43,8 @@ def local(lt: str, params: dict):
     """
     params
     ------
-    lt : str 
-        lattice type 
+    lt : str
+        lattice type
     params : dict
     """
     if lt not in unitary_algorithms:
@@ -57,13 +58,15 @@ def local(lt: str, params: dict):
     h_single = hz * Sz + hx * Sx
 
     if lt == "original":
-        h = h_bond + (np.kron(h_single, I2) + np.kron(I2, h_single)) / 4.0  # n* there is 4 bond per site
+        h = h_bond + (np.kron(h_single, I2) + np.kron(I2, h_single)) / \
+            4.0  # n* there is 4 bond per site
         sps = 2
         return [h], sps
 
     if lt == "3site":
         _h = utils.sum_ham(h_bond / 6, [[0, 1], [1, 2], [2, 0], [3, 4], [4, 5], [5, 3]], 6, 2)
-        _h += utils.sum_ham(h_single / 6, [[i] for i in range(6)], 6, 2)  # n* there is 6 bond per site
+        _h += utils.sum_ham(h_single / 6, [[i] for i in range(6)],
+                            6, 2)  # n* there is 6 bond per site
 
         h = [
             _h + utils.sum_ham(h_bond, [[0, 5]], 6, 2),
@@ -78,7 +81,8 @@ def local(lt: str, params: dict):
         E, V = np.linalg.eigh(_h0)
         U = np.kron(V, V)
         _h = utils.sum_ham(h_bond / 6, [[0, 1], [1, 2], [2, 0], [3, 4], [4, 5], [5, 3]], 6, 2)
-        _h += utils.sum_ham(h_single / 6, [[i] for i in range(6)], 6, 2)  # n* there is 6 bond per site
+        _h += utils.sum_ham(h_single / 6, [[i] for i in range(6)],
+                            6, 2)  # n* there is 6 bond per site
 
         h = [
             _h + utils.sum_ham(h_bond, [[0, 5]], 6, 2),
@@ -320,7 +324,7 @@ def system(_L: list[int], lt: str, params: dict, separate: bool = False) -> np.n
 
         if len(H_list) != 3:
             raise RuntimeError("something wrong")
-        if separate == True:
+        if separate:
             _H_list = []
             _H = utils.sum_ham(H_list[0], bonds_prime1[0], 4, 8)
             _H += utils.sum_ham(H_list[1], bonds_prime1[1], 4, 8)

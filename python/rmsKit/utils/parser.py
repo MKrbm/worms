@@ -7,12 +7,15 @@ models = [
     "HXYZ2D",
     "FF1D",
     "FF2D",
+    "BLBQ1D",
+    "MG1D",
+    "SS2D",
 ]
 # minimum energy solver, quasi energy solver
-loss_val = ["mel", "none"]
+loss_val = ["mel", "none", "qsmel"]
 
 
-def get_parser(length=False, model=None):
+def get_parser(length: bool = False, model=None):
 
     parser = argparse.ArgumentParser(
         description="exact diagonalization of shastry_surtherland")
@@ -87,12 +90,53 @@ def get_parser(length=False, model=None):
         default=1,
     )
 
-    if length:
-        parser.add_argument('-L1', "--length1", help="length of side", type=int, required=True)
-        parser.add_argument('-L2', "--length2", help="length of side", type=int)
+    parser.add_argument(
+        "-J1",
+        "--J1",
+        help="first neighbor coupling",
+        type=float,
+        default=1,
+    )
+
+    parser.add_argument(
+        "-J2",
+        "--J2",
+        help="second neighbor coupling",
+        type=float,
+        default=1,
+    )
+
+    parser.add_argument(
+        "-J3",
+        "--J3",
+        help="third neighbor coupling",
+        type=float,
+        default=1,
+    )
+
+    parser.add_argument(
+        "-J0",
+        "--J0",
+        help="neighbor coupling",
+        type=float,
+        default=1,
+    )
+
+    parser.add_argument('-L1', "--length1", help="length of side", type=int, required=length)
+    parser.add_argument('-L2', "--length2", help="length of side", type=int)
+
+    return parser
+
+
+def get_params_parser(parser):
+
     args = parser.parse_args()
 
     params = dict(
+        J0=args.J0,
+        J1=args.J1,
+        J2=args.J2,
+        J3=args.J3,
         Jx=args.coupling_x if args.coupling_x is not None else args.coupling_z,
         Jy=args.coupling_y if args.coupling_y is not None else args.coupling_z,
         Jz=args.coupling_z,

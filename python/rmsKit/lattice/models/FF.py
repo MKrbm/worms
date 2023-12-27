@@ -3,11 +3,10 @@ import sys
 import os
 import numpy as np
 import random
-from ..core.constants import *
-from ..core.utils import *
+from ..core.paulis.spin import *
+from .. import utils
 import logging
 import tensornetwork as tn
-import utils
 from typing import List, Any, Tuple, Dict
 
 

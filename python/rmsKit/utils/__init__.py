@@ -1,62 +1,41 @@
-import numpy as np
+"""This module contains utility functions for the rmsKit package.
+
+The functions are divided into the following categories:
+    - Functions for running the simulation
+    - Functions for extracting information from the simulation result
+    - Some other utility functions
+"""
 import datetime
-import logging
-import sys
 from .functions import sum_ham, stoquastic, get_files_in_order, files_to_dataframe, \
     get_local_best_loss_from_tensorboard, bfs_search_and_get_files, filter_dataframe, \
-    get_seed_and_loss, get_canonical_form
+    get_seed_and_loss, get_canonical_form, extract_info_from_file, result_to_dataframe, \
+    extract_parameters_from_path, param_dict_normalize, get_loss
+
 from .run_sim import run_ff, extract_loss, path_with_lowest_loss, run_worm
+from .get_logger import get_logger
+from . import path
 
 
-now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+NOW = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 
-def get_logger(log_filename: str, level: int = logging.INFO,
-               stdout: bool = False) -> logging.Logger:
-    if not stdout:
-        logging.basicConfig(
-            level=level,
-            filename=log_filename,
-            format="%(asctime)s - %(levelname)s - %(message)s"
-        )
-
-        logger = logging.getLogger()
-        print("Log file will be saved to " + log_filename)
-    else:
-        logging.basicConfig(
-            level=level,
-            stream=sys.stdout,
-            format="%(asctime)s - %(levelname)s - %(message)s"
-        )
-
-        file_handler = logging.FileHandler(log_filename)
-        file_handler.setLevel(logging.INFO)
-        file_formatter = logging.Formatter(
-            "%(asctime)s - %(levelname)s - %(message)s")
-        file_handler.setFormatter(file_formatter)
-
-        logger = logging.getLogger()
-        logger.addHandler(file_handler)
-
-    logging.info("Log file will be saved to " + log_filename)
-    logging.info("filename : torch_optimize_loc.py")
-    return logger
-
-
-__all__ = [
-    "run_ff",
-    "sum_ham",
-    "stoquastic",
-    "get_local_best_loss_from_tensorboard",
-    "extract_loss",
-    "path_with_lowest_loss",
-    "run_worm",
-    "get_files_in_order",
-    "bfs_search_and_get_files",
-    "filter_dataframe",
-    "files_to_dataframe",
-    "get_seed_and_loss",
-    "get_canonical_form",
-    "now",
-    "get_logger",
-]
+# __all__ = [
+#     "run_ff",
+#     "sum_ham",
+#     "stoquastic",
+#     "get_local_best_loss_from_tensorboard",
+#     "extract_loss",
+#     "path_with_lowest_loss",
+#     "run_worm",
+#     "get_files_in_order",
+#     "bfs_search_and_get_files",
+#     "filter_dataframe",
+#     "files_to_dataframe",
+#     "get_seed_and_loss",
+#     "get_canonical_form",
+#     "now",
+#     "get_logger",
+#     "extract_info_from_file",
+#     "result_to_dataframe",
+#     "extract_parameters_from_path",
+# ]

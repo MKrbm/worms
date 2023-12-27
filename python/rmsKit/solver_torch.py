@@ -2,15 +2,16 @@ import numpy as np
 import torch
 import os
 from lattice import save_npy, get_model
-from utils.parser import get_parser
-from utils import now, get_logger
+from utils.parser import get_parser, get_params_parser
+from utils import NOW, get_logger
 import logging
 
 
-args, params, hash_str = get_parser(length=True)
+parser = get_parser(length=True)
+args, params, hash_str = get_params_parser(parser)
 
 
-log_filename = f"optimizer_output/{now}_{hash_str}.log"
+log_filename = f"optimizer_output/{NOW}_{hash_str}.log"
 logger = get_logger(log_filename, level=logging.INFO, stdout=args.stdout)
 
 if __name__ == "__main__":
@@ -22,6 +23,8 @@ if __name__ == "__main__":
     L_list.append(args.length1)
     L_list.append(args.length2) if args.length2 is not None else None
     N = np.prod(L_list)
+    if args.model == "SS2D":
+        N = 4*N
 
     Hnp, sps, path = get_model(args.model, params, L=L_list)
     H = torch.from_numpy(Hnp).to(device)
@@ -63,8 +66,10 @@ if __name__ == "__main__":
     logging.info("eigenvalues file: {}".format(file))
     with open(file, "w") as dat_file:
         dat_file.write("index,value\n")
+        # logging.info("index,value") if args.stdout else None
         for i, e in enumerate(E):
             dat_file.write(f"{i},{e:.60g}\n")
+            # logging.info(f"{i},{e:.5g}") if args.stdout else None
 
     file = f"{path}/statistics.csv"
     os.makedirs(os.path.dirname(file), exist_ok=True)

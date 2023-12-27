@@ -5,12 +5,12 @@ project(worms VERSION 1.0.0 LANGUAGES CXX)
 
 # cmake will find modules from this path with include command
 # you don't need to run include if there is no option to download from github
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(MPI REQUIRED COMPONENTS CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON) # This is needed to prevent FetchContent from trying to download things when we don't want it to (e.g. when we're offline)
 
 # c and c++ compiler
 # set(CMAKE_C_COMPILER /usr/bin/aarch64-linux-gnu-gcc CACHE PATH "")
@@ -86,12 +86,4 @@ ENDFOREACH(name)
 # message(STATUS "MPI_CXX_INCLUDE_DIRS = ${MPI_CXX_INCLUDE_DIRS}")
 # message(STATUS "MPI_CXX_LIBRARIES = ${MPI_CXX_LIBRARIES}")
 
-add_executable(mpi_test ./test_/hello_world.cpp)
-target_link_libraries(mpi_test MPI::MPI_CXX)
-
-# target_link_libraries(worm-gtest worm)
-# target_include_directories(worm-gtest PUBLIC "${PROJECT_BINARY_DIR}")
-# add_test(NAME test COMMAND  worm-gtest)
-
-# add_subdirectory(examples)
 configure_file(MainConfig.h.in MainConfig.h)

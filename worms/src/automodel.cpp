@@ -1,5 +1,6 @@
 #include <lattice/basis.hpp>
 #include <lattice/graph_xml.hpp>
+#include <utility>
 
 #include "../include/automodel.hpp"
 
@@ -195,8 +196,11 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
   // cout << "hi" << endl;
   //* raed all numpy files in given path.
   std::vector<std::string> path_list;
-  get_npy_path(ham_path, path_list);
+  get_npy_path(std::move(ham_path), path_list);
   std::sort(path_list.begin(), path_list.end());
+  if (path_list.empty()) {
+    throw std::runtime_error("Couldn't find any hamiltonian files");
+  }
 
   //* if repeat = true
   VI types_tmp;
@@ -265,6 +269,7 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
     }
     if (print)
       std::cout << "hamiltonian is read from " << path << std::endl;
+
     local_operator<MCT> &loperator = loperators[types[p_i]];
     for (int i = 0; i < shape[0]; i++)
       for (int j = 0; j < shape[1]; j++) {
@@ -354,14 +359,19 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
   // cout << "hi" << endl;
   //* raed all numpy files in given path.
   std::vector<std::string> path_list;
-  get_npy_path(ham_path, path_list);
+  get_npy_path(std::move(ham_path), path_list);
   std::sort(path_list.begin(), path_list.end());
+  if (path_list.empty()) {
+    throw std::runtime_error("Couldn't find any hamiltonian files");
+  }
 
   std::vector<std::string> u_path_list;
   std::string u_path_npy;
-  get_npy_path(u_path, u_path_list);
+  get_npy_path(std::move(u_path), u_path_list);
   if (u_path_list.size() != 1) {
-    throw std::runtime_error("there must be one and only one u_path");
+    std::string err_msg = "there must be one and only one u_path";
+    err_msg += "given u_path is : " + u_path;
+    throw std::runtime_error(err_msg);
   }
   u_path_npy = u_path_list[0];
 
