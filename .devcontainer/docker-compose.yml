@@ -16,7 +16,7 @@ services:
         read_only: true
     tty: true
     ports:
-      - 2222:22
+      - 2222:0022
     security_opt: 
       - seccomp:unconfined
     stdin_open: true
