@@ -44,6 +44,7 @@ logger.info("L simulated: {}".format(np.sort(df.n_sites.unique())))
 params_df = utils.param_dict_normalize(df['ham_path'].apply(utils.extract_parameters_from_path))
 df = pd.concat([df, params_df], axis=1)
 df = df.rename(columns={"T": "temperature"})
+print(df.columns)
 
 image_model_dir.mkdir(parents=False, exist_ok=True)
 
@@ -56,9 +57,12 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
     for fixed_values in itertools.product(*fixed_params.values()):
         filtered_df = df.copy()
         figure_name_parts = []
+        # print(fixed_values)
         for key, value in zip(fixed_params.keys(), fixed_values):
             filtered_df = filtered_df[filtered_df[key] == value]
+            # print(key, value, len(filtered_df))
             figure_name_parts.append(f"{key}_{value}")
+
 
         x_param, y_param = heatmap_params
         x_values = np.sort(filtered_df[x_param].unique())
@@ -73,6 +77,7 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
         }
 
         # Process data for heatmap
+        # print(x, y)
         for Jx, Jy in zip(x.reshape(-1), y.reshape(-1)):
             df_plot = filtered_df[(filtered_df[x_param] == Jx) & (filtered_df[y_param] == Jy)]
             df_u = df_plot[~df_plot.loss.isna()]
@@ -107,7 +112,7 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
         for i, (key, z) in enumerate(zs.items()):
             Z = np.array(z).reshape(x.shape)
             vmin, vmax = (0, max_loss) if "Loss" in key else (0, max_neg)
-            c = ax[i // 2, i % 2].imshow(Z, cmap='RdPu', vmin=vmin, vmax=vmax, aspect=1,
+            c = ax[i // 2, i % 2].imshow(Z, cmap='RdPu', vmin=vmin, vmax=vmax, aspect="auto",
                                          extent=[x.min(), x.max(), y.min(), y.max()],
                                          origin='lower', interpolation='none')
             ax[i // 2, i % 2].set_title(key)
@@ -130,12 +135,29 @@ if model_name == "HXYZ1D":
                 df.hx.unique())}
     plot_heatmap(df, fixed_params_HXYZ1D, ('Jx', 'Jy'), model_name, image_model_dir)
 
-elif model_name == "MG1D":
-    fixed_params_MG1D = {
+
+if model_name == "HXYZ2D":
+    fixed_params_HXYZ2D = {
         "temperature": np.sort(
             df.temperature.unique()), "n_sites": np.sort(
-            df.n_sites.unique())}
+            df.n_sites.unique()), "hx": np.sort(
+                df.hx.unique())}
+    plot_heatmap(df, fixed_params_HXYZ2D, ('Jx', 'Jy'), model_name, image_model_dir)
+
+elif model_name == "MG1D":
+    fixed_params_MG1D = {
+        "temperature": np.sort(df.temperature.unique()),
+        "n_sites": np.sort(df.n_sites.unique()),
+    }
     plot_heatmap(df, fixed_params_MG1D, ('J2', 'J3'), model_name, image_model_dir)
+
+elif model_name == "BLBQ1D":
+    fixed_params_BLBQ1D = {
+        "temperature": np.sort(df.temperature.unique()),
+        "n_sites": np.sort(df.n_sites.unique()),
+        "J1": [1],
+    }
+    plot_heatmap(df, fixed_params_BLBQ1D, ('J0', 'hx'), model_name, image_model_dir)
 
 elif model_name == "SS2D":
     fixed_params_MG1D = {
