@@ -9,28 +9,28 @@ import itertools  # noqa
 
 import sys  # noqa
 from pathlib import Path  # noqa
-python_dir = Path(__file__).resolve().parents[2]
-sys.path.insert(0, python_dir.resolve().as_posix())
+PYTHON_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, PYTHON_DIR.resolve().as_posix())
 from rmsKit import utils  # noqa
 logger = utils.get_logger("log.log", level="INFO", stdout=True)
 parser = utils.parser.get_parser()
 args, _, _ = utils.parser.get_params_parser(parser)
 
-IMAGE_PATH = python_dir / "visualize" / "image"
-WORM_RESULT_PATH = python_dir / "rmsKit" / "array" / "zetta"
+
+IMAGE_PATH = PYTHON_DIR / "visualize" / "image"
+WORM_RESULT_PATH = PYTHON_DIR / "rmsKit" / "array" / "quetta"
 
 model_name = args.model
+image_model_dir = IMAGE_PATH / model_name
+worm_result_path = WORM_RESULT_PATH / (model_name+"_loc")
 
 N = 10**6
 BETA_THRES = 20
+
 if not IMAGE_PATH.exists():
     raise FileNotFoundError("{} does not exist.".format(IMAGE_PATH.resolve()))
 if not WORM_RESULT_PATH.exists():
     raise FileNotFoundError("{} does not exist.".format(WORM_RESULT_PATH.resolve()))
-
-image_model_dir = IMAGE_PATH / model_name
-worm_result_path = WORM_RESULT_PATH / (model_name+"_loc")
-
 if not worm_result_path.exists():
     raise FileNotFoundError("{} does not exist.".format(worm_result_path.resolve()))
 
@@ -42,33 +42,28 @@ logger.info("temeprature simulated: {}".format(np.sort(df["T"].unique())))
 logger.info("L simulated: {}".format(np.sort(df.n_sites.unique())))
 
 params_df = utils.param_dict_normalize(df['ham_path'].apply(utils.extract_parameters_from_path))
-df0 = pd.concat([df, params_df], axis=1)
-df0 = df0.rename(columns={"T": "temp"})
+df = pd.concat([df, params_df], axis=1)
+df = df.rename(columns={"T": "temperature"})
+
+image_model_dir.mkdir(parents=False, exist_ok=True)
+
+# Define the heatmap plotting function
 
 
-if model_name == "HXYZ1D":
+# Define the heatmap plotting function
+def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
+    """Plot the heatmap of the average sign and loss as a function of two parameters."""
+    for fixed_values in itertools.product(*fixed_params.values()):
+        filtered_df = df.copy()
+        figure_name_parts = []
+        for key, value in zip(fixed_params.keys(), fixed_values):
+            filtered_df = filtered_df[filtered_df[key] == value]
+            figure_name_parts.append(f"{key}_{value}")
 
-    h = 0.5
-    T = 0.25
-    L = 10
-    df = df0
-    hz_list = np.sort(df.hz.unique())
-    hx_list = np.sort(df.hx.unique())
-    T_list = np.sort(df.temp.unique())
-    L_list = np.sort(df.n_sites.unique())
-
-    for h, T, L in itertools.product(hx_list, T_list, L_list):
-
-        # Determine a figure name that reflects the model and parameters
-        figure_name = f"AsHeatmap_h_{h}_T_{T}_L_{L}.png"
-        figure_path = image_model_dir / figure_name
-        logger.info(f"Plotting {figure_name}")
-
-        df = df0[(df0.temp == T) & (df0.n_sites == L) & (df0.hx == h)]
-
-        Jx_list = np.sort(df.Jx.unique())
-        Jy_list = np.sort(df.Jy.unique())
-        Jz_list = np.sort(df.Jz.unique())
+        x_param, y_param = heatmap_params
+        x_values = np.sort(filtered_df[x_param].unique())
+        y_values = np.sort(filtered_df[y_param].unique())
+        x, y = np.meshgrid(x_values, y_values)
 
         zs = {
             "NegativeSign (optimized)": [],
@@ -76,103 +71,17 @@ if model_name == "HXYZ1D":
             "Loss (optimized)": [],
             "Loss (initial)": [],
         }
-        x, y = np.meshgrid(Jx_list, Jy_list)
-        skip_flag = False
+
+        # Process data for heatmap
         for Jx, Jy in zip(x.reshape(-1), y.reshape(-1)):
-            df_plot = df[df.hx == h]
-            df_plot = df_plot[(df_plot.Jx == Jx) & (df_plot.Jy == Jy)]
+            df_plot = filtered_df[(filtered_df[x_param] == Jx) & (filtered_df[y_param] == Jy)]
             df_u = df_plot[~df_plot.loss.isna()]
             df_h = df_plot[df_plot.loss.isna()]
+
             if len(df_u) == 0 or len(df_h) == 0:
-                logger.debug(f"Skipping Jx={Jx}, Jy={Jy}")
-                skip_flag = True
-                break
-        #     au = df_u["as"].min()
-            ah = df_h["as"].min()
-            idx = np.argmin(df_u.loss.values)
-            loss = df_u.loss.values[idx]
-            init_loss = df_u.init_loss.values[idx]
-            au = df_u["as"].values[idx]
+                logger.debug(f"Skipping {x_param}={Jx}, {y_param}={Jy}")
+                continue
 
-            zs["NegativeSign (optimized)"].append(au)
-            zs["NegativeSign (initial)"].append(ah)
-            zs["Loss (optimized)"].append(loss)
-            zs["Loss (initial)"].append(init_loss)
-
-        if skip_flag:
-            logger.warning(f"Skipping {figure_name} because not enough data")
-            continue
-
-        plot_order = [
-            "NegativeSign (optimized)",
-            "Loss (optimized)",
-            "NegativeSign (initial)",
-            "Loss (initial)",
-        ]
-
-        max_loss = max(np.max(zs["Loss (optimized)"]), np.max(zs["Loss (initial)"]))
-        if np.abs(max_loss) < 1e-5:
-            max_loss = 1
-
-        fig, ax = plt.subplots(2, 2, figsize=(8, 8))
-        for i, (key, z) in enumerate(zs.items()):
-            Z = np.array(z).reshape(x.shape)
-            # Determine the vmin and vmax based on whether 'Loss' is in the key
-            vmin, vmax = (0, max_loss) if "Loss" in key else (0, 1)
-
-            # Use imshow with an appropriate aspect ratio to ensure square cells
-            c = ax[i % 2, i // 2].imshow(Z, cmap='RdPu', vmin=vmin, vmax=vmax, aspect='1',
-                                         extent=[x.min(), x.max(), y.min(), y.max()],
-                                         origin='lower', interpolation='none')
-
-            ax[i % 2, i // 2].set_title(key)
-            ax[i % 2, i // 2].set_xlabel('Jx/Jz')
-            ax[i % 2, i // 2].set_ylabel('Jy/Jz')
-            
-            fig.colorbar(c, ax=ax[i % 2, i // 2])
-
-        plt.tight_layout()  # Adjust subplots to fit into the figure area.
-        figure_path.parent.mkdir(parents=False, exist_ok=True)
-        plt.savefig(figure_path, bbox_inches='tight')
-        logger.info(f"Figure saved to {figure_path}")
-
-elif model_name == "MG1D":
-
-    df = df0
-    T_list = np.sort(df.temp.unique())
-    L_list = np.sort(df.n_sites.unique())
-
-    for T, L in itertools.product(T_list, L_list):
-
-        # Determine a figure name that reflects the model and parameters
-        figure_name = f"AsHeatmap_T_{T}_L_{L}.png"
-        figure_path = image_model_dir / figure_name
-        logger.info(f"Plotting {figure_name}")
-
-        df = df0[(df0.temp == T) & (df0.n_sites == L)]
-
-        J1_list = np.sort(df.J1.unique())
-        J2_list = np.sort(df.J2.unique())
-        J3_list = np.sort(df.J3.unique())
-
-        zs = {
-            "NegativeSign (optimized)": [],
-            "NegativeSign (initial)": [],
-            "Loss (optimized)": [],
-            "Loss (initial)": [],
-        }
-        x, y = np.meshgrid(J2_list, J3_list)
-        skip_flag = False
-        for J2, J3 in zip(x.reshape(-1), y.reshape(-1)):
-            df_plot = df
-            df_plot = df_plot[(df_plot.J2 == J2) & (df_plot.J3 == J3)]
-            df_u = df_plot[~df_plot.loss.isna()]
-            df_h = df_plot[df_plot.loss.isna()]
-            if len(df_u) == 0 or len(df_h) == 0:
-                logger.debug(f"Skipping J2={J2}, J3={J3}")
-                skip_flag = True
-                break
-        #     au = df_u["as"].min()
             ah = df_h["as"].min()
             ah_err = df_h["as_error"].min() * np.sqrt(N)
             idx = np.argmin(df_u.loss.values)
@@ -181,45 +90,56 @@ elif model_name == "MG1D":
             au = df_u["as"].values[idx]
             au_err = df_u["as_error"].values[idx] * np.sqrt(N)
 
-            zs["NegativeSign (optimized)"].append(au_err/au)
-            zs["NegativeSign (initial)"].append(ah_err/ah)
+            zs["NegativeSign (optimized)"].append(1 - au)
+            zs["NegativeSign (initial)"].append(1 - ah)
             zs["Loss (optimized)"].append(loss)
             zs["Loss (initial)"].append(init_loss)
 
-        if skip_flag:
-            logger.warning(f"Skipping {figure_name} because not enough data")
-            continue
-
-        plot_order = [
-            "NegativeSign (optimized)",
-            "Loss (optimized)",
-            "NegativeSign (initial)",
-            "Loss (initial)",
-        ]
-
+        # Plotting
+        fig, ax = plt.subplots(2, 2, figsize=(10, 10))
         max_loss = max(np.max(zs["Loss (optimized)"]), np.max(zs["Loss (initial)"]))
-        max_neg = max(np.max(zs["NegativeSign (optimized)"]), np.max(zs["NegativeSign (initial)"]))
-        max_neg = min(max_neg, 100)
+        # max_neg = max(np.max(zs["NegativeSign (optimized)"]), np.max(zs["NegativeSign (initial)"]))
+        # max_neg = min(max_neg, 100)
+        max_neg = 1
         if np.abs(max_loss) < 1e-5:
             max_loss = 1
 
-        fig, ax = plt.subplots(2, 2, figsize=(10, 10))
         for i, (key, z) in enumerate(zs.items()):
             Z = np.array(z).reshape(x.shape)
-            # Determine the vmin and vmax based on whether 'Loss' is in the key
             vmin, vmax = (0, max_loss) if "Loss" in key else (0, max_neg)
-
-            # Use imshow with an appropriate aspect ratio to ensure square cells
-            c = ax[i % 2, i // 2].imshow(Z, cmap='RdPu', vmin=vmin, vmax=vmax, aspect='1',
+            c = ax[i // 2, i % 2].imshow(Z, cmap='RdPu', vmin=vmin, vmax=vmax, aspect=1,
                                          extent=[x.min(), x.max(), y.min(), y.max()],
                                          origin='lower', interpolation='none')
+            ax[i // 2, i % 2].set_title(key)
+            ax[i // 2, i % 2].set_xlabel(x_param)
+            ax[i // 2, i % 2].set_ylabel(y_param)
+            fig.colorbar(c, ax=ax[i // 2, i % 2])
 
-            ax[i % 2, i // 2].set_title(key)
-            ax[i % 2, i // 2].set_xlabel('J2/J1')
-            ax[i % 2, i // 2].set_ylabel('J3/J1')
-            fig.colorbar(c, ax=ax[i % 2, i // 2])
-
-        plt.tight_layout()  # Adjust subplots to fit into the figure area.
-        figure_path.parent.mkdir(parents=False, exist_ok=True)
+        plt.tight_layout()
+        figure_name = f"AsHeatmap_{'_'.join(figure_name_parts)}.png"
+        figure_path = image_model_dir / figure_name
         plt.savefig(figure_path, bbox_inches='tight')
         logger.info(f"Figure saved to {figure_path}")
+
+
+if model_name == "HXYZ1D":
+    fixed_params_HXYZ1D = {
+        "temperature": np.sort(
+            df.temperature.unique()), "n_sites": np.sort(
+            df.n_sites.unique()), "hx": np.sort(
+                df.hx.unique())}
+    plot_heatmap(df, fixed_params_HXYZ1D, ('Jx', 'Jy'), model_name, image_model_dir)
+
+elif model_name == "MG1D":
+    fixed_params_MG1D = {
+        "temperature": np.sort(
+            df.temperature.unique()), "n_sites": np.sort(
+            df.n_sites.unique())}
+    plot_heatmap(df, fixed_params_MG1D, ('J2', 'J3'), model_name, image_model_dir)
+
+elif model_name == "SS2D":
+    fixed_params_MG1D = {
+        "temperature": np.sort(
+            df.temperature.unique()), "n_sites": np.sort(
+            df.n_sites.unique()), "J0": [1]}
+    plot_heatmap(df, fixed_params_MG1D, ('J1', 'J2'), model_name, image_model_dir)
