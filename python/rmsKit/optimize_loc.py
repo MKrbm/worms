@@ -73,7 +73,7 @@ if __name__ == "__main__":
         loss = rms_torch.SystemQUasiEnergyLoss(h_list, device=device)
     elif args.loss == "mel":
         h_list, _, _ = get_model(args.model, params)
-        loss = rms_torch.MinimumEnergyLoss(h_list, device=device)
+        loss = rms_torch.MinimumEnergyLoss(h_list, device=device, decay=epochs/10)
         loss_dir = f"{params['lt']}_{args.loss}"
     elif args.loss == "none":
         h_list, _, _ = get_model(args.model, params)
@@ -97,7 +97,6 @@ if __name__ == "__main__":
 
     # save local hamiltonian
     save_npy(h_path / "H", [-np.array(h) for h in local_h_list])  # minus for - beta * H
-    print(local_h_list[0])
 
     # save global hamiltonian
 
@@ -133,8 +132,7 @@ if __name__ == "__main__":
         start = time.time()
         torch.manual_seed(seed)
         np.random.seed(seed)
-        if args.loss == "smel":
-            loss.initializer(model())
+        loss.initializer(model())
         local_best_loss = 1e10
         local_best_us = []
         model.reset_params()
@@ -174,7 +172,7 @@ if __name__ == "__main__":
             f"best loss at epoch {epochs}: {local_best_loss}, best loss so far: {best_loss}, time elapsed: {time_elapsed:.4f} seconds"
         )
 
-        u_path_epoch = u_path / f"loss_{local_best_loss:.5f}/u"
+        u_path_epoch = u_path / f"loss_{local_best_loss:.7f}/u"
         u_path_epoch.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
         save_npy(u_path_epoch, local_best_us)
 
@@ -188,11 +186,11 @@ if __name__ == "__main__":
             best_loss: {} and actual loss: {}
             """.format(best_loss, loss(out).item()))
     else:
-        u_path_epoch = u_path / f"loss_{best_loss:.5f}/u"
+        u_path_epoch = u_path / f"loss_{best_loss:.7f}/u"
         save_npy(u_path_epoch, best_us)
 
     logging.info(f"best loss: {best_loss} / initial loss: {initial_loss}")
-    logging.info(f"best loss was saved to {u_path}/loss_{best_loss:.5f}/u")
+    logging.info(f"best loss was saved to {u_path}/loss_{best_loss:.7f}/u")
     logging.info(f"hamiltonian was saved to {h_path}/H")
 
     if args.symoblic_link is not None:
@@ -239,7 +237,7 @@ if __name__ == "__main__":
 
     if new_info:
         with open(info_path, "w") as f:
-            best_unitary_path = u_path / f"loss_{best_loss:.5f}" / "u"
+            best_unitary_path = u_path / f"loss_{best_loss:.7f}" / "u"
             hamiltonian_path = h_path / "H"
             f.write(f"best loss: {best_loss} / initial loss: {initial_loss}\n")
             f.write(f"best loss was saved to {best_unitary_path.resolve()}\n")

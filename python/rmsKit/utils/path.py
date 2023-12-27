@@ -2,7 +2,10 @@
 import re
 from pathlib import Path
 import logging
-from typing import Dict
+from typing import Dict, List
+import pandas as pd
+import numpy as np
+from .functions import get_loss
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +25,65 @@ def find_info_txt_files(directory_path):
         raise ValueError(f"The given path {directory_path} is not a directory.")
     info_txt_files = list(dir_path.rglob('info.txt'))
     return [str(file) for file in info_txt_files]
+
+
+def find_summary_files(directory_path: Path) -> List[Dict[str, Path]]:
+    """Find all info.txt files under the given directory."""
+    dir_path = Path(directory_path).resolve()
+    if not dir_path.is_dir():
+        raise ValueError(f"The given path {directory_path} is not a directory.")
+    sim_res_folder = [path.parent for path in dir_path.rglob('summary/')]
+    res = []
+    for sim_res in sim_res_folder:
+        summary_folder = sim_res / "summary"
+        info_file = sim_res / "info.txt"
+        assert summary_folder.is_dir()
+        assert info_file.exists()
+        for path in summary_folder.rglob('*.csv'):
+            dic = dict()
+            dic["summary"] = path
+            dic["info"] = info_file
+            res.append(dic)
+    return res
+
+
+def get_df_from_summary_files(summary_files: str, N: int) -> pd.DataFrame:
+    """Get a dataframe from the given summary files.
+
+    summary files must be csv files.
+    """
+    df = None
+    for res_dict in summary_files:
+        sum_file = res_dict["summary"]
+        info_file = res_dict["info"]
+        info = extract_info_from_txt(info_file)
+        if "sweeps_{}".format(N) in str(sum_file):
+            try:
+                df1 = pd.read_csv(sum_file)
+                if not (df1.u_path.isnull().values.any()):
+                    df1 = get_loss(df1)
+                    if np.abs(df1.loss.values - info["best_loss"]).mean() > 1E-7:
+                        print(df1.loss, info["best_loss"])
+                        raise ValueError("best_loss is not consistent with summary data")
+            except BaseException as e:
+                logging.warning("Could not concate or read {}".format(sum_file))
+                logging.warning(e)
+
+            df1["init_loss"] = info["initial_loss"]
+
+            if df is not None:
+                df = pd.concat([df, df1])
+            else:
+                df = df1
+    df = df.reset_index(drop=True)
+    return df
+
+
+def get_sim_result(directory_path: Path, N: int) -> pd.DataFrame:
+    """Get the simulation result from the given directory."""
+    summary_files = find_summary_files(directory_path)
+    df = get_df_from_summary_files(summary_files, N)
+    return df
 
 
 def extract_info_from_txt(file_path: Path) -> Dict[str, Path]:

@@ -55,7 +55,7 @@ run_job() {
     EPOCH=2000
     LR=0.005
     M=20
-    model_name="HXYZ1D"
+    model_name="HXYZ2D"
     log_dir="${project_dir}/job/log/${model_name}"
     [ ! -d "$log_dir" ] && mkdir -p "$log_dir" && echo "Created log directory $log_dir"
     log_file="${log_dir}/Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_hx_${H}.log"

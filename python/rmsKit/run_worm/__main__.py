@@ -41,15 +41,20 @@ if __name__ == "__main__":
 
     # define parameters list to be passed to the run_worm function
     # beta = np.linspace(0.5, 5, 3)
-    beta = np.array([1, 4])
+    if args.model == "SS2D":
+        beta = np.array([1, 4])
+        L_list = [[2, 2], [3, 2]]
+        logger.info("RUN SS2D MODEL")
+    elif args.model == "HXYZ2D":
+        beta = np.array([1, 4])
+        L_list = [[4, 4], [5, 5]]
+        logger.info("RUN HXYZ2D MODEL")
+    else:
+        beta = np.array([1, 4])
+        L_list = [[10], [11]]
+        logger.info("RUN {} MODEL".format(args.model))
+
     T_list = 1/beta
-
-    # define the lattice sizes
-    # L_list = [[i, i] for i in range(4, 11)]
-    # L_list = [[i] for i in range(10, 30, 10)] + [[i + 5] for i in range(10, 30, 10)]
-    L_list = [10, 11]
-    L_list = [[i] for i in L_list]
-
     # define the number of samples
     p = args.num_threads
     M = args.sweeps
