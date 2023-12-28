@@ -3,10 +3,10 @@
 # n: Calculate the total number of jobs for BLBQ model
 
 calculate_total_jobs() {
-    J0_values=($(seq -3 0.2 3))  # Define J0 values
-    J1_values=(1)  # Define J1 values
+    J0_values=(3)  # Define J0 values
+    J1_values=($(seq -3 0.2 6))  # Define J1 values
     hz_values=(0)          # Define hz values
-    hx_values=($(seq 0 0.1 1))          # Define hx values
+    hx_values=($(seq 0 0.2 3))          # Define hx values
 
     num_J0=${#J0_values[@]}
     num_J1=${#J1_values[@]}
