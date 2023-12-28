@@ -47,8 +47,8 @@ run_job() {
 
     LT=1
     SWEEPS=1000000
-    EPOCH=2000
-    M=20
+    EPOCH=5000
+    M=50
     model_name="SS2D"
     log_dir="${project_dir}/job/log/${model_name}"
     [ ! -d "$log_dir" ] && mkdir -p "$log_dir" && echo "Created log directory $log_dir"
@@ -74,7 +74,7 @@ run_job() {
     source /opt/materiapps-intel/env.sh
     source ~/worms/myenv/bin/activate
 
-    python -u optimize_loc.py -m $model_name -o Adam -lr 0.007 -e "$EPOCH" -M "$M" -lt "$LT" \
+    python -u optimize_loc.py -m $model_name -o Adam -lr 0.003 -e "$EPOCH" -M "$M" -lt "$LT" \
         -J0 "$J0" -J1 "$J1" -J2 "$J2" \
         -n "$n_cpu" --symoblic_link "$symbolic_link" \
         --stdout >> "$log_file"
