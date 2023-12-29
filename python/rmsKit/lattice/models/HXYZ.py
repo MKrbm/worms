@@ -41,7 +41,10 @@ def system(_L: list[int], params: dict) -> Tuple[NDArray[Any], int]:
         logging.info(f"params : {params}")
         H_list, sps = local(params, D=1)
 
-        bonds = [[i, (i + 1) % L] for i in range(L)]
+        if params["obc"]:
+            bonds = [[i, i + 1] for i in range(L - 1)]
+        else:
+            bonds = [[i, (i + 1) % L] for i in range(L)]
         if len(H_list) != 1:
             raise RuntimeError("something wrong")
         _H = utils.sum_ham(H_list[0], bonds, L, sps)

@@ -54,7 +54,10 @@ def system(_L: list[int], params: dict) -> Tuple[NDArray[Any], int]:
         logging.info(f"params : {P}")
         logging.info(f"L      : {L}")
         H_list, sps = local(params, D=1)
-        bonds = [[i, (i + 1) % L] for i in range(L)]
+        if params["obc"]:
+            bonds = [[i, i + 1] for i in range(L - 1)]
+        else:
+            bonds = [[i, (i + 1) % L] for i in range(L)]
 
         if len(H_list) != 1:
             raise RuntimeError("something wrong")
