@@ -24,7 +24,6 @@ parser.add_argument('-s', '--sweeps', type=int, required=True,
                     help='The number of sweeps to perform.')
 parser.add_argument('--original', action='store_true', default=False,
                     help='If this flag is set, the original Hamiltonian will be used.')
-parser.add_argument("--obc", action="store_true", default=False, help="Use open boundary condition.")
 args = parser.parse_args()
 search_path = Path(args.path)
 
@@ -50,6 +49,10 @@ if __name__ == "__main__":
         beta = np.array([1, 4])
         L_list = [[4, 4], [5, 5]]
         logger.info("RUN HXYZ2D MODEL")
+    elif args.model == "BLBQ1D":
+        beta = np.array([1, 4])
+        L_list = [[10], [11]]
+        logger.info("RUN BLBQ1D MODEL")
     else:
         beta = np.array([1, 4])
         L_list = [[10], [11]]
