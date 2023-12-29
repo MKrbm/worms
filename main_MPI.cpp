@@ -308,11 +308,12 @@ int main(int argc, char **argv) {
     std::cout << "params : " << params << std::endl;
     std::cout << "alpha : " << alpha << std::endl;
     std::cout << "temperature : " << T << std::endl;
+    std::cout << "boundary condition : " << (obc ? "obc" : "pbc")
+              << std::endl;
   }
 
   //* finish argparse
   std::unique_ptr<model::base_lattice> lat_ptr;
-  // model::base_lattice lat(basis, cell, shapes, file, !rank);
   if (obc) {
     lat_ptr = std::make_unique<model::base_lattice>(
         basis, cell, shapes, file, rank == 0, lattice::boundary_t::open);
