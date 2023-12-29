@@ -48,6 +48,7 @@ def get_model(model: str, params: Dict[str, Any], L: Union[List[int], None] = No
             a += f"{k}_{v:.4g}_"
         params_str = a[:-1]
         p["lt"] = params["lt"]
+        p["obc"] = params["obc"]
 
         if L:
             size_name = f"L_{L[0]}x{L[1]}" if d == 2 else f"L_{L[0]}"
@@ -73,6 +74,7 @@ def get_model(model: str, params: Dict[str, Any], L: Union[List[int], None] = No
             a += f"{k}_{v:.4g}_"
         params_str = a[:-1]
         p["lt"] = params["lt"]
+        p["obc"] = params["obc"]
 
         if L:
             size_name = f"L_{L[0]}"
@@ -97,6 +99,7 @@ def get_model(model: str, params: Dict[str, Any], L: Union[List[int], None] = No
             a += f"{k}_{v:.4g}_"
         params_str = a[:-1]
         p["lt"] = params["lt"]
+        p["obc"] = params["obc"]
 
         if L:
             size_name = f"L_{L[0]}"

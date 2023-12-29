@@ -94,6 +94,7 @@ MAGNETIZATION_MEAN = "m"
 MAGNETIZATION_ERROR = "m_error"
 SUSCEPTIBILITY_MEAN = "chi"
 SUSCEPTIBILITY_ERROR = "chi_error"
+BOUNDARY_CONDITION = "bc"
 
 
 def extract_info_from_file(file_path, allow_missing: bool = False,
@@ -143,6 +144,10 @@ def extract_info_from_file(file_path, allow_missing: bool = False,
                 info_dict[SUSCEPTIBILITY_ERROR] = float(values[1].strip())
             elif "model name is" in line:
                 info_dict[MODEL_NAME] = line.split(":")[1].strip()
+            elif "boundary condition" in line:
+                info_dict[BOUNDARY_CONDITION] = line.split(":")[1].strip()
+                if info_dict[BOUNDARY_CONDITION] != "pbc" and info_dict[BOUNDARY_CONDITION] != "obc":
+                    raise ValueError("boundary condition should be either periodic or open")
 
     if U_PATH not in info_dict.keys() or HAM_PATH not in info_dict.keys():
         print(
@@ -154,7 +159,7 @@ def extract_info_from_file(file_path, allow_missing: bool = False,
             f"Info: {file_path} has not yet finished. Ignored this file") if warning else None
         return None
 
-    if len(info_dict.keys()) != 17 and not allow_missing:
+    if len(info_dict.keys()) != 18 and not allow_missing:
         print(
             f"Warning: {file_path} is missing some information.") if warning else None
         return None

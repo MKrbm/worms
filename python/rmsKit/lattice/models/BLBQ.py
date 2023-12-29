@@ -54,7 +54,10 @@ def system(_L: list[int], params: dict) -> Tuple[NDArray[Any], int]:
 
     H_list, sps = local(P, D=1)
 
-    bonds = [[i, (i + 1) % L] for i in range(L)]
+    if params["obc"]:
+        bonds = [[i, i + 1] for i in range(L - 1)]
+    else:
+        bonds = [[i, (i + 1) % L] for i in range(L)]
 
     if len(H_list) != 1:
         raise RuntimeError("Local Hamilonian bust contain only one term")

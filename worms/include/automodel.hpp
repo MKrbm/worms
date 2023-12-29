@@ -8,6 +8,7 @@
 #include <tuple>
 #include <vector>
 
+#include "lattice/types.hpp"
 #include "localoperator.hpp"
 #include "model.hpp"
 
@@ -60,12 +61,13 @@ class model::base_lattice {
   base_lattice(std::string basis_name = "chain lattice",
                std::string cell_name = "simple1d", VS shapes = {6},
                std::string file = "../config/lattice_xml.txt",
-               bool print = false);
-  static std::tuple<size_t, VVS, VS, VS> initilizer_xml(std::string basis_name,
-                                                        std::string cell_name,
-                                                        VS shapes,
-                                                        std::string file,
-                                                        bool print);
+               bool print = false,
+               lattice::boundary_t = lattice::boundary_t::periodic
+               );
+  static std::tuple<size_t, VVS, VS, VS> initilizer_xml(
+      std::string basis_name, std::string cell_name, VS shapes,
+      std::string file, bool print,
+      lattice::boundary_t boundary);
 };
 
 /*

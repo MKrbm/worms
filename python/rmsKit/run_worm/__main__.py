@@ -49,6 +49,10 @@ if __name__ == "__main__":
         beta = np.array([1, 4])
         L_list = [[4, 4], [5, 5]]
         logger.info("RUN HXYZ2D MODEL")
+    elif args.model == "BLBQ1D":
+        beta = np.array([1, 4])
+        L_list = [[10], [11]]
+        logger.info("RUN BLBQ1D MODEL")
     else:
         beta = np.array([1, 4])
         L_list = [[10], [11]]
@@ -116,6 +120,7 @@ if __name__ == "__main__":
                 M,
                 n=p,
                 logging=True,
+                obc=args.obc,
                 project_dir=rmsKit_directory.parent.parent.resolve())
             output = subprocess_out.stdout.decode("utf-8")
             # Extract the path using regex
