@@ -24,6 +24,7 @@ parser.add_argument('-s', '--sweeps', type=int, required=True,
                     help='The number of sweeps to perform.')
 parser.add_argument('--original', action='store_true', default=False,
                     help='If this flag is set, the original Hamiltonian will be used.')
+parser.add_argument("--obc", action="store_true", default=False, help="Use open boundary condition.")
 args = parser.parse_args()
 search_path = Path(args.path)
 
@@ -116,6 +117,7 @@ if __name__ == "__main__":
                 M,
                 n=p,
                 logging=True,
+                obc=args.obc,
                 project_dir=rmsKit_directory.parent.parent.resolve())
             output = subprocess_out.stdout.decode("utf-8")
             # Extract the path using regex

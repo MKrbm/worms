@@ -153,7 +153,9 @@ def _run_HXYZ2D(Js: List[float],
 def _run_BLBQ1D(Js: List[float],
                 Hs: List[float],
                 L: int,
-                lt: int) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+                lt: int,
+                obc: bool = False,
+                ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     # run HXYZ1D
     params = {
         "L1": L,
@@ -162,6 +164,7 @@ def _run_BLBQ1D(Js: List[float],
         "hz": Hs[0],
         "hx": Hs[1],
         "lt": lt,
+        "obc": obc,
     }
     rmsKit_directory = Path(
         __file__).resolve().parent.parent.as_posix()
@@ -392,6 +395,15 @@ if __name__ == "__main__":
         if test_solver_worm(mdfu2, mdfh2, dfe2, dfs2):
             logging.info("BLBQ1D(alpha=1 / lt = 2) test passed")
 
+        # n: alpha = -0.3
+        Js = [1, -0.3]
+        Hs = [0, 0.3]
+        L = 4
+
+        mdfu, mdfh, dfe, dfs = _run_BLBQ1D(Js, Hs, L, 1, obc=True)
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("BLBQ1D(alpha=1) test passed")
+
     if model == "SS2D" or model == "all":
 
         L = [1, 1]
@@ -405,7 +417,7 @@ if __name__ == "__main__":
             logging.info("SS2D(Disentangled, dimer basis is gs) test passed")
 
         e0 = np.min(dfe.value)
-        analytic_e0 = -  L[0] * L[1] * (3/4)
+        analytic_e0 = -  L[0] * L[1] * (3/4) * 4
         if np.abs(e0 - analytic_e0) < 1e-8:
             logging.info(
                 "ground state energy at Shastry-Sutherland point is correct : {} = - L * 3 / 4".format(e0))

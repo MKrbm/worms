@@ -27,6 +27,8 @@ if __name__ == "__main__":
         N = 4*N
 
     Hnp, sps, path = get_model(args.model, params, L=L_list)
+    path += f"_obc_{int(args.obc)}"
+    print(path)
     H = torch.from_numpy(Hnp).to(device)
     E, V = torch.linalg.eigh(H)
     E = E.cpu().numpy()
