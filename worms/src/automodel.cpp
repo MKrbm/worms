@@ -1,8 +1,8 @@
+#include "../include/automodel.hpp"
+
 #include <lattice/basis.hpp>
 #include <lattice/graph_xml.hpp>
 #include <utility>
-
-#include "../include/automodel.hpp"
 
 namespace model {
 
@@ -21,12 +21,20 @@ VVD kron_product(const VVD &a, const VVD &b) {
 }
 
 base_lattice::base_lattice(int L, VVS bonds)
-    : L(L), Nb(bonds.size()), N_op(1), bonds(bonds),
-      bond_type(VS(bonds.size(), 0)), site_type(VS(L, 0)) {}
+    : L(L),
+      Nb(bonds.size()),
+      N_op(1),
+      bonds(bonds),
+      bond_type(VS(bonds.size(), 0)),
+      site_type(VS(L, 0)) {}
 
 base_lattice::base_lattice(int L, VVS bonds, VS bond_type, VS site_type)
-    : L(L), Nb(bonds.size()), N_op(num_type(bond_type)), bonds(bonds),
-      bond_type(bond_type), site_type(site_type) {
+    : L(L),
+      Nb(bonds.size()),
+      N_op(num_type(bond_type)),
+      bonds(bonds),
+      bond_type(bond_type),
+      site_type(site_type) {
   VS tmp(bond_type);
   std::sort(tmp.begin(), tmp.end());
   if (tmp[0] != 0) {
@@ -44,8 +52,9 @@ base_lattice::base_lattice(int L, VVS bonds, VS bond_type, VS site_type)
         bond_t_size[i]++;
         if (type2bonds[i].size() > 0 &&
             type2bonds[i].back().size() != bonds[j].size())
-          throw std::invalid_argument("legsize should be consistent among the "
-                                      "operator with the same type");
+          throw std::invalid_argument(
+              "legsize should be consistent among the "
+              "operator with the same type");
         type2bonds[i].push_back(bonds[j]);
       }
 
@@ -62,9 +71,10 @@ base_lattice::base_lattice(std::tuple<size_t, VVS, VS, VS> tp)
     : base_lattice(get<0>(tp), get<1>(tp), get<2>(tp), get<3>(tp)) {}
 
 base_lattice::base_lattice(std::string basis_name, std::string cell_name,
-                           VS shapes, std::string file, bool print)
-    : base_lattice(initilizer_xml(basis_name, cell_name, shapes, file, print)) {
-}
+                           VS shapes, std::string file, bool print,
+                           lattice::boundary_t boundary)
+    : base_lattice(initilizer_xml(std::move(basis_name), std::move(cell_name), std::move(shapes), std::move(file), print,
+                                  boundary)) {}
 
 VVS generate_bonds(lattice::graph lattice) {
   VVS bonds;
@@ -98,9 +108,9 @@ size_t num_type(VS bond_type) {
                        std::unique(bond_type.begin(), bond_type.end()));
 }
 
-std::tuple<size_t, VVS, VS, VS>
-base_lattice::initilizer_xml(string basis_name, string cell_name, VS shapes,
-                             string file, bool print) {
+std::tuple<size_t, VVS, VS, VS> base_lattice::initilizer_xml(
+    string basis_name, string cell_name, VS shapes, string file, bool print,
+    lattice::boundary_t boundary) {
   ifstream is(file);
   boost::property_tree::ptree pt;
   read_xml(is, pt);
@@ -109,47 +119,45 @@ base_lattice::initilizer_xml(string basis_name, string cell_name, VS shapes,
   lattice::unitcell cell;
   read_xml(pt, cell_name, cell);
   switch (cell.dimension()) {
-  case 1: {
-    if (shapes.size() != 1) {
-      std::cerr << "Wrong number of shapes for 1D lattice";
-      exit(1);
+    case 1: {
+      if (shapes.size() != 1) {
+        std::cerr << "Wrong number of shapes for 1D lattice";
+        exit(1);
+      }
+      lattice::graph lat(bs, cell, lattice::extent(shapes[0]), boundary);
+      if (print) lat.print(std::cout);
+      return make_tuple(lat.num_sites(), generate_bonds(lat),
+                        generate_bond_type(lat), generate_site_type(lat));
+      break;
     }
-    lattice::graph lat(bs, cell, lattice::extent(shapes[0]));
-    if (print)
-      lat.print(std::cout);
-    return make_tuple(lat.num_sites(), generate_bonds(lat),
-                      generate_bond_type(lat), generate_site_type(lat));
-    break;
-  }
-  case 2: {
-    if (shapes.size() != 2) {
-      std::cerr << "Wrong number of shapes for 2D lattice";
-      exit(1);
+    case 2: {
+      if (shapes.size() != 2) {
+        std::cerr << "Wrong number of shapes for 2D lattice";
+        exit(1);
+      }
+      lattice::graph lat(bs, cell, lattice::extent(shapes[0], shapes[1]),
+                         boundary);
+      if (print) lat.print(std::cout);
+      return make_tuple(lat.num_sites(), generate_bonds(lat),
+                        generate_bond_type(lat), generate_site_type(lat));
+      break;
+    } break;
+    case 3: {
+      if (shapes.size() != 3) {
+        std::cerr << "Wrong number of shapes for 3D lattice";
+        exit(1);
+      }
+      lattice::graph lat(
+          bs, cell, lattice::extent(shapes[0], shapes[1], shapes[2]), boundary);
+      if (print) lat.print(std::cout);
+      return make_tuple(lat.num_sites(), generate_bonds(lat),
+                        generate_bond_type(lat), generate_site_type(lat));
+      break;
     }
-    lattice::graph lat(bs, cell, lattice::extent(shapes[0], shapes[1]));
-    if (print)
-      lat.print(std::cout);
-    return make_tuple(lat.num_sites(), generate_bonds(lat),
-                      generate_bond_type(lat), generate_site_type(lat));
-    break;
-  } break;
-  case 3: {
-    if (shapes.size() != 3) {
-      std::cerr << "Wrong number of shapes for 3D lattice";
-      exit(1);
-    }
-    lattice::graph lat(bs, cell,
-                       lattice::extent(shapes[0], shapes[1], shapes[2]));
-    if (print)
-      lat.print(std::cout);
-    return make_tuple(lat.num_sites(), generate_bonds(lat),
-                      generate_bond_type(lat), generate_site_type(lat));
-    break;
-  }
-  default:
-    cerr << "Unsupported lattice dimension\n";
-    exit(127);
-    break;
+    default:
+      cerr << "Unsupported lattice dimension\n";
+      exit(127);
+      break;
   }
   return make_tuple(0, VVS(), VS(), VS());
 }
@@ -206,7 +214,7 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
   VI types_tmp;
   VD params_tmp;
   if (repeat) {
-    int r_cnt = N_op / types.size(); // repeat count
+    int r_cnt = N_op / types.size();  // repeat count
     if (r_cnt * types.size() != N_op) {
       std::cerr << "can not finish repeating types and params\n";
       exit(1);
@@ -214,11 +222,9 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
     for (int i = 0; i < r_cnt; i++) {
       types_tmp.insert(types_tmp.end(), types.begin(), types.end());
       params_tmp.insert(params_tmp.end(), params.begin(), params.end());
-      for (auto &x : types)
-        x += types.size();
+      for (auto &x : types) x += types.size();
     }
-    if (print)
-      cout << "repeat params " << r_cnt << " times." << endl;
+    if (print) cout << "repeat params " << r_cnt << " times." << endl;
     types = types_tmp;
     params = params_tmp;
   }
@@ -242,11 +248,11 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
   for (int i = 0; i < N_op; i++) {
     for (auto b : type2bonds[i][0]) {
       dofs_list[i].push_back(_sps_sites[site_type[b]]);
-    } // size should be leg_size
+    }  // size should be leg_size
     loperators.push_back(local_operator<MC>(
         type2bonds[i][0].size(),
-        dofs_list[i][0])); // local_operator only accepts one sps type yet.
-                           // Also, currently only available for bond operator.
+        dofs_list[i][0]));  // local_operator only accepts one sps type yet.
+                            // Also, currently only available for bond operator.
   }
 
   for (int p_i = 0; p_i < path_list.size(); p_i++) {
@@ -267,8 +273,7 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
       std::cerr << "matrix size : " << S << std::endl;
       exit(1);
     }
-    if (print)
-      std::cout << "hamiltonian is read from " << path << std::endl;
+    if (print) std::cout << "hamiltonian is read from " << path << std::endl;
 
     local_operator<MCT> &loperator = loperators[types[p_i]];
     for (int i = 0; i < shape[0]; i++)
@@ -379,7 +384,7 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
   VI types_tmp;
   VD params_tmp;
   if (repeat) {
-    int r_cnt = N_op / types.size(); // repeat count
+    int r_cnt = N_op / types.size();  // repeat count
     if (r_cnt * types.size() != N_op) {
       std::cerr << "can not finish repeating types and params\n";
       exit(1);
@@ -387,11 +392,9 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
     for (int i = 0; i < r_cnt; i++) {
       types_tmp.insert(types_tmp.end(), types.begin(), types.end());
       params_tmp.insert(params_tmp.end(), params.begin(), params.end());
-      for (auto &x : types)
-        x += types.size();
+      for (auto &x : types) x += types.size();
     }
-    if (print)
-      cout << "repeat params " << r_cnt << " times." << endl;
+    if (print) cout << "repeat params " << r_cnt << " times." << endl;
     types = types_tmp;
     params = params_tmp;
   }
@@ -415,11 +418,11 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
   for (int i = 0; i < N_op; i++) {
     for (auto b : type2bonds[i][0]) {
       dofs_list[i].push_back(_sps_sites[site_type[b]]);
-    } // size should be leg_size
+    }  // size should be leg_size
     loperators.push_back(local_operator<MC>(
         type2bonds[i][0].size(),
-        dofs_list[i][0])); // local_operator only accepts one sps type yet.
-                           // Also, currently only available for bond operator.
+        dofs_list[i][0]));  // local_operator only accepts one sps type yet.
+                            // Also, currently only available for bond operator.
   }
 
   // load unitary matrix
@@ -489,8 +492,7 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
     for (int i = 0; i < S; i++)
       for (int j = 0; j < S; j++) {
         double x = 0;
-        for (int k = 0; k < S; k++)
-          x += tmp[i][k] * u_mat_kron[j][k];
+        for (int k = 0; k < S; k++) x += tmp[i][k] * u_mat_kron[j][k];
         loperator._ham[i][j] = x;
       }
   }
@@ -542,7 +544,6 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
                            std::vector<std::vector<std::vector<double>>> hams,
                            double shift, bool zero_worm)
     : base_lattice(lat), zw(zero_worm) {
-
   //! Currently not available
   // throw std::runtime_error("This constructor is not available yet");
 
@@ -557,10 +558,10 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
   for (int i = 0; i < N_op; i++) {
     for (auto b : type2bonds[i][0]) {
       dofs_list[i].push_back(_sps_sites[site_type[b]]);
-    } // size should be leg_size
-    loperators.push_back(
-        local_operator<MC>(type2bonds[i][0].size(),
-                           dofs_list[i][0])); // local_operator only accepts one
+    }  // size should be leg_size
+    loperators.push_back(local_operator<MC>(
+        type2bonds[i][0].size(),
+        dofs_list[i][0]));  // local_operator only accepts one
     for (int j = 0; j < hams[i].size(); j++)
       for (int k = 0; k < hams[i][j].size(); k++) {
         loperators[i]._ham[j][k] = hams[i][j][k];
@@ -596,4 +597,4 @@ void base_model<MC>::initial_setting(VD off_sets, double thres) {
 template class model::base_model<bcl::heatbath>;
 template class model::base_model<bcl::st2010>;
 template class model::base_model<bcl::st2013>;
-} // namespace model
+}  // namespace model

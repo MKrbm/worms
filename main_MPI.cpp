@@ -67,6 +67,8 @@ int main(int argc, char **argv) {
   parser.addArgument({"-P1"}, "set params[0]");
   parser.addArgument({"-P2"}, "set params[1]");
   parser.addArgument({"-alpha"}, "set alpha");
+  parser.addArgument({"--obc"}, "set open boundary condition",
+                     argparse::ArgumentType::StoreTrue);
   parser.addArgument({"--output"}, "save output to file",
                      argparse::ArgumentType::StoreTrue);
 
@@ -122,6 +124,7 @@ int main(int argc, char **argv) {
   vector<size_t> dofs;
   bool repeat;  // true if repeat params and types.
   bool zero_worm;
+  bool obc;
 
   for (int i = 0; i < shape_cfg.getLength(); i++) {
     int tmp = shape_cfg[i];
@@ -234,6 +237,7 @@ int main(int argc, char **argv) {
   if (args.has("split-sweeps")) {
     sweeps = sweeps / size;
   }
+  obc = args.has("obc");
   sweeps = (sweeps / 2) * 2;  // make sure sweeps is even number
 
   if (args.has("output") && rank == 0) {
@@ -307,7 +311,15 @@ int main(int argc, char **argv) {
   }
 
   //* finish argparse
-  model::base_lattice lat(basis, cell, shapes, file, !rank);
+  std::unique_ptr<model::base_lattice> lat_ptr;
+  // model::base_lattice lat(basis, cell, shapes, file, !rank);
+  if (obc) {
+    lat_ptr = std::make_unique<model::base_lattice>(
+        basis, cell, shapes, file, rank == 0, lattice::boundary_t::open);
+  } else {
+    lat_ptr =
+        std::make_unique<model::base_lattice>(basis, cell, shapes, file, rank == 0);
+  }
   // model::base_model<bcl::heatbath>* spin;
   std::unique_ptr<model::base_model<bcl::heatbath>> spin_ptr;
   if (u_path.empty()) {
@@ -315,29 +327,29 @@ int main(int argc, char **argv) {
       std::cout << "unitary is not given. Identity matrix is used."
                 << std::endl;
     spin_ptr = std::make_unique<model::base_model<bcl::heatbath>>(
-        lat, dofs, ham_path, params, types, shift, zero_worm, repeat, !rank,
+        *lat_ptr, dofs, ham_path, params, types, shift, zero_worm, repeat, rank == 0,
         alpha);
   } else {
     spin_ptr = std::make_unique<model::base_model<bcl::heatbath>>(
-        lat, dofs, ham_path, u_path, params, types, shift, zero_worm, repeat,
-        !rank, alpha);
+        *lat_ptr, dofs, ham_path, u_path, params, types, shift, zero_worm, repeat,
+        rank == 0, alpha);
   }
-  model::observable obs(*spin_ptr, obs_path, !rank);
+  model::observable obs(*spin_ptr, obs_path, rank == 0);
 
   // n* set wobs
-  if (wobs_paths.size() == 0) wobs_paths.push_back("");
+  if (wobs_paths.empty()) wobs_paths.push_back("");
   model::MapWormObs mapwobs;
   for (int i = 0; i < wobs_paths.size(); i++) {
     string name = "G";
     name += to_string(i);
     mapwobs.push_back(
-        name, model::WormObs(spin_ptr->sps_sites(0), wobs_paths[i], !rank));
+        name, model::WormObs(spin_ptr->sps_sites(0), wobs_paths[i], rank == 0));
   }
 
   // model::WormObs wobs(spin.sps_sites(0), wobs_path, !rank); // all elements
   // of sps_sites are the same.
 
-  size_t n_sites = lat.L * ns_unit;
+  size_t n_sites = lat_ptr->L * ns_unit;
 
   // output MC step info
   if (rank == 0)

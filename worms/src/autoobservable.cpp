@@ -4,6 +4,7 @@
 #include "load_npy.hpp"
 #include "../include/funcs.hpp"
 #include <alps/alea/computed.hpp>
+#include <utility>
 using namespace std;
 
 bool endsWith(const string &str, const string &suffix)
@@ -217,7 +218,7 @@ namespace model
 
   void ArrWormObs::_SetWormObs(vector<double> _obs, bool print)
   {
-    if (_worm_obs.size() != 0 )
+    if (!_worm_obs.empty() )
     {
       if (print) cerr << "Worm_obs is already set" << endl;
       return;
@@ -226,7 +227,7 @@ namespace model
     {
       throw std::runtime_error("dimension dissmatch");
     }
-    _worm_obs = move(_obs);
+    _worm_obs = std::move(_obs);
     _has_operator = true;
     if (!check_is_symm())
     {
@@ -298,7 +299,7 @@ namespace model
     return _worm_obs[state];
   }
 
-  WormObs::WormObs(size_t spin_dof, std::string folder_path, bool print) : WormObs(spin_dof, move(ReadNpy(spin_dof, folder_path, print)))
+  WormObs::WormObs(size_t spin_dof, std::string folder_path, bool print) : WormObs(spin_dof, std::move(ReadNpy(spin_dof, std::move(folder_path), print)))
   {
     // cout <<(*obs1)({1,0,0,1}) << endl;
     // cerr << "WormObs is not implemented yet" << endl;
@@ -308,8 +309,8 @@ namespace model
 
   WormObs::WormObs(size_t spin_dof, pair<BaseWormObsPtr, BaseWormObsPtr> obspt_pair) : _spin_dof(spin_dof), batch_obs(1)
   {
-    BaseWormObsPtr obs1 = move(obspt_pair.first);
-    BaseWormObsPtr obs2 = move(obspt_pair.second);
+    BaseWormObsPtr obs1 = std::move(obspt_pair.first);
+    BaseWormObsPtr obs2 = std::move(obspt_pair.second);
     if (obs1->leg_size() != 1 || obs2->leg_size() != 2)
     {
       cerr << "WormObs requires 1 and 2 leg operators" << endl;
@@ -327,8 +328,8 @@ namespace model
       cerr << "Operators are not set yet" << endl;
       exit(1);
     }
-    _first = move(obs1);
-    _second = move(obs2);
+    _first = std::move(obs1);
+    _second = std::move(obs2);
   }
 
   /*
