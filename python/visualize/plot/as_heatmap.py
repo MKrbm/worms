@@ -155,9 +155,9 @@ elif model_name == "BLBQ1D":
     fixed_params_BLBQ1D = {
         "temperature": np.sort(df.temperature.unique()),
         "n_sites": np.sort(df.n_sites.unique()),
-        "J1": [1],
+        "J0": [1],
     }
-    plot_heatmap(df, fixed_params_BLBQ1D, ('J0', 'hx'), model_name, image_model_dir)
+    plot_heatmap(df, fixed_params_BLBQ1D, ('J1', 'hx'), model_name, image_model_dir)
 
 elif model_name == "SS2D":
     fixed_params_MG1D = {
