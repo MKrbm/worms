@@ -2,7 +2,7 @@ import argparse
 import random
 
 models = [
-    "KH",
+    "KH2D",
     "HXYZ1D",
     "HXYZ2D",
     "FF1D",

@@ -1,4 +1,4 @@
-from .models import FF, HXYZ, BLBQ, MG, SS
+from .models import FF, HXYZ, BLBQ, MG, SS, KH
 from typing import List, Tuple, Any, Dict, Union
 from numpy._typing import NDArray
 
@@ -136,4 +136,28 @@ def get_model(model: str, params: Dict[str, Any], L: Union[List[int], None] = No
             h_list, sps = SS.local(params, 2)
             return h_list, sps, model_name
 
+    elif "KH2D" in model:
+        p = dict(
+            Jx=params["Jx"],
+            Jy=params["Jy"],
+            Jz=params["Jz"],
+            hx=params["hx"],
+            hz=params["hz"],
+        )
+        a = ""
+        for k, v in p.items():
+            v = float(v)
+            a += f"{k}_{v:.4g}_"
+        params_str = a[:-1]
+        p["lt"] = params["lt"]
+
+        if L:
+            size_name = f"L_{L[0]}x{L[1]}"
+            model_name = f"{model}_sys/{size_name}/{params_str}"
+            h_list, sps = KH.system(L, p)
+            return h_list, sps, model_name
+        else:
+            model_name = f"{model}_loc/{params_str}"
+            h_list, sps = KH.local(params, 2)
+            return h_list, sps, model_name
     raise NotImplementedError(f"model {model} not implemented")

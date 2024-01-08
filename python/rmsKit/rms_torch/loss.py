@@ -8,13 +8,16 @@ import logging
 
 
 class MinimumEnergyLoss(nn.Module):
+    """Calculate the minimum energy of a system using the reverse iteration method."""
+
     def __init__(
         self,
-        h_list: List[Union[np.ndarray, torch.Tensor]],
+        h_list: Union[List[torch.Tensor], List[np.ndarray]],
         device: torch.device = torch.device("cpu"),
         decay: float = 0.1,
         # n : after "decay" step, the regularization term will e^(-1) times smaller
     ):
+        """Initialize the minimum energy loss function."""
         super(MinimumEnergyLoss, self).__init__()
 
         logging.info("Initializing MinimumEnergyLoss")
