@@ -665,11 +665,18 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
   - Implement MG model.
   - Confirm test passed for all.
 
+- commit : a4b966222e65ce67ead8451a8b9e5836fb24e377
+- memo
+ - implemented Kagome Heisenberg model.
+ - confirmed negative sign improved at J = [1, 1.3, 1.3] h = [0, 0].
+ - confirmed all test passed.
+
 - **bugs**
   - I found out result is inconsistent with previous result.
     - Comparason commit : 86fbd568d695de1dbc824b8102190c43d7535fa6
     - I need to figure out which is correct.
     - I found out this is just a typo of summary (parameter described here was misleading)
+
 
 # todo list
 
