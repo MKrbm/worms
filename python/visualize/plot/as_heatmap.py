@@ -156,6 +156,7 @@ elif model_name == "BLBQ1D":
         "temperature": np.sort(df.temperature.unique()),
         "n_sites": np.sort(df.n_sites.unique()),
         "J0": [1],
+        "bc" : ["obc"],
     }
     plot_heatmap(df, fixed_params_BLBQ1D, ('J1', 'hx'), model_name, image_model_dir)
 
