@@ -1,17 +1,17 @@
 #!/bin/bash
 
-#SBATCH --job-name=blbq1d_sim
+#SBATCH --job-name=ss2d_sim
 #SBATCH --output=job_log/logfile_%A_%a.log
-#SBATCH --array=0-148  # Adjust this for the number of jobs and parallelism
+#SBATCH --array=0-256  # Adjust this for the number of jobs and parallelism
 #SBATCH --ntasks=4
 #SBATCH --nodes=1
 #SBATCH --partition=cpu
 
 # Source the blbl.sh script
-source blbq1d_sim.sh
+# source blbq1d_sim.sh
 #source hxyz1d_sim.sh
 #source hxyz2d_sim.sh
-# source ss2d_sim.sh
+source ss2d_sim.sh
 # source mg1d_sim.sh
 
 # Set the project directory
@@ -21,7 +21,7 @@ PROJECT_DIR=$(dirname "$(pwd)")
 SLURM_ARRAY_TASK_ID=$SLURM_ARRAY_TASK_ID
 
 #n_job_per_run=11  # Adjust this for the number of jobs per run
-n_job_per_run=5  # Adjust this for the number of jobs per run
+n_job_per_run=2  # Adjust this for the number of jobs per run
 
 # Run the job (for loop)
 # rm "$PROJECT_DIR"/job_log/log/*

@@ -48,7 +48,7 @@ run_job() {
     LT=1
     SWEEPS=1000000
     EPOCH=5000
-    M=50
+    M=1
     model_name="SS2D"
     log_dir="${project_dir}/job/log/${model_name}"
     [ ! -d "$log_dir" ] && mkdir -p "$log_dir" && echo "Created log directory $log_dir"
