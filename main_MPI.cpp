@@ -373,9 +373,10 @@ int main(int argc, char **argv) {
 
   // simulate with worm algorithm (parallel computing is enable)
   vector<batch_res> res;
+  double break_rate = 0;
   auto map_worm_obs =
       exe_worm_parallel(*spin_ptr, T, sweeps, therms, cutoff_l, fix_wdensity,
-                        rank, res, ac_res, obs, mapwobs, seed);
+                        rank, res, ac_res, obs, mapwobs, break_rate,  seed);
 
   batch_res as = res[0];   // average sign
   batch_res ene = res[1];  // signed energy i.e. $\sum_i E_i S_i / N_MC$
@@ -486,7 +487,8 @@ int main(int argc, char **argv) {
     std::cout << "# of operators       = " << nop_mean.first << " +- "
               << nop_mean.second << std::endl
               << "# of neg sign op     = " << nnop_mean.first << " +- "
-              << nnop_mean.second << std::endl;
+              << nnop_mean.second << std::endl
+              << "break out rate       = " << break_rate << std::endl;
   }
   MPI_Finalize();
 }

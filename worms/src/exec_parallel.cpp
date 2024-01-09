@@ -7,7 +7,8 @@ exe_worm_parallel(model::base_model<MC> spin_model, double T, size_t sweeps,
                   size_t therms, size_t cutoff_l, bool fix_wdensity, int rank,
                   std::vector<batch_res> &res, // contains results such as energy, average_sign,, etc
                   alps::alea::autocorr_result<double> &ac_res,
-                  model::observable obs, model::MapWormObs wobs, int seed) {
+                  model::observable obs, model::MapWormObs wobs,
+                  double & borate, int seed) {
 
   // cout << "Hi" << endl;
   using SPINMODEL = model::base_model<MC>;
@@ -150,8 +151,7 @@ exe_worm_parallel(model::base_model<MC> spin_model, double T, size_t sweeps,
   // elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end -
   // begin).count() / (double)1E3;
 #endif
-  double r = 1 - solver.bocnt /
-                     (double)(therms + sweeps); // # of loops breaked out divded
+  borate = solver.bocnt / static_cast<double>(therms + sweeps); // # of loops breaked out divded
                                                 // by total number of loops.
   // double r_ = 1-r_;
 
@@ -176,16 +176,16 @@ template map_wobs_t exe_worm_parallel<bcl::st2013>(
     model::base_model<bcl::st2013> spin_model, double T, size_t sweeps,
     size_t therms, size_t cutoff_l, bool fix_wdensity, int rank,
     std::vector<batch_res> &res, alps::alea::autocorr_result<double> &ac_res,
-    model::observable obs, model::MapWormObs wobs, int seed);
+    model::observable obs, model::MapWormObs wobs, double& borate, int seed);
 
-template map_wobs_t exe_worm_parallel<bcl::st2010>(
-    model::base_model<bcl::st2010> spin_model, double T, size_t sweeps,
-    size_t therms, size_t cutoff_l, bool fix_wdensity, int rank,
-    std::vector<batch_res> &res, alps::alea::autocorr_result<double> &ac_res,
-    model::observable obs, model::MapWormObs wobs, int seed);
+// template map_wobs_t exe_worm_parallel<bcl::st2010>(
+//     model::base_model<bcl::st2010> spin_model, double T, size_t sweeps,
+//     size_t therms, size_t cutoff_l, bool fix_wdensity, int rank,
+//     std::vector<batch_res> &res, alps::alea::autocorr_result<double> &ac_res,
+//     model::observable obs, model::MapWormObs wobs, double& borate, int seed);
 
 template map_wobs_t exe_worm_parallel<bcl::heatbath>(
     model::base_model<bcl::heatbath> spin_model, double T, size_t sweeps,
     size_t therms, size_t cutoff_l, bool fix_wdensity, int rank,
     std::vector<batch_res> &res, alps::alea::autocorr_result<double> &ac_res,
-    model::observable obs, model::MapWormObs wobs, int seed);
+    model::observable obs, model::MapWormObs wobs, double& borate, int seed);
