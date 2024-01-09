@@ -136,10 +136,11 @@ if __name__ == "__main__":
                 data_list.append(data)
 
                 # n: check if the simulation is reliable
-                if data["as_error"] / data["as"] > 0.2:
+                if (data["as_error"] / data["as"]) > 0.2 or (data["as"] <= 0):
                     logger.info(
-                        "Simulation is not reliable. The simulation for the following temperature will be ignored.")
-                    continue
+                        """Negativity was to high {} Simulation is not reliable.
+                        The simulation for the following temperature will be ignored.
+                        """.format(data["as_error"] / data["as"]))
                 else:
                     logger.info(
                         "Simulation succeeded. Sweeps : {} L : {}, T : {}, Negativity : {}".format(
