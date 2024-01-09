@@ -140,10 +140,12 @@ TEST(HamsTest, Kagome4x4WormUpdate)
   double wdensity = 5;
   double wlength = 0;
   double wcount = 0;
+  size_t w_upd_cnt;
+  size_t cutoff_thres = std::numeric_limits<size_t>::max();
   for (int i = 0; i < 1E3; i++)
   {
     solver.diagonalUpdate(wdensity);
-    solver.wormUpdate(wcount, wlength);
+    solver.wormUpdate(wcount, wlength, w_upd_cnt, cutoff_thres);
   }
   cerr << "finish" << endl;
 }
