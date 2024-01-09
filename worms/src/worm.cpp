@@ -1004,9 +1004,6 @@ template <class MCT>
 void Worm<MCT>::reset_ops() {
   for (size_t i = 0; i < psop.size(); i++) {
     ops_main[psop[i]] = pops_main[i];
-    if (! pops_main[i].same(ops_copy[psop[i]])){
-      throw std::runtime_error("ops_main and ops_copy are not same");
-    }
   }
 }
 
