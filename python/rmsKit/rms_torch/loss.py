@@ -63,8 +63,8 @@ class MinimumEnergyLoss(nn.Module):
         for i in range(len(self.h_list)):
             loss += self.minimum_energy_loss(self.h_list[i], U) - self.shift_origin_offset[i]
 
-        self.weight = self.weight * np.exp(-1 / self.weight_decay)
-        # print(f"weight: {self.weight}")
+        self.weight = (self.weight * np.exp(-1 / self.weight_decay)) \
+            if (self.weight_decay != 0) else 0
         return torch.abs(loss)
 
     def minimum_energy_loss(self, H: torch.Tensor, U: torch.Tensor) -> torch.Tensor:
