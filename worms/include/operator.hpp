@@ -1,5 +1,6 @@
 #pragma once
 
+#include <gtest/gtest-matchers.h>
 #include <iostream>
 #include <memory>
 #include <iterator>
@@ -23,6 +24,59 @@ namespace spin_state
 
   public:
     Operator() : bond_ptr_(nullptr), pows_ptr_(nullptr) {}
+
+    Operator(Operator const &op)
+        : bond_ptr_(op.bond_ptr_), pows_ptr_(op.pows_ptr_), state_(op.state_), op_type_(op.op_type_), tau_(op.tau_), cnt_(0), sps(op.sps),
+          nn_state_(op.nn_state_)
+    {}
+
+    bool same(Operator const &op){
+      if (op_type_ != op.op_type_){
+        std::cout << "op_type_ = " << op_type_ << " op.op_type_ = " << op.op_type_ << std::endl;
+        std::cout << "state_ = " << state_ << " op.state_ = " << op.state_ << std::endl;
+        std::cout << "tau_ = " << tau_ << " op.tau_ = " << op.tau_ << std::endl;
+        std::cout << "nn_state_ = " << nn_state_ << " op.nn_state_ = " << op.nn_state_ << std::endl;
+        return false;
+      }
+      if (state_ != op.state_){
+        std::cout << "op_type_ = " << op_type_ << " op.op_type_ = " << op.op_type_ << std::endl;
+        std::cout << "state_ = " << state_ << " op.state_ = " << op.state_ << std::endl;
+        std::cout << "tau_ = " << tau_ << " op.tau_ = " << op.tau_ << std::endl;
+        std::cout << "nn_state_ = " << nn_state_ << " op.nn_state_ = " << op.nn_state_ << std::endl;
+        return false;
+      }
+      if (tau_ != op.tau_){
+        std::cout << "op_type_ = " << op_type_ << " op.op_type_ = " << op.op_type_ << std::endl;
+        std::cout << "state_ = " << state_ << " op.state_ = " << op.state_ << std::endl;
+        std::cout << "tau_ = " << tau_ << " op.tau_ = " << op.tau_ << std::endl;
+        std::cout << "nn_state_ = " << nn_state_ << " op.nn_state_ = " << op.nn_state_ << std::endl;
+        return false;
+      }
+      if (nn_state_ != op.nn_state_){
+        std::cout << "op_type_ = " << op_type_ << " op.op_type_ = " << op.op_type_ << std::endl;
+        std::cout << "state_ = " << state_ << " op.state_ = " << op.state_ << std::endl;
+        std::cout << "tau_ = " << tau_ << " op.tau_ = " << op.tau_ << std::endl;
+        std::cout << "nn_state_ = " << nn_state_ << " op.nn_state_ = " << op.nn_state_ << std::endl;
+        return false;
+      }
+      return true;
+    }
+
+    // Operator& operator == (Operator const &op)
+    // {
+    //   if (this == &op) return *this;
+    // }
+
+    Operator& operator=(Operator const &op)
+    {
+      state_ = op.state_;
+      nn_state_ = op.nn_state_;
+      op_type_ = op.op_type_;
+      tau_ = op.tau_;
+      cnt_ = 0;
+      sps = op.sps;
+      return *this;
+    }
 
     Operator(const VS *const bp, const VS *pp, size_t st,
              int o, double t)
@@ -57,8 +111,8 @@ namespace spin_state
     void set_state(size_t s)
     {
       state_ = s;
-      cnt_ = 0;
     }
+    void reset_cnt() { cnt_ = 0; }
     void add_cnt() { cnt_++; }
     size_t size() const { return bond_ptr_->size(); }
     int op_type() const { return op_type_; }

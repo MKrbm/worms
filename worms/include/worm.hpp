@@ -92,6 +92,7 @@ public:
   OPS ops_sub;  // n*  for sub.
   state_t state;
   state_t cstate;
+  // state_t copystate;
   DOTS spacetime_dots; // n*  contain dots in space-time.
   WORMS worms_list;
 
@@ -102,7 +103,9 @@ public:
   std::vector<size_t> bond_type;
   std::vector<state_func> state_funcs;
   std::unordered_set<size_t> can_warp_ops;
-  std::vector<size_t> pres = std::vector<size_t>(0);
+  // std::vector<size_t> pres = std::vector<size_t>(0);
+  OPS pops_main;
+  OPS ops_copy;
   std::vector<size_t> psop = std::vector<size_t>(0);
   std::vector<state_t> worm_states;
   std::vector<double> worm_taus;
