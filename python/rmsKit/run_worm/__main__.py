@@ -42,7 +42,8 @@ if __name__ == "__main__":
     # define parameters list to be passed to the run_worm function
     # beta = np.linspace(0.5, 5, 3)
     if args.model == "SS2D":
-        beta = np.array([10])
+        beta = np.array([1, 4])
+        # beta = np.array([10])
         L_list = [[2, 2], [3, 2]]
         logger.info("RUN SS2D MODEL")
     elif args.model == "HXYZ2D":
