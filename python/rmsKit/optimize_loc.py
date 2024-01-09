@@ -190,6 +190,7 @@ if __name__ == "__main__":
 
     model.reset_params(torch.from_numpy(best_us[0]))
     out = model()
+    loss.initializer()
     if (abs(best_loss - loss(out).item())) > 1e-8:
         logging.error(
             """
@@ -197,9 +198,9 @@ if __name__ == "__main__":
             Something is wrong with the optimization.
             best_loss: {} and actual loss: {}
             """.format(best_loss, loss(out).item()))
-    else:
-        u_path_epoch = u_path / f"loss_{best_loss:.7f}/u"
-        save_npy(u_path_epoch, best_us)
+
+    u_path_epoch = u_path / f"loss_{best_loss:.7f}/u"
+    save_npy(u_path_epoch, best_us)
 
     logging.info(f"best loss: {best_loss} / initial loss: {initial_loss}")
     logging.info(f"best loss was saved to {u_path}/loss_{best_loss:.7f}/u")

@@ -101,7 +101,7 @@ class MinimumEnergyLoss(nn.Module):
         """
         return self.stoquastic(A)
 
-    def initializer(self, U: torch.Tensor) -> None:
+    def initializer(self, U: Union[torch.Tensor, None] = None) -> None:
         """Initialize the unitary matrix.
 
         If the loss is mel, just initialze decay weight to 1 if decay > 0.
