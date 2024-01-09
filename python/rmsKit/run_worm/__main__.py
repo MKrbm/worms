@@ -42,7 +42,8 @@ if __name__ == "__main__":
     # define parameters list to be passed to the run_worm function
     # beta = np.linspace(0.5, 5, 3)
     if args.model == "SS2D":
-        beta = np.array([10])
+        beta = np.array([1, 4])
+        # beta = np.array([10])
         L_list = [[2, 2], [3, 2]]
         logger.info("RUN SS2D MODEL")
     elif args.model == "HXYZ2D":
@@ -136,10 +137,11 @@ if __name__ == "__main__":
                 data_list.append(data)
 
                 # n: check if the simulation is reliable
-                if data["as_error"] / data["as"] > 0.2:
+                if (data["as_error"] / data["as"]) > 0.2 or (data["as"] <= 0):
                     logger.info(
-                        "Simulation is not reliable. The simulation for the following temperature will be ignored.")
-                    continue
+                        """Negativity was to high {} Simulation is not reliable.
+                        The simulation for the following temperature will be ignored.
+                        """.format(data["as_error"] / data["as"]))
                 else:
                     logger.info(
                         "Simulation succeeded. Sweeps : {} L : {}, T : {}, Negativity : {}".format(
