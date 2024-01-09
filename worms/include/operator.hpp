@@ -30,43 +30,6 @@ namespace spin_state
           nn_state_(op.nn_state_)
     {}
 
-    bool same(Operator const &op){
-      if (op_type_ != op.op_type_){
-        std::cout << "op_type_ = " << op_type_ << " op.op_type_ = " << op.op_type_ << std::endl;
-        std::cout << "state_ = " << state_ << " op.state_ = " << op.state_ << std::endl;
-        std::cout << "tau_ = " << tau_ << " op.tau_ = " << op.tau_ << std::endl;
-        std::cout << "nn_state_ = " << nn_state_ << " op.nn_state_ = " << op.nn_state_ << std::endl;
-        return false;
-      }
-      if (state_ != op.state_){
-        std::cout << "op_type_ = " << op_type_ << " op.op_type_ = " << op.op_type_ << std::endl;
-        std::cout << "state_ = " << state_ << " op.state_ = " << op.state_ << std::endl;
-        std::cout << "tau_ = " << tau_ << " op.tau_ = " << op.tau_ << std::endl;
-        std::cout << "nn_state_ = " << nn_state_ << " op.nn_state_ = " << op.nn_state_ << std::endl;
-        return false;
-      }
-      if (tau_ != op.tau_){
-        std::cout << "op_type_ = " << op_type_ << " op.op_type_ = " << op.op_type_ << std::endl;
-        std::cout << "state_ = " << state_ << " op.state_ = " << op.state_ << std::endl;
-        std::cout << "tau_ = " << tau_ << " op.tau_ = " << op.tau_ << std::endl;
-        std::cout << "nn_state_ = " << nn_state_ << " op.nn_state_ = " << op.nn_state_ << std::endl;
-        return false;
-      }
-      if (nn_state_ != op.nn_state_){
-        std::cout << "op_type_ = " << op_type_ << " op.op_type_ = " << op.op_type_ << std::endl;
-        std::cout << "state_ = " << state_ << " op.state_ = " << op.state_ << std::endl;
-        std::cout << "tau_ = " << tau_ << " op.tau_ = " << op.tau_ << std::endl;
-        std::cout << "nn_state_ = " << nn_state_ << " op.nn_state_ = " << op.nn_state_ << std::endl;
-        return false;
-      }
-      return true;
-    }
-
-    // Operator& operator == (Operator const &op)
-    // {
-    //   if (this == &op) return *this;
-    // }
-
     Operator& operator=(Operator const &op)
     {
       state_ = op.state_;

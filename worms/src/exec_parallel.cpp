@@ -2,40 +2,39 @@
 
 // parallel version of exe_worm
 template <typename MC>
-std::unordered_map<std::string, model::WormObs>
-exe_worm_parallel(model::base_model<MC> spin_model, double T, size_t sweeps,
-                  size_t therms, size_t cutoff_l, bool fix_wdensity, int rank,
-                  std::vector<batch_res> &res, // contains results such as energy, average_sign,, etc
-                  alps::alea::autocorr_result<double> &ac_res,
-                  model::observable obs, model::MapWormObs wobs,
-                  double & borate, int seed) {
-
+std::unordered_map<std::string, model::WormObs> exe_worm_parallel(
+    model::base_model<MC> spin_model, double T, size_t sweeps, size_t therms,
+    size_t cutoff_l, bool fix_wdensity, int rank,
+    std::vector<batch_res>
+        &res,  // contains results such as energy, average_sign,, etc
+    alps::alea::autocorr_result<double> &ac_res, model::observable obs,
+    model::MapWormObs wobs, double &borate, int seed) {
   // cout << "Hi" << endl;
   using SPINMODEL = model::base_model<MC>;
-  if (cutoff_l < 0)
-    cutoff_l = numeric_limits<decltype(cutoff_l)>::max();
+  if (cutoff_l < 0) cutoff_l = numeric_limits<decltype(cutoff_l)>::max();
 
-  batch_obs ave_sign(1); // average sign
-  batch_obs ene(1);      // signed energy i.e. $\sum_i E_i S_i / N_MC$
+  batch_obs ave_sign(1);  // average sign
+  batch_obs ene(1);       // signed energy i.e. $\sum_i E_i S_i / N_MC$
   batch_obs n_neg_ele(1);
   batch_obs n_ops(1);
-  batch_obs N2(1); // average of square of number of operators (required for
-                   // specific heat)
-  batch_obs N(1); // average of number of operators (required for specific heat)
-  batch_obs dH2(1);    // second derivative by magnetic field
-  batch_obs dH(1);     // first derivative by magnetic field
-  batch_obs m_diag(1); // magnetization (assume standard basis)
-  alps::alea::autocorr_acc<double> auto_corr(3); // H, m^2, S
+  batch_obs N2(1);  // average of square of number of operators (required for
+                    // specific heat)
+  batch_obs N(
+      1);  // average of number of operators (required for specific heat)
+  batch_obs dH2(1);     // second derivative by magnetic field
+  batch_obs dH(1);      // first derivative by magnetic field
+  batch_obs m_diag(1);  // magnetization (assume standard basis)
+  alps::alea::autocorr_acc<double> auto_corr(3);  // H, m^2, S
 
   // ; // magnetization
-  BC::observable M2; // magnetization^2
-  BC::observable K;  // matnetic susceptibility
+  BC::observable M2;  // magnetization^2
+  BC::observable K;   // matnetic susceptibility
 
   double beta = 1 / T;
 
   // if seed is negative, will initialize seed by random seed
-  Worm<MC> solver(beta, spin_model, wobs, cutoff_l,
-                  rank, seed); // template needs for std=14
+  Worm<MC> solver(beta, spin_model, wobs, cutoff_l, rank,
+                  seed);  // template needs for std=14
   // spin_model.lattice.print(std::cout);
 
 #if MESTIME
@@ -51,18 +50,22 @@ exe_worm_parallel(model::base_model<MC> spin_model, double T, size_t sweeps,
   double wcount = 0;
   double wlength = 0;
   double wdensity = spin_model.Nb;
+  double cutoff_ave = 0;
+  double cutoff_var = 0;
+  size_t cutoff_thres = std::numeric_limits<size_t>::max();
   for (int i = 0; i < therms + sweeps; i++) {
-    solver.diagonalUpdate(wdensity); // n* need to be comment out
-    solver.wormUpdate(wcount, wlength);
+    size_t w_upd_cnt = 0;
+    solver.diagonalUpdate(wdensity);  // n* need to be comment out
+    solver.wormUpdate(wcount, wlength, w_upd_cnt, cutoff_thres);
     if (cnt >= therms) {
       int sign = 1;
       // double w_rate = 1;
       double n_neg = 0;
       double n_op = 0;
       double mu = 0;
-      double sum_ot = 0; // \sum_{tau} O_{tau} : sum of observables
+      double sum_ot = 0;  // \sum_{tau} O_{tau} : sum of observables
       double sum_2_ot =
-          0; // \sum_{tau} (O_{tau})^2 : sum of square of observables
+          0;  // \sum_{tau} (O_{tau})^2 : sum of square of observables
 
       for (const auto &s : solver.state) {
         mu += 0.5 - s;
@@ -120,12 +123,18 @@ exe_worm_parallel(model::base_model<MC> spin_model, double T, size_t sweeps,
       // cout << alps::alea::make_adapter<double>(v)[0] << endl;
       auto_corr << _tmp;
     }
+    double delta = w_upd_cnt - cutoff_ave;
+    cutoff_ave += delta / (i + 1);
+    if (i >= 1) cutoff_var += (delta * delta) / (i + 1) - cutoff_var / i;
+    // std::cout << w_upd_cnt << " " << cutoff_ave << " " << sqrt(cutoff_var) <<
+    // std::endl;
     if (i <= therms / 2) {
       if (!fix_wdensity) {
         if (wcount > 0)
           wdensity =
               spin_model.Nb /
-              (wlength / wcount); // Actually at least one worm is secured.
+              (wlength / wcount);  // Actually at least one worm is secured.
+
         if (i % (therms / 8 + 1) == 0) {
           wcount /= 2;
           wlength /= 2;
@@ -133,15 +142,21 @@ exe_worm_parallel(model::base_model<MC> spin_model, double T, size_t sweeps,
       }
     }
     if (i == therms / 2) {
-      if (!fix_wdensity && (rank == 0))
+      cutoff_thres =
+          (size_t)(cutoff_ave + sqrt(cutoff_var) * solver.cutoff_length);
+      if (!fix_wdensity && (rank == 0)) {
         std::cout << "Info: average number worms per MCS is reset from "
                   << spin_model.L << " to " << wdensity + 1 << "(rank=" << rank
-                  << ")"
-                  << "\n" << std::endl;
-      else if (rank == 0)
+                  << ")" << std::endl;
+        std::cout << "Info: cutoff_thres is " << cutoff_thres
+                  << "(rank=" << rank << ")"
+                  << "\n"
+                  << std::endl;
+      } else if (rank == 0)
         std::cout << "Info: average number worms per MCS is " << wdensity + 1
                   << "(rank=" << rank << ")"
-                  << "\n" << std::endl;
+                  << "\n"
+                  << std::endl;
     }
     cnt++;
   }
@@ -151,8 +166,10 @@ exe_worm_parallel(model::base_model<MC> spin_model, double T, size_t sweeps,
   // elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end -
   // begin).count() / (double)1E3;
 #endif
-  borate = solver.bocnt / static_cast<double>(therms + sweeps); // # of loops breaked out divded
-                                                // by total number of loops.
+  borate =
+      solver.bocnt /
+      static_cast<double>(therms + sweeps);  // # of loops breaked out divded
+                                             // by total number of loops.
   // double r_ = 1-r_;
 
   res.push_back(ave_sign.finalize());
@@ -176,7 +193,7 @@ template map_wobs_t exe_worm_parallel<bcl::st2013>(
     model::base_model<bcl::st2013> spin_model, double T, size_t sweeps,
     size_t therms, size_t cutoff_l, bool fix_wdensity, int rank,
     std::vector<batch_res> &res, alps::alea::autocorr_result<double> &ac_res,
-    model::observable obs, model::MapWormObs wobs, double& borate, int seed);
+    model::observable obs, model::MapWormObs wobs, double &borate, int seed);
 
 // template map_wobs_t exe_worm_parallel<bcl::st2010>(
 //     model::base_model<bcl::st2010> spin_model, double T, size_t sweeps,
@@ -188,4 +205,4 @@ template map_wobs_t exe_worm_parallel<bcl::heatbath>(
     model::base_model<bcl::heatbath> spin_model, double T, size_t sweeps,
     size_t therms, size_t cutoff_l, bool fix_wdensity, int rank,
     std::vector<batch_res> &res, alps::alea::autocorr_result<double> &ac_res,
-    model::observable obs, model::MapWormObs wobs, double& borate, int seed);
+    model::observable obs, model::MapWormObs wobs, double &borate, int seed);

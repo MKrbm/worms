@@ -25,6 +25,7 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_,
       cutoff_length(cl),
       _mp_worm_obs(mp_worm_obs_),
       _phys_cnt(1),
+      cutoff_thres(1000),
       loperators(spin_model.loperators),
       sps(spin_model.sps_sites(0)),
       obs_sum(mp_worm_obs_().size()),
@@ -88,6 +89,7 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_,
 }
 template <class MCT>
 void Worm<MCT>::diagonalUpdate(double wdensity) {
+  dout << "hello" << endl;
   swapOps();
   expdist_t expdist(rho * beta +
                     wdensity);  // initialize exponential distribution
@@ -108,6 +110,7 @@ void Worm<MCT>::diagonalUpdate(double wdensity) {
   worm_taus.resize(0);
 
   ops_sub.push_back(OP_type::sentinel(1));  //*sentinels
+  dout << ops_sub.size() << endl;
   double tau0 = uniform(rand_src);
   double tau = expdist(rand_src);
   bool set_atleast_one = false;
@@ -209,7 +212,7 @@ variables
 dir : direction of worm head. 1 : upward, -1 : downward
 */
 template <class MCT>
-void Worm<MCT>::wormUpdate(double &wcount, double &wlength) {
+void Worm<MCT>::wormUpdate(double &wcount, double &wlength, size_t &w_update_cnt, size_t & cutoff_thres) {
   pops_main.resize(0);
   psop.resize(0);
   ops_copy.clear(); 
@@ -275,36 +278,11 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength) {
         if (fl != 0) {
           n_dot_label = dot->move_next(dir);  // next label of dot.
         }
-        size_t status =
-            wormOpUpdate(n_dot_label, dir, site, wlength_prime, fl, tau, wt_dot,
-                         wt_site, wt_tau, w_x, wt_x, t_fl, t_dir, w_index);
-
-        if (u_cnt >= 105) {
-          int x;
-        }
-        if (u_cnt >= 105) {
-          dout << "n_dot_label, dir, site, wlength_prime, fl, tau, wt_dot, "
-                  "wt_site, wt_tau, w_x, wt_x, t_fl, t_dir, w_index : "
-               << n_dot_label << " " << dir << " " << site << " "
-               << wlength_prime << " " << fl << " " << tau << " " << wt_dot
-               << " " << wt_site << " " << wt_tau << " " << w_x << " " << wt_x
-               << " " << t_fl << " " << t_dir << " " << w_index << std::endl;
-          dout << "u : " << u_cnt << std::endl;
-          dout << "\n--------------------\n" << std::endl;
-
-          // if (u_cnt == 200){
-          //   exit(1);
-          // }
-        }
-        u_cnt++;
-        if (status == 1) {
-          reset_ops();
-          ops_main.resize(ops_main.size() - 1);
-          // ops_main.clear();
-          // std::copy(ops_copy.begin(), ops_copy.end(), std::back_inserter(ops_main));
+        if (w_update_cnt > cutoff_thres) {
+          ops_main.clear();
+          std::copy(ops_copy.begin(), ops_copy.end(), std::back_inserter(ops_main));
           std::copy(copystate.begin(), copystate.end(), state.begin());
           sign = copysign;
-          // ops_main.resize(ops_main.size() - 1);
           /*  
           //n: 
             We don't need to reset 
@@ -313,12 +291,19 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength) {
             because they will be reset in diagonalUpdate.
           */
           bocnt++;
-          dout << "break" << std::endl;
+          // std::cout << "break" << std::endl;
+          wlength += wlength_prime; 
           return;
         }
+        size_t status =
+            wormOpUpdate(n_dot_label, dir, site, wlength_prime, fl, tau, wt_dot,
+                         wt_site, wt_tau, w_x, wt_x, t_fl, t_dir, w_index);
+
+        u_cnt++;
         if (fl != 0) {
           dot = &spacetime_dots[n_dot_label];
         }
+        w_update_cnt++;
       } while ((n_dot_label != wt_dot ||
                 ((t_dir == dir ? 1 : -1) * t_fl + fl + sps) % sps != 0));
 
@@ -329,11 +314,11 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength) {
       }
 
       // n* debug
-// #ifndef NDEBUG
-//       if (cstate != worm_states[w_index]) {
-//         throw std::runtime_error("wormUpdate : state is not updated correctly");
-//       }
-// #endif
+#ifndef NDEBUG
+      if (cstate != worm_states[w_index]) {
+        throw std::runtime_error("wormUpdate : state is not updated correctly");
+      }
+#endif
 
       // n* caluclation contribution to wobs
       _phys_cnt << phys_cnt;
@@ -616,16 +601,6 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
     cur_dot = next_dot = *it;
     dotp = &spacetime_dots[next_dot];
     opsp = &ops_main[dotp->label()];
-    if (opsp->cnt() == 0) {
-      psop.push_back(dotp->label());
-      if (!ops_copy[dotp->label()].same(*opsp)){
-        throw std::runtime_error("ops_copy[dotp->label()].same(*opsp) is false");
-      
-      }
-      pops_main.push_back(*opsp);
-    }
-    opsp->add_cnt();
-
     op_type = opsp->op_type();
     dout << "n, cur_dot, next_dot, op_type : " << n << " " << cur_dot << " "
          << next_dot << " " << op_type << std::endl;
@@ -739,19 +714,6 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
   if (dotp->at_origin()) {
     state[dotp->label()] = (state[dotp->label()] + fl) % sps;
   } else if (dotp->at_operator()) {
-    if (opsp->cnt() == 0) {
-      psop.push_back(dotp->label());
-      if (!ops_copy[dotp->label()].same(*opsp)){
-        throw std::runtime_error("ops_copy[dotp->label()].same(*opsp) is false");
-      
-      }
-      pops_main.push_back(*opsp);
-    }
-    opsp->add_cnt();
-    if (opsp->cnt() > cutoff_length) {
-      return 1;
-    }
-
     int state_num;
     int tmp;
     int nindex;

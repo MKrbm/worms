@@ -131,9 +131,11 @@ TEST(HXX1D2SITE, check_update_a) {
   double wdensity = 5;
   double wcount = 1;
   double wlength = 1;
+  size_t w_upd_cnt;
+  size_t cutoff_thres = std::numeric_limits<size_t>::max();
   while (true) {
     solver.diagonalUpdate(10);  // n* need to be comment out
-    solver.wormUpdate(wcount, wlength);
+    solver.wormUpdate(wcount, wlength, w_upd_cnt, cutoff_thres);
     auto ops = solver.ops_main;
     int cnt = 0;
     for (const auto &op : ops) cnt += op.is_diagonal() ? 0 : 1;
@@ -145,7 +147,7 @@ TEST(HXX1D2SITE, check_update_a) {
   std::map<size_t, double> mat_elem;
 
   for (int i = 0; i < sweeps; i++) {
-    solver.wormUpdate(wcount, wlength);
+    solver.wormUpdate(wcount, wlength, w_upd_cnt, cutoff_thres);
     state_t state = solver.state;
     state_t cstate = state;
     auto ops = solver.ops_main;
@@ -233,10 +235,15 @@ TEST(HXX1D2SITE, check_update) {
   using state_t = spin_state::state_t;
 
   // n* loop until ops_main has 3 operators
-  double wdensity = 5, wcount = 1, wlength = 1;
+  double wdensity = 5;
+  double wcount = 1;
+  double wlength = 1;
+  size_t w_upd_cnt;
+  size_t cutoff_thres = std::numeric_limits<size_t>::max();
+
   while (true) {
     solver.diagonalUpdate(10);  // n* need to be comment out
-    solver.wormUpdate(wcount, wlength);
+    solver.wormUpdate(wcount, wlength, w_upd_cnt, cutoff_thres);
     auto ops = solver.ops_main;
     int cnt = 0;
     for (const auto &op : ops) cnt += op.is_diagonal() ? 0 : 1;
@@ -248,7 +255,7 @@ TEST(HXX1D2SITE, check_update) {
   std::map<size_t, double> mat_elem;
 
   for (int i = 0; i < sweeps; i++) {
-    solver.wormUpdate(wcount, wlength);
+    solver.wormUpdate(wcount, wlength, w_upd_cnt, cutoff_thres);
     state_t state = solver.state;
     state_t cstate = state;
     auto ops = solver.ops_main;
