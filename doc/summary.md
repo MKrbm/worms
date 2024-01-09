@@ -666,10 +666,15 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
   - Confirm test passed for all.
 
 - commit : a4b966222e65ce67ead8451a8b9e5836fb24e377
-- memo
- - implemented Kagome Heisenberg model.
- - confirmed negative sign improved at J = [1, 1.3, 1.3] h = [0, 0].
- - confirmed all test passed.
+  - memo
+   - implemented Kagome Heisenberg model.
+   - confirmed negative sign improved at J = [1, 1.3, 1.3] h = [0, 0].
+   - confirmed all test passed.
+
+- commit : c5113f105150215c571ee3671ecd3960ce1766c0
+  - memo 
+    - implemented cutoff_thres
+    - check all test
 
 - **bugs**
   - I found out result is inconsistent with previous result.

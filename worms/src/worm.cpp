@@ -37,7 +37,7 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_,
   if (seed < 0) {
     engine_seed = rseed;
   } else {
-    engine_seed = seed;
+    engine_seed = seed + (rank + 1);
   }
   std::cout << "Random seed for process : "<< rank << " is set to : " << engine_seed << std::endl;
   rand_src = engine_type(engine_seed);
