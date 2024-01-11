@@ -48,7 +48,7 @@ run_job() {
     LT=1
     SWEEPS=1000000
     EPOCH=5000
-    M=50
+    M=10
     model_name="SS2D"
     log_dir="${project_dir}/job/log/${model_name}"
     [ ! -d "$log_dir" ] && mkdir -p "$log_dir" && echo "Created log directory $log_dir"
@@ -74,22 +74,21 @@ run_job() {
     source /opt/materiapps-intel/env.sh
     source ~/worms/myenv/bin/activate
 
-    # python -u optimize_loc.py -m $model_name -o Adam -lr 0.003 -e "$EPOCH" -M "$M" -lt "$LT" \
-        #     -J0 "$J0" -J1 "$J1" -J2 "$J2" \
-        #     -n "$n_cpu" --symoblic_link "$symbolic_link" \
-        #     --stdout >> "$log_file"
-    # echo "Finished SS2D model job with J0=${J0}, J1=${J1}, J2=${J2} in CPU ${n_cpu}"
+    python -u optimize_loc.py -m $model_name -o Adam -lr 0.003 -e "$EPOCH" -M "$M" -lt "$LT" \
+        -J0 "$J0" -J1 "$J1" -J2 "$J2" \
+        -n "$n_cpu" --symoblic_link "$symbolic_link" \
+        --stdout >> "$log_file"
+
+    python -u -m run_worm -m $model_name --path "$symbolic_link" -s "$SWEEPS" -n "$n_cpu" --stdout >> "$log_file"
+    echo "Finished running worm with optimized hamiltonian"
 
     python -u optimize_loc.py -m $model_name -lt -1 -loss none \
         -J0 "$J0" -J1 "$J1" -J2 "$J2" \
         -n "$n_cpu" --symoblic_link "$symbolic_link" \
         --stdout >> "$log_file"
 
-    # python -u -m run_worm -m $model_name --path "$symbolic_link" -s "$SWEEPS" --original -n "$n_cpu" --stdout >> "$log_file"
-    # echo "Finished running worm with original hamiltonian"
-
     python -u -m run_worm -m $model_name --path "$symbolic_link" -s "$SWEEPS" -n "$n_cpu" --stdout >> "$log_file"
-    echo "Finished running worm with optimized hamiltonian"
+    echo "Finished running worm with dimer-basis hamiltonian"
 }
 
 # Initialization
