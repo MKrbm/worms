@@ -25,7 +25,7 @@ model = parser.parse_args().model
 
 
 def test_sim_res(df_u, df_h, df_e, df_s, eigs):
-
+    """Test the simulation results by comparing the results with the exact results."""
     test_fail = True
 
     diff = np.abs(np.sort(eigs) - np.sort(df_e.value)).mean()
@@ -39,7 +39,7 @@ def test_sim_res(df_u, df_h, df_e, df_s, eigs):
 
 
 def test_solver_worm(df_u, df_h, df_e, df_s):
-
+    """Test the solver by comparing the results with the exact results."""
     test_fail = True
 
     if not np.all(df_u.c_test) & np.all(df_u.e_test):
@@ -65,6 +65,7 @@ def test_solver_worm(df_u, df_h, df_e, df_s):
 
 @contextlib.contextmanager
 def change_directory(directory):
+    """Change directory to directory and return to the original directory."""
     original_directory = os.getcwd()
     try:
         os.chdir(directory)
@@ -74,6 +75,7 @@ def change_directory(directory):
 
 
 def call_HPhi(HPhi_in: str, L: int) -> List[float]:
+    """Call HPhi and return the eigenvalues."""
     eigs = []
     for sz2 in range(0, L+1):
         # write the HPhi_in into a stat.in file
@@ -89,7 +91,7 @@ def call_HPhi(HPhi_in: str, L: int) -> List[float]:
                 stdout=subprocess.PIPE,
                 shell=True,
                 env=ENV)
-            stdout = out.stdout.decode("utf-8")
+            # stdout = out.stdout.decode("utf-8")
 
         # load the output file
         eigs_tmp = []
@@ -120,9 +122,9 @@ def _run_HXYZ1D(Js: List[float],
         __file__).resolve().parent.parent.as_posix()
     output_dir = FILE_DIR / "output"
     output_dir.mkdir(exist_ok=True)
-    output_dir = output_dir.as_posix()
-    logging.debug("output_dir: {}".format(output_dir))
-    return run_HXYZ(params, rmsKit_directory, output_dir)
+    # output_dir = output_dir.as_posix()
+    logging.debug("output_dir: {}".format(output_dir.as_posix()))
+    return run_HXYZ(params, rmsKit_directory, output_dir.as_posix())
 
 
 def _run_HXYZ2D(Js: List[float],
@@ -146,9 +148,9 @@ def _run_HXYZ2D(Js: List[float],
         __file__).resolve().parent.parent.as_posix()
     output_dir = FILE_DIR / "output"
     output_dir.mkdir(exist_ok=True)
-    output_dir = output_dir.as_posix()
-    logging.debug("output_dir: {}".format(output_dir))
-    return run_HXYZ(params, rmsKit_directory, output_dir)
+    # output_dir = output_dir.as_posix()
+    logging.debug("output_dir: {}".format(output_dir.as_posix()))
+    return run_HXYZ(params, rmsKit_directory, output_dir.as_posix())
 
 
 def _run_BLBQ1D(Js: List[float],
@@ -171,9 +173,9 @@ def _run_BLBQ1D(Js: List[float],
         __file__).resolve().parent.parent.as_posix()
     output_dir = FILE_DIR / "output"
     output_dir.mkdir(exist_ok=True)
-    output_dir = output_dir.as_posix()
-    logging.debug("output_dir: {}".format(output_dir))
-    return run_BLBQ1D(params, rmsKit_directory, output_dir)
+    # output_dir = output_dir.as_posix()
+    logging.debug("output_dir: {}".format(output_dir.as_posix()))
+    return run_BLBQ1D(params, rmsKit_directory, output_dir.as_posix())
 
 
 def _run_MG1D(Js: List[float],
@@ -196,10 +198,9 @@ def _run_MG1D(Js: List[float],
 
 
 def _run_SS2D(Js: List[float],
-              L1: int, L2: int) -> Tuple[pd.DataFrame,
-                                         pd.DataFrame,
-                                         pd.DataFrame,
-                                         pd.DataFrame]:
+              L1: int,
+              L2: int,
+              obc: bool = False) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     # run HXYZ1D
     params = {
         "L1": L1,
@@ -208,6 +209,7 @@ def _run_SS2D(Js: List[float],
         "J1": Js[1],
         "J2": Js[2],
         "lt": 1,
+        "obc": obc,
     }
 
     rmsKit_directory = Path(
@@ -482,11 +484,20 @@ if __name__ == "__main__":
                 "ground state energy at Shastry-Sutherland point is incorrect : {} != - N * 3".format(e0))
 
         # n: Shastry-Sutherland model (plaquette phase)
-        Js = [1.0, 1, 0]
+        Js = [1.0, 1.3, 0.2]
         logging.info("Run SS2D test")
 
         logging.info("Js: {}".format(Js))
         mdfu, mdfh, dfe, dfs = _run_SS2D(Js,  Ls[0], Ls[1])
+        if test_solver_worm(mdfu, mdfh, dfe, dfs):
+            logging.info("SS2D(yet dimer basis is gs) test passed")
+
+        # n: Shastry-Sutherland model (obc)
+        Js = [1.0, 1.3, 0.2]
+        logging.info("Run SS2D test")
+
+        logging.info("Js: {}".format(Js))
+        mdfu, mdfh, dfe, dfs = _run_SS2D(Js,  Ls[0], Ls[1], True)
         if test_solver_worm(mdfu, mdfh, dfe, dfs):
             logging.info("SS2D(yet dimer basis is gs) test passed")
 
@@ -502,7 +513,6 @@ if __name__ == "__main__":
         mdfu, mdfh, dfe, dfs = _run_KH2D(Js, hs, Ls[0], Ls[1])
         if test_solver_worm(mdfu, mdfh, dfe, dfs):
             logging.info("KH2D test passed")
-
 
         # n: Kagome Heisenberg model
         Js = [1.0, - 0.8, 0.5]
