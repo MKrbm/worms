@@ -63,7 +63,6 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
             # print(key, value, len(filtered_df))
             figure_name_parts.append(f"{key}_{value}")
 
-
         x_param, y_param = heatmap_params
         x_values = np.sort(filtered_df[x_param].unique())
         y_values = np.sort(filtered_df[y_param].unique())
@@ -81,19 +80,28 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
         for Jx, Jy in zip(x.reshape(-1), y.reshape(-1)):
             df_plot = filtered_df[(filtered_df[x_param] == Jx) & (filtered_df[y_param] == Jy)]
             df_u = df_plot[~df_plot.loss.isna()]
+
+            if len(df_u) == 0:
+                logger.info(f"Optimized system data was not found for {x_param}={Jx}, {y_param}={Jy}")
+                au = np.nan
+                au_err = np.nan
+                loss = np.nan
+                init_loss = np.nan
+            else:
+                idx = np.argmin(df_u.loss.values)
+                loss = df_u.loss.values[idx]
+                init_loss = df_u.init_loss.values[idx]
+                au = df_u["as"].values[idx]
+                au_err = df_u["as_error"].values[idx] * np.sqrt(N)
+
             df_h = df_plot[df_plot.loss.isna()]
-
-            if len(df_u) == 0 or len(df_h) == 0:
-                logger.debug(f"Skipping {x_param}={Jx}, {y_param}={Jy}")
-                continue
-
-            ah = df_h["as"].min()
-            ah_err = df_h["as_error"].min() * np.sqrt(N)
-            idx = np.argmin(df_u.loss.values)
-            loss = df_u.loss.values[idx]
-            init_loss = df_u.init_loss.values[idx]
-            au = df_u["as"].values[idx]
-            au_err = df_u["as_error"].values[idx] * np.sqrt(N)
+            if len(df_h) == 0:
+                logger.info(f"Original System data was not found for {x_param}={Jx}, {y_param}={Jy}")
+                ah = np.nan
+                ah_err = np.nan
+            else:
+                ah = df_h["as"].min()
+                ah_err = df_h["as_error"].min() * np.sqrt(N)
 
             zs["NegativeSign (optimized)"].append(1 - au)
             zs["NegativeSign (initial)"].append(1 - ah)
@@ -156,13 +164,15 @@ elif model_name == "BLBQ1D":
         "temperature": np.sort(df.temperature.unique()),
         "n_sites": np.sort(df.n_sites.unique()),
         "J0": [1],
-        "bc" : ["obc"],
+        "bc": ["obc"],
     }
     plot_heatmap(df, fixed_params_BLBQ1D, ('J1', 'hx'), model_name, image_model_dir)
 
 elif model_name == "SS2D":
     fixed_params_MG1D = {
-        "temperature": np.sort(
-            df.temperature.unique()), "n_sites": np.sort(
-            df.n_sites.unique()), "J0": [1]}
+        "temperature": [0.25, 1],
+        "n_sites": np.sort(df.n_sites.unique()),
+        "J0": [1],
+        "loss_func": ["-1_none", "1_mel"]
+    }
     plot_heatmap(df, fixed_params_MG1D, ('J1', 'J2'), model_name, image_model_dir)
