@@ -11,7 +11,8 @@
 # source blbq1d_sim.sh
 #source hxyz1d_sim.sh
 #source hxyz2d_sim.sh
-source ss2d_sim.sh
+# source ss2d_sim.sh
+source ss2d_dimer_sim.sh
 # source mg1d_sim.sh
 
 # Set the project directory
