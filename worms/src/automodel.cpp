@@ -135,10 +135,10 @@ std::tuple<size_t, VVS, VS, VS> base_lattice::initilizer_xml(
         std::cerr << "Wrong number of shapes for 2D lattice";
         exit(1);
       }
-      if (boundary == lattice::boundary_t::open) {
-        std::cerr << "open boundary is not supported for 2D lattice";
-        exit(1);
-      }
+      // if (boundary == lattice::boundary_t::open) {
+      //   std::cerr << "open boundary is not supported for 2D lattice";
+      //   exit(1);
+      // }
       lattice::graph lat(bs, cell, lattice::extent(shapes[0], shapes[1]),
                          boundary);
       if (print) lat.print(std::cout);

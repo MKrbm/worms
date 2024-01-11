@@ -74,8 +74,9 @@ mc_res run_worm(model::base_model<MC> &spin, double T, size_t sweeps,
                 model::MapWormObs wobs) {
   // dont fix worm density. Not printout density information.
   alps::alea::autocorr_result<double> ac_res;
+  double r;
   exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, ac_res, obs,
-                    wobs);
+                    wobs, r);
 
   batch_res as = res[0];  // average sign
   batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$

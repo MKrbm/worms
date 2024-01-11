@@ -322,16 +322,16 @@ int main(int argc, char **argv) {
         std::make_unique<model::base_lattice>(basis, cell, shapes, file, rank == 0);
   }
   // model::base_model<bcl::heatbath>* spin;
-  std::unique_ptr<model::base_model<bcl::heatbath>> spin_ptr;
+  std::unique_ptr<model::base_model<bcl::st2013>> spin_ptr;
   if (u_path.empty()) {
     if (rank == 0)
       std::cout << "unitary is not given. Identity matrix is used."
                 << std::endl;
-    spin_ptr = std::make_unique<model::base_model<bcl::heatbath>>(
+    spin_ptr = std::make_unique<model::base_model<bcl::st2013>>(
         *lat_ptr, dofs, ham_path, params, types, shift, zero_worm, repeat, rank == 0,
         alpha);
   } else {
-    spin_ptr = std::make_unique<model::base_model<bcl::heatbath>>(
+    spin_ptr = std::make_unique<model::base_model<bcl::st2013>>(
         *lat_ptr, dofs, ham_path, u_path, params, types, shift, zero_worm, repeat,
         rank == 0, alpha);
   }
@@ -373,9 +373,10 @@ int main(int argc, char **argv) {
 
   // simulate with worm algorithm (parallel computing is enable)
   vector<batch_res> res;
+  double break_rate = 0;
   auto map_worm_obs =
       exe_worm_parallel(*spin_ptr, T, sweeps, therms, cutoff_l, fix_wdensity,
-                        rank, res, ac_res, obs, mapwobs, seed);
+                        rank, res, ac_res, obs, mapwobs, break_rate,  seed);
 
   batch_res as = res[0];   // average sign
   batch_res ene = res[1];  // signed energy i.e. $\sum_i E_i S_i / N_MC$
@@ -486,7 +487,8 @@ int main(int argc, char **argv) {
     std::cout << "# of operators       = " << nop_mean.first << " +- "
               << nop_mean.second << std::endl
               << "# of neg sign op     = " << nnop_mean.first << " +- "
-              << nnop_mean.second << std::endl;
+              << nnop_mean.second << std::endl
+              << "break out rate       = " << break_rate << std::endl;
   }
   MPI_Finalize();
 }

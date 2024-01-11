@@ -36,7 +36,8 @@ void run_worm(
 {
   // dont fix worm density. Not printout density information.
   alps::alea::autocorr_result<double> ac_res;
-  exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, ac_res, obs, wobs);
+  double r;
+  exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, ac_res, obs, wobs, r);
 
   batch_res as = res[0];  // average sign
   batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
