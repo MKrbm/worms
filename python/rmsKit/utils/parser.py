@@ -12,7 +12,7 @@ models = [
     "SS2D",
 ]
 # minimum energy solver, quasi energy solver
-loss_val = ["mel", "none", "qsmel"]
+loss_val = ["mel", "none", "qsmel", "stoq"]
 
 
 def get_parser(length: bool = False, model=None, Description=None):

@@ -71,6 +71,10 @@ if __name__ == "__main__":
         H, _, _ = get_model(args.model, params, L)
         h_list = [H]
         loss = rms_torch.SystemQUasiEnergyLoss(h_list, device=device)
+    elif args.loss == "stoq":
+        h_list, _, _ = get_model(args.model, params)
+        loss = rms_torch.SystemStoquastic(h_list, device=device)
+        loss_dir = f"{params['lt']}_{args.loss}"
     elif args.loss == "mel":
         h_list, _, _ = get_model(args.model, params)
         loss = rms_torch.MinimumEnergyLoss(h_list, device=device, decay=epochs/10)
