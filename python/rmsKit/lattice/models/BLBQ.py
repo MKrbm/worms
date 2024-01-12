@@ -24,9 +24,19 @@ def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
 
     e, v = np.linalg.eigh(h)
 
-    if lt > 0:
+    ur = np.array([
+        [-1j / np.sqrt(2), 0, 1j / np.sqrt(2)],
+        [1 / np.sqrt(2), 0, 1 / np.sqrt(2)],
+        [0, 1j, 0],
+    ])
+    UR = np.kron(ur, ur)
+
+    if lt < 0:
+        h = UR @ h @ UR.T
+
+    if abs(lt) > 0:
         sps = 3
-        if lt > 1:
+        if abs(lt) > 1:
             L = lt
             _h = utils.sum_ham(h / 2, [[i, i+1] for i in range(2*L-1)], 2 * L, sps)
             _h += utils.sum_ham(h / 2, [[L-1, L]], 2 * L, sps)
