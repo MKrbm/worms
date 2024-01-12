@@ -139,8 +139,8 @@ if __name__ == "__main__":
                 # n: check if the simulation is reliable
                 if (data["as_error"] / data["as"]) > 0.2 or (data["as"] <= 0):
                     logger.info(
-                        """Negativity was to high {} Simulation is not reliable.
-                        The simulation for the following temperature will be ignored.
+                        """Negativity was too high {} Simulation is not reliable.
+                        The simulation for the following temperature can be ignored.
                         """.format(data["as_error"] / data["as"]))
                 else:
                     logger.info(
