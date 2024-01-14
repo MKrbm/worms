@@ -140,7 +140,7 @@ def local(params: Dict[Any, Any], check_L: List[int] = []) -> Tuple[Any, int]:
         raise NotImplementedError("not implemented")
 
 
-def system(_L: list[int], params: dict) -> np.ndarray:
+def system(_L: list[int], params: dict) -> Tuple[np.ndarray, int]:
     _d = len(_L)
     s = params["sps"]
     d = params["dimension"]
@@ -152,7 +152,7 @@ def system(_L: list[int], params: dict) -> np.ndarray:
         h_list, sps = local(params)
         bonds = [[i, (i + 1) % L] for i in range(L)]
         H = utils.sum_ham(h_list[0], bonds, L, s ** params["lt"])
-        return H
+        return H, sps
     elif _d == 2:
         L1 = _L[0]
         L2 = _L[1]
@@ -165,7 +165,7 @@ def system(_L: list[int], params: dict) -> np.ndarray:
                  for i in range(L1*L2)] + [[i, T_y[i]] for i in range(L1*L2)]
         h_list, sps = local(params)
         H = utils.sum_ham(h_list[0], bonds, L1*L2, s)
-        return H
+        return H, sps
     else:
         raise NotImplementedError("not implemented")
 
