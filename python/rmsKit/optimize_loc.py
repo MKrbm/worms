@@ -147,7 +147,7 @@ if __name__ == "__main__":
         start = time.time()
         torch.manual_seed(seed)
         np.random.seed(seed)
-        loss.initializer(model())
+        loss.initializer()
         local_best_loss = 1e10
         local_best_us = []
         model.reset_params()
@@ -172,9 +172,8 @@ if __name__ == "__main__":
                 else:
                     raise RuntimeError("No gradient for parameter")
                 if (t+1) % (epochs // num_print) == 0 or t == 0:
-                    print(
+                    logging.info(
                         f"I: {i + 1}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}",
-                        file=logger.handlers[0].stream,
                     )
             optimizer.step()
 
