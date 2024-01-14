@@ -22,13 +22,17 @@ def get_model(model: str, params: Dict[str, Any], L: Union[List[int], None] = No
             lt=1 if lt == "original" else int(lt),
             seed=1 if seed is None else seed,
         )
-        if L:
-            raise NotImplementedError("get system hamiltonian not implemented")
-        h_list, sps = FF.local(p)
-        # h_list: List[NDArray[Any]] = [h.numpy() for h in _h_list]
         params_str = f's_{sps}_r_{p["rank"]}_d_{p["dimension"]}_seed_{p["seed"]}'
-        model_name = f"{model}_loc/{params_str}"
-        return h_list, sps, model_name
+        if L:
+            size_name = f"L_{L[0]}x{L[1]}" if d == 2 else f"L_{L[0]}"
+            model_name = f"{model}_sys/{size_name}/{params_str}"
+            h_list, sps = FF.system(L, p)
+            return h_list, sps, model_name
+        else:
+            h_list, sps = FF.local(p)
+            # h_list: List[NDArray[Any]] = [h.numpy() for h in _h_list]
+            model_name = f"{model}_loc/{params_str}"
+            return h_list, sps, model_name
     elif "HXYZ" in model:
 
         if model == "HXYZ1D":
