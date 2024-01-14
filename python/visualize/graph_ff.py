@@ -179,9 +179,7 @@ for t in sorted(df.temperature.unique()):
             capsize=5,
             label=label_dict["none"],
             alpha=0.7)
-
         ax1.set_title('Energy per site vs L at beta = {}'.format(t))
-
         ax1.set_ylabel('Energy')
         try:
             ax1.set_ylim(lower_bound, upper_bound)
@@ -189,9 +187,6 @@ for t in sorted(df.temperature.unique()):
             print("lower_bound / upper_bound was not valid (nan / inf))")
             continue
         ax1.legend()
-
-        # Plotting AS vs Inverse Temperature in ax2
-
         ax2.errorbar(df_dict["mel"]['n_sites'], df_dict["mel"]['as'],
                      yerr=df_dict["mel"]['as_error'], fmt='o-', capsize=5, label=label_dict["mel"])
         ax2.errorbar(
