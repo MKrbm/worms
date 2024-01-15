@@ -4,9 +4,9 @@
 
 calculate_total_jobs() {
     J0_values=(1)  # Define J0 values
-    J1_values=($(seq -1 0.05 2))  # Define J1 values
+    J1_values=($(seq -1 0.05 3))  # Define J1 values
     hz_values=(0)          # Define hz values
-    hx_values=($(seq 0.00 0.05 1.0))          # Define hx values
+    hx_values=(0)          # Define hx values
 
     num_J0=${#J0_values[@]}
     num_J1=${#J1_values[@]}
@@ -56,7 +56,7 @@ run_job() {
     LT=-1
     SWEEPS=1000000
     EPOCH=10000
-    M=10
+    M=30
     model_name="BLBQ1D"
     log_dir="${project_dir}/job/log/${model_name}"
     [ ! -d "$log_dir" ] && mkdir -p "$log_dir" && echo "Created log directory $log_dir"
