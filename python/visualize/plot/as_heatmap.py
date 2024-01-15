@@ -16,7 +16,6 @@ logger = utils.get_logger("log.log", level="INFO", stdout=True)
 parser = utils.parser.get_parser()
 args, _, _ = utils.parser.get_params_parser(parser)
 
-
 IMAGE_PATH = PYTHON_DIR / "visualize" / "image"
 WORM_RESULT_PATH = PYTHON_DIR / "rmsKit" / "array" / "quetta"
 
@@ -69,10 +68,10 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
         x, y = np.meshgrid(x_values, y_values)
 
         zs = {
-            "NegativeSign (optimized)": [],
-            "NegativeSign (initial)": [],
+            "AS (optimized)": [],
+            "AS (original)": [],
             "Loss (optimized)": [],
-            "Loss (initial)": [],
+            "Loss (original)": [],
         }
 
         # Process data for heatmap
@@ -82,7 +81,8 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
             df_u = df_plot[~df_plot.loss.isna()]
 
             if len(df_u) == 0:
-                logger.info(f"Optimized system data was not found for {x_param}={Jx}, {y_param}={Jy}")
+                logger.info(
+                    f"Optimized system data was not found for {x_param}={Jx}, {y_param}={Jy}")
                 au = np.nan
                 au_err = np.nan
                 loss = np.nan
@@ -96,21 +96,22 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
 
             df_h = df_plot[df_plot.loss.isna()]
             if len(df_h) == 0:
-                logger.info(f"Original System data was not found for {x_param}={Jx}, {y_param}={Jy}")
+                logger.info(
+                    f"Original System data was not found for {x_param}={Jx}, {y_param}={Jy}")
                 ah = np.nan
                 ah_err = np.nan
             else:
                 ah = df_h["as"].min()
                 ah_err = df_h["as_error"].min() * np.sqrt(N)
 
-            zs["NegativeSign (optimized)"].append(1 - au)
-            zs["NegativeSign (initial)"].append(1 - ah)
+            zs["AS (optimized)"].append(au)
+            zs["AS (original)"].append(ah)
             zs["Loss (optimized)"].append(loss)
-            zs["Loss (initial)"].append(init_loss)
+            zs["Loss (original)"].append(init_loss)
 
         # Plotting
-        fig, ax = plt.subplots(2, 2, figsize=(10, 10))
-        max_loss = max(np.max(zs["Loss (optimized)"]), np.max(zs["Loss (initial)"]))
+        fig, ax = plt.subplots(2, 2, figsize=(13, 13))
+        max_loss = max(np.max(zs["Loss (optimized)"]), np.max(zs["Loss (original)"]))
         # max_neg = max(np.max(zs["NegativeSign (optimized)"]), np.max(zs["NegativeSign (initial)"]))
         # max_neg = min(max_neg, 100)
         max_neg = 1
@@ -120,17 +121,31 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
         for i, (key, z) in enumerate(zs.items()):
             Z = np.array(z).reshape(x.shape)
             vmin, vmax = (0, max_loss) if "Loss" in key else (0, max_neg)
-            c = ax[i // 2, i % 2].imshow(Z, cmap='RdPu', vmin=vmin, vmax=vmax, aspect="auto",
+
+            # Choose colormap based on whether "Loss" is in the key
+            if "Loss" in key:
+                colormap = 'Reds'  # Colormap for loss plots
+            else:
+                colormap = 'RdPu_r'  # Colormap for other plots
+            c = ax[i % 2, i // 2].imshow(Z, cmap=colormap, vmin=vmin, vmax=vmax, aspect="auto",
                                          extent=[x.min(), x.max(), y.min(), y.max()],
                                          origin='lower', interpolation='none')
-            ax[i // 2, i % 2].set_title(key)
-            ax[i // 2, i % 2].set_xlabel(x_param)
-            ax[i // 2, i % 2].set_ylabel(y_param)
-            fig.colorbar(c, ax=ax[i // 2, i % 2])
+            ax[i % 2, i // 2].set_title(key, fontsize=25)
+            ax[i % 2, i // 2].set_xlabel(x_param, fontsize=20)
+            ax[i % 2, i // 2].set_ylabel(y_param, fontsize=20)
+            # Adjust font size for tick labels
+            ax[i % 2, i // 2].tick_params(axis='both', which='major', labelsize=15)
+            cbar = fig.colorbar(c, ax=ax[i % 2, i // 2], fraction=0.06, pad=0.04)
+            if "Loss" in key:
+                pass
+            else:
+                cbar.ax.invert_yaxis()
 
         plt.tight_layout()
         figure_name = f"AsHeatmap_{'_'.join(figure_name_parts)}.png"
+        # figure_name = f"AsHeatmap_{'_'.join(figure_name_parts)}.pdf"
         figure_path = image_model_dir / figure_name
+        # plt.savefig(figure_path, bbox_inches='tight', format="pdf")
         plt.savefig(figure_path, bbox_inches='tight')
         logger.info(f"Figure saved to {figure_path}")
 
