@@ -22,8 +22,6 @@ def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
     h = J1 * h_heis @ h_heis + J0 * h_heis + \
         (np.kron(h_single, I3) + np.kron(I3, h_single)) / 2
 
-    e, v = np.linalg.eigh(h)
-
     ur = np.array([
         [-1j / np.sqrt(2), 0, 1j / np.sqrt(2)],
         [1 / np.sqrt(2), 0, 1 / np.sqrt(2)],
@@ -32,8 +30,12 @@ def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
     UR = np.kron(ur, ur)
 
     if lt < 0:
-        h = UR @ h @ UR.T
-
+        e = np.linalg.eigvalsh(h)
+        h = (UR @ h @ UR.T.conj()).real
+        e_1 = np.linalg.eigvalsh(h)
+        if (np.linalg.norm(e - e_1) > 1E-10):
+            logging.warning("eigenvalues are not equal for parameter {}".format(params))
+            raise ValueError("lattice type -1 with magnetic field is not supported yet")
     if abs(lt) > 0:
         sps = 3
         if abs(lt) > 1:
