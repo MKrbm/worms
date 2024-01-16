@@ -47,6 +47,10 @@ if __name__ == "__main__":
         L_list = [[2, 2], [3, 3]]
         logger.info("RUN SS2D MODEL")
     elif args.model == "HXYZ2D":
+        beta = np.array([0.5, 1, 4])
+        L_list = [[3, 3], [4, 4]]
+        logger.info("RUN HXYZ2D MODEL")
+    elif args.model == "KH2D":
         beta = np.array([1, 4])
         L_list = [[4, 4], [5, 5]]
         logger.info("RUN HXYZ2D MODEL")
