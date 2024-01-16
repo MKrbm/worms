@@ -2,8 +2,8 @@
 
 #SBATCH --job-name=blbq1d_sim
 #SBATCH --output=job_log/logfile_%A_%a.log
-#SBATCH --array=0-129  # Adjust this for the number of jobs and parallelism
-#SBATCH --ntasks=4
+#SBATCH --array=0-40  # Adjust this for the number of jobs and parallelism
+#SBATCH --ntasks=10
 #SBATCH --nodes=1
 #SBATCH --partition=cpu
 
@@ -22,7 +22,7 @@ PROJECT_DIR=$(dirname "$(pwd)")
 SLURM_ARRAY_TASK_ID=$SLURM_ARRAY_TASK_ID
 
 #n_job_per_run=11  # Adjust this for the number of jobs per run
-n_job_per_run=10  # Adjust this for the number of jobs per run
+n_job_per_run=2  # Adjust this for the number of jobs per run
 
 # Run the job (for loop)
 # rm "$PROJECT_DIR"/job_log/log/*
