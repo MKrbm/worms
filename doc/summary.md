@@ -683,7 +683,9 @@ For example: `python solver_jax.py -m HXYZ -L1 6 -Jx -.5 -Jy 0.5 -T 1`
     - I found out this is just a typo of summary (parameter described here was misleading)
 
 
-- commit : 
+- commit : 78e443cd96184de5cb3837373bee931e5d2d50ff
+  - Fix bug of KH local Hamiltonian.
+
 
 # todo list
 
