@@ -66,9 +66,14 @@ def local(params: Dict[str, Any], D: int = 2) -> Tuple[List[NDArray[Any]], int]:
         _h += utils.sum_ham(h_single / 6, [[i] for i in range(6)],
                             6, 2)  # n* there is 6 bond per site
 
+        # h = [
+        #     _h + utils.sum_ham(h_bond, [[0, 5]], 6, 2),
+        #     _h + utils.sum_ham(h_bond, [[0, 4]], 6, 2),
+        #     _h + utils.sum_ham(h_bond, [[2, 4]], 6, 2),
+        # ]
         h = [
-            _h + utils.sum_ham(h_bond, [[0, 5]], 6, 2),
-            _h + utils.sum_ham(h_bond, [[0, 4]], 6, 2),
+            _h + utils.sum_ham(h_bond, [[2, 3]], 6, 2),
+            _h + utils.sum_ham(h_bond, [[1, 3]], 6, 2),
             _h + utils.sum_ham(h_bond, [[2, 4]], 6, 2),
         ]
         sps = 8

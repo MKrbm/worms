@@ -321,6 +321,13 @@ int main(int argc, char **argv) {
     lat_ptr =
         std::make_unique<model::base_lattice>(basis, cell, shapes, file, rank == 0);
   }
+  // if (rank == 0){
+  //   auto bonds = lat_ptr->bonds; 
+  //   auto types = lat_ptr->bond_type;
+  //   for (int i = 0; i < bonds.size(); i++) {
+  //     std::cout << bonds[i] << " " << types[i] << std::endl;
+  //   }
+  // }
   // model::base_model<bcl::heatbath>* spin;
   std::unique_ptr<model::base_model<bcl::st2013>> spin_ptr;
   if (u_path.empty()) {
