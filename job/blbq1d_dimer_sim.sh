@@ -4,9 +4,9 @@
 
 calculate_total_jobs() {
     J0_values=(1)  # Define J0 values
-    J1_values=($(seq -1 0.05 2))  # Define J1 values
+    J1_values=($(seq -1 0.05 3))  # Define J1 values
     hz_values=(0)          # Define hz values
-    hx_values=($(seq 0.05 0.1 1.05))          # Define hx values
+    hx_values=(0)          # Define hx values
 
     num_J0=${#J0_values[@]}
     num_J1=${#J1_values[@]}
@@ -53,10 +53,10 @@ run_job() {
 
     calculate_parameters "$task_id"
 
-    LT=1
+    LT=-1
     SWEEPS=1000000
     EPOCH=10000
-    M=40
+    M=30
     model_name="BLBQ1D"
     log_dir="${project_dir}/job/log/${model_name}"
     [ ! -d "$log_dir" ] && mkdir -p "$log_dir" && echo "Created log directory $log_dir"
@@ -93,9 +93,9 @@ run_job() {
     echo "Finished optimization for BLBQ model with J0=${J0}, J1=${J1}, hz=${hz} and hx=${hx} in CPU ${n_cpu}"
 
 
-    python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS --original -n "$n_cpu" --stdout  >> "$log_file"
+    python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS --original -n "$n_cpu" --stdout --obc >> "$log_file"
 
-    python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS -n "$n_cpu" --stdout  >> "$log_file"
+    python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS -n "$n_cpu" --stdout --obc >> "$log_file"
 
     echo "Finished BLBQ model job with J0=${J0}, J1=${J1}, hz=${hz} and hx=${hx} in CPU ${n_cpu}"
 

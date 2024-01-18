@@ -40,7 +40,6 @@ if __name__ == "__main__":
 
     sps = args.sps
     epochs = args.epochs
-    seed_list = [np.random.randint(0, 1000000) for i in range(args.num_iter)]
 
     log_dir = Path("optimizer_output")
     log_dir.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
@@ -59,6 +58,7 @@ if __name__ == "__main__":
     logging.info(f"device = {device}")
 
     optim_name = args.optimizer
+    iter = args.num_iter
     if args.loss == "qsmel":
         if "1D" in args.model:
             L = [args.length1]
@@ -71,16 +71,27 @@ if __name__ == "__main__":
         H, _, _ = get_model(args.model, params, L)
         h_list = [H]
         loss = rms_torch.SystemQUasiEnergyLoss(h_list, device=device)
+    elif args.loss == "stoq":
+        h_list, _, _ = get_model(args.model, params)
+        loss = rms_torch.SystemStoquastic(h_list, device=device)
+        loss_dir = f"{params['lt']}_{args.loss}"
     elif args.loss == "mel":
         h_list, _, _ = get_model(args.model, params)
         loss = rms_torch.MinimumEnergyLoss(h_list, device=device, decay=epochs/10)
         loss_dir = f"{params['lt']}_{args.loss}"
     elif args.loss == "none":
         h_list, _, _ = get_model(args.model, params)
+        loss = rms_torch.MinimumEnergyLoss(h_list, device=device, decay=0)
         loss_dir = f"{params['lt']}_{args.loss}"
         optim_name = "none"
+        logging.info(
+            "Loss : None is specified. " +
+            "Loss function is automatically set to mel and no optimization will be performed. " +
+            "Iteration set to 0")
+        iter = 0
 
-        # use system hamiltonian for qsmel
+    seed_list = [np.random.randint(0, 1000000) for i in range(iter)]
+    # use system hamiltonian for qsmel
 
     local_h_list, sps, model_name = get_model(args.model, params)
     custom_dir = Path("out/tensorboard")
@@ -97,6 +108,11 @@ if __name__ == "__main__":
 
     # save local hamiltonian
     save_npy(h_path / "H", [-np.array(h) for h in local_h_list])  # minus for - beta * H
+    # if args.loss == "none":
+    #     identity = torch.eye(h_list[0].shape[1], dtype=torch.float64)
+    #     initial_loss = loss(identity).item()
+    #     logging.info(f"initial loss = {initial_loss}")
+    #     exit(0)
 
     # save global hamiltonian
 
@@ -117,22 +133,21 @@ if __name__ == "__main__":
 
     model = rms_torch.UnitaryRieman(
         h_list[0].shape[1], sps, device=device).to(device)
-    model_test = rms_torch.UnitaryRieman(
-        h_list[0].shape[1], sps, device=device).to(device)
     model.reset_params(torch.eye(sps))
-    model_test.reset_params(torch.eye(sps))
 
     initial_loss = loss(model()).item()
     logging.info(f"initial loss = {initial_loss}")
 
-    best_loss = 1e10
-    best_us = None
+    best_loss = initial_loss
+    best_us = [
+        np.eye(sps, dtype=np.float64),
+    ]
     num_print = 10
     for i, seed in enumerate(seed_list):
         start = time.time()
         torch.manual_seed(seed)
         np.random.seed(seed)
-        loss.initializer(model())
+        loss.initializer()
         local_best_loss = 1e10
         local_best_us = []
         model.reset_params()
@@ -157,9 +172,8 @@ if __name__ == "__main__":
                 else:
                     raise RuntimeError("No gradient for parameter")
                 if (t+1) % (epochs // num_print) == 0 or t == 0:
-                    print(
+                    logging.info(
                         f"I: {i + 1}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}",
-                        file=logger.handlers[0].stream,
                     )
             optimizer.step()
 
@@ -169,7 +183,8 @@ if __name__ == "__main__":
 
         time_elapsed = time.time() - start
         logging.info(
-            f"best loss at epoch {epochs}: {local_best_loss}, best loss so far: {best_loss}, time elapsed: {time_elapsed:.4f} seconds"
+            f"""best loss at epoch {epochs}: {local_best_loss}, best loss so far: {best_loss},
+            time elapsed: {time_elapsed:.4f} seconds"""
         )
 
         u_path_epoch = u_path / f"loss_{local_best_loss:.7f}/u"
@@ -178,6 +193,7 @@ if __name__ == "__main__":
 
     model.reset_params(torch.from_numpy(best_us[0]))
     out = model()
+    loss.initializer()
     if (abs(best_loss - loss(out).item())) > 1e-8:
         logging.error(
             """
@@ -185,9 +201,9 @@ if __name__ == "__main__":
             Something is wrong with the optimization.
             best_loss: {} and actual loss: {}
             """.format(best_loss, loss(out).item()))
-    else:
-        u_path_epoch = u_path / f"loss_{best_loss:.7f}/u"
-        save_npy(u_path_epoch, best_us)
+
+    u_path_epoch = u_path / f"loss_{best_loss:.7f}/u"
+    save_npy(u_path_epoch, best_us)
 
     logging.info(f"best loss: {best_loss} / initial loss: {initial_loss}")
     logging.info(f"best loss was saved to {u_path}/loss_{best_loss:.7f}/u")

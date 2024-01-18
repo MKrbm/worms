@@ -192,7 +192,8 @@ def run_worm(
         T: float,
         N: int,
         n: int = 1,
-        project_dir: Path = None,
+        obc: bool = False,
+        project_dir: Union[Path, None] = None,
         logging: bool = True):
 
     if not isinstance(ham_path, Path):
@@ -253,7 +254,8 @@ def run_worm(
         "--sps",
         str(sps),
         "--output" if logging else "",
-        "--split-sweeps"
+        "--split-sweeps",
+        "--obc" if obc else ""
     ]
 
     cmd = [str(arg) for arg in cmd if arg != ""]

@@ -35,6 +35,7 @@ def run(params: Dict,
         cmd_optimize: str,
         N: int,
         beta: List[float],
+        obc: bool = False
         ) -> Tuple[pd.DataFrame,
                    pd.DataFrame,
                    pd.DataFrame,
@@ -133,6 +134,7 @@ def run(params: Dict,
                 L_list,
                 t,
                 N,
+                obc=obc,
                 project_dir=rmsKit_directory.parent.parent.resolve(),
                 logging=False)
 
@@ -160,7 +162,7 @@ def run(params: Dict,
         run_res = []
         for b in beta:
             t = 1 / b
-            output = run_worm(model_name, hamiltonian_path, "", L_list, t, N,
+            output = run_worm(model_name, hamiltonian_path, "", L_list, t, N, obc=obc,
                               project_dir=rmsKit_directory.parent.parent.resolve(), logging=False)
 
             with open(output_file.format("worm"), "w") as f:

@@ -42,13 +42,22 @@ if __name__ == "__main__":
     # define parameters list to be passed to the run_worm function
     # beta = np.linspace(0.5, 5, 3)
     if args.model == "SS2D":
-        beta = np.array([1, 4])
-        L_list = [[2, 2], [3, 2]]
+        beta = np.array([0.25, 1, 4, 10])
+        # beta = np.array([10])
+        L_list = [[2, 2], [3, 3]]
         logger.info("RUN SS2D MODEL")
     elif args.model == "HXYZ2D":
+        beta = np.array([0.5, 1, 4])
+        L_list = [[3, 3], [4, 4]]
+        logger.info("RUN HXYZ2D MODEL")
+    elif args.model == "KH2D":
         beta = np.array([1, 4])
         L_list = [[4, 4], [5, 5]]
         logger.info("RUN HXYZ2D MODEL")
+    elif args.model == "BLBQ1D":
+        beta = np.array([1, 4])
+        L_list = [[10], [11]]
+        logger.info("RUN BLBQ1D MODEL")
     else:
         beta = np.array([1, 4])
         L_list = [[10], [11]]
@@ -116,6 +125,7 @@ if __name__ == "__main__":
                 M,
                 n=p,
                 logging=True,
+                obc=args.obc,
                 project_dir=rmsKit_directory.parent.parent.resolve())
             output = subprocess_out.stdout.decode("utf-8")
             # Extract the path using regex
@@ -131,10 +141,11 @@ if __name__ == "__main__":
                 data_list.append(data)
 
                 # n: check if the simulation is reliable
-                if data["as_error"] / data["as"] > 0.2:
+                if (data["as_error"] / data["as"]) > 0.2 or (data["as"] <= 0):
                     logger.info(
-                        "Simulation is not reliable. The simulation for the following temperature will be ignored.")
-                    continue
+                        """Negativity was too high {} Simulation is not reliable.
+                        The simulation for the following temperature can be ignored.
+                        """.format(data["as_error"] / data["as"]))
                 else:
                     logger.info(
                         "Simulation succeeded. Sweeps : {} L : {}, T : {}, Negativity : {}".format(

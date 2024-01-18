@@ -3,7 +3,7 @@
 Normaly this model is next nearest neighbor interaction on a square lattice.
 """
 import numpy as np
-from ..core.paulis.spin import *
+from ..core.paulis.spin import SzSz, SxSx, SySy
 from .. import utils
 import logging
 from typing import List, Any, Tuple, Dict
@@ -17,9 +17,6 @@ def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
     J2 = params["J2"]
     # TODO: hx = params["hx"]
     lt = params["lt"]  # lattice type
-    if lt != 1:
-        raise ValueError("Shastry-Sutherland only accept lattice type 1")
-
     h_bond = SzSz + SxSx + SySy
     # TODO: h_single = hx * Sx
 
@@ -36,7 +33,23 @@ def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
 
     sps = 4
 
-    return [H1, H2], sps
+    u_dimer = np.array([
+        [0, 1 / np.sqrt(2), 1 / np.sqrt(2), 0],
+        [1, 0, 0, 0],
+        [0, 1 / np.sqrt(2), -1 / np.sqrt(2), 0],
+        [0, 0, 0, 1],
+    ])
+
+    Ud = np.kron(u_dimer, u_dimer)
+
+    if lt == 1:
+        logging.info("Lattice type: 1 is used (diagonal unit)")
+        return [H1, H2], sps
+    elif lt == -1:
+        logging.info("Lattice type: -1 is used (dimer unit)")
+        return [Ud @ H1 @ Ud.T, Ud @ H2 @ Ud.T], sps
+    else:
+        raise ValueError("Shastry-Sutherland only accept lattice type 1")
 
 
 def system(_L: list[int], params: dict) -> Tuple[NDArray[Any], int]:
@@ -76,7 +89,6 @@ def system(_L: list[int], params: dict) -> Tuple[NDArray[Any], int]:
                 else:
                     bonds1.append([idx, T_y[idx]])
                     bonds2.append([idx, T_x[idx]])
-
 
         _H = utils.sum_ham(H_list[0], bonds1, L1 * L2, sps)
         _H += utils.sum_ham(H_list[1], bonds2, L1 * L2, sps)

@@ -2,7 +2,7 @@ import argparse
 import random
 
 models = [
-    "KH",
+    "KH2D",
     "HXYZ1D",
     "HXYZ2D",
     "FF1D",
@@ -12,7 +12,7 @@ models = [
     "SS2D",
 ]
 # minimum energy solver, quasi energy solver
-loss_val = ["mel", "none", "qsmel"]
+loss_val = ["mel", "none", "qsmel", "stoq"]
 
 
 def get_parser(length: bool = False, model=None, Description=None):
@@ -44,6 +44,9 @@ def get_parser(length: bool = False, model=None, Description=None):
                         help="learning rate", type=float, default=0.01)
     parser.add_argument(
         "--stdout", help="print out the result in system terminal", action="store_true")
+
+    parser.add_argument("--obc", help="open boundary condition", action="store_true")
+
     parser.add_argument("-e", "--epochs", help="epoch", type=int, default=100)
     parser.add_argument(
         "-lt",
@@ -145,6 +148,7 @@ def get_params_parser(parser):
         lt=args.lattice_type,
         sps=args.sps,
         seed=args.seed,  # random seed to generate hamiltonian
+        obc=args.obc,
     )
 
     args_str = "args: {}".format(args)

@@ -27,6 +27,14 @@ def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
     J3 = params["J3"]
     lt = params["lt"]
     h_bond = SzSz + SxSx + SySy
+
+    u_dimer = np.array([
+        [1 / np.sqrt(2), 0, 0, 1 / np.sqrt(2)],
+        [1 / np.sqrt(2), 0, 0, -1 / np.sqrt(2)],
+        [0, 1 / np.sqrt(2), -1 / np.sqrt(2), 0],
+        [0, 1 / np.sqrt(2), 1 / np.sqrt(2), 0],
+    ])
+    Ud = np.kron(u_dimer, u_dimer)
     if lt == 2:
         # n: MG model has 3 bonds per site.
         _h = utils.sum_ham(h_bond, [[0, 2]], 4, 2) * J1
@@ -34,6 +42,14 @@ def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
         _h += utils.sum_ham(h_bond, [[1, 2]], 4, 2) * J3
         _h += utils.sum_ham(h_bond, [[0, 1], [2, 3]], 4, 2) * J2 / 2
         h = _h
+        sps = 4
+    if lt == -2:
+        # n: MG model has 3 bonds per site.
+        _h = utils.sum_ham(h_bond, [[0, 2]], 4, 2) * J1
+        _h += utils.sum_ham(h_bond, [[1, 3]], 4, 2) * J1
+        _h += utils.sum_ham(h_bond, [[1, 2]], 4, 2) * J3
+        _h += utils.sum_ham(h_bond, [[0, 1], [2, 3]], 4, 2) * J2 / 2
+        h = Ud @ _h @ Ud.T
         sps = 4
     else:
         raise ValueError("lt != 2 is not implemented")
@@ -54,7 +70,10 @@ def system(_L: list[int], params: dict) -> Tuple[NDArray[Any], int]:
         logging.info(f"params : {P}")
         logging.info(f"L      : {L}")
         H_list, sps = local(params, D=1)
-        bonds = [[i, (i + 1) % L] for i in range(L)]
+        if params["obc"]:
+            bonds = [[i, i + 1] for i in range(L - 1)]
+        else:
+            bonds = [[i, (i + 1) % L] for i in range(L)]
 
         if len(H_list) != 1:
             raise RuntimeError("something wrong")

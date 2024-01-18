@@ -25,6 +25,7 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_,
       cutoff_length(cl),
       _mp_worm_obs(mp_worm_obs_),
       _phys_cnt(1),
+      cutoff_thres(1000),
       loperators(spin_model.loperators),
       sps(spin_model.sps_sites(0)),
       obs_sum(mp_worm_obs_().size()),
@@ -36,7 +37,7 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_,
   if (seed < 0) {
     engine_seed = rseed;
   } else {
-    engine_seed = seed;
+    engine_seed = seed + (rank + 1);
   }
   std::cout << "Random seed for process : "<< rank << " is set to : " << engine_seed << std::endl;
   rand_src = engine_type(engine_seed);
@@ -88,6 +89,7 @@ Worm<MCT>::Worm(double beta, MODEL model_, model::MapWormObs mp_worm_obs_,
 }
 template <class MCT>
 void Worm<MCT>::diagonalUpdate(double wdensity) {
+  dout << "hello" << endl;
   swapOps();
   expdist_t expdist(rho * beta +
                     wdensity);  // initialize exponential distribution
@@ -108,6 +110,7 @@ void Worm<MCT>::diagonalUpdate(double wdensity) {
   worm_taus.resize(0);
 
   ops_sub.push_back(OP_type::sentinel(1));  //*sentinels
+  dout << ops_sub.size() << endl;
   double tau0 = uniform(rand_src);
   double tau = expdist(rand_src);
   bool set_atleast_one = false;
@@ -209,10 +212,14 @@ variables
 dir : direction of worm head. 1 : upward, -1 : downward
 */
 template <class MCT>
-void Worm<MCT>::wormUpdate(double &wcount, double &wlength) {
-  pres.resize(0);
+void Worm<MCT>::wormUpdate(double &wcount, double &wlength, size_t &w_update_cnt, size_t & cutoff_thres) {
+  pops_main.resize(0);
   psop.resize(0);
+  ops_copy.clear(); 
+  std::copy(ops_main.begin(), ops_main.end(), std::back_inserter(ops_copy));
   std::copy(state.begin(), state.end(), cstate.begin());
+  auto copystate = state;
+  auto copysign = sign;
   ops_main.push_back(OP_type::sentinel(1));  //*sentinels
   typename WORMS::iterator wsi = worms_list.begin();
   size_t w_index = 0;
@@ -233,18 +240,25 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength) {
 #endif
       // t : tail, h : head. direction of tails is opposite to the direction of
       // the initial head. prime means the spin state in front of the worm.
-      int wt_dot, site, wt_site, _t_spin, n_dot_label;
-      double wt_tau, tau;  // tau_prime is the time of the next operator.
+      int wt_dot;
+      int site;
+      int wt_site;
+      int _t_spin;
+      int n_dot_label;
+      int fl = static_cast<int>((sps - 1) * uniform(rand_src)) + 1;
+      int t_fl = fl;
+      double wt_tau;
+      double tau;  // tau_prime is the time of the next operator.
+      double r = uniform(rand_src);
+      int dir = static_cast<size_t>(2) * r;
+      int t_dir = 1 - dir;
       std::tie(wt_site, wt_dot, wt_tau) =
           *wsi;  // contains site, dot label, tau
       tau = wt_tau;
       site = wt_site;
       Dotv2 *dot = &spacetime_dots[wt_dot];
       Dotv2 *_dot;
-      double r = uniform(rand_src);
-      int dir = (size_t)2 * r, t_dir = !dir;
-      int fl = static_cast<int>((sps - 1) * uniform(rand_src)) + 1, t_fl = fl;
-      // bool br = 0;
+      bool br = false;
 
       dout << "r : " << r << std::endl;
       // n* spin state at worm head
@@ -264,36 +278,32 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength) {
         if (fl != 0) {
           n_dot_label = dot->move_next(dir);  // next label of dot.
         }
+        if (w_update_cnt > cutoff_thres) {
+          ops_main.clear();
+          std::copy(ops_copy.begin(), ops_copy.end(), std::back_inserter(ops_main));
+          std::copy(copystate.begin(), copystate.end(), state.begin());
+          sign = copysign;
+          /*  
+          //n: 
+            We don't need to reset 
+            1. cstate
+            2. worm_states
+            because they will be reset in diagonalUpdate.
+          */
+          bocnt++;
+          // std::cout << "break" << std::endl;
+          wlength += wlength_prime; 
+          return;
+        }
         size_t status =
             wormOpUpdate(n_dot_label, dir, site, wlength_prime, fl, tau, wt_dot,
                          wt_site, wt_tau, w_x, wt_x, t_fl, t_dir, w_index);
 
-        if (u_cnt >= 105) {
-          int x;
-        }
-        if (u_cnt >= 105) {
-          dout << "n_dot_label, dir, site, wlength_prime, fl, tau, wt_dot, "
-                  "wt_site, wt_tau, w_x, wt_x, t_fl, t_dir, w_index : "
-               << n_dot_label << " " << dir << " " << site << " "
-               << wlength_prime << " " << fl << " " << tau << " " << wt_dot
-               << " " << wt_site << " " << wt_tau << " " << w_x << " " << wt_x
-               << " " << t_fl << " " << t_dir << " " << w_index << std::endl;
-          dout << "u : " << u_cnt << std::endl;
-          dout << "\n--------------------\n" << std::endl;
-
-          // if (u_cnt == 200){
-          //   exit(1);
-          // }
-        }
         u_cnt++;
-        if (status != 0) {
-          if (status == 1) {
-            throw std::runtime_error("not implemented yet");
-          }
-        }
         if (fl != 0) {
           dot = &spacetime_dots[n_dot_label];
         }
+        w_update_cnt++;
       } while ((n_dot_label != wt_dot ||
                 ((t_dir == dir ? 1 : -1) * t_fl + fl + sps) % sps != 0));
 
@@ -317,10 +327,6 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength) {
         obs.second << obs_sum[obs_i];
         obs_i++;
       }
-
-      // n* break the loop (contains bugs)
-      //  if (br == 1)
-      //    bocnt++; break;
 
       wlength += wlength_prime;
       checkOpsInUpdate(wt_dot, dir ? n_dot_label : dot->prev(), t_dir, t_fl, fl,
@@ -708,18 +714,14 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
   if (dotp->at_origin()) {
     state[dotp->label()] = (state[dotp->label()] + fl) % sps;
   } else if (dotp->at_operator()) {
-    // if (opsp->cnt() == 0) {
-    //   psop.push_back(dotp->label());
-    //   pres.push_back(opsp->state());
-    // }
-    opsp->add_cnt();
-
-    // if (opsp->cnt() > cutoff_length) {
-    //   return 1;
-    // }
-
-    int state_num, tmp, nindex, dir_in, leg_size, cindex, index;
-    dir_in = !dir;  // n* direction the Worm comes in from the view of operator.
+    int state_num;
+    int tmp;
+    int nindex;
+    int dir_in;
+    int leg_size;
+    int cindex;
+    int index;
+    dir_in = 1-dir;  // n* direction the Worm comes in from the view of operator.
     leg_size = opsp->size();
     cindex = dotp->leg(dir_in, leg_size);
     index = dotp->leg(0, leg_size);
@@ -1001,7 +1003,7 @@ bool Worm<MCT>::detectWormCross(double tau, double tau_prime, double wt_tau,
 template <class MCT>
 void Worm<MCT>::reset_ops() {
   for (size_t i = 0; i < psop.size(); i++) {
-    ops_main[psop[i]].set_state(pres[i]);
+    ops_main[psop[i]] = pops_main[i];
   }
 }
 

@@ -9,7 +9,7 @@ source ss2d_sim.sh
 
 P=5
 PROJECT_DIR=$(dirname "$(pwd)")
-NUM_THREAD=1  # Adjust this to the number of parallel jobs you want to run
+NUM_THREAD=1  # Adjust this to the number ou parallel jobs you want to run
 
 # Cleanup existing job data
 echo removing "$PROJECT_DIR/job/worm/*"

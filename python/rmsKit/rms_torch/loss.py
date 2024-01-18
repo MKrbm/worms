@@ -8,23 +8,26 @@ import logging
 
 
 class MinimumEnergyLoss(nn.Module):
+    """Calculate the minimum energy of a system using the reverse iteration method."""
+
     def __init__(
         self,
-        h_list: List[Union[np.ndarray, torch.Tensor]],
+        h_list: Union[List[torch.Tensor], List[np.ndarray]],
         device: torch.device = torch.device("cpu"),
         decay: float = 0.1,
         # n : after "decay" step, the regularization term will e^(-1) times smaller
     ):
+        """Initialize the minimum energy loss function."""
         super(MinimumEnergyLoss, self).__init__()
 
         logging.info("Initializing MinimumEnergyLoss")
         logging.info(f"\tnumber of local hamiltonians: {len(h_list)}")
         logging.info(f"\tdecay time: {decay}")
-        offset = []
         self.shift_origin_offset = []
         self.h_list = []
         self.X = []
         self.weight = 1 if decay > 0 else 0
+        self.offset = []
         if decay < 0:
             raise ValueError("decay should be positive.")
         self.weight_decay = decay
@@ -42,12 +45,12 @@ class MinimumEnergyLoss(nn.Module):
 
             logging.info(f"\tmaximum energy of local hamiltonian {i}: {E[-1]:.3f}")
             logging.info(f"\tminimum energy of local hamiltonian {i}: {E[0]:.3f}")
-            offset.append(E[-1])
-            self.h_list[i][:] = self.h_list[i] - offset[i] * \
+            self.offset.append(E[-1])
+            self.h_list[i][:] = self.h_list[i] - self.offset[i] * \
                 torch.eye(h_list[i].shape[1], device=device)
-            logging.info(f"\toffset of local hamiltonian {i}: {offset[i]:.3f}")
+            logging.info(f"\toffset of local hamiltonian {i}: {self.offset[i]:.3f}")
             self.X.append(V[:, 0].to(device))
-            self.shift_origin_offset.append(offset[i] - E[0])
+            self.shift_origin_offset.append(self.offset[i] - E[0])
 
     def forward(self, U: torch.Tensor) -> torch.Tensor:
         """Return loss value for the minimum eigen loss. (Or minimum eigen local loss).
@@ -60,8 +63,8 @@ class MinimumEnergyLoss(nn.Module):
         for i in range(len(self.h_list)):
             loss += self.minimum_energy_loss(self.h_list[i], U) - self.shift_origin_offset[i]
 
-        self.weight = self.weight * np.exp(-1 / self.weight_decay)
-        # print(f"weight: {self.weight}")
+        self.weight = (self.weight * np.exp(-1 / self.weight_decay)) \
+            if (self.weight_decay != 0) else 0
         return torch.abs(loss)
 
     def minimum_energy_loss(self, H: torch.Tensor, U: torch.Tensor) -> torch.Tensor:
@@ -98,7 +101,7 @@ class MinimumEnergyLoss(nn.Module):
         """
         return self.stoquastic(A)
 
-    def initializer(self, U: torch.Tensor) -> None:
+    def initializer(self, U: Union[torch.Tensor, None] = None) -> None:
         """Initialize the unitary matrix.
 
         If the loss is mel, just initialze decay weight to 1 if decay > 0.
@@ -110,7 +113,7 @@ class MinimumEnergyLoss(nn.Module):
 class SystemQUasiEnergyLoss(MinimumEnergyLoss):
     def __init__(
         self,
-        h_list: List[Union[np.ndarray, torch.Tensor]],
+        h_list: Union[List[torch.Tensor], List[np.ndarray]],
         device: torch.device = torch.device("cpu"),
     ):
         # h_list must be 1 element list
@@ -120,8 +123,8 @@ class SystemQUasiEnergyLoss(MinimumEnergyLoss):
         super(SystemQUasiEnergyLoss, self).__init__(h_list, device)
 
     def forward(self, U: torch.Tensor, nr: int = 2, regularizer: float = 0.0) -> torch.Tensor:
-        """
-        Return loss value for the System Quasi Energy Loss.
+        """Return loss value for the System Quasi Energy Loss.
+
         Quasi Energy loss is approximated value of System Energy Loss.
         """
         if nr < 1:
@@ -139,8 +142,8 @@ class SystemQUasiEnergyLoss(MinimumEnergyLoss):
             H: torch.Tensor,
             nr: int = 2,
             regularizer: float = 0.0) -> torch.Tensor:
-        """
-        Return loss value for the System Quasi Energy Loss.
+        """Return loss value for the System Quasi Energy Loss.
+
         Quasi Energy loss is approximated value of System Energy Loss.
         """
         if nr < 1:
@@ -160,3 +163,41 @@ class SystemQUasiEnergyLoss(MinimumEnergyLoss):
         res += regularizer * (1 - torch.abs(quasi_Sgs.dot(z) / torch.norm(z)))
         return res
 
+    def initializer(self, U: Union[torch.Tensor, None] = None) -> None:
+        """Initialize the unitary matrix.
+
+        If the loss is mel, just initialze decay weight to 1 if decay > 0.
+        """
+        return
+
+
+class SystemStoquastic(MinimumEnergyLoss):
+    """Calculate the minimum energy of a system using the reverse iteration method."""
+
+    def __init__(
+        self,
+        h_list: Union[List[torch.Tensor], List[np.ndarray]],
+        device: torch.device = torch.device("cpu"),
+        # n : after "decay" step, the regularization term will e^(-1) times smaller
+    ):
+        """System Stoquastic Loss."""
+        super(SystemStoquastic, self).__init__(h_list, device, decay=0)
+
+    def forward(self, U: torch.Tensor) -> torch.Tensor:
+        """Return loss value for the minimum eigen loss. (Or minimum eigen local loss).
+
+        Local Hamiltonian will be shifted so that miminum value will be 0
+        """
+        loss = torch.zeros(1, device=U.device)
+        for i in range(len(self.h_list)):
+            H = self.h_list[i]
+            loss += (H - self.get_stoquastic(U @ H @ U.T)).sum()
+        return torch.abs(loss)
+
+    def initializer(self, U: Union[torch.Tensor, None] = None) -> None:
+        """Initialize the unitary matrix.
+
+        If the loss is mel, just initialze decay weight to 1 if decay > 0.
+        """
+        self.weight = 1 if self.weight_decay > 0 else 0
+        return

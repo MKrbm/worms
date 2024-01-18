@@ -25,8 +25,15 @@ if __name__ == "__main__":
     N = np.prod(L_list)
     if args.model == "SS2D":
         N = 4*N
+    elif args.model == "KH2D":
+        N = 3*N
 
     Hnp, sps, path = get_model(args.model, params, L=L_list)
+    if "1D" in args.model:
+        path += f"_obc_{int(args.obc)}"
+    elif "2D" in args.model:
+        pass
+    print(path)
     H = torch.from_numpy(Hnp).to(device)
     E, V = torch.linalg.eigh(H)
     E = E.cpu().numpy()
