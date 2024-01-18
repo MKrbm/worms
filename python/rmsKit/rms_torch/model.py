@@ -1,18 +1,23 @@
+"""UnitaryRieman and UnitaryRiemanNonSym classes for PyTorch."""
 import torch
 from torch import nn
 import numpy as np
 import math
-from typing import Union, Tuple
+from typing import Union
 
 
 def random_unitary_matrix(size: int, device: torch.device) -> torch.Tensor:
+    """Generate a random unitary matrix of size size x size."""
     random_matrix = np.random.randn(size, size)
     q, _ = np.linalg.qr(random_matrix)
     return torch.tensor(q, dtype=torch.float64, device=device)
 
 
 class UnitaryRieman(nn.Module):
+    """UnitaryRieman class for PyTorch."""
+
     def __init__(self, H_size: int, unitary_size: int, device=torch.device("cpu"), u0=None):
+        """Initialize UnitaryRieman class."""
         super(UnitaryRieman, self).__init__()
 
         if H_size <= 0 or unitary_size <= 0:
@@ -26,7 +31,8 @@ class UnitaryRieman(nn.Module):
         self.initialize_params()
 
     def initialize_params(self):
-        n_us = round(math.log2(self.H_size) / math.log2(self.unitary_size))
+        """Initialize parameters of UnitaryRieman class."""
+        # n_us = round(math.log2(self.H_size) / math.log2(self.unitary_size))
         if self.u0 is None:
             self.u = nn.ParameterList([nn.Parameter(random_unitary_matrix(
                 self.unitary_size, self.device), requires_grad=True)])
@@ -36,6 +42,7 @@ class UnitaryRieman(nn.Module):
             )
 
     def reset_params(self, u0: Union[torch.Tensor, None] = None):
+        """Reset parameters of UnitaryRieman class."""
         if u0 is not None and u0.shape != (self.unitary_size, self.unitary_size):
             raise ValueError("The shape of u0 is not correct.")
         for p in self.parameters():
@@ -49,8 +56,7 @@ class UnitaryRieman(nn.Module):
             )
 
     def forward(self) -> torch.Tensor:
-        # calculate kron of unitaries (result size must be H_size x H_size)
-
+        """Calculate kron of unitaries (result size must be H_size x H_size)."""
         num_repeat = round(math.log2(self.H_size) / math.log2(self.unitary_size))
         U = self.u[0]
         for i in range(num_repeat - 1):
@@ -59,7 +65,10 @@ class UnitaryRieman(nn.Module):
 
 
 class UnitaryRiemanNonSym(nn.Module):
+    """UnitaryRiemanNonSym class for PyTorch."""
+
     def __init__(self, H_size: int, unitary_size: int, device=torch.device("cpu"), u0_list=None):
+        """Initialize UnitaryRiemanNonSym class."""
         super(UnitaryRiemanNonSym, self).__init__()
 
         if H_size <= 0 or unitary_size <= 0:
@@ -73,6 +82,7 @@ class UnitaryRiemanNonSym(nn.Module):
         self.initialize_params()
 
     def initialize_params(self):
+        """Initialize parameters of UnitaryRiemanNonSym class."""
         n_us = round(math.log2(self.H_size) / math.log2(self.unitary_size))
         if self.u0_list is None:
             self.us = nn.ParameterList([nn.Parameter(random_unitary_matrix(
@@ -86,6 +96,7 @@ class UnitaryRiemanNonSym(nn.Module):
                 u0, dtype=torch.float64, device=self.device), requires_grad=True) for u0 in self.u0_list])
 
     def reset_params(self):
+        """Reset parameters of UnitaryRiemanNonSym class."""
         for p in self.parameters():
             if p.grad is not None:
                 p.grad.detach_()
@@ -93,6 +104,7 @@ class UnitaryRiemanNonSym(nn.Module):
             p.data = random_unitary_matrix(self.unitary_size, self.device)
 
     def forward(self) -> torch.Tensor:
+        """Calculate kron of unitaries (result size must be H_size x H_size)."""
         U = self.us[0]
         # for u in self.us[1:]:
         #     U = torch.kron(U, u)
