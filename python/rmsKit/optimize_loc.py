@@ -75,7 +75,7 @@ if __name__ == "__main__":
             raise ValueError("Invalid model name. Must contain 1D or 2D")
         H, _, _ = get_model(args.model, params, L)
         h_list = [H]
-        loss = rms_torch.SystemQUasiEnergyLoss(h_list, device=device)
+        loss = rms_torch.SystemQuasiEnergyLoss(h_list, device=device)
     elif args.loss == "stoq":
         h_list, _, _ = get_model(args.model, params)
         loss = rms_torch.SystemStoquastic(h_list, device=device)

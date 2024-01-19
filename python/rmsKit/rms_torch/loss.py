@@ -110,7 +110,7 @@ class MinimumEnergyLoss(nn.Module):
         return
 
 
-class SystemQUasiEnergyLoss(MinimumEnergyLoss):
+class SystemQuasiEnergyLoss(MinimumEnergyLoss):
     def __init__(
         self,
         h_list: Union[List[torch.Tensor], List[np.ndarray]],
