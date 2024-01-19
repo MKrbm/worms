@@ -55,6 +55,7 @@ if __name__ == "__main__":
         device = torch.device("cpu")
         logging.info("Running on CPU")
         # n: number of threads
+        logging.info("Number of threads: {}".format(torch.get_num_threads()))
         logging.info("Please specify the number of threads with OMP_NUM_THREADS and MKL_NUM_THREADS")
 
     logging.info(f"device = {device}")
