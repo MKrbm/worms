@@ -53,8 +53,10 @@ if __name__ == "__main__":
             device = torch.device("cuda")
     else:
         device = torch.device("cpu")
-        logging.info("Running on CPU")
-        # n: number of threads
+        logging.info("Running on CPU / number of threads is set to 1")
+        os.environ["OMP_NUM_THREADS"] = "1"
+        os.environ["MKL_NUM_THREADS"] = "1"
+        torch.set_num_threads(1)
         logging.info("Number of threads: {}".format(torch.get_num_threads()))
         logging.info("Please specify the number of threads with OMP_NUM_THREADS and MKL_NUM_THREADS")
 
@@ -178,8 +180,7 @@ if __name__ == "__main__":
                     raise RuntimeError("No gradient for parameter")
                 if (t+1) % (epochs // num_print) == 0 or t == 0:
                     logging.info(
-                        f"I: {i + 1}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}",
-                    )
+                        f"I: {i + 1}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}", )
             optimizer.step()
 
         if local_best_loss < best_loss:
