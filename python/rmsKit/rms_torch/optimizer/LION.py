@@ -3,6 +3,7 @@ from typing import Tuple, Optional, Callable
 import torch
 from torch.optim.optimizer import Optimizer
 import numpy as np
+import logging
 
 # functions
 
@@ -48,6 +49,10 @@ class LION(Optimizer):
         self.epoch = 0
 
         defaults = dict(lr=lr, betas=betas, weight_decay=weight_decay)
+        logging.info("LION optimizer")
+        param_info = "lr = {}, betas = {}, weight_decay = {}".format(
+            lr, betas, weight_decay)
+        logging.info(param_info)
 
         super().__init__(params, defaults)
 
@@ -55,7 +60,7 @@ class LION(Optimizer):
 
     @staticmethod
     def lr_decay(epoch: int, lr: float) -> float:
-        f = lambda x: np.exp(-5 * np.tanh(x * 0.04))
+        def f(x): return np.exp(-5 * np.tanh(x * 0.04))
         lr = f(epoch) * lr
         # epoch = (epoch // 10) * 10
         return lr

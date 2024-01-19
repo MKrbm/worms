@@ -32,7 +32,7 @@ class MinimumEnergyLoss(nn.Module):
             raise ValueError("decay should be positive.")
         self.weight_decay = decay
         for i in range(len(h_list)):
-            logging.info("\tInitializing local hamiltonian \n{}".format(h_list[i]))
+            # logging.info("\tInitializing local hamiltonian \n{}".format(h_list[i]))
             if isinstance(h_list[i], np.ndarray):
                 self.h_list.append(torch.from_numpy(
                     h_list[i]).to(torch.float64).to(device))

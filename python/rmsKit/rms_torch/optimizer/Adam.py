@@ -2,11 +2,21 @@ from typing import List, Optional, Union
 
 import torch
 from torch import Tensor
-from torch.optim.optimizer import (Optimizer, _use_grad_for_differentiable, _get_value, _stack_if_compiling,
-                                   _dispatch_sqrt, _default_to_fused_or_foreach, _capturable_doc,
-                                   _differentiable_doc, _foreach_doc, _fused_doc, _maximize_doc)
+from torch.optim.optimizer import (
+    Optimizer,
+    _use_grad_for_differentiable,
+    _get_value,
+    _stack_if_compiling,
+    _dispatch_sqrt,
+    _default_to_fused_or_foreach,
+    _capturable_doc,
+    _differentiable_doc,
+    _foreach_doc,
+    _fused_doc,
+    _maximize_doc)
 from torch.optim import Adam as _Adam
 from torch.utils._foreach_utils import _group_tensors_by_device_and_dtype
+import logging
 
 __all__ = ['Adam']
 
@@ -26,6 +36,10 @@ class Adam(torch.optim.Adam):
                         differentiable=differentiable, fused=fused)
         super().__init__(params, **defaults)
 
+        logging.info("Adam optimizer")
+        param_info = "lr = {}, betas = {}, eps = {}, weight_decay = {}".format(
+            lr, betas, eps, weight_decay)
+        logging.info(param_info)
 
     @_use_grad_for_differentiable
     def step(self, closure=None):
@@ -127,8 +141,10 @@ def adam(params: List[Tensor],
 
     # this check is slow during compilation, so we skip it
     # if it's strictly needed we can add this check back in dynamo
-    if not torch._utils.is_compiling() and not all(isinstance(t, torch.Tensor) for t in state_steps):
-        raise RuntimeError("API has changed, `state_steps` argument must contain a list of singleton tensors")
+    if not torch._utils.is_compiling() and not all(isinstance(t, torch.Tensor)
+                                                   for t in state_steps):
+        raise RuntimeError(
+            "API has changed, `state_steps` argument must contain a list of singleton tensors")
 
     if foreach and torch.jit.is_scripting():
         raise RuntimeError('torch.jit.script not supported with foreach optimizers')
@@ -141,7 +157,6 @@ def adam(params: List[Tensor],
         func = _single_tensor_adam
     else:
         func = _single_tensor_adam
-
 
     # What is capturable?
     if capturable is True or differentiable is True:
@@ -199,7 +214,8 @@ def _single_tensor_adam(params: List[Tensor],
         exp_avg_sq = exp_avg_sqs[i]
         step_t = state_steps[i]
 
-        # If compiling, the compiler will handle cudagraph checks, see note [torch.compile x capturable]
+        # If compiling, the compiler will handle cudagraph checks, see note
+        # [torch.compile x capturable]
         if not torch._utils.is_compiling() and capturable:
             assert (
                 (param.is_cuda and step_t.is_cuda) or (param.is_xla and step_t.is_xla)
@@ -246,9 +262,13 @@ def _single_tensor_adam(params: List[Tensor],
                 # Uses the max. for normalizing running avg. of gradient
                 # Folds in (admittedly ugly) 1-elem step_size math here to avoid extra param-set-sized read+write
                 # (can't fold it into addcdiv_ below because addcdiv_ requires value is a Number, not a Tensor)
-                denom = (max_exp_avg_sqs[i].sqrt() / (bias_correction2_sqrt * step_size_neg)).add_(eps / step_size_neg)
+                denom = (max_exp_avg_sqs[i].sqrt() /
+                         (bias_correction2_sqrt *
+                          step_size_neg)).add_(eps /
+                                               step_size_neg)
             else:
-                denom = (exp_avg_sq.sqrt() / (bias_correction2_sqrt * step_size_neg)).add_(eps / step_size_neg)
+                denom = (exp_avg_sq.sqrt() / (bias_correction2_sqrt *
+                         step_size_neg)).add_(eps / step_size_neg)
 
             # param.addcdiv_(exp_avg, denom)
             foreacth_addcdiv_(param, exp_avg, denom)
@@ -277,7 +297,6 @@ def _single_tensor_adam(params: List[Tensor],
         # Lastly, switch back to complex view
         if amsgrad and torch.is_complex(params[i]):
             max_exp_avg_sqs[i] = torch.view_as_complex(max_exp_avg_sqs[i])
-
 
 
 def foreacth_addcdiv_(param, device_exp_avg, denom, step_size=None):

@@ -53,6 +53,8 @@ if __name__ == "__main__":
             device = torch.device("cuda")
     else:
         device = torch.device("cpu")
+        logging.info("Running on CPU")
+        # n: number of threads
         logging.info("Please specify the number of threads with OMP_NUM_THREADS and MKL_NUM_THREADS")
 
     logging.info(f"device = {device}")
@@ -91,6 +93,7 @@ if __name__ == "__main__":
         iter = 0
 
     seed_list = [np.random.randint(0, 1000000) for i in range(iter)]
+    # seed_list = range(iter, 2*iter)
     # use system hamiltonian for qsmel
 
     local_h_list, sps, model_name = get_model(args.model, params)
@@ -152,6 +155,7 @@ if __name__ == "__main__":
         local_best_us = []
         model.reset_params()
         optimizer = optimizer_func(model.parameters(), **learning_params)
+        logging.info(f"seed = {seed}")
 
         for t in range(epochs):
             optimizer.zero_grad()
