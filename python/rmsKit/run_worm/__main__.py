@@ -58,6 +58,10 @@ if __name__ == "__main__":
         beta = np.array([1, 4])
         L_list = [[10], [11]]
         logger.info("RUN BLBQ1D MODEL")
+    elif args.model == "FF2D":
+        beta = np.array([1])
+        L_list = [[4, 4]]
+        logger.info("RUN FF2D MODEL")
     else:
         beta = np.array([1, 4])
         L_list = [[10], [11]]

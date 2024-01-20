@@ -24,6 +24,7 @@ def path_with_lowest_loss(parent_dir, return_ham=False, absolute_path=False, onl
     # Get all directory names under the parent directory using glob (not only direct children)
     parent_dir = os.path.abspath(parent_dir)
     dir_names = glob.glob(os.path.join(parent_dir, "**"), recursive=True)
+    dir_names = [path for path in dir_names if "loss" in path]
 
     if only_ham:
         # find the file path include "/H/" in the dir_names
@@ -48,6 +49,7 @@ def path_with_lowest_loss(parent_dir, return_ham=False, absolute_path=False, onl
     # Find the path with the lowest loss
     min_path, min_loss = min(valid_losses, key=lambda x: x[1])
     min_path = min_path + "/u"
+    print("min_path: ", min_path)
 
     if return_ham:
         # find the file path include "/H/" in the dir_names

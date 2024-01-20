@@ -5,9 +5,10 @@
 # source hxyz1d_sim.sh
 # source blbq1d_sim.sh
 # source mg1d_sim.sh
-source ss2d_sim.sh
+# source ss2d_sim.sh
+source ff2d_sim.sh
 
-P=5
+P=3
 PROJECT_DIR=$(dirname "$(pwd)")
 NUM_THREAD=1  # Adjust this to the number ou parallel jobs you want to run
 

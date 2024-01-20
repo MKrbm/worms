@@ -84,8 +84,8 @@ run_job() {
 
     # Running the simulation for HXYZ1D
     python -u optimize_loc.py -m $model_name -o Adam -lr $LR -e $EPOCH -M $M -lt $LT \
-        -Jz "$Jz" -Jx "$Jx" -Jy "$Jy" -hx "$H" -n "$n_cpu" --symoblic_link "$symbolic_link" \
-        --stdout >> "$log_file"
+        -Jz "$Jz" -Jx "$Jx" -Jy "$Jy" -hx "$H" -n "$n_cpu" \
+        --symoblic_link "$symbolic_link" --stdout >> "$log_file"
 
     echo "Finished optimization for HXYZ1D model with Jx=${Jx}, Jy=${Jy}, Jz=${Jz}, H=${H} in CPU ${n_cpu}"
 
