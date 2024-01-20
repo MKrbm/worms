@@ -181,7 +181,7 @@ class Worm {
   ---------
   dir : direction of worm head. 1 : upward, -1 : downward
   */
-  void wormUpdate(double &, double &, size_t&, size_t&);
+  void wormUpdate(double &, double &, size_t&, const size_t);
 
   /*
   This function will be called ever time the head of the worm cross the same

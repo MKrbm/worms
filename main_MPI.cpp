@@ -164,16 +164,17 @@ int main(int argc, char **argv) {
 
   size_t sweeps;
   size_t therms;
-  size_t cutoff_l;
+  int64_t cutoff_l;
+  // int64_t _cutoff_l;
   int seed;
   size_t sps;
   double T = 0;
   bool fix_wdensity = false;
   try {
     const Setting &config = settings["config"];
-    sweeps = (long)config.lookup("sweeps");
-    therms = (long)config.lookup("therms");
-    cutoff_l = (long)config.lookup("cutoff_length");
+    sweeps = (int64_t)config.lookup("sweeps");
+    therms = (int64_t)config.lookup("therms");
+    cutoff_l = (int64_t)config.lookup("cutoff_length");
     T = (double)config.lookup("temperature");
     fix_wdensity = config.lookup("fix_wdensity");
     seed = static_cast<int>(config.lookup("seed"));
@@ -183,13 +184,21 @@ int main(int argc, char **argv) {
               << std::endl;
     std::cout << "read config file from default instead" << std::endl;
     const Setting &config = settings["default"];
-    sweeps = (long)config.lookup("sweeps");
-    therms = (long)config.lookup("therms");
-    cutoff_l = (long)config.lookup("cutoff_length");
+    sweeps = (int64_t)config.lookup("sweeps");
+    therms = (int64_t)config.lookup("therms");
+    cutoff_l = (int64_t)config.lookup("cutoff_length");
     T = (double)config.lookup("temperature");
     fix_wdensity = config.lookup("fix_wdensity");
     seed = static_cast<int>(config.lookup("seed"));
   }
+
+  // if (_cutoff_l < 0) {
+  //   if (rank == 0)
+  //     std::cout
+  //         << "cutoff_length is negative. Automatically set to maximum size"
+  //         << std::endl;
+  // }
+  // cutoff_l = std::numeric_limits<int64_t>::max();
 
   try {
     ham_path = args.get<string>("ham");
@@ -308,8 +317,7 @@ int main(int argc, char **argv) {
     std::cout << "params : " << params << std::endl;
     std::cout << "alpha : " << alpha << std::endl;
     std::cout << "temperature : " << T << std::endl;
-    std::cout << "boundary condition : " << (obc ? "obc" : "pbc")
-              << std::endl;
+    std::cout << "boundary condition : " << (obc ? "obc" : "pbc") << std::endl;
   }
 
   //* finish argparse
@@ -318,11 +326,11 @@ int main(int argc, char **argv) {
     lat_ptr = std::make_unique<model::base_lattice>(
         basis, cell, shapes, file, rank == 0, lattice::boundary_t::open);
   } else {
-    lat_ptr =
-        std::make_unique<model::base_lattice>(basis, cell, shapes, file, rank == 0);
+    lat_ptr = std::make_unique<model::base_lattice>(basis, cell, shapes, file,
+                                                    rank == 0);
   }
   // if (rank == 0){
-  //   auto bonds = lat_ptr->bonds; 
+  //   auto bonds = lat_ptr->bonds;
   //   auto types = lat_ptr->bond_type;
   //   for (int i = 0; i < bonds.size(); i++) {
   //     std::cout << bonds[i] << " " << types[i] << std::endl;
@@ -335,12 +343,12 @@ int main(int argc, char **argv) {
       std::cout << "unitary is not given. Identity matrix is used."
                 << std::endl;
     spin_ptr = std::make_unique<model::base_model<bcl::st2013>>(
-        *lat_ptr, dofs, ham_path, params, types, shift, zero_worm, repeat, rank == 0,
-        alpha);
+        *lat_ptr, dofs, ham_path, params, types, shift, zero_worm, repeat,
+        rank == 0, alpha);
   } else {
     spin_ptr = std::make_unique<model::base_model<bcl::st2013>>(
-        *lat_ptr, dofs, ham_path, u_path, params, types, shift, zero_worm, repeat,
-        rank == 0, alpha);
+        *lat_ptr, dofs, ham_path, u_path, params, types, shift, zero_worm,
+        repeat, rank == 0, alpha);
   }
   model::observable obs(*spin_ptr, obs_path, rank == 0);
 
@@ -383,7 +391,7 @@ int main(int argc, char **argv) {
   double break_rate = 0;
   auto map_worm_obs =
       exe_worm_parallel(*spin_ptr, T, sweeps, therms, cutoff_l, fix_wdensity,
-                        rank, res, ac_res, obs, mapwobs, break_rate,  seed);
+                        rank, res, ac_res, obs, mapwobs, break_rate, seed);
 
   batch_res as = res[0];   // average sign
   batch_res ene = res[1];  // signed energy i.e. $\sum_i E_i S_i / N_MC$

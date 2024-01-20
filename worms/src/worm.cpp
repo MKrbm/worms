@@ -212,7 +212,7 @@ variables
 dir : direction of worm head. 1 : upward, -1 : downward
 */
 template <class MCT>
-void Worm<MCT>::wormUpdate(double &wcount, double &wlength, size_t &w_update_cnt, size_t & cutoff_thres) {
+void Worm<MCT>::wormUpdate(double &wcount, double &wlength, size_t &w_update_cnt, const size_t cutoff_thres) {
   pops_main.resize(0);
   psop.resize(0);
   ops_copy.clear(); 
