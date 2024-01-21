@@ -53,6 +53,7 @@ image_model_dir.mkdir(parents=False, exist_ok=True)
 # Define the heatmap plotting function
 def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
     """Plot the heatmap of the average sign and loss as a function of two parameters."""
+    print(fixed_params)
     for fixed_values in itertools.product(*fixed_params.values()):
         filtered_df = df.copy()
         figure_name_parts = []
@@ -109,9 +110,27 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
             zs["Loss (optimized)"].append(loss)
             zs["Loss (original)"].append(init_loss)
 
+        zs["AS (optimized)"] = np.array(zs["AS (optimized)"])
+        zs["AS (original)"] = np.array(zs["AS (original)"])
+        zs["Loss (optimized)"] = np.array(zs["Loss (optimized)"])
+        zs["Loss (original)"] = np.array(zs["Loss (original)"])
+        # Replace nan with largest value
+        zs["AS (optimized)"][np.isnan(zs["AS (optimized)"])] = np.nanmin(
+            zs["AS (optimized)"])
+        zs["AS (original)"][np.isnan(zs["AS (original)"])] = np.nanmin(
+            zs["AS (original)"])
+        zs["Loss (optimized)"][np.isnan(zs["Loss (optimized)"])] = np.nanmin(
+            zs["Loss (optimized)"])
+        zs["Loss (original)"][np.isnan(zs["Loss (original)"])] = np.nanmin(
+            zs["Loss (original)"])
+        print(zs["Loss (optimized)"])
+
         # Plotting
         fig, ax = plt.subplots(2, 2, figsize=(13, 13))
-        max_loss = max(np.max(zs["Loss (optimized)"]), np.max(zs["Loss (original)"]))
+        try:
+            max_loss = max(np.max(zs["Loss (optimized)"]), np.max(zs["Loss (original)"]))
+        except BaseException as e:
+            raise e
         # max_neg = max(np.max(zs["NegativeSign (optimized)"]), np.max(zs["NegativeSign (initial)"]))
         # max_neg = min(max_neg, 100)
         max_neg = 1
@@ -185,8 +204,8 @@ elif model_name == "BLBQ1D":
 
 elif model_name == "SS2D":
     fixed_params_MG1D = {
-        "temperature": [0.25, 1],
-        "n_sites": np.sort(df.n_sites.unique()),
+        "temperature": [0.1],
+        "n_sites": [16,36],
         "J0": [1],
         "loss_func": ["-1_none", "1_mel"]
     }

@@ -54,7 +54,7 @@ run_job() {
     SWEEPS=1000000
     EPOCH=10000
     LR=0.001
-    M=50
+    M=1
     model_name="KH2D"
     log_dir="${project_dir}/job/log/${model_name}"
     [ ! -d "$log_dir" ] && mkdir -p "$log_dir" && echo "Created log directory $log_dir"
@@ -77,6 +77,12 @@ run_job() {
         export MKL_NUM_THREADS=$n_cpu
     else
         echo "Using all available CPUs"
+    fi
+
+    # if h is 1, then skip this simulation
+    if [ "$H" -eq 1 ]; then
+        echo "Skipping the simulation as H is set to 1."
+        exit 1
     fi
 
     source /opt/materiapps-intel/env.sh

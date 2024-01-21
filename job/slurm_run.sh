@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#SBATCH --job-name=blbq1d_sim
+#SBATCH --job-name=kh2d_sim
 #SBATCH --output=job_log/logfile_%A_%a.log
-#SBATCH --array=0-128  # Adjust this for the number of jobs and parallelism
-#SBATCH --ntasks=4
+#SBATCH --array=64-121  # Adjust this for the number of jobs and parallelism
+#SBATCH --ntasks=8
 #SBATCH --nodes=1
 #SBATCH --partition=cpu
 
