@@ -54,6 +54,7 @@ image_model_dir.mkdir(parents=False, exist_ok=True)
 def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
     """Plot the heatmap of the average sign and loss as a function of two parameters."""
     print(fixed_params)
+    print(df.temperature.unique(), df.n_sites.unique(), df.hx.unique())
     for fixed_values in itertools.product(*fixed_params.values()):
         filtered_df = df.copy()
         figure_name_parts = []
@@ -63,9 +64,11 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
             # print(key, value, len(filtered_df))
             figure_name_parts.append(f"{key}_{value}")
 
+
         x_param, y_param = heatmap_params
         x_values = np.sort(filtered_df[x_param].unique())
         y_values = np.sort(filtered_df[y_param].unique())
+        print(x_values, y_values)
         x, y = np.meshgrid(x_values, y_values)
 
         zs = {
@@ -210,3 +213,12 @@ elif model_name == "SS2D":
         "loss_func": ["-1_none", "1_mel"]
     }
     plot_heatmap(df, fixed_params_MG1D, ('J1', 'J2'), model_name, image_model_dir)
+
+elif model_name == "KH2D":
+    fixed_params_KH2D = {
+        "temperature": [2, 4],
+        "n_sites": [16, 25],
+        "loss_func": ["3_mel"],
+        "hx" : [0.0, 0.5],
+    }
+    plot_heatmap(df, fixed_params_KH2D, ('Jx', 'Jy'), model_name, image_model_dir)
