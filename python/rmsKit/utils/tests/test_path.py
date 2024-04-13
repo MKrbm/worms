@@ -79,7 +79,6 @@ class TestPathUtils:
         assert "ham_path" in df.columns, "The 'ham_path' column is missing in the DataFrame"
         assert len(df) > 0, "The DataFrame is empty"
 
-        print(df.columns)
 
     def test_get_sim_result(self):
         # Prepare test data
@@ -95,6 +94,14 @@ class TestPathUtils:
 
 
     def test_get_worm_path(self):
-        # Example test case for get_worm_path
-        # Assuming it returns a path string
-        assert True
+        search_path = Path("python/rmsKit/utils/tests/example/summary1")
+        best_loss, value, u_path, ham_path, info_path = get_worm_path(search_path)
+        expected_u_path = Path('python/rmsKit/utils/tests/example/summary1/Adam/lr_0.001_epoch_10000/loss_0.0000009/u')
+        expected_ham_path = Path('python/rmsKit/utils/tests/example/summary1/H')
+
+        # Assert that the returned paths and values match the expected results
+        assert best_loss == 9.473249065194977e-07, "The best loss does not match the expected value."
+        assert value == 0.017832783982157707, "The value does not match the expected value."
+        assert u_path == expected_u_path, f"The unitary path does not match the expected path. Expected: {expected_u_path}, Got: {u_path}"
+        assert ham_path == expected_ham_path, f"The Hamiltonian path does not match the expected path. Expected: {expected_ham_path}, Got: {ham_path}"
+        assert info_path == Path('python/rmsKit/utils/tests/example/summary1/info.txt'), "The info.txt path does not match the expected path."

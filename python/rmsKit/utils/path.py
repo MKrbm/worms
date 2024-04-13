@@ -2,10 +2,9 @@
 import re
 from pathlib import Path
 import logging
-from typing import Dict, List
+from typing import Dict, List, Tuple, Union, cast
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Tuple, Union
 from .functions import get_loss
 
 logger = logging.getLogger(__name__)
@@ -83,6 +82,59 @@ def extract_info_from_txt(file_path: Path) -> Dict[str, Union[float, Path]]:
 
     return res
 
+def get_worm_path(
+        search_path: Path,
+        ) -> Tuple[float, float, Path, Path, Path]:
+    """
+    Extracts the paths to the model hamiltonian and optimized unitary based on information found in 'info.txt' files within a given directory.
+
+    This function searches for 'info.txt' files within the specified directory, extracts the paths to the model hamiltonian and optimized unitary,
+    and returns these paths along with the best and initial loss values. Optionally, it can also return the path to the 'info.txt' file used.
+
+    Args:
+        search_path (Path): The directory path in which to search for 'info.txt' files.
+        return_info_path (bool, optional): If True, the function also returns the path to the 'info.txt' file used. Defaults to False.
+
+    Returns:
+        Tuple[float, float, Path, Path, Path]: A tuple containing the best loss, initial loss, path to the optimized unitary,
+        path to the model hamiltonian, and path to the 'info.txt' file.
+
+    Raises:
+        ValueError: If the search_path does not exist, is not a directory, or if no 'info.txt' file is found.
+        ValueError: If the paths extracted from 'info.txt' are not valid Path objects or if the referenced files do not exist.
+    """
+    if not search_path.exists():
+        raise ValueError(f"The given search path {search_path} does not exist.")
+    if not search_path.is_dir():
+        raise ValueError(f"The given path {search_path} is not a directory.")
+
+    # Get info.txt files under the hamiltonian path
+    info_txt_files = find_info_txt_files(search_path)
+    if not info_txt_files:
+        raise ValueError(f"No info.txt file found under the search path: {search_path}")
+    if len(info_txt_files) > 1:
+        logger.warning(f"Multiple info.txt files found under the search path. {info_txt_files[0]} will be used.")
+    info_txt_file = info_txt_files[0]
+    extracted_info = extract_info_from_txt(info_txt_file)
+
+    if not isinstance(extracted_info["unitary_path"], Path):
+        raise ValueError(f"The unitary path in the info.txt file is not a Path object: {extracted_info['unitary_path']}")
+    if not isinstance(extracted_info["hamiltonian_path"], Path):
+        raise ValueError(f"The hamiltonian path in the info.txt file is not a Path object: {extracted_info['hamiltonian_path']}")
+
+    # Ensure paths are Path objects
+    unitary_path = cast(Path, extracted_info["unitary_path"])
+    hamiltonian_path = cast(Path, extracted_info["hamiltonian_path"])
+
+    if not unitary_path.exists():
+        raise ValueError(f"The path to the optimized unitary {unitary_path} does not exist.")
+    if not hamiltonian_path.exists():
+        raise ValueError(f"The path to the model hamiltonian {hamiltonian_path} does not exist.")
+
+    loss = cast(float, extracted_info["best_loss"])
+    initial_loss = cast(float, extracted_info["initial_loss"])
+
+    return loss, initial_loss, unitary_path, hamiltonian_path, info_txt_file
 
 def find_summary_files(directory_path: Union[str, Path]) -> List[Dict[str, Path]]:
     dir_path = Path(directory_path).resolve()
@@ -143,42 +195,3 @@ def get_sim_result(directory_path: Path, N: int) -> pd.DataFrame:
     summary_files = find_summary_files(directory_path)
     df = get_df_from_summary_files(summary_files, N)
     return df
-
-
-
-
-
-def get_worm_path(search_path: Path, return_info_path: bool = False):
-    """Extract the path to model hamiltonian and optimized unitary from the given path."""
-    if not search_path.exists():
-        raise ValueError(f"The given search path {search_path} does not exist.")
-    if not search_path.is_dir():
-        raise ValueError(f"The given path {search_path} is not a directory.")
-
-    # Get info.txt files under the hamiltonian path
-    info_txt_files = find_info_txt_files(search_path)
-    if not info_txt_files:
-        raise ValueError(f"No info.txt file found under the search path: {search_path}")
-    if len(info_txt_files) > 1:
-        logger.warning(f"Multiple info.txt files found under the search path. {info_txt_files[0]} will be used.")
-    info_txt_file = info_txt_files[0]
-    extracted_info = extract_info_from_txt(info_txt_file)
-
-    if not isinstance(extracted_info["unitary_path"], Path):
-        raise ValueError(f"The unitary path in the info.txt file is not a Path object: {extracted_info['unitary_path']}")
-    if not isinstance(extracted_info["hamiltonian_path"], Path):
-        raise ValueError(f"The hamiltonian path in the info.txt file is not a Path object: {extracted_info['hamiltonian_path']}")
-
-    # Ensure paths are Path objects
-    unitary_path = extracted_info["unitary_path"] 
-    hamiltonian_path = extracted_info["hamiltonian_path"] 
-
-    if not unitary_path.exists():
-        raise ValueError(f"The path to the optimized unitary {unitary_path} does not exist.")
-    if not hamiltonian_path.exists():
-        raise ValueError(f"The path to the model hamiltonian {hamiltonian_path} does not exist.")
-
-    loss = extracted_info["best_loss"]
-    initial_loss = extracted_info["initial_loss"]
-
-    return (loss, initial_loss, unitary_path, hamiltonian_path, info_txt_file) if return_info_path else (loss, initial_loss, unitary_path, hamiltonian_path)
