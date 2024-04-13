@@ -9,6 +9,7 @@ from ..path import (
     get_worm_path
 )
 from pathlib import Path
+import pandas as pd
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -54,19 +55,43 @@ class TestPathUtils:
         assert result["hamiltonian_path"] == expected_result["hamiltonian_path"]
         assert result["unitary_path"] == expected_result["unitary_path"]
 
-    def test_find_summary_files(self):
-        # Example test case for find_summary_files
-        assert True
+    def test_find_summary_files_and_get_df(self):
+        # Test with a valid directory containing summary files
+        directory_path = Path("python/rmsKit/utils/tests/example/summary1")
+        summary_files = find_summary_files(directory_path)
+        assert len(summary_files) > 0, "No summary files found in the directory"
+        for res_dict in summary_files:
+            assert "summary" in res_dict and "info" in res_dict, "Missing 'summary' or 'info' key in the result dictionary"
+        
+        # Test with an invalid directory path
+        with pytest.raises(ValueError) as e:
+            invalid_directory = Path("nonexistent/directory")
+            find_summary_files(invalid_directory)
+        assert "The given path" in str(e.value) and "is not a directory" in str(e.value)
 
-    def test_get_df_from_summary_files(self):
-        # Example test case for get_df_from_summary_files
-        # Assuming it returns a pandas DataFrame
-        assert True
+        # Use the results of find_summary_files as the input for get_df_from_summary_files
+        N = 1000000 
+        df = get_df_from_summary_files(summary_files, N)
+
+        # Assert the expected properties of the returned DataFrame
+        assert isinstance(df, pd.DataFrame), "The returned object is not a pandas DataFrame"
+        assert "init_loss" in df.columns, "The 'init_loss' column is missing in the DataFrame"
+        assert "ham_path" in df.columns, "The 'ham_path' column is missing in the DataFrame"
+        assert len(df) > 0, "The DataFrame is empty"
+
+        print(df.columns)
 
     def test_get_sim_result(self):
-        # Example test case for get_sim_result
-        # Assuming it returns a simulation result object or dict
-        assert True
+        # Prepare test data
+        directory_path = Path("python/rmsKit/utils/tests/example/summary1")
+        N = 1000000
+
+        # Call the function under test
+        df = get_sim_result(directory_path, N)
+
+        # Assert the expected properties of the returned DataFrame
+        assert isinstance(df, pd.DataFrame), "The returned object is not a pandas DataFrame"
+        assert len(df) > 0, "The DataFrame is empty"
 
 
     def test_get_worm_path(self):

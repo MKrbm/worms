@@ -103,35 +103,38 @@ def find_summary_files(directory_path: Union[str, Path]) -> List[Dict[str, Path]
     return res
 
 
-def get_df_from_summary_files(summary_files: str, N: int) -> pd.DataFrame:
-    """Get a dataframe from the given summary files.
-
-    summary files must be csv files.
+def get_df_from_summary_files(summary_files: List[Dict[str, Path]], N: int) -> pd.DataFrame:
     """
-    df = None
+    Compile a DataFrame from summary CSV files that match a specific sweep number.
+
+    Args:
+    - summary_files (List[Dict[str, Path]]): A list of dictionaries, each containing paths to a summary file and its corresponding info file.
+    - N (int): The sweep number to filter summary files by.
+
+    Returns:
+    - pd.DataFrame: A DataFrame compiled from the filtered summary files, enriched with initial loss information.
+    """
+    dfs = []
     for res_dict in summary_files:
         sum_file = res_dict["summary"]
         info_file = res_dict["info"]
         info = extract_info_from_txt(info_file)
-        if "sweeps_{}".format(N) in str(sum_file):
+        if f"sweeps_{N}" in sum_file.resolve().as_posix():
             try:
-                df1 = pd.read_csv(sum_file)
-                if not (df1.u_path.isnull().values.any()):
-                    df1 = get_loss(df1)
-                    if np.abs(df1.loss.values - info["best_loss"]).mean() > 1E-7:
-                        print(df1.loss, info["best_loss"])
+                df = pd.read_csv(sum_file)
+                if not df.u_path.isnull().values.any():
+                    df = get_loss(df)
+                    if np.abs(df.loss.values - info["best_loss"]).mean() > 1E-7:
                         raise ValueError("best_loss is not consistent with summary data")
-            except BaseException as e:
-                logging.warning("Could not concate or read {}".format(sum_file))
+                df["init_loss"] = info["initial_loss"]
+                dfs.append(df)
+            except Exception as e:
+                logging.warning(f"Could not concatenate or read {sum_file}")
                 logging.warning(e)
-
-            df1["init_loss"] = info["initial_loss"]
-
-            if df is not None:
-                df = pd.concat([df, df1])
-            else:
-                df = df1
-    df = df.reset_index(drop=True)
+    if dfs:
+        df = pd.concat(dfs).reset_index(drop=True)
+    else:
+        df = pd.DataFrame()
     return df
 
 
@@ -144,37 +147,38 @@ def get_sim_result(directory_path: Path, N: int) -> pd.DataFrame:
 
 
 
+
 def get_worm_path(search_path: Path, return_info_path: bool = False):
     """Extract the path to model hamiltonian and optimized unitary from the given path."""
     if not search_path.exists():
-        raise ValueError("The given search path does not exist.")
+        raise ValueError(f"The given search path {search_path} does not exist.")
     if not search_path.is_dir():
-        raise ValueError("The given path is not a directory.")
+        raise ValueError(f"The given path {search_path} is not a directory.")
 
     # Get info.txt files under the hamiltonian path
     info_txt_files = find_info_txt_files(search_path)
-    if len(info_txt_files) == 0:
-        raise ValueError("No info.txt file found under the search path : {}".format(search_path))
+    if not info_txt_files:
+        raise ValueError(f"No info.txt file found under the search path: {search_path}")
     if len(info_txt_files) > 1:
-        logger.warning("""
-                       Multiple info.txt files found under the search path.
-                       The {} will be used.
-            """.format(info_txt_files[0]))
-    info_txt_file = Path(info_txt_files[0])
+        logger.warning(f"Multiple info.txt files found under the search path. {info_txt_files[0]} will be used.")
+    info_txt_file = info_txt_files[0]
     extracted_info = extract_info_from_txt(info_txt_file)
 
-    # Get the path to the optimized unitary
-    unitary_path = extracted_info["unitary_path"]
-    if not Path(unitary_path).exists():
-        raise ValueError("The path to the optimized unitary does not exist.")
-    hamiltonian_path = extracted_info["hamiltonian_path"]
-    if not Path(hamiltonian_path).exists():
-        raise ValueError("The path to the model hamiltonian does not exist.")
+    if not isinstance(extracted_info["unitary_path"], Path):
+        raise ValueError(f"The unitary path in the info.txt file is not a Path object: {extracted_info['unitary_path']}")
+    if not isinstance(extracted_info["hamiltonian_path"], Path):
+        raise ValueError(f"The hamiltonian path in the info.txt file is not a Path object: {extracted_info['hamiltonian_path']}")
+
+    # Ensure paths are Path objects
+    unitary_path = extracted_info["unitary_path"] 
+    hamiltonian_path = extracted_info["hamiltonian_path"] 
+
+    if not unitary_path.exists():
+        raise ValueError(f"The path to the optimized unitary {unitary_path} does not exist.")
+    if not hamiltonian_path.exists():
+        raise ValueError(f"The path to the model hamiltonian {hamiltonian_path} does not exist.")
 
     loss = extracted_info["best_loss"]
     initial_loss = extracted_info["initial_loss"]
 
-    if return_info_path:
-        return loss, initial_loss, unitary_path, hamiltonian_path, info_txt_file
-    else:
-        return loss, initial_loss, unitary_path, hamiltonian_path
+    return (loss, initial_loss, unitary_path, hamiltonian_path, info_txt_file) if return_info_path else (loss, initial_loss, unitary_path, hamiltonian_path)
