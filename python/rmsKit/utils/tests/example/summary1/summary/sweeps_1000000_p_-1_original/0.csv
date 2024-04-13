@@ -1,0 +1,5 @@
+model_name,alpha,T,bc,n_sites,u_path,ham_path,sweeps,as,as_error,e,e_error,c,c_error,m,m_error,chi,chi_error,loss_func
+BLBQ1D,0.2,1.0,obc,10,,/home/keisuke/worms/python/rmsKit/array/torch/BLBQ1D_loc/J0_1_J1_1.75_hx_0.85_hz_0/-1_mel/H/0.npy,1000000,0.993784,0.000533636,-1.63109,0.00134037,0.194578,0.00836054,0.0,0.0,0.0,0.0,-1_mel
+BLBQ1D,0.2,0.25,obc,10,,/home/keisuke/worms/python/rmsKit/array/torch/BLBQ1D_loc/J0_1_J1_1.75_hx_0.85_hz_0/-1_mel/H/0.npy,1000000,0.987028,0.00104055,-1.69678,0.000591563,0.0618848,0.0274586,0.0,0.0,0.0,0.0,-1_mel
+BLBQ1D,0.2,1.0,obc,11,,/home/keisuke/worms/python/rmsKit/array/torch/BLBQ1D_loc/J0_1_J1_1.75_hx_0.85_hz_0/-1_mel/H/0.npy,1000000,0.993432,0.000515993,-1.65219,0.00168922,0.189198,0.00810814,0.0,0.0,0.0,0.0,-1_mel
+BLBQ1D,0.2,0.25,obc,11,,/home/keisuke/worms/python/rmsKit/array/torch/BLBQ1D_loc/J0_1_J1_1.75_hx_0.85_hz_0/-1_mel/H/0.npy,1000000,0.985496,0.00102622,-1.71919,0.000625651,0.0159482,0.0275683,0.0,0.0,0.0,0.0,-1_mel
