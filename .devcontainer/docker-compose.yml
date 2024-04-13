@@ -6,7 +6,7 @@ version: '3.4'
 services:
   main:
     container_name: worms_gpu_torch 
-    image: kei0709/cuda12.1:latest 
+    image: kei0709/cuda_12.1-ubuntu22.04:latest
     # image: nvidia/cuda:12.1.1-runtime-ubuntu22.04
     volumes:
       - ..:/home/user/project
