@@ -5,30 +5,86 @@ import logging
 from typing import Dict, List
 import pandas as pd
 import numpy as np
+from typing import Dict, List, Tuple, Union
 from .functions import get_loss
 
 logger = logging.getLogger(__name__)
 
 
-def extract_to_rmskit(path: Path):
-    """Extract the path to rmsKit directory from the given path."""
+def extract_to_rmskit(path: Path) -> Path:
+    """
+    Extracts the path up to and including the 'rmsKit' directory from the given path.
+
+    Traverses the parents of the given path to find a directory named 'rmsKit' and returns the path up to that directory.
+
+    Args:
+        path (Path): The path from which to extract the 'rmsKit' directory.
+
+    Returns:
+        Path: The path up to and including the 'rmsKit' directory.
+
+    Raises:
+        ValueError: If the 'rmsKit' directory is not found in the path's ancestors.
+    """
     for parent in path.parents:
         if parent.name == 'rmsKit':
-            return str(parent)
+            return parent
     raise ValueError("The given path is not under 'rmsKit'.")
 
+def find_info_txt_files(directory_path: Union[str, Path]) -> List[Path]:
+    """
+    Finds all 'info.txt' files within the given directory path.
 
-def find_info_txt_files(directory_path):
-    """Find all info.txt files under the given directory."""
+    Recursively searches the given directory for files named 'info.txt' and returns a list of Paths to these files.
+
+    Args:
+        directory_path (Union[str, Path]): The directory path in which to search for 'info.txt' files.
+
+    Returns:
+        List[Path]: A list of Paths to the found 'info.txt' files.
+
+    Raises:
+        ValueError: If the given directory_path is not a directory.
+    """
     dir_path = Path(directory_path)
     if not dir_path.is_dir():
         raise ValueError(f"The given path {directory_path} is not a directory.")
     info_txt_files = list(dir_path.rglob('info.txt'))
-    return [str(file) for file in info_txt_files]
+    return info_txt_files
+
+def extract_info_from_txt(file_path: Path) -> Dict[str, Union[float, Path]]:
+    """Extract information from the given info.txt file."""
+    patterns = {
+        "best_loss": r"best loss: ([\d.e-]+)",
+        "initial_loss": r"initial loss: ([\d.e-]+)",
+        "hamiltonian_path": r"hamiltonian was saved to ([/\w._-]+)",
+        "unitary_path": r"best loss was saved to ([/\w._-]+)"
+    }
+    res = {}
+
+    # Read the file and extract information
+    content = file_path.read_text()
+
+    for key, pattern in patterns.items():
+        match = re.search(pattern, content)
+        if match:
+            if "path" in key:
+                res[key] = Path(match.group(1))
+            else:
+                res[key] = float(match.group(1))
+
+    if None in res.values():
+        missing_keys = [key for key, value in res.items() if value is None]
+        raise ValueError(f"""
+        Could not extract all required information from the given file. Missing: {', '.join(missing_keys)}
+        The file content is:
+        {content}
+        """)
+
+    return res
 
 
-def find_summary_files(directory_path: Path) -> List[Dict[str, Path]]:
-    """Find all info.txt files under the given directory."""
+def find_summary_files(directory_path: Union[str, Path]) -> List[Dict[str, Path]]:
     dir_path = Path(directory_path).resolve()
     if not dir_path.is_dir():
         raise ValueError(f"The given path {directory_path} is not a directory.")
@@ -37,12 +93,12 @@ def find_summary_files(directory_path: Path) -> List[Dict[str, Path]]:
     for sim_res in sim_res_folder:
         summary_folder = sim_res / "summary"
         info_file = sim_res / "info.txt"
-        assert summary_folder.is_dir()
-        assert info_file.exists()
+        if not summary_folder.is_dir():
+            raise ValueError(f"Expected {summary_folder} to be a directory.")
+        if not info_file.exists():
+            raise ValueError(f"Info file {info_file} does not exist.")
         for path in summary_folder.rglob('*.csv'):
-            dic = dict()
-            dic["summary"] = path
-            dic["info"] = info_file
+            dic = {"summary": path, "info": info_file}
             res.append(dic)
     return res
 
@@ -86,53 +142,6 @@ def get_sim_result(directory_path: Path, N: int) -> pd.DataFrame:
     return df
 
 
-def extract_info_from_txt(file_path: Path) -> Dict[str, Path]:
-    """Extract information from the given info.txt file."""
-    best_loss_pattern = r"best loss: ([\d.e-]+)"
-    initial_loss_pattern = r"initial loss: ([\d.e-]+)"
-    hamiltonian_path_pattern = r"hamiltonian was saved to ([/\w._-]+)"
-    unitary_path_pattern = r"best loss was saved to ([/\w._-]+)"
-
-    # Read the file and extract information
-    with open(file_path, 'r') as file:
-        content = file.read()
-
-        # Extract best loss
-        best_loss_match = re.search(best_loss_pattern, content)
-        best_loss = best_loss_match.group(1) if best_loss_match else None
-
-        # Extract initial loss
-        initial_loss_match = re.search(initial_loss_pattern, content)
-        initial_loss = initial_loss_match.group(1) if initial_loss_match else None
-
-        # Extract hamiltonian path
-        hamiltonian_path_match = re.search(hamiltonian_path_pattern, content)
-        hamiltonian_path = hamiltonian_path_match.group(1) if hamiltonian_path_match else None
-
-        # Extract unitary path
-        unitary_path_match = re.search(unitary_path_pattern, content)
-        unitary_path = unitary_path_match.group(1) if unitary_path_match else None
-
-    res = {
-        "best_loss": float(best_loss),
-        "initial_loss": float(initial_loss),
-        "hamiltonian_path": Path(hamiltonian_path),
-        "unitary_path": Path(unitary_path)
-    }
-
-    if None in res.values():
-        raise ValueError("""
-        Could not extract all required information from the given file.
-        The file should contain the following information:
-        - best loss
-        - initial loss
-        - hamiltonian path
-        - unitary path
-        The file content is:
-        {}
-        """.format(content))
-
-    return res
 
 
 def get_worm_path(search_path: Path, return_info_path: bool = False):
