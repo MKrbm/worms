@@ -58,3 +58,17 @@
     - add `set(CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH FALSE)` in `CMakeLists.txt`. 
     - remove path to miniconda3 from `PATH environment`
     - alternatively (better answer), you can just add x86_64-linux-gnu(/usr/lib/aarch64-linux-gnu) on top of current $PATH by PATH="/usr/lib/x86_64-linux-gnu:$PATH"(PATH="/usr/lib/aarch64-linux-gnu:$PATH")
+
+
+
+# How to build the project
+
+- Configure with cmake : `cmake ..`
+- Build with make : `make`
+  - If you installed `ninja` and want to use it, you can specify the number of threads by using `cmake -GNinja ..` and `ninja -j<number_of_threads>`
+
+## Run the test with ctest 
+  - For unit tests : `ctest`
+  - For integration tests, you have to check individually
+
+

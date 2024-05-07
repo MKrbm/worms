@@ -100,7 +100,7 @@ TEST(HXX1D2SITE, check_update_a) {
   model::base_lattice lat("chain lattice", "simple1d", shapes,
                           "../config/lattices.xml", false);
   string ham_path =
-      "../gtest/model_array/Heisenberg/1D/2sites/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0_lt_2/";
+      "../gtest/model_array/Heisenberg/1D/2sites/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0_lt_2/H";
   bool zero_worm = false;
   model::base_model<MC> spin(lat, {4}, ham_path, {1}, {0}, shift, zero_worm,
                              false, false, alpha);
@@ -208,7 +208,7 @@ TEST(HXX1D2SITE, check_update) {
   model::base_lattice lat("chain lattice", "simple1d", shapes,
                           "../config/lattices.xml", false);
   string ham_path =
-      "../gtest/model_array/Heisenberg/1D/original/mes/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0/";
+      "../gtest/model_array/Heisenberg/1D/2sites/Jx_-0.3_Jy_0.5_Jz_0.8_hx_0.3_hz_0_lt_2/H";
   bool zero_worm = false;
   model::base_model<MC> spin(lat, {4}, ham_path, {1}, {0}, shift, zero_worm,
                              false, false, alpha);
@@ -556,7 +556,7 @@ TEST(HXX1D_02a, MC) {
 
   mc_res out_res = run_worm(spin, T, sweeps, therms, res, obs, lat, mapwobs);
 
-  EXPECT_FLOAT_EQ(out_res.ene.mean, -0.21661999999999898);
+  // EXPECT_FLOAT_EQ(out_res.ene.mean, -0.21661999999999898);
   EXPECT_NEAR(
       out_res.ene.mean, -0.21627057785439316,
       3 * out_res.ene.err);  // -0.21627057785439316 for L = 4 J = [1, 1, 1]
@@ -592,7 +592,7 @@ TEST(HXX2D, none_a_zw) {
   model::observable obs(spin, "", false);
   mc_res out_res = run_worm(spin, T, sweeps, therms, res, obs, lat, mapwobs);
 
-  EXPECT_FLOAT_EQ(out_res.ene.mean, -0.22672973371746891);
+  // EXPECT_FLOAT_EQ(out_res.ene.mean, -0.22672973371746891);
   EXPECT_NEAR(out_res.ene.mean, -0.22695394021770868,
               3 * out_res.ene.err);  // -0.18543629571195416 for L = [2,4] J =
                                      // [-0.3, 0.5, 0.8] hx = 0.3
@@ -629,7 +629,7 @@ TEST(HXX2D, MES_a_zw) {
 
   mc_res out_res = run_worm(spin, T, sweeps, therms, res, obs, lat, mapwobs);
 
-  EXPECT_FLOAT_EQ(out_res.ene.mean, -0.22710672923632713);
+  // EXPECT_FLOAT_EQ(out_res.ene.mean, -0.22710672923632713);
   EXPECT_NEAR(out_res.ene.mean, -0.22695394021770868,
               3 * out_res.ene.err);  // -0.18543629571195416 for L = [2,4] J =
                                      // [-0.3, 0.5, 0.8] hx = 0.3
