@@ -67,8 +67,15 @@
 - Build with make : `make`
   - If you installed `ninja` and want to use it, you can specify the number of threads by using `cmake -GNinja ..` and `ninja -j<number_of_threads>`
 
-## Run the test with ctest 
-  - For unit tests : `ctest`
-  - For integration tests, you have to check individually
+# Run the test 
+  ## For c++ projects with ctest
+    - For unit tests : `ctest`
+    - For integration tests, you have to check individually
+
+  ## For python projects with pytest
+    - Just run pytest with `pytest` 
+      - All tests are supposed to be called from project root directory.
+      - For example, `pytest python/rmsKit/rms_torch/tests/functions.py`
+    - All tests file must start with `test` 
 
 

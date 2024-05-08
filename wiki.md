@@ -5,3 +5,6 @@
 - ### Negative sign problem
 
 - ### Majumder-gohsh
+
+from nptyping import NDArray
+
