@@ -5,7 +5,7 @@ from typing import Any, Tuple, Union, List
 
 
 
-def check_is_unitary_torch(X: torch.Tensor) -> torch.Tensor:
+def check_is_unitary_torch(X: torch.Tensor) -> bool:
     """
     Check if a given matrix X is unitary.
     
@@ -18,9 +18,23 @@ def check_is_unitary_torch(X: torch.Tensor) -> torch.Tensor:
         torch.Tensor: A boolean tensor indicating if the matrix is unitary.
     """
     with torch.no_grad():
-        I_prime = X @ X.T.conj()
-        identity_matrix = torch.eye(X.shape[0], device=X.device)
-        return (torch.abs(I_prime - identity_matrix) < 1e-8).all()
+        I_prime = X @ X.H
+        identity_matrix = torch.eye(X.shape[0], device=X.device, dtype=X.dtype)
+        return torch.allclose(I_prime, identity_matrix, atol=1e-6)
+
+def is_hermitian_torch(X: torch.Tensor) -> bool:
+    """
+    Check if a given matrix X is Hermitian.
+    
+    A matrix is Hermitian if it is equal to its conjugate transpose.
+    
+    Parameters:
+        X (torch.Tensor): A matrix to be checked for Hermitian property.
+    
+    Returns:
+        bool: A boolean indicating if the matrix is Hermitian.
+    """
+    return torch.allclose(X, X.H, atol=1e-9)
 
 
 def riemannian_grad_torch(u: torch.Tensor, euc_grad: torch.Tensor) -> torch.Tensor:
@@ -44,8 +58,8 @@ def riemannian_grad_torch(u: torch.Tensor, euc_grad: torch.Tensor) -> torch.Tens
 
     if u.shape != euc_grad.shape:
         raise ValueError("shape of u and euc_grad must be same")
-    rg = euc_grad @ u.T.conj() - u @ euc_grad.T.conj()
-    return (rg - rg.T.conj()) / 2
+    rg = euc_grad @ u.H
+    return (rg - rg.H) / 2
 
 
 def kron_complex(ur1: torch.Tensor, ui1: torch.Tensor, ur2: torch.Tensor,
