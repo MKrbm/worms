@@ -4,6 +4,7 @@ from torch import nn
 
 # import math
 from typing import Union, List
+from .functions import is_hermitian_torch
 import logging
 
 
@@ -12,7 +13,7 @@ class MinimumEnergyLoss(nn.Module):
 
     def __init__(
         self,
-        h_list: Union[List[torch.Tensor], List[np.ndarray]],
+        h_list: List[torch.Tensor],
         device: torch.device = torch.device("cpu"),
         decay: float = 0.1,
         # n : after "decay" step, the regularization term will e^(-1) times smaller
@@ -32,17 +33,10 @@ class MinimumEnergyLoss(nn.Module):
             raise ValueError("decay should be positive.")
         self.weight_decay = decay
         for i in range(len(h_list)):
-            # logging.info("\tInitializing local hamiltonian \n{}".format(h_list[i]))
-            if isinstance(h_list[i], np.ndarray):
-                self.h_list.append(torch.from_numpy(
-                    h_list[i]).to(torch.float64).to(device))
-            elif isinstance(h_list[i], torch.Tensor):
-                self.h_list.append(h_list[i].to(device))
-            else:
-                raise TypeError(
-                    "h should be of type np.ndarray or torch.Tensor.")
+            if not is_hermitian_torch(h_list[i]):
+                raise ValueError("h_list should be a list of Hermitian matrices.")
+            self.h_list.append(h_list[i].to(device))
             E, V = torch.linalg.eigh(self.h_list[i])
-
             logging.info(f"\tmaximum energy of local hamiltonian {i}: {E[-1]:.3f}")
             logging.info(f"\tminimum energy of local hamiltonian {i}: {E[0]:.3f}")
             self.offset.append(E[-1])
@@ -75,7 +69,7 @@ class MinimumEnergyLoss(nn.Module):
         A = U @ H @ U.T
         result_abs = self.get_stoquastic(A)
 
-        # n: corresponds to caluclate eneergy of maximum superposition state
+        # n: corresponds to caluclate energy of maximum superposition state
         negativity = torch.abs(A - result_abs).mean() / H.shape[0]
         try:
             E = torch.linalg.eigvalsh(result_abs)
