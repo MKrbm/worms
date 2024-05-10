@@ -15,8 +15,8 @@ class MinimumEnergyLoss(nn.Module):
         self,
         h_list: List[torch.Tensor],
         device: torch.device = torch.device("cpu"),
-        decay: float = 0.1,
-        # n : after "decay" step, the regularization term will e^(-1) times smaller
+        decay: float = 0.0,
+        dtype : torch.dtype = torch.float64, # n : after "decay" step, the regularization term will e^(-1) times smaller
     ):
         """Initialize the minimum energy loss function."""
         super(MinimumEnergyLoss, self).__init__()
@@ -35,7 +35,7 @@ class MinimumEnergyLoss(nn.Module):
         for i in range(len(h_list)):
             if not is_hermitian_torch(h_list[i]):
                 raise ValueError("h_list should be a list of Hermitian matrices.")
-            self.h_list.append(h_list[i].to(device))
+            self.h_list.append(h_list[i].clone().detach().to(device))
             E, V = torch.linalg.eigh(self.h_list[i])
             logging.info(f"\tmaximum energy of local hamiltonian {i}: {E[-1]:.3f}")
             logging.info(f"\tminimum energy of local hamiltonian {i}: {E[0]:.3f}")
@@ -53,24 +53,27 @@ class MinimumEnergyLoss(nn.Module):
         """
         # add minimum energy of each local hamiltonian for calculating the total energy
         # initialize with torch tensor
-        loss = torch.zeros(1, device=U.device)
+        loss = torch.zeros(1, device=U.device, dtype=self.h_list[0].dtype)
         for i in range(len(self.h_list)):
             loss += self.minimum_energy_loss(self.h_list[i], U) - self.shift_origin_offset[i]
 
         self.weight = (self.weight * np.exp(-1 / self.weight_decay)) \
             if (self.weight_decay != 0) else 0
+        
         return torch.abs(loss)
 
     def minimum_energy_loss(self, H: torch.Tensor, U: torch.Tensor) -> torch.Tensor:
-        """Calculate the minimum energy of a system using the reverse iteration method.
+        """Calculate the minimum energy of a system with ED.
 
-        The first ground state is calculated using the eigendecomposition of the Hamiltonian.
         """
         A = U @ H @ U.T
         result_abs = self.get_stoquastic(A)
 
         # n: corresponds to caluclate energy of maximum superposition state
-        negativity = torch.abs(A - result_abs).mean() / H.shape[0]
+        if self.weight_decay > 0:
+            negativity = torch.abs(A - result_abs).mean() / H.shape[0]
+        else:
+            negativity = 0
         try:
             E = torch.linalg.eigvalsh(result_abs)
         except RuntimeError:
