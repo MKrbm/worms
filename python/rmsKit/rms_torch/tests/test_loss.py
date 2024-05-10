@@ -26,18 +26,24 @@ class TestMinimumEnergyLoss:
 
         self.setup_device()
 
-        # Create a list of random Hermitian matrices
-        self.h_list = [torch.randn(4, 4, device=self.device, dtype=torch.float64)  for _ in range(3)]
-        self.h_list = [h + h.H for h in self.h_list]
+        # Create a tensor of random Hermitian matrices
+        h_tensor = torch.randn(3, 4, 4, device=self.device, dtype=torch.float64)
+        h_tensor = h_tensor + h_tensor.transpose(-2, -1)  # Make the tensor Hermitian
 
-        self.h_list_an : List[torch.Tensor] = [-torch.eye(4, device=self.device, dtype=torch.float64) for _ in range(3)]
-        self.h_list_shifted : List[torch.Tensor] = [torch.randn(4, 4, device=self.device, dtype=torch.float64)  for _ in range(3)]
-        self.h_list_shifted = [h + h.H for h in self.h_list_shifted]
-        self.h_list_shifted = [h - torch.linalg.eigvalsh(h).max() * torch.eye(4, device=self.device) for h in self.h_list_shifted]
+        self.h_tensor = h_tensor
+
+        # Create a tensor of negative identity matrices
+        self.h_tensor_an = -torch.eye(4, device=self.device, dtype=torch.float64).repeat(3, 1, 1)
+
+        # Create a tensor of shifted Hermitian matrices
+        h_tensor_shifted = torch.randn(3, 4, 4, device=self.device, dtype=torch.float64)
+        h_tensor_shifted = h_tensor_shifted + h_tensor_shifted.transpose(-2, -1)
+        max_eigenvalues = torch.linalg.eigvalsh(h_tensor_shifted).max(dim=1).values
+        self.h_tensor_shifted = h_tensor_shifted - max_eigenvalues[:, None, None] * torch.eye(4, device=self.device)
 
     def test_initializer(self):
-        mel = MinimumEnergyLoss(h_list=self.h_list, device=self.device)
-        for original_h, h, offset, shift_origin_offset in zip(self.h_list, mel.h_list, mel.offset, mel.shift_origin_offset):
+        mel = MinimumEnergyLoss(h_tensor=self.h_tensor, device=self.device)
+        for original_h, h, offset, shift_origin_offset in zip(self.h_tensor, mel.h_tensor, mel.offset, mel.shift_origin_offset):
             # Check if the matrix is shifted by its maximum eigenvalue
             E, _ = torch.linalg.eigh(original_h)
             max_eigenvalue = E[-1]
@@ -51,52 +57,52 @@ class TestMinimumEnergyLoss:
             assert torch.allclose(offset, max_eigenvalue), "Offset is not the maximum eigenvalue."
 
     def test_non_hermitian(self):
-        # Create a non-Hermitian matrix
-        non_hermitian_matrix = torch.randn(4, 4, device=self.device)
+        # Create a non-Hermitian matrix tensor
+        non_hermitian_tensor = torch.randn(3, 4, 4, device=self.device)
         with pytest.raises(ValueError):
-            MinimumEnergyLoss(h_list=[non_hermitian_matrix], device=self.device)
+            MinimumEnergyLoss(h_tensor=non_hermitian_tensor, device=self.device)
 
     def test_weight_decay_effect(self):
         # Test the effect of weight decay
-        mel = MinimumEnergyLoss(h_list=self.h_list, device=self.device, decay=0.1)
+        mel = MinimumEnergyLoss(h_tensor=self.h_tensor, device=self.device, decay=0.1)
         initial_weight = mel.weight
         mel.forward(torch.eye(4, device=self.device, dtype=torch.float64))  # Trigger weight update
         assert mel.weight < initial_weight, "Weight did not decay as expected."
+        assert mel.weight == 1 * np.exp(-1 / mel.weight_decay), "Weight did not decay as expected."
 
     def test_weight_zero_when_decay_zero(self):
         # Test that weight is zero when decay is zero
-        mel = MinimumEnergyLoss(h_list=self.h_list, device=self.device, decay=0)
+        mel = MinimumEnergyLoss(h_tensor=self.h_tensor, device=self.device)
         assert mel.weight == 0, "Weight should be zero when decay is zero."
     
     def test_return_toy(self):
-
-        mel = MinimumEnergyLoss(h_list=self.h_list_an, device=self.device, decay=0.0)
+        mel = MinimumEnergyLoss(h_tensor=self.h_tensor_an, device=self.device)
         I = torch.eye(4, device=self.device, dtype=torch.float64)
         loss = mel(I)
-        assert loss.dtype == self.h_list_an[0].dtype, "Tensor is not of the correct type: torch.float64"
+        assert loss.dtype == self.h_tensor_an.dtype, "Tensor is not of the correct type: torch.float64"
         assert torch.allclose(loss.cpu(), torch.tensor(0.0).double()), "Loss must be 0 for identity hamiltonian."
         assert loss.device.type == self.device.type, f"Tensor is not on the correct device: {self.device}"
 
+        # Create a tensor of random matrices and make them all negative definite
+        h_tensor_all_neg = torch.randn(3, 4, 4, device=self.device, dtype=torch.float64)
+        h_tensor_all_neg = -torch.abs(h_tensor_all_neg + h_tensor_all_neg.transpose(-2, -1))
 
-        h_list_all_neg = [torch.randn(4, 4, device=self.device, dtype=torch.float64)  for _ in range(3)]
-        h_list_all_neg = [-torch.abs(h + h.H) for h in h_list_all_neg]
-        mel = MinimumEnergyLoss(h_list=h_list_all_neg, device=self.device, decay=0.0)
+        mel = MinimumEnergyLoss(h_tensor=h_tensor_all_neg, device=self.device)
         I = torch.eye(4, device=self.device, dtype=torch.float64)
         loss = mel(I)
         assert torch.allclose(loss.cpu(), torch.tensor(0.0).double(), atol=1e-7), "Since the matrices are all negative, the loss must be 0."
 
-
     def test_loss_computation(self):
-        # Calculate the sum of the largest eigenvalues of self.h_list
+        # Calculate the sum of the largest eigenvalues of self.h_tensor_shifted
         loss0 = torch.tensor(0.0).double()
         loss_an0 = torch.tensor(0.0).double()
-        for h in self.h_list_shifted:
+        for h in self.h_tensor_shifted:
             h_an = -torch.abs(h)
             loss0 += torch.linalg.eigvalsh(h)[0].double().cpu()
             loss_an0 += torch.linalg.eigvalsh(h_an)[0].double().cpu()
         expected_loss = loss0 - loss_an0
-        mel = MinimumEnergyLoss(h_list=self.h_list_shifted, device=self.device, decay=0.0)
-        for i in range(len(self.h_list_shifted)):
+        mel = MinimumEnergyLoss(h_tensor=self.h_tensor_shifted, device=self.device)
+        for i in range(len(self.h_tensor_shifted)):
             assert torch.allclose(mel.offset[i], torch.tensor(0.0).double(), atol=1e-6), "Offset should be 0 for all matrices."
         I = torch.eye(4, device=self.device, dtype=torch.float64)
         computed_loss = mel(I).detach().cpu()
