@@ -5,6 +5,7 @@ from typing import Union, List
 from .functions import is_hermitian_torch
 import logging
 
+logger = logging.getLogger(__name__)
 
 class MinimumEnergyLoss(nn.Module):
     """Calculate the minimum energy of a system using the reverse iteration method."""
@@ -22,9 +23,9 @@ class MinimumEnergyLoss(nn.Module):
         if isinstance(h_tensor, list):
             h_tensor = torch.stack(h_tensor)
 
-        logging.info("Initializing MinimumEnergyLoss")
-        logging.info(f"\tnumber of local hamiltonians: {h_tensor.shape[0]}")
-        logging.info(f"\tdecay time: {decay}")
+        logger.info("Initializing MinimumEnergyLoss")
+        logger.info(f"\tnumber of local hamiltonians: {h_tensor.shape[0]}")
+        logger.info(f"\tdecay time: {decay}")
 
         if decay <= 0:
             raise ValueError("decay should be strictly positive.")
@@ -37,7 +38,9 @@ class MinimumEnergyLoss(nn.Module):
         self.dtype = dtype
         self.initializer()
 
-        self.h_tensor = h_tensor.clone().detach().to(device)
+        if h_tensor.dtype != dtype: #raise warning  
+            logger.warning(f"h_tensor is not of type {dtype}. It will be converted to {dtype}.")
+        self.h_tensor = h_tensor.clone().detach().to(dtype).to(device)
         E, V = torch.linalg.eigh(self.h_tensor)
         self.offset = E.max(dim=1).values
         self.h_tensor -= self.offset[:, None, None] * torch.eye(h_tensor.shape[-1], device=device, dtype=dtype)
@@ -46,6 +49,8 @@ class MinimumEnergyLoss(nn.Module):
 
     def forward(self, U: torch.Tensor) -> torch.Tensor:
         """Return loss value for the minimum eigen loss."""
+        if U.dtype != self.dtype:
+            raise ValueError(f"U should be of type {self.dtype}.")
         loss = torch.zeros(1, device=U.device, dtype=self.dtype)
         for i in range(self.h_tensor.shape[0]):
             loss += self.minimum_energy_loss(self.h_tensor[i], U) - self.shift_origin_offset[i]
@@ -55,7 +60,7 @@ class MinimumEnergyLoss(nn.Module):
 
     def minimum_energy_loss(self, H: torch.Tensor, U: torch.Tensor) -> torch.Tensor:
         """Calculate the minimum energy of a system with ED."""
-        A = U @ H @ U.T
+        A = U @ H @ U.H
         result_abs = self.get_stoquastic(A)
         negativity = torch.abs(A - result_abs).mean() / H.shape[0] if self.weight > 0 else 0
         E = torch.linalg.eigvalsh(result_abs)

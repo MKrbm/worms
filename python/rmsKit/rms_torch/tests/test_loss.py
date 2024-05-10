@@ -111,3 +111,93 @@ class TestMinimumEnergyLoss:
         # Check if the computed loss matches the expected loss
         assert torch.isclose(computed_loss, expected_loss), "Computed loss does not match expected loss."
 
+
+
+class TestMinimumEnergyLossComplex:
+
+    def setup_device(self):
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda:0")
+        else:
+            self.device = torch.device("cpu")
+        print(f"Using device: {self.device}")
+
+    def setup_method(self):
+        torch.manual_seed(42)  # Set the seed for PyTorch
+        np.random.seed(42) 
+
+        self.setup_device()
+
+        # Create a tensor of random Hermitian matrices with complex values
+        real_part = torch.randn(3, 4, 4, device=self.device, dtype=torch.float64)
+        imag_part = torch.randn(3, 4, 4, device=self.device, dtype=torch.float64)
+        h_tensor_complex = torch.complex(real_part, imag_part)
+        h_tensor_complex = h_tensor_complex + h_tensor_complex.transpose(-2, -1).conj()  # Make the tensor Hermitian
+
+        self.h_tensor_complex = h_tensor_complex
+
+        # Create a tensor of shifted Hermitian matrices with complex values
+        h_tensor_shifted_complex = torch.complex(real_part, imag_part)
+        h_tensor_shifted_complex = h_tensor_shifted_complex + h_tensor_shifted_complex.transpose(-2, -1).conj()
+        max_eigenvalues = torch.linalg.eigvalsh(h_tensor_shifted_complex).max(dim=1).values
+        self.h_tensor_shifted_complex = h_tensor_shifted_complex - max_eigenvalues[:, None, None] * torch.eye(4, device=self.device, dtype=torch.float64)
+
+    def test_complex_hermitian(self):
+        mel = MinimumEnergyLoss(h_tensor=self.h_tensor_complex, device=self.device, dtype=torch.complex128)
+        for original_h, h, offset in zip(self.h_tensor_complex, mel.h_tensor, mel.offset):
+            # Check if the matrix is shifted by its maximum eigenvalue
+            E, _ = torch.linalg.eigh(original_h)
+            max_eigenvalue = E[-1]
+
+            assert offset.dtype == torch.float64, "Offset is not of the correct type: torch.float64"
+            assert h.device.type == self.device.type, f"Tensor is not on the correct device: {self.device}"
+            assert h.dtype == torch.complex128, "Tensor is not of the correct type: torch.complex128"
+            assert torch.allclose(h, original_h - offset * torch.eye(4, device=self.device, dtype=torch.complex128)), \
+                "Matrix is not shifted correctly by the origin offset."
+            assert torch.allclose(offset, max_eigenvalue), "Offset is not the maximum eigenvalue."
+        
+        I = torch.eye(4, device=self.device, dtype=torch.complex128)
+        loss = mel(I)
+        assert loss.dtype == torch.float64, "Loss is not of the correct type: torch.float64"
+        assert loss.device.type == self.device.type, f"Tensor is not on the correct device: {self.device}"
+
+    def test_complex_non_hermitian(self):
+        # Create a non-Hermitian matrix tensor
+        non_hermitian_tensor = torch.randn(3, 4, 4, device=self.device, dtype=torch.complex128)
+        non_hermitian_tensor = non_hermitian_tensor + non_hermitian_tensor.transpose(-2, -1)
+        with pytest.raises(ValueError):
+            MinimumEnergyLoss(h_tensor=non_hermitian_tensor, device=self.device, dtype=torch.complex128)
+    
+    def test_dtype_mismatch(self):
+        with pytest.raises(ValueError):
+            mel = MinimumEnergyLoss(h_tensor=self.h_tensor_complex, device=self.device, dtype=torch.complex64)
+            I = torch.eye(4, device=self.device, dtype=torch.float64)
+            mel(I)
+
+    def test_loss_computation_complex(self):
+        # Calculate the sum of the largest eigenvalues of self.h_tensor_shifted_complex
+        loss = torch.tensor(0.0).double()
+        loss_stoq = torch.tensor(0.0).double()
+        for h in self.h_tensor_shifted_complex:
+            h_stoq = -torch.abs(h)
+            loss += torch.linalg.eigvalsh(h)[0].double().cpu()
+            loss_stoq += torch.linalg.eigvalsh(h_stoq)[0].double().cpu()
+        expected_loss = loss - loss_stoq
+        mel = MinimumEnergyLoss(h_tensor=self.h_tensor_shifted_complex, device=self.device, dtype=torch.complex128)
+        I = torch.eye(4, device=self.device, dtype=torch.complex128)
+        computed_loss = mel(I).detach().cpu()
+        print(f"Computed loss: {computed_loss}")
+        print(f"Expected loss: {expected_loss}")
+        # Check if the computed loss matches the expected loss
+        assert torch.isclose(computed_loss, expected_loss), "Computed loss does not match expected loss."
+
+    def test_complex_shifted_comparison(self):
+        h_tensor_real = self.h_tensor_shifted_complex.real
+        h_tensor_real_complex = h_tensor_real.clone().detach().to(torch.complex128)
+        mel_real = MinimumEnergyLoss(h_tensor=h_tensor_real, device=self.device, dtype=torch.float64)
+        mel_complex = MinimumEnergyLoss(h_tensor=h_tensor_real_complex, device=self.device, dtype=torch.complex128)
+        I_complex = torch.eye(4, device=self.device, dtype=torch.complex128)
+        loss_complex = mel_complex(I_complex)
+        loss_real = mel_real(I_complex.real)
+        assert torch.allclose(loss_complex, loss_real), "Losses from complex and real shifted tensors do not match."
+
