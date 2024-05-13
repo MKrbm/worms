@@ -15,8 +15,6 @@ services:
         target: /home/user/.ssh
         read_only: true
     tty: true
-    ports:
-      - 2222:0022
     security_opt: 
       - seccomp:unconfined
     stdin_open: true
