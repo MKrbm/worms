@@ -10,6 +10,7 @@ def get_model(model: str, params: Dict[str, Any], L: Union[List[int], None] = No
         lt = params["lt"]
         sps = int(params["sps"])
         seed = params["seed"]
+        d = 1
         if model == "FF1D":
             d = 1
         elif model == "FF2D":
@@ -35,6 +36,7 @@ def get_model(model: str, params: Dict[str, Any], L: Union[List[int], None] = No
             return h_list, sps, model_name
     elif "HXYZ" in model:
 
+        d = 1
         if model == "HXYZ1D":
             d = 1
         elif model == "HXYZ2D":
