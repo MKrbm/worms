@@ -10,6 +10,7 @@ from ..loss import MinimumEnergyLoss
 logger = logging.getLogger(__name__)
 
 
+
 class TestMinimumEnergyLoss:
 
     def setup_device(self):

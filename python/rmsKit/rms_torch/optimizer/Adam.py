@@ -233,11 +233,13 @@ def _single_tensor_adam(params: List[Tensor],
             exp_avg_sq = torch.view_as_real(exp_avg_sq)
             if amsgrad:
                 max_exp_avg_sqs[i] = torch.view_as_real(max_exp_avg_sqs[i])
-            param = torch.view_as_real(param)
+            # param = torch.view_as_real(param)
 
         # Decay the first and second moment running average coefficient
-        exp_avg.lerp_(grad, 1 - beta1)
-        exp_avg_sq.mul_(beta2).addcmul_(grad, grad.conj(), value=1 - beta2)
+        exp_avg.lerp_(grad, 1 - beta1) #exponential moving average
+        exp_avg_sq.mul_(beta2).addcmul_(grad, grad, value=1 - beta2) 
+
+        assert not torch.is_complex(exp_avg)
 
         if capturable or differentiable:
             step = step_t
@@ -301,7 +303,13 @@ def _single_tensor_adam(params: List[Tensor],
 
 def foreacth_addcdiv_(param, device_exp_avg, denom, step_size=None):
 
+    tx = device_exp_avg / denom
+    # print(device_exp_avg)
+    # print(denom)
+    if torch.is_complex(param):
+        tx = torch.view_as_complex(tx)
+    print(tx)
     if step_size is not None:
-        param.data[:] = torch.matrix_exp(- step_size*device_exp_avg / denom) @ param.data[:]
+        param.data[:] = torch.matrix_exp(- step_size * tx) @ param.data[:]
     else:
-        param.data[:] = torch.matrix_exp(- device_exp_avg / denom) @ param.data[:]
+        param.data[:] = torch.matrix_exp(- tx) @ param.data[:]

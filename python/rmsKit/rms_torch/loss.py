@@ -51,7 +51,7 @@ class MinimumEnergyLoss(nn.Module):
         """Return loss value for the minimum eigen loss."""
         if U.dtype != self.dtype:
             raise ValueError(f"U should be of type {self.dtype}.")
-        loss = torch.zeros(1, device=U.device, dtype=self.dtype)
+        loss = torch.tensor(0, dtype=torch.float64, device=self.device)
         for i in range(self.h_tensor.shape[0]):
             loss += self.minimum_energy_loss(self.h_tensor[i], U) - self.shift_origin_offset[i]
 

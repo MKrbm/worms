@@ -35,10 +35,20 @@ class TestUnitaryRieman:
             UnitaryRieman(H_size=10, unitary_size=2)
 
     def test_inconsistent_u0_error(self):
-        u0 = torch.randn(3, 3)  # Incorrect size
+        # Test case 1: When u0 is not unitary
+        u0_not_unitary = torch.randn(2, 2)  # Random matrix, not unitary
         with pytest.raises(ValueError):
-            UnitaryRieman(H_size=8, unitary_size=2, u0=u0)
+            UnitaryRieman(H_size=8, unitary_size=2, u0=u0_not_unitary)
 
+        # Test case 2: When u0 is not a square matrix
+        u0_not_square = torch.randn(2, 3)  # Non-square matrix
+        with pytest.raises(ValueError):
+            UnitaryRieman(H_size=8, unitary_size=2, u0=u0_not_square)
+
+        # Test case 3: When dtype is inconsistent
+        u0_inconsistent_dtype = torch.randn(2, 2, dtype=torch.float32)  # Different dtype
+        with pytest.raises(ValueError):
+            UnitaryRieman(H_size=8, unitary_size=2, u0=u0_inconsistent_dtype, dtype=torch.float64)
 
     def test_unitary_output(self):
         model = UnitaryRieman(H_size=8, unitary_size=2, dtype=torch.float64, device=self.device)

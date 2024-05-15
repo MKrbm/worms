@@ -74,7 +74,7 @@ class UnitaryRieman(nn.Module):
             self.u = nn.ParameterList(
                 [
                     nn.Parameter(
-                        torch.tensor(self.u0, dtype=self.dtype, device=self.device),
+                        self.u0.clone().detach().to(self.dtype).to(self.device),
                         requires_grad=True,
                     )
                 ]
