@@ -81,8 +81,9 @@ if __name__ == "__main__":
         loss = rms_torch.SystemStoquastic(h_list, device=device)
         loss_dir = f"{params['lt']}_{args.loss}"
     elif args.loss == "mel":
-        h_list, _, _ = get_model(args.model, params)
-        loss = rms_torch.MinimumEnergyLoss(h_list, device=device, decay=epochs/10)
+        h_array, _, _ = get_model(args.model, params)
+        h_torch = torch.tensor(h_array, dtype=torch.float64, device=device)
+        loss = rms_torch.MinimumEnergyLoss(h_torch, device=device, decay=epochs/10)
         loss_dir = f"{params['lt']}_{args.loss}"
     elif args.loss == "none":
         h_list, _, _ = get_model(args.model, params)
@@ -94,6 +95,8 @@ if __name__ == "__main__":
             "Loss function is automatically set to mel and no optimization will be performed. " +
             "Iteration set to 0")
         iter = 0
+    else:
+        raise ValueError("Invalid loss function")
 
     seed_list = [np.random.randint(0, 1000000) for i in range(iter)]
     # seed_list = range(iter, 2*iter)
