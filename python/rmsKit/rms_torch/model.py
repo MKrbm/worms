@@ -1,4 +1,4 @@
-"""UnitaryRieman and UnitaryRiemanNonSym classes for PyTorch."""
+"""UnitaryRiemann and UnitaryRiemanNonSym classes for PyTorch."""
 
 import torch
 from torch import nn
@@ -18,8 +18,8 @@ def random_unitary_matrix(size: int, device: torch.device, dtype: torch.dtype) -
     q, _ = np.linalg.qr(random_matrix)
     return torch.tensor(q, dtype=dtype, device=device)
 
-class UnitaryRieman(nn.Module):
-    """UnitaryRieman class for PyTorch."""
+class UnitaryRiemann(nn.Module):
+    """UnitaryRiemann class for PyTorch."""
 
     def __init__(
         self,
@@ -29,8 +29,8 @@ class UnitaryRieman(nn.Module):
         u0: Optional[torch.Tensor] = None,
         dtype: torch.dtype = torch.float64,
     ):
-        """Initialize UnitaryRieman class."""
-        super(UnitaryRieman, self).__init__()
+        """Initialize UnitaryRiemann class."""
+        super(UnitaryRiemann, self).__init__()
 
         if H_size <= 0 or unitary_size <= 0:
             raise ValueError(
@@ -59,7 +59,7 @@ class UnitaryRieman(nn.Module):
         self.initialize_params()
 
     def initialize_params(self):
-        """Initialize parameters of UnitaryRieman class."""
+        """Initialize parameters of UnitaryRiemann class."""
         # n_us = round(math.log2(self.H_size) / math.log2(self.unitary_size))
         if self.u0 is None:
             self.u = nn.ParameterList(
@@ -81,7 +81,7 @@ class UnitaryRieman(nn.Module):
             )
 
     def reset_params(self, u0: Union[torch.Tensor, None] = None):
-        """Reset parameters of UnitaryRieman class."""
+        """Reset parameters of UnitaryRiemann class."""
         if u0 is not None and u0.shape != (self.unitary_size, self.unitary_size):
             raise ValueError("The shape of u0 is not correct.")
         for p in self.parameters():

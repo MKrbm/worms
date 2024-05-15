@@ -171,7 +171,7 @@ if __name__ == "__main__":
         loss = rms_torch.SystemMinimumEnergyLoss(H, device=device, P_single=P).to(device)
     else:
         raise ValueError("not implemented")
-    model = rms_torch.UnitaryRieman(H.shape[1], sps, device=device).to(device)
+    model = rms_torch.UnitaryRiemann(H.shape[1], sps, device=device).to(device)
 
     best_loss = 1e10
     best_us = None

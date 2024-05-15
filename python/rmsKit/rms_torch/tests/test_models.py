@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from ..model import (
     random_unitary_matrix,
-    UnitaryRieman
+    UnitaryRiemann
 )
 
 from ..functions import (
@@ -28,37 +28,37 @@ class TestUnitaryRieman:
 
     def test_wrong_dtype_error(self):
         with pytest.raises(ValueError):
-            UnitaryRieman(H_size=8, unitary_size=2, dtype=torch.int32)
+            UnitaryRiemann(H_size=8, unitary_size=2, dtype=torch.int32)
 
     def test_h_size_not_power_of_unitary_size_error(self):
         with pytest.raises(ValueError):
-            UnitaryRieman(H_size=10, unitary_size=2)
+            UnitaryRiemann(H_size=10, unitary_size=2)
 
     def test_inconsistent_u0_error(self):
         # Test case 1: When u0 is not unitary
         u0_not_unitary = torch.randn(2, 2)  # Random matrix, not unitary
         with pytest.raises(ValueError):
-            UnitaryRieman(H_size=8, unitary_size=2, u0=u0_not_unitary)
+            UnitaryRiemann(H_size=8, unitary_size=2, u0=u0_not_unitary)
 
         # Test case 2: When u0 is not a square matrix
         u0_not_square = torch.randn(2, 3)  # Non-square matrix
         with pytest.raises(ValueError):
-            UnitaryRieman(H_size=8, unitary_size=2, u0=u0_not_square)
+            UnitaryRiemann(H_size=8, unitary_size=2, u0=u0_not_square)
 
         # Test case 3: When dtype is inconsistent
         u0_inconsistent_dtype = torch.randn(2, 2, dtype=torch.float32)  # Different dtype
         with pytest.raises(ValueError):
-            UnitaryRieman(H_size=8, unitary_size=2, u0=u0_inconsistent_dtype, dtype=torch.float64)
+            UnitaryRiemann(H_size=8, unitary_size=2, u0=u0_inconsistent_dtype, dtype=torch.float64)
 
     def test_unitary_output(self):
-        model = UnitaryRieman(H_size=8, unitary_size=2, dtype=torch.float64, device=self.device)
+        model = UnitaryRiemann(H_size=8, unitary_size=2, dtype=torch.float64, device=self.device)
         U = model.forward()
         assert check_is_unitary_torch(U)
         assert U.shape == (8, 8)
         assert U.dtype == torch.float64
         assert U.device == self.device
 
-        model = UnitaryRieman(H_size=16, unitary_size=4, dtype=torch.complex128, device=self.device)
+        model = UnitaryRiemann(H_size=16, unitary_size=4, dtype=torch.complex128, device=self.device)
         U = model.forward()
         assert check_is_unitary_torch(U)
         assert U.shape == (16, 16)
@@ -67,7 +67,7 @@ class TestUnitaryRieman:
 
     def test_riemannian_grad(self):
         H = torch.randn(8, 8, dtype=torch.complex64, device=self.device)
-        model = UnitaryRieman(H_size=8, unitary_size=2, dtype=torch.complex64, device=self.device)
+        model = UnitaryRiemann(H_size=8, unitary_size=2, dtype=torch.complex64, device=self.device)
         U = model.forward()
 
         def loss_fn(U, H):
@@ -90,7 +90,7 @@ class TestUnitaryRieman:
 
     def test_riemannian_gd(self):
         H = torch.randn(8, 8, dtype=torch.complex64, device=self.device)
-        model = UnitaryRieman(H_size=8, unitary_size=2, dtype=torch.complex64, device=self.device)
+        model = UnitaryRiemann(H_size=8, unitary_size=2, dtype=torch.complex64, device=self.device)
         U = model.forward()
 
         def loss_fn(U, H):

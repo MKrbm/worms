@@ -140,7 +140,7 @@ if __name__ == "__main__":
     else:
         raise ValueError("Invalid optimizer")
 
-    model = rms_torch.UnitaryRieman(
+    model = rms_torch.UnitaryRiemann(
         h_list[0].shape[1], sps, device=device).to(device)
     model.reset_params(torch.eye(sps))
 

@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 import logging
 
-from ..model import UnitaryRieman
+from ..model import UnitaryRiemann
 from ..loss import MinimumEnergyLoss
 from ..functions import check_is_unitary_torch
 from ..optimizer import Adam
@@ -30,8 +30,8 @@ class TestRiemannianOptimization:
         self.H = (self.H + self.H.T) / 2
 
     def test_riemannian_optimization(self):
-        # Initialize UnitaryRieman class with dtype=torch.float64
-        model = UnitaryRieman(H_size=16, unitary_size=4, dtype=torch.float64, device=self.device)
+        # Initialize UnitaryRiemann class with dtype=torch.float64
+        model = UnitaryRiemann(H_size=16, unitary_size=4, dtype=torch.float64, device=self.device)
         U = model.forward()
 
         # Calculate loss with MinimumEnergyLoss
@@ -68,9 +68,9 @@ class TestRiemannianOptimization:
             model.zero_grad()
 
     def test_comp_float_comp(self):
-        modelR = UnitaryRieman(H_size=16, unitary_size=4, dtype=torch.float64, device=self.device)
+        modelR = UnitaryRiemann(H_size=16, unitary_size=4, dtype=torch.float64, device=self.device)
         u0 = [p.detach().clone().to(torch.complex128) for p in modelR.u][0]
-        modelC = UnitaryRieman(H_size=16, 
+        modelC = UnitaryRiemann(H_size=16, 
                             unitary_size=4,
                             u0=u0,
                             dtype=torch.complex128, device=self.device)
@@ -97,8 +97,8 @@ class TestRiemannianOptimization:
             logger.debug(f"Gradient {i} is {uc_grad[i]} \n and \n {ur_grad[i]}")
 
     def test_rg_optimal(self):
-        # Initialize UnitaryRieman class with dtype=torch.float64
-        model = UnitaryRieman(H_size=16, unitary_size=4, dtype=torch.float64, device=self.device)
+        # Initialize UnitaryRiemann class with dtype=torch.float64
+        model = UnitaryRiemann(H_size=16, unitary_size=4, dtype=torch.float64, device=self.device)
         U = model.forward()
 
         # Calculate loss with MinimumEnergyLoss and do backward
@@ -147,7 +147,7 @@ class TestRiemannianOptimization:
                          f"skew-Hermitian matrices: {loss_updated.item() - loss_p.item()}")
     
     def test_adam_orthogonal(self):
-        model = UnitaryRieman(H_size=16, unitary_size=4, dtype=torch.float64, device=self.device)
+        model = UnitaryRiemann(H_size=16, unitary_size=4, dtype=torch.float64, device=self.device)
         U = model.forward()
         mel = MinimumEnergyLoss(h_tensor=self.H.unsqueeze(0).to(torch.float64),
                                 device=self.device,
@@ -172,7 +172,7 @@ class TestRiemannianOptimization:
 
 
     def test_adam_unitary(self):
-        model = UnitaryRieman(H_size=16, unitary_size=4, dtype=torch.complex128, device=self.device)
+        model = UnitaryRiemann(H_size=16, unitary_size=4, dtype=torch.complex128, device=self.device)
         U = model.forward()
         mel = MinimumEnergyLoss(h_tensor=self.H.unsqueeze(0).to(torch.complex128),
                                 device=self.device,

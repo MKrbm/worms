@@ -6,7 +6,7 @@ from typing import List
 
 from ..lattice import FF
 from ..utils import sum_ham
-from ..rms_torch import UnitaryRieman, MinimumEnergyLoss, Adam, check_is_unitary_torch
+from ..rms_torch import UnitaryRiemann, MinimumEnergyLoss, Adam, check_is_unitary_torch
 
 
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ class TestOptimizeFF1D:
         h, sps = FF.local(self.params)
         h_torch = torch.tensor(h, dtype=torch.float64)
 
-        model = UnitaryRieman(H_size=h.shape[1], unitary_size=sps, dtype=torch.float64, device=self.device)
+        model = UnitaryRiemann(H_size=h.shape[1], unitary_size=sps, dtype=torch.float64, device=self.device)
 
         # Calculate loss with MinimumEnergyLoss and do backward
         mel = MinimumEnergyLoss(h_tensor=h_torch, device=self.device, dtype=torch.float64)
@@ -60,7 +60,7 @@ class TestOptimizeFF1D:
         h, sps = FF.local(self.params)
         h_torch = torch.tensor(h, dtype=torch.complex128)
 
-        model = UnitaryRieman(H_size=h.shape[1], unitary_size=sps, dtype=torch.complex128, device=self.device)
+        model = UnitaryRiemann(H_size=h.shape[1], unitary_size=sps, dtype=torch.complex128, device=self.device)
 
         # Calculate loss with MinimumEnergyLoss and do backward
         mel = MinimumEnergyLoss(h_tensor=h_torch, device=self.device, dtype=torch.complex128)
@@ -87,9 +87,9 @@ class TestOptimizeFF1D:
         h, sps = FF.local(self.params)
         h_torch = torch.tensor(h, dtype=torch.float64)
 
-        modelR = UnitaryRieman(H_size=h.shape[1], unitary_size=sps, dtype=torch.float64, device=self.device)
+        modelR = UnitaryRiemann(H_size=h.shape[1], unitary_size=sps, dtype=torch.float64, device=self.device)
         u0 = [p.detach().clone().to(torch.complex128) for p in modelR.u][0]
-        modelC = UnitaryRieman(H_size=h.shape[1], unitary_size=sps, dtype=torch.complex128, device=self.device, u0=u0)
+        modelC = UnitaryRiemann(H_size=h.shape[1], unitary_size=sps, dtype=torch.complex128, device=self.device, u0=u0)
 
         # Calculate loss with MinimumEnergyLoss and do backward
         melR = MinimumEnergyLoss(h_tensor=h_torch, device=self.device, dtype=torch.float64, decay=1e-2)
