@@ -95,7 +95,7 @@ class UnitaryRiemann(nn.Module):
             )
 
     def forward(self) -> torch.Tensor:
-        """Calculate kron of unitaries (result size must be H_size x H_size)."""
+        """Calculate kron of unitary matrix (result size must be H_size x H_size)."""
         U = self.u[0]
         for i in range(self.num_repeat - 1):
             U = torch.kron(U, self.u[0])
@@ -140,7 +140,7 @@ class UnitaryRiemanNonSym(nn.Module):
             self.us = nn.ParameterList(
                 [
                     nn.Parameter(
-                        random_unitary_matrix(self.unitary_size, self.device),
+                        random_unitary_matrix(self.unitary_size, self.device, self.dtype),
                         requires_grad=True,
                     )
                     for _ in range(n_us)

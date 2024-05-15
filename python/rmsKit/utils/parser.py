@@ -66,6 +66,14 @@ def get_parser(length: bool = False, model=None, Description=None):
     )
 
     parser.add_argument(
+        "--type",
+        help="dtype of the unitary matrix. Default is float64",
+        choices=["float64", "complex128", "float32", "complex64"],
+        default="float64",
+        nargs="?",
+    )
+
+    parser.add_argument(
         "-o",
         "--optimizer",
         help="optimizer",
@@ -155,3 +163,17 @@ def get_params_parser(parser):
     hash_str = str(hash(args_str))
 
     return args, params, hash_str
+
+def get_dtype(dtype):
+    import torch
+
+    if dtype == "float64":
+        return torch.float64
+    elif dtype == "complex128":
+        return torch.complex128
+    elif dtype == "float32":
+        return torch.float32
+    elif dtype == "complex64":
+        return torch.complex64
+    else:
+        raise TypeError("dtype not supported")

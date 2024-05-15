@@ -20,7 +20,7 @@ import os
 import re
 
 from lattice import save_npy, get_model
-from utils.parser import get_parser, get_params_parser
+from utils.parser import get_parser, get_params_parser, get_dtype
 from utils import NOW, get_logger, stoquastic
 
 parser = get_parser()
@@ -64,6 +64,8 @@ if __name__ == "__main__":
 
     optim_name = args.optimizer
     iter = args.num_iter
+    dtype = get_dtype(args.type)
+
     if args.loss == "qsmel":
         if "1D" in args.model:
             L = [args.length1]
@@ -81,9 +83,8 @@ if __name__ == "__main__":
         loss = rms_torch.SystemStoquastic(h_list, device=device)
         loss_dir = f"{params['lt']}_{args.loss}"
     elif args.loss == "mel":
-        h_array, _, _ = get_model(args.model, params)
-        h_torch = torch.tensor(h_array, dtype=torch.float64, device=device)
-        loss = rms_torch.MinimumEnergyLoss(h_torch, device=device, decay=epochs/10)
+        h_list, _, _ = get_model(args.model, params)
+        loss = rms_torch.MinimumEnergyLoss(torch.tensor(h_list, dtype = dtype, device = device), device=device, decay=epochs/10, dtype=dtype)
         loss_dir = f"{params['lt']}_{args.loss}"
     elif args.loss == "none":
         h_list, _, _ = get_model(args.model, params)
