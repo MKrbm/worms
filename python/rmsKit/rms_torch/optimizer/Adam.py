@@ -304,11 +304,9 @@ def _single_tensor_adam(params: List[Tensor],
 def foreacth_addcdiv_(param, device_exp_avg, denom, step_size=None):
 
     tx = device_exp_avg / denom
-    # print(device_exp_avg)
-    # print(denom)
     if torch.is_complex(param):
         tx = torch.view_as_complex(tx)
-    print(tx)
+    assert torch.allclose(tx, -tx.H)
     if step_size is not None:
         param.data[:] = torch.matrix_exp(- step_size * tx) @ param.data[:]
     else:
