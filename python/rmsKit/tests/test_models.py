@@ -123,6 +123,8 @@ class TestFF1D:
         assert np.allclose(h1, h2), "Returned matrix is not the same"
         assert sps1 == sps2, "Unexpected sps value"
 
+        assert model_name == f"FF1D_loc/s_{params['sps']}_r_{params['rank']}_d_{params['dimension']}_seed_{params['seed']}", "Unexpected model name"
+
         logger.debug(model_name)
         
 

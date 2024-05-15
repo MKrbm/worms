@@ -6,6 +6,7 @@ import logging
 from ..model import UnitaryRieman
 from ..loss import MinimumEnergyLoss
 from ..functions import check_is_unitary_torch
+from ..optimizer import Adam
 
 
 logger = logging.getLogger(__name__)
@@ -145,14 +146,14 @@ class TestRiemannianOptimization:
             logger.debug(f"Loss after updating with random"
                          f"skew-Hermitian matrices: {loss_updated.item() - loss_p.item()}")
     
-    def test_adam(self):
-        model = UnitaryRieman(H_size=16, unitary_size=4, dtype=torch.complex128, device=self.device)
+    def test_adam_orthogonal(self):
+        model = UnitaryRieman(H_size=16, unitary_size=4, dtype=torch.float64, device=self.device)
         U = model.forward()
-        mel = MinimumEnergyLoss(h_tensor=self.H.unsqueeze(0),
+        mel = MinimumEnergyLoss(h_tensor=self.H.unsqueeze(0).to(torch.float64),
                                 device=self.device,
-                                dtype=torch.complex128)
+                                dtype=torch.float64)
         
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999))
+        optimizer = Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999))
         
         num_iterations = 30
         prev_loss = float('inf')
@@ -161,13 +162,36 @@ class TestRiemannianOptimization:
             optimizer.zero_grad()
             U = model.forward()
             loss = mel(U)
-            model.update_riemannian_gradient()
             loss.backward()
+            model.update_riemannian_gradient()
             optimizer.step()
             current_loss = loss.item()
             assert current_loss <= prev_loss, f"Loss increased at iteration {i+1}"
             prev_loss = current_loss
-            
             logger.debug(f"Loss at iteration {i+1}: {current_loss}")
 
+
+    def test_adam_unitary(self):
+        model = UnitaryRieman(H_size=16, unitary_size=4, dtype=torch.complex128, device=self.device)
+        U = model.forward()
+        mel = MinimumEnergyLoss(h_tensor=self.H.unsqueeze(0).to(torch.complex128),
+                                device=self.device,
+                                dtype=torch.complex128)
+        
+        optimizer = Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999))
+        
+        num_iterations = 30
+        prev_loss = float('inf')
+        
+        for i in range(num_iterations):
+            optimizer.zero_grad()
+            U = model.forward()
+            loss = mel(U)
+            loss.backward()
+            model.update_riemannian_gradient()
+            optimizer.step()
+            current_loss = loss.item()
+            assert current_loss <= prev_loss, f"Loss increased at iteration {i+1}"
+            prev_loss = current_loss
+            logger.debug(f"Loss at iteration {i+1}: {current_loss}")
 
