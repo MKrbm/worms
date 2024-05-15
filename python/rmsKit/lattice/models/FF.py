@@ -85,7 +85,7 @@ def create_PEPS(L1, L2, A):
 unitary_algorithms = ["original"]
 
 
-def local(params: Dict[Any, Any], check_L: List[int] = []) -> Tuple[Any, int]:
+def local(params: Dict[Any, Any]) -> Tuple[np.ndarray, int]:
     logging.info("params: {}".format(params))
     sps = params["sps"]
     bond_dim = params["rank"]
@@ -96,9 +96,9 @@ def local(params: Dict[Any, Any], check_L: List[int] = []) -> Tuple[Any, int]:
     np.random.seed(seed)
     random.seed(seed)
 
-    if check_L:
-        if d != len(check_L):
-            raise ValueError("dimension not match")
+    # if check_L:
+    #     if d != len(check_L):
+    #         raise ValueError("dimension not match")
 
     if d == 1:
         A = block1D(bond_dim, sps, bond_dim)
@@ -107,19 +107,20 @@ def local(params: Dict[Any, Any], check_L: List[int] = []) -> Tuple[Any, int]:
         Up = U[:, len(s):]
         h = Up @ Up.T
         if L >= 2:
-            _h = utils.sum_ham(h / 2, [[i, i+1] for i in range(2*L-1)], 2 * L, sps)
-            _h += utils.sum_ham(h / 2, [[L-1, L]], 2 * L, sps)
-            h = _h
+            h_ = utils.sum_ham(h / 2, [[i, i+1] for i in range(2*L-1)], 2 * L, sps)
+            h_ += utils.sum_ham(h / 2, [[L-1, L]], 2 * L, sps)
+            h = h_
             sps = sps**L
 
-        if check_L:
-            L = check_L[0]
-            H = utils.sum_ham(h, [[i, (i + 1) % L] for i in range(L)], L, sps)
-            e = np.linalg.eigvalsh(H)
-            logging.info(f"eigenvalues: {e}")
-            return [h], sps
-        else:
-            return [h], sps
+        # if check_L:
+        #     L = check_L[0]
+        #     H = utils.sum_ham(h, [[i, (i + 1) % L] for i in range(L)], L, sps)
+        #     e = np.linalg.eigvalsh(H)
+        #     logging.info(f"eigenvalues: {e}")
+        #     return [h], sps
+        # else:
+            # return [h], sps
+        return h[None,:], sps
     elif d == 2:
         if L != 1:
             raise NotImplementedError(
@@ -135,7 +136,7 @@ def local(params: Dict[Any, Any], check_L: List[int] = []) -> Tuple[Any, int]:
         h = (h + h.T)/2
         if np.linalg.norm(h) < 1E-8:
             raise ValueError("h is null operator")
-        return [h], sps
+        return h[None,:], sps
     else:
         raise NotImplementedError("not implemented")
 
