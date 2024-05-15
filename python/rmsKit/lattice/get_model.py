@@ -1,10 +1,10 @@
 from .models import FF, HXYZ, BLBQ, MG, SS, KH
-from typing import List, Tuple, Any, Dict, Union
+from typing import List, Tuple, Any, Dict, Union, Optional
 from numpy._typing import NDArray
 
 
-def get_model(model: str, params: Dict[str, Any], L: Union[List[int], None] = None
-              ) -> Tuple[Union[List[NDArray[Any]], NDArray[Any]], int, str]:
+def get_model(model: str, params: Dict[str, Any], L: Optional[List[int]] = None
+              ) -> Tuple[NDArray, int, str]:
 
     if "FF" in model:
         lt = params["lt"]

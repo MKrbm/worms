@@ -150,9 +150,9 @@ def system(_L: list[int], params: dict) -> Tuple[np.ndarray, int]:
         if d != _d:
             raise ValueError("dimension not match")
         H = np.zeros((s**L, s**L))
-        h_list, sps = local(params)
+        h_array, sps = local(params)
         bonds = [[i, (i + 1) % L] for i in range(L)]
-        H = utils.sum_ham(h_list[0], bonds, L, s ** params["lt"])
+        H = utils.sum_ham(h_array[0], bonds, L, s ** params["lt"])
         return H, sps
     elif _d == 2:
         L1 = _L[0]
@@ -164,8 +164,8 @@ def system(_L: list[int], params: dict) -> Tuple[np.ndarray, int]:
         T_y = x + ((y + 1) % L2) * L1
         bonds = [[i, T_x[i]]
                  for i in range(L1*L2)] + [[i, T_y[i]] for i in range(L1*L2)]
-        h_list, sps = local(params)
-        H = utils.sum_ham(h_list[0], bonds, L1*L2, s)
+        h_array, sps = local(params)
+        H = utils.sum_ham(h_array[0], bonds, L1*L2, s)
         return H, sps
     else:
         raise NotImplementedError("not implemented")
