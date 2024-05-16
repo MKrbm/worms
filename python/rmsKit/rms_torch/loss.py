@@ -23,9 +23,6 @@ class MinimumEnergyLoss(nn.Module):
         if isinstance(h_tensor, list):
             h_tensor = torch.stack(h_tensor)
 
-        logger.info("Initializing MinimumEnergyLoss")
-        logger.info(f"\tnumber of local hamiltonians: {h_tensor.shape[0]}")
-        logger.info(f"\tdecay time: {decay}")
 
         if decay <= 0:
             raise ValueError("decay should be strictly positive.")
@@ -46,6 +43,14 @@ class MinimumEnergyLoss(nn.Module):
         self.h_tensor -= self.offset[:, None, None] * torch.eye(h_tensor.shape[-1], device=device, dtype=dtype)
         self.shift_origin_offset = self.offset - E.min(dim=1).values
         self.X = V[:, :, 0]
+
+        logger.info(f"Initialized MinimumEnergyLoss")
+        logger.info(f"\tnumber of local hamiltonians: {self.h_tensor.shape[0]}")
+        logger.info(f"\tdtype: {self.dtype}")
+        logger.info(f"\tdevice: {self.device}")
+        logger.info(f"\tweight decay: {self.weight_decay}")
+        logger.info(f"\tinitial weight: {self.weight}")
+        logger.info(f"\tshift_origin_offset value: {self.shift_origin_offset}")
 
     def forward(self, U: torch.Tensor) -> torch.Tensor:
         """Return loss value for the minimum eigen loss."""
