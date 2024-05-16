@@ -78,7 +78,7 @@ def get_parser(length: bool = False, model=None, Description=None):
         "--optimizer",
         help="optimizer",
         choices=["LION", "Adam"],
-        default="LION",
+        default="Adam",
         nargs="?",
         const="all",
     )
