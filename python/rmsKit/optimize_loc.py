@@ -154,6 +154,7 @@ if __name__ == "__main__":
     ]
     num_print = 10
     for i, seed in enumerate(seed_list):
+        logging.info(f"------ Start iteration {i + 1} ------")
         start = time.time()
         torch.manual_seed(seed)
         np.random.seed(seed)
@@ -176,15 +177,10 @@ if __name__ == "__main__":
                                      for p in model.parameters()]
 
             loss_val.backward()
-            for p in model.parameters():
-                grad = p.grad
-                if grad is not None:
-                    grad.data[:] = rms_torch.riemannian_grad_torch(p.data, grad)
-                else:
-                    raise RuntimeError("No gradient for parameter")
-                if (t+1) % (epochs // num_print) == 0 or t == 0:
-                    logging.info(
-                        f"I: {i + 1}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}", )
+            model.update_riemannian_gradient()
+            if (t+1) % (epochs // num_print) == 0 or t == 0:
+                logging.info(
+                    f"I: {i + 1}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}", )
             optimizer.step()
 
         if local_best_loss < best_loss:
