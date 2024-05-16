@@ -20,14 +20,14 @@ def save_npy(folder: Union[str, Path], hams: List[np._typing.NDArray[Any]]) -> N
             os.makedirs(folder)
         for i, ham in enumerate(hams):
             name = f"{i}"
-            np.save(folder + f"/{i}", (ham.real).astype(np.float64))
+            np.save(folder + f"/{i}", ham)
             log = f"save matrix ({ham.shape}): " + folder + "/" + name + ".npy"
             logging.info(log)
     else:
         if not os.path.exists(os.path.dirname(folder)):
             os.makedirs(os.path.dirname(folder))
         name = "0"
-        np.save(folder, hams.real.astype(np.float64))
+        np.save(folder, hams)
         log = f"save matrix ({hams.shape}): " + folder + ".npy"
         logging.info(log)
 
