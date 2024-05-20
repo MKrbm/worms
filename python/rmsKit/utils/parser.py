@@ -89,7 +89,7 @@ def get_parser(length: bool = False, model=None, Description=None):
     parser.add_argument(
         "-p",
         "--platform",
-        help="cput / gpu",
+        help="cpu / gpu",
         choices=["cpu", "gpu"],
         nargs="?",
         const="all",
