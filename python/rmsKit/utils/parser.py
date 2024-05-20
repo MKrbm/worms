@@ -1,5 +1,8 @@
 import argparse
 import random
+import logging
+
+logger = logging.getLogger(__name__)
 
 models = [
     "KH2D",
@@ -66,7 +69,7 @@ def get_parser(length: bool = False, model=None, Description=None):
     )
 
     parser.add_argument(
-        "--type",
+        "--dtype",
         help="dtype of the unitary matrix. Default is float64",
         choices=["float64", "complex128", "float32", "complex64"],
         default="float64",
@@ -177,3 +180,12 @@ def get_dtype(dtype):
         return torch.complex64
     else:
         raise TypeError("dtype not supported")
+
+def print_args_info(args):
+    """
+    Print out the argument information.
+    """
+    logger.info("Argument Information:")
+    for arg, value in vars(args).items():
+        logger.info(f"{arg}: {value}")
+

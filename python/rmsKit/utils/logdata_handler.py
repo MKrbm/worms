@@ -16,6 +16,22 @@ def parse_log_file(file_path):
         raise ValueError("Initial saved path not found in log file")
     initial_saved_path = initial_saved_path_match.group(1)
 
+    # Fetch dtype, seed, and model
+    dtype_match = re.search(r'dtype: (\w+)', log_content)
+    if not dtype_match:
+        raise ValueError("dtype not found in log file")
+    dtype = dtype_match.group(1)
+
+    seed_match = re.search(r'seed: (\d+)', log_content)
+    if not seed_match:
+        raise ValueError("seed not found in log file")
+    seed = int(seed_match.group(1))
+
+    model_match = re.search(r'model: (\w+)', log_content)
+    if not model_match:
+        raise ValueError("model not found in log file")
+    model = model_match.group(1)
+
     # Split log data by sections starting with 'Start iteration'
     iterations_data = log_content.split('------ Start iteration')[1:]
     if len(iterations_data) == 0:
@@ -58,4 +74,6 @@ def parse_log_file(file_path):
         })
 
     df = pd.DataFrame(data)
-    return df
+    
+    # Return the DataFrame along with dtype, seed, and model
+    return df, {'dtype': dtype, 'seed': seed, 'model': model}

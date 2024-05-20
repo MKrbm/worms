@@ -20,7 +20,7 @@ import os
 import re
 
 from lattice import save_npy, get_model
-from utils.parser import get_parser, get_params_parser, get_dtype
+from utils.parser import get_parser, get_params_parser, get_dtype, print_args_info
 from utils import NOW, get_logger, stoquastic
 
 parser = get_parser()
@@ -61,10 +61,11 @@ if __name__ == "__main__":
         logging.info("Please specify the number of threads with OMP_NUM_THREADS and MKL_NUM_THREADS")
 
     logging.info(f"device = {device}")
+    print_args_info(args)
 
     optim_name = args.optimizer
     iter = args.num_iter
-    dtype = get_dtype(args.type)
+    dtype = get_dtype(args.dtype)
 
     if args.loss == "qsmel":
         if "1D" in args.model:
