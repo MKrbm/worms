@@ -19,5 +19,3 @@ echo "PROJECT_DIR: $PROJECT_DIR"
 
 # Use GNU Parallel to run jobs in parallel
 seq 0 $((total_jobs - 1)) | parallel -j $NUM_THREAD run_job {} "$PROJECT_DIR" $P
-
-
