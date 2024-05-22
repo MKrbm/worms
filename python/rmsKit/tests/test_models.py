@@ -24,18 +24,18 @@ class TestFF1D:
 
         self.params2 = {
             "sps": 4,
-            "rank": 3,
+            "rank": 2,
             "dimension": 1,
             "seed": 42,
             "lt": 1
         }
 
         self.params4 = {
-            "sps": 5,
-            "rank": 4,
+            "sps": 9,
+            "rank": 2,
             "dimension": 1,
             "seed": 42,
-            "lt": 2
+            "lt": 1
         }
         self.params3 = {
             "sps": 3,
@@ -97,12 +97,13 @@ class TestFF1D:
         E, V = np.linalg.eigh(H)
         assert np.allclose(E[0], 0), "Ground state energy is not null"
     
-        # h, sps = FF.local(self.params4)
-        # L = 5
-        # H = sum_ham(h[0], [[i, i+1] for i in range(L-1)], L, sps)
-        # assert np.allclose(H, H.T.conj())
-        # E, V = np.linalg.eigh(H)
-        # assert np.allclose(E[0], 0), "Ground state energy is not null"
+        L = 3
+        h, sps = FF.local(self.params4)
+        assert not np.allclose(h, np.zeros_like(h)), "Returned matrix is null"
+        H = sum_ham(h[0], [[i, i+1] for i in range(L-1)], L, sps)
+        assert np.allclose(H, H.T.conj())
+        E, V = np.linalg.eigh(H)
+        assert np.allclose(E[0], 0), "Ground state energy is not null"
 
     def test_ff_system(self):
         L = 6
@@ -117,6 +118,9 @@ class TestFF1D:
         h, sps = FF.local(self.params1)
         H_ = sum_ham(h[0], [[i, (i+1)%L ] for i in range(L)], L, sps)
         assert np.allclose(H, H_), "Returned matrix is not the same"
+
+        #print all ground state energy
+        # print(E)
     
     def test_get_model(self):
         params = {
