@@ -21,7 +21,7 @@ class TestLogDataHandler:
 
         # Run the optimize_loc.py script
         result = subprocess.run(
-            f"python {file_path} -m FF1D --sps 3 --seed 23224 --loss mel -M 10 -e 20 --type complex128",
+            f"python {file_path} -m FF1D --sps 3 --seed 23224 --loss mel -M 10 -e 20 --dtype complex128",
             text=True,
             shell=True,
             capture_output=True,
@@ -49,7 +49,7 @@ class TestLogDataHandler:
 
     def test_parse_log_file(self, log_file_path):
         # Parse the log file
-        df = parse_log_file(log_file_path)
+        df, meta = parse_log_file(log_file_path)
 
         # Perform some basic checks on the DataFrame
         assert not df.empty, "DataFrame is empty"
@@ -57,6 +57,10 @@ class TestLogDataHandler:
         assert 'Loss at Epoch Start' in df.columns, "Column 'Loss at Epoch Start' not found in DataFrame"
         assert 'Best Loss at Iteration' in df.columns, "Column 'Best Loss at Iteration' not found in DataFrame"
         assert 'Saved Path' in df.columns, "Column 'Saved Path' not found in DataFrame"
+
+        assert meta["dtype"] == "complex128", f"Expected dtype 'complex128', got '{meta['dtype']}'"
+        assert meta["seed"] == 23224, f"Expected seed '23224', got '{meta['seed']}'"
+        assert meta["model"] == "FF1D", f"Expected model 'FF1D', got '{meta['model']}'"
 
 
         # check no elements have None
@@ -81,9 +85,10 @@ class TestLogDataHandler:
             assert np.isclose(loss_value, best_loss, atol=1e-5), f"Loss value in path {loss_value} does not match Best Loss at Iteration {best_loss}"
 
             
+    # Check properties of the saved matrices
     def test_check_unitary_and_complex(self, log_file_path):
         # Parse the log file
-        df = parse_log_file(log_file_path)
+        df, meta = parse_log_file(log_file_path)
 
         # load path from the first row
         path = df["Saved Path"].iloc[0]
@@ -109,9 +114,10 @@ class TestLogDataHandler:
             unitary_check = np.allclose(np.dot(u, u.conj().T), identity, atol=1e-5)
             assert unitary_check, f"Matrix is not unitary: {path}"
     
+    # Check the saved best loss values is actually the best loss
     def test_mel_loss(self, log_file_path):
         # Parse the log file
-        log_df = parse_log_file(log_file_path)
+        log_df, meta = parse_log_file(log_file_path)
         initial_path = log_df["Saved Path"].iloc[0]
         neg_H = -np.load(initial_path) #saved as -H
         neg_H = neg_H - 10 * np.eye(neg_H.shape[0], dtype=neg_H.dtype)

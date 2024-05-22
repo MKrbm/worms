@@ -30,6 +30,13 @@ class TestFF1D:
             "lt": 1
         }
 
+        self.params4 = {
+            "sps": 5,
+            "rank": 4,
+            "dimension": 1,
+            "seed": 42,
+            "lt": 2
+        }
         self.params3 = {
             "sps": 3,
             "rank": 4,
@@ -90,6 +97,13 @@ class TestFF1D:
         E, V = np.linalg.eigh(H)
         assert np.allclose(E[0], 0), "Ground state energy is not null"
     
+        # h, sps = FF.local(self.params4)
+        # L = 5
+        # H = sum_ham(h[0], [[i, i+1] for i in range(L-1)], L, sps)
+        # assert np.allclose(H, H.T.conj())
+        # E, V = np.linalg.eigh(H)
+        # assert np.allclose(E[0], 0), "Ground state energy is not null"
+
     def test_ff_system(self):
         L = 6
         H, sps = FF.system([L], params=self.params1)
