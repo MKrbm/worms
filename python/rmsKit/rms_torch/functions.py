@@ -63,7 +63,7 @@ def riemannian_grad_torch(u: torch.Tensor, euc_grad: torch.Tensor) -> torch.Tens
 
 
 def kron_complex(ur1: torch.Tensor, ui1: torch.Tensor, ur2: torch.Tensor,
-                 ui2: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+                 ui2: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Compute the Kronecker product of two complex matrices represented by their real and imaginary parts.
     
