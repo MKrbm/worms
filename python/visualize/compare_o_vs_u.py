@@ -7,7 +7,7 @@ import numpy as np
 import sys
 import logging
 
-PYTHON_DIR = Path(__file__).parents[2]
+PYTHON_DIR = Path(__file__).parents[1]
 sys.path.insert(0, PYTHON_DIR.as_posix())
 from rmsKit.utils.logdata_handler import parse_log_file
 
