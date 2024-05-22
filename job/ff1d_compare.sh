@@ -33,11 +33,12 @@ run_job() {
 
     calculate_parameters "$task_id"
 
+    sps=3
     model_name="FF1D"
     log_dir="${project_dir}/job/logs/${model_name}"
     [ ! -d "$log_dir" ] && mkdir -p "$log_dir" && echo "Created log directory $log_dir"
     link_dir="${project_dir}/job/link/${model_name}"
-    symbolic_link="${link_dir}/seed_${seed}"
+    symbolic_link="${link_dir}/seed_${seed}_sps_${sps}"
     log_file_orth="${log_dir}/seed_${seed}_orth.log"
     log_file_uni="${log_dir}/seed_${seed}_uni.log"
 
@@ -64,11 +65,11 @@ run_job() {
 
     # Run jobs with different settings
     python -u optimize_loc.py -m $model_name -o Adam -e 1500 -lr 0.001 -lt 1 -M $M \
-        --sps 3 --seed "$seed" --stdout --loss mel --dtype float64 \
+        --sps "$sps" --seed "$seed" --stdout --loss mel --dtype float64 \
         --symoblic_link "$symbolic_link" --stdout >> "$log_file_orth"
 
     python -u optimize_loc.py -m $model_name -o Adam -e 1500 -lr 0.001 -lt 1 -M $M \
-        --sps 3 --seed "$seed" --stdout --loss mel --dtype complex128 \
+        --sps "$sps" --seed "$seed" --stdout --loss mel --dtype complex128 \
         --symoblic_link "$symbolic_link" --stdout >> "$log_file_uni"
 
 
