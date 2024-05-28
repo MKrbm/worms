@@ -58,9 +58,9 @@ class TestLogDataHandler:
         assert 'Best Loss at Iteration' in df.columns, "Column 'Best Loss at Iteration' not found in DataFrame"
         assert 'Saved Path' in df.columns, "Column 'Saved Path' not found in DataFrame"
 
-        assert meta["dtype"] == "complex128", f"Expected dtype 'complex128', got '{meta['dtype']}'"
-        assert meta["seed"] == 23224, f"Expected seed '23224', got '{meta['seed']}'"
-        assert meta["model"] == "FF1D", f"Expected model 'FF1D', got '{meta['model']}'"
+        assert meta.dtype == "complex128", f"Expected dtype 'complex128', got '{meta.dtype}'"
+        assert meta.seed == 23224, f"Expected seed '23224', got '{meta.seed}'"
+        assert meta.model == "FF1D", f"Expected model 'FF1D', got '{meta.model}'"
 
 
         # check no elements have None

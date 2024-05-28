@@ -1,10 +1,20 @@
 import re
 import pandas as pd
 import logging
+import dataclasses
+
+
+@dataclasses.dataclass
+class MetaData:
+    dtype: str
+    seed: int
+    model: str
 
 logger = logging.getLogger(__name__)
 
-def parse_log_file(file_path):
+
+
+def parse_log_file(file_path : str) -> tuple[pd.DataFrame, MetaData]:
     with open(file_path, 'r') as file:
         log_content = file.read()
 
@@ -84,5 +94,5 @@ def parse_log_file(file_path):
     df = pd.DataFrame(data)
     
     # Return the DataFrame along with dtype, seed, and model
-    return df, {'dtype': dtype, 'seed': seed, 'model': model}
-    return df, {'dtype': dtype, 'seed': seed, 'model': model}
+    return df, MetaData(dtype=dtype, seed=seed, model=model)
+
