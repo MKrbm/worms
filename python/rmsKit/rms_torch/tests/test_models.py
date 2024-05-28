@@ -1,13 +1,8 @@
 import torch
 import numpy as np
-from ..model import (
-    random_unitary_matrix,
-    UnitaryRiemann
-)
+from ..model import random_unitary_matrix, UnitaryRiemann
 
-from ..functions import (
-    check_is_unitary_torch
-)
+from ..functions import check_is_unitary_torch
 
 import pytest
 
@@ -23,7 +18,7 @@ class TestUnitaryRieman:
 
     def setup_method(self):
         torch.manual_seed(42)  # Set the seed for PyTorch
-        np.random.seed(42) 
+        np.random.seed(42)
         self.setup_device()
 
     def test_wrong_dtype_error(self):
@@ -46,28 +41,61 @@ class TestUnitaryRieman:
             UnitaryRiemann(H_size=8, unitary_size=2, u0=u0_not_square)
 
         # Test case 3: When dtype is inconsistent
-        u0_inconsistent_dtype = torch.randn(2, 2, dtype=torch.float32)  # Different dtype
+        u0_inconsistent_dtype = torch.randn(
+            2, 2, dtype=torch.float32
+        )  # Different dtype
         with pytest.raises(ValueError):
-            UnitaryRiemann(H_size=8, unitary_size=2, u0=u0_inconsistent_dtype, dtype=torch.float64)
+            UnitaryRiemann(
+                H_size=8, unitary_size=2, u0=u0_inconsistent_dtype, dtype=torch.float64
+            )
 
     def test_unitary_output(self):
-        model = UnitaryRiemann(H_size=8, unitary_size=2, dtype=torch.float64, device=self.device)
+        model = UnitaryRiemann(
+            H_size=8, unitary_size=2, dtype=torch.float64, device=self.device
+        )
         U = model.forward()
         assert check_is_unitary_torch(U)
         assert U.shape == (8, 8)
         assert U.dtype == torch.float64
         assert U.device == self.device
 
-        model = UnitaryRiemann(H_size=16, unitary_size=4, dtype=torch.complex128, device=self.device)
+        model = UnitaryRiemann(
+            H_size=16, unitary_size=4, dtype=torch.complex128, device=self.device
+        )
         U = model.forward()
         assert check_is_unitary_torch(U)
         assert U.shape == (16, 16)
         assert U.dtype == torch.complex128
         assert U.device == self.device
 
-    def test_riemannian_grad(self):
+    def test_unitary_output_only_phase(self):
+        model = UnitaryRiemann(
+            H_size=8,
+            unitary_size=2,
+            dtype=torch.complex128,
+            device=self.device,
+            only_phase=True,
+        )
+        for p in model.parameters():
+            assert p.dtype == torch.float64
+        params = list(model.parameters())
+        assert len(params) == 2
+        assert params[0].shape == torch.Size(
+            []
+        ), "First parameter should be a scalar torch value"
+        assert params[1].shape == torch.Size(
+            [2, 2]
+        ), "Second parameter should be a 2 x 2 matrix"
+        U = model.forward()
+        assert check_is_unitary_torch(X=U)
+        assert U.shape == (8, 8)
+        assert U.dtype == torch.complex128
+        assert U.device == self.device
+
         H = torch.randn(8, 8, dtype=torch.complex64, device=self.device)
-        model = UnitaryRiemann(H_size=8, unitary_size=2, dtype=torch.complex64, device=self.device)
+        model = UnitaryRiemann(
+            H_size=8, unitary_size=2, dtype=torch.complex64, device=self.device
+        )
         U = model.forward()
 
         def loss_fn(U, H):
@@ -87,17 +115,46 @@ class TestUnitaryRieman:
         assert rg.device == self.device
         assert torch.allclose(rg, -rg.H, atol=1e-6)
 
-
-    def test_riemannian_gd(self):
+    def test_riemannian_grad_only_phase(self):
         H = torch.randn(8, 8, dtype=torch.complex64, device=self.device)
-        model = UnitaryRiemann(H_size=8, unitary_size=2, dtype=torch.complex64, device=self.device)
+        model = UnitaryRiemann(
+            H_size=8,
+            unitary_size=2,
+            dtype=torch.complex64,
+            device=self.device,
+            only_phase=True,
+        )
         U = model.forward()
 
         def loss_fn(U, H):
             loss = torch.mm(U, torch.mm(H, U.H))
             loss = torch.abs(loss).sum()
             return loss
-        
+
+        loss = loss_fn(U, H)
+        loss.backward()
+        assert model.u[0].grad is not None
+
+        model.update_riemannian_gradient()
+        rg = model.u[0].grad
+        assert rg is not None
+        assert rg.shape == (2, 2)
+        assert rg.dtype == torch.float32
+        assert rg.device == self.device
+        assert torch.allclose(rg, -rg.H, atol=1e-6)
+
+    def test_riemannian_gd(self):
+        H = torch.randn(8, 8, dtype=torch.complex64, device=self.device)
+        model = UnitaryRiemann(
+            H_size=8, unitary_size=2, dtype=torch.complex64, device=self.device
+        )
+        U = model.forward()
+
+        def loss_fn(U, H):
+            loss = torch.mm(U, torch.mm(H, U.H))
+            loss = torch.abs(loss).sum()
+            return loss
+
         loss = loss_fn(U, H)
         loss.backward()
         model.update_riemannian_gradient()
@@ -106,13 +163,13 @@ class TestUnitaryRieman:
         pdata_old = []
         for p in model.u:
             assert p.grad is not None
-            assert p.grad.device == self.device 
+            assert p.grad.device == self.device
             pdata_old.append(p.data.clone().detach())
             rg = p.grad.clone()
             rg /= torch.norm(rg)
             p.data[:] = torch.linalg.matrix_exp(-step * rg) @ p.data
             assert check_is_unitary_torch(p.data)
-        
+
         Up = model.forward()
         assert check_is_unitary_torch(Up)
         loss_p = loss_fn(Up, H)
@@ -120,16 +177,86 @@ class TestUnitaryRieman:
 
         for _ in range(100):
             # Create a skew-Hermitian matrix
-            skew_hermitian = torch.randn(2, 2, dtype=torch.complex64, device=self.device)
+            skew_hermitian = torch.randn(
+                2, 2, dtype=torch.complex64, device=self.device
+            )
             skew_hermitian = skew_hermitian - skew_hermitian.T.conj()
             skew_hermitian /= torch.norm(skew_hermitian)
+            # print(skew_hermitian)
 
             # Update pdata_old with the generated skew-Hermitian matrix
             for i, p in enumerate(model.u):
-                p.data[:] = torch.linalg.matrix_exp(-step * skew_hermitian) @ pdata_old[i]
+                p.data[:] = (
+                    torch.linalg.matrix_exp(-step * skew_hermitian) @ pdata_old[i]
+                )
 
             # Recalculate the loss after updating with skew-Hermitian matrix
             Up_updated = model.forward()
             loss_updated = loss_fn(Up_updated, H)
-            assert loss_updated > loss_p, "Updated loss should be greater than previous loss_p"
-        
+            assert (
+                loss_updated > loss_p
+            ), "Updated loss should be greater than previous loss_p"
+
+    def test_riemannian_gd_only_phase(self):
+        H = torch.randn(16, 16, dtype=torch.complex64, device=self.device)
+        model = UnitaryRiemann(
+            H_size=16,
+            unitary_size=4,
+            dtype=torch.complex64,
+            device=self.device,
+            only_phase=True,
+        )
+        U = model.forward()
+
+        def loss_fn(U, H):
+            loss = torch.mm(U, torch.mm(H, U.H))
+            loss = torch.abs(loss).sum()
+            return loss
+
+        loss = loss_fn(U, H)
+        loss.backward()
+        model.update_riemannian_gradient()
+
+        step = 0.001
+        pdata_old = []
+        for p in model.u:
+            assert p.grad is not None
+            assert p.grad.device == self.device
+            pdata_old.append(p.data.clone().detach())
+            rg = p.grad.clone()
+            rg /= torch.norm(rg)
+            p.data[:] = torch.linalg.matrix_exp(-step * rg) @ p.data
+            assert check_is_unitary_torch(p.data)
+
+        if model.phase is None:
+            raise ValueError("The phase is not defined.")
+        if model.phase.grad is None:
+            raise ValueError("The phase.grad is not initialized.")
+        model.phase.data = model.phase.data - step * model.phase.grad
+
+        Up = model.forward()
+        assert check_is_unitary_torch(Up)
+        loss_p = loss_fn(Up, H)
+        assert loss_p < loss
+
+        for i in range(100):
+            # Create a skew-Hermitian matrix
+            skew_hermitian = torch.randn(
+                4, 4, dtype=torch.float32, device=self.device
+            )
+            skew_hermitian = skew_hermitian - skew_hermitian.T.conj()
+            skew_hermitian /= torch.norm(skew_hermitian)
+            print(skew_hermitian)
+
+            # Update pdata_old with the generated skew-Hermitian matrix
+            for i, p in enumerate(model.u):
+                p.data[:] = (
+                    torch.linalg.matrix_exp(-step * skew_hermitian) @ pdata_old[i]
+                )
+
+            # Recalculate the loss after updating with skew-Hermitian matrix
+            Up_updated = model.forward()
+            loss_updated = loss_fn(Up_updated, H)
+            assert (
+                loss_updated > loss_p
+            ), "Updated loss should be greater than previous loss_p, loss_p: {}, loss_updated: {} at iteration: {}".format(loss_p, loss_updated, i)
