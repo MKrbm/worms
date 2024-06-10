@@ -11,6 +11,7 @@ find_package(MPI REQUIRED COMPONENTS CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON) # This is needed to prevent FetchContent from trying to download things when we don't want it to (e.g. when we're offline)
+SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # c and c++ compiler
 # set(CMAKE_C_COMPILER /usr/bin/aarch64-linux-gnu-gcc CACHE PATH "")

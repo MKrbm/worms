@@ -20,7 +20,7 @@ Release.bak/
 *.zip
 python_copy
 # Distribution / packaging
-.Python
+.Pyth
 build/
 Debug/
 Release/
@@ -38,6 +38,7 @@ julia_test/
 worm_result/
 result_worm/
 output_worm/
+project.toml
 
 # packages / libraries
 ALPSCore
