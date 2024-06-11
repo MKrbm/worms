@@ -12,6 +12,7 @@ __pycache__/
 *link
 *.so
 *.pdf
+*.gif
 myenv/
 Release.bak/
 *compile_commands.json
