@@ -13,9 +13,9 @@ from rmsKit import rms_torch, lattice
 
 params = {
     "sps": 8,
-    "rank": 2,
+    "rank": 7,
     "dimension": 1,
-    "seed": 10,
+    "seed": 3,
     "lt": 1,
 }
 
@@ -45,37 +45,24 @@ for i in range(n_iter):
 rg = (model.u[0].grad).clone().detach()
 I = torch.eye(rg.shape[0])
 RG = torch.kron(rg, I) + torch.kron(I, rg)
-rg_flat = rg.flatten()
 
-# Number of vectors to generate
-K = 8  # Example value, set this to your desired number of vectors
+def generate_pauli_matrices(dim):
+    pauli_matrices = []
+    I = torch.eye(dim)
+    for n in range(dim):
+        for m in range(n + 1, dim):
+            A = torch.zeros((dim, dim), dtype=dtype)
+            A[n, m] = 1
+            A[m, n] = -1
+            pauli_matrices.append(torch.kron(A, I) + torch.kron(I, A))
+    return pauli_matrices
 
-# Initialize list to hold the orthogonal vectors, starting with rg_flat
-orthogonal_vectors = [rg_flat]
-
-# Generate and orthogonalize K random vectors
-for _ in range(K):
-    random_vec = torch.randn_like(rg_flat)
-    for ortho_vec in orthogonal_vectors:
-        # Project random_vec onto ortho_vec and subtract to make orthogonal
-        random_vec -= (torch.dot(random_vec, ortho_vec) / torch.dot(ortho_vec, ortho_vec)) * ortho_vec
-    # Normalize the vector (optional, for numerical stability)
-    random_vec /= torch.norm(random_vec)
-    orthogonal_vectors.append(random_vec)
-
-# Convert orthogonal vectors back to the original shape and store them
-P_RGs = []
-for vec in orthogonal_vectors[1:]:  # Skip the first one as it's rg_flat
-    p_rg = vec.view(rg.shape)
-    p_rg = p_rg - p_rg.H  # Ensure skew-symmetry
-    P_RG = torch.kron(p_rg, I) + torch.kron(I, p_rg)
-    P_RGs.append(P_RG)
-    assert torch.isclose(torch.trace(P_RG @ RG), torch.tensor(0.0, dtype=dtype))
+pauli_matrices_kron = generate_pauli_matrices(rg.shape[0])
 
 
 U = model.forward().clone().detach()
 
-steps = np.arange(-30, 30, 0.1)
+steps = np.linspace(-1.5 * np.pi, 1.5 * np.pi, 300)
 
 H_old = None
 
@@ -131,11 +118,13 @@ def visualize_landscape(RG, U, steps, title : str):
     fig.show()
 
 # Visualize landscape for RG
+steps = np.linspace(-10 * np.pi, 10 * np.pi, 300)
 visualize_landscape(RG, U, steps, "Loss Landscape along steepest descent direction")
 
+steps = np.linspace(-1.5 * np.pi, 1.5 * np.pi, 300)
 # Visualize landscape for P_RG
-for k, P_RG in enumerate(P_RGs):
-    visualize_landscape(P_RG, U, steps, f"Loss Landscape along orthogonal direction k = {k}")
+for k, pauli in enumerate(pauli_matrices_kron):
+    visualize_landscape(pauli, U, steps, f"Loss Landscape along pauli direction k = {k}")
 
 
 

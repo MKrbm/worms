@@ -118,7 +118,3 @@ end
 p2 = plot(x, losses_p_rg, xlabel="Step Size", ylabel="Loss", title="Loss vs Step Size (Perpendicular rg)", legend=false)
 
 plot(p1, p2)
-
-
-typeof(3) |> isabstracttype
-Real |> isabstracttype
