@@ -15,53 +15,61 @@ np = pyimport("numpy")
 BASE_DIR = "/Users/keisuke/Documents/projects/todo/worms/job/FF1D_sps_8/FF1D"
 BASE_DIR *= "visualize/plots/compare_o_vs_u/sps_8" 
 # FIGURE_DIR = joinpath(BASE_DIR, "visualize", "plots", "compare_o_vs_u", "sps_8")
-ou = np.load("/Users/keisuke/Documents/projects/todo/worms/python/rmsKit/array/torch/FF1D_loc/s_3_r_2_d_1_seed_3/1_mel/Adam/lr_0.01_epoch_100/loss_0.2644055/u/0.npy")
-H = -np.load("/Users/keisuke/Documents/projects/todo/worms/python/rmsKit/array/torch/FF1D_loc/s_3_r_2_d_1_seed_3/1_mel/H/0.npy")
+ou = np.load("/home/user/project/worms/python/rmsKit/array/torch/FF1D_loc/s_3_r_2_d_1_seed_3/1_mel/Adam/lr_0.01_epoch_100/loss_0.2643156/u/0.npy")
+const H = -np.load("/home/user/project/worms/python/rmsKit/array/torch/FF1D_loc/s_3_r_2_d_1_seed_3/1_mel/H/0.npy")
 H -= eigmax(H) * I
-e0 = eigmin(H) |> abs
+# const Ha :: Hermitian{Float64} = hermitianpart(H)
+Ha = hermitianpart(H)
+const e0 = eigmin(Ha) |> abs
 
-u0 = rand(Haar(1, 8));
+H̄(u) = MinEigLoss.H̄(Ha, u)
 
-MinEigLoss.min_eig_loss(H, ou) - e0
-
-Zygote.gradient(loss, u0)
-
-H̄(u) = MinEigLoss.H̄(H, u)
-
-function sum_near_zero(x, step)
-    return sum(abs.(H̄(x)) .< step)
+function wrapper(Ha)
+    e0 = eigmin(Ha) |> abs  
+    println(e0)
+    function loss_func(u)
+        return MinEigLoss.min_eig_loss(Ha, u) - e0
+    end
+    return loss_func
 end
 
-function riemannian_steepest_descent(H, u0, step; iterations = 1000)
+loss_func = wrapper(Ha)
+@code_warntype loss_func(ou)
+
+
+function riemannian_steepest_descent(loss :: Function, u0 :: Matrix{Float64}, step :: Float64; iterations :: Int = 1000) 
     losses = Float64[]
     rgs = Matrix{Float64}[]
-    u = u0
-    loss(u) = MinEigLoss.min_eig_loss(H, u)
-
+    u = copy(u0)
     for i in 1:iterations
         l = loss(u)
         push!(losses, l)
-        rg = Zygote.gradient(loss, u)[1]
+        rg :: typeof(u) = Zygote.gradient(loss, u)[1]
         push!(rgs, rg)
         if !(norm(rg + rg') < 1e-7)
             println("gradient is not skew-symmetric")
             break
         end
-        u = MinEigLoss.riemannian_update(u, rg, step)
+        u = copy(MinEigLoss.riemannian_update(u, rg, step))
     end
 
     return losses, u, rgs
 end
 
-iter = 1000
-step = 1e-3
-losses, final_u, rgs = riemannian_steepest_descent(H,u0, step, iterations = iter);
 
+
+iter = 3000
+step = 1e-3
+u0 = rand(Haar(1, 3));
+losses, final_u, rgs = riemannian_steepest_descent(loss_func, u0, step; iterations = iter);
+println(losses[end])
+@code_warntype riemannian_steepest_descent(loss_func,u0, step; iterations = iter)
 
 plot(1:iter, losses, xlabel="Iteration", ylabel="Loss", title="Riemannian Steepest Descent Loss", legend=false)
 
 
-rg = Zygote.gradient(loss, ou)[1]
+
+rg = Zygote.gradient(loss_func, ou)[1]
 I_matrix = I(size(rg)[1])
 
 H_old = zero(H);
@@ -72,23 +80,49 @@ function sign_change(H_new)
     return res
 end
 
-function landscape(t, r, u)
+function landscape(t, r, u, q)
     uΔt = exp(t .* r) * u
-    return loss(uΔt), sum_near_zero(uΔt, 0.005), sign_change(H̄(uΔt))
+    H_new = H̄(uΔt) |> Symmetric
+    # println(H_new)
+    # lq_norm_res = lq_norm(H_new, q)
+    # println(typeof(lq_norm_res))
+    return loss_func(uΔt), sum_near_zero(uΔt, 0.01), sign_change(H_new), lq_norm(H_new, q)
+end
+
+function sum_near_zero(x, step)
+    return sum(abs.(H̄(x)) .< step)
+end
+
+function lq_norm(x :: AbstractMatrix, q)
+    loss = zero(eltype(x))
+    s = 9
+    println(size(x))
+    for i in 1:s
+        for j in 1:s
+            if i == j
+                continue
+            end
+            loss += abs(x[i,j]) ^ q
+        end
+    end
+    return loss
+end
+
+let u = final_u
+    rg = Zygote.gradient(loss_func, u)[1]
+    t_list = LinRange(-10, 10, 1000)
+    unzip(a) = map(x->getfield.(a, x), fieldnames(eltype(a)))
+    loss_vals, near_zeros, sign_changes, lq_norms = unzip([landscape(t, rg, u, 1) for t in t_list])
+    sign_changes[1] = 0
+    p1 = plot(t_list, loss_vals, xlabel="Δt", ylabel="Loss", title="Riemannian Steepest Descent Loss", legend=false)
+    p2 = plot(t_list, near_zeros, color="red", xlabel="Δt", ylabel="Near Zero", title="Near Zero", legend=false)
+    p3 = plot(t_list, sign_changes, color="blue", xlabel="Δt", ylabel="Sign Change", title="Sign Change", legend=false,)
+    p4 = plot(t_list, lq_norms, color="green", xlabel="Δt", ylabel="LQ Norm", title="LQ Norm", legend=false)
+
+    loss_vals |> minimum
+    plot(p1, p2, p3, p4, layout=(4,1))
 end
 
 
-
-
-t_list = LinRange(-10, 10, 100)
-unzip(a) = map(x->getfield.(a, x), fieldnames(eltype(a)))
-loss_vals, near_zeros, sign_changes = unzip([landscape(t, rg, ou) for t in t_list])
-sign_changes[1] = 0
-p1 = plot(t_list, loss_vals, xlabel="Δt", ylabel="Loss", title="Riemannian Steepest Descent Loss", legend=false)
-p2 = plot(t_list, near_zeros, color="red", xlabel="Δt", ylabel="Near Zero", title="Near Zero", legend=false)
-p3 = plot(t_list, sign_changes, color="blue", xlabel="Δt", ylabel="Sign Change", title="Sign Change", legend=false,)
-
-
-plot(p1, p2, p3, layout=(3,1))
 
 

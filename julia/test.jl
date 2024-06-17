@@ -127,5 +127,22 @@ function min_eigenvalue(H_plus)
     minimum(eigen(H_plus).values)
 end
 
+function mul_y(y)
+    println("y = $y")
+    return y*y
+end
 
-Zygote.di
+function two_argument(x, y)
+    c = mul_y(y)
+    return x + c
+end
+
+@code_warntype two_argument(3.0, 3.0)
+two_argument(3.0, 3.0)
+
+const y = 3.0
+one_arg(x) = two_argument(x, y)
+
+one_arg(3.0)
+
+@code

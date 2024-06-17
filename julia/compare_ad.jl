@@ -19,9 +19,15 @@ function min_eigenvalue_wrt_A(A, H)
     min_eigenvalue(H_plus)
 end
 
+function min_eigenvalue_wrt_A′(A, H)
+    H_plus = compute_H_plus(A, H)
+    eigmin(H_plus)
+end
+
 # Different sizes for H
 sizes = [10, 20, 50, 100, 200]
 backward_times = Float64[]
+backward_times′ = Float64[]
 
 # Loop over different sizes
 for s in sizes
@@ -30,15 +36,23 @@ for s in sizes
     A = rand(s, s)
     
     # Measure backward derivative time using Zygote
-    backward_time = @belapsed Zygote.gradient(a -> min_eigenvalue_wrt_A(a, H), A)
+    backward_time = @belapsed Zygote.gradient(a -> min_eigenvalue_wrt_A(a, $H), $A)
     push!(backward_times, backward_time)
+
+    # Measure forward derivative time using Zygote
+    backward_time′ = @belapsed Zygote.gradient(a -> min_eigenvalue_wrt_A′(a, $H), $A)
+    push!(backward_times′, backward_time′)
 end
 
 
+backward_times′
+backward_times
+
 
 # Plotting the results
-plot(sizes, backward_times, label="Zygote (Backward)", xlabel="Matrix Size", ylabel="Time (s)", legend=:topleft, title="Derivative Computational Time")
-# savefig("derivative_computational_time.png")
+p = plot(sizes, backward_times, label="Zygote (Backward)", xlabel="Matrix Size", ylabel="Time (s)", legend=:topleft, title="Derivative Computational Time")
+plot!(sizes, backward_times′, label="Zygote (Backward with eigmin)", xlabel="Matrix Size", ylabel="Time (s)", legend=:topleft, title="Derivative Computational Time")
+savefig("derivative_computational_time.png")
 
 # Display the plot in Julia's plotting window
 # display(plot(sizes, backward_times, label="Zygote (Backward)", xlabel="Matrix Size", ylabel="Time (s)", legend=:top_left, title="Derivative Computational Time"))
