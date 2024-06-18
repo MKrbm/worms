@@ -29,7 +29,7 @@ end
 
 function H̄_abs(H, u)
     res = -abs.(H̄(H, u))
-    return Symmetric(res)
+    return Hermitian(res)
 end
 
 minimum_eigenvalue(H) = minimum(eigvals(H))
@@ -66,31 +66,31 @@ export Adam, step!, foo, SG, SGReg
 foo() = println("foo")
 
 # Struct containing all necessary info
-mutable struct Adam
-    theta::Matrix{Float64} # Parameter array
+mutable struct Adam{T<:Number}
+    theta::Matrix{T} # Parameter array
     loss::Function                # Loss function
-    m::SkewHermitian{Float64, Matrix{Float64}}     # First moment
-    v::Symmetric{Float64, Matrix{Float64}}     # Second moment
+    m::SkewHermitian{T, Matrix{T}}     # First moment
+    v::Hermitian{T, Matrix{T}}     # Second moment
     b1::Float64                   # Exp. decay first moment
     b2::Float64                   # Exp. decay second moment
     a::Float64                    # Step size
     eps::Float64                  # Epsilon for stability
-    t::Int                        # Time step (iteration)
+    t::Int                  # Time step (iteration)
 end
 
 # Outer constructor
-function Adam(theta::AbstractArray{Float64}, loss::Function)
+function Adam(theta::AbstractArray{T}, loss::Function) where T<:Number
     m = skewhermitian(zero(theta))
-    v = Symmetric(zero(theta))
+    v = Hermitian(zero(theta))
     b1 = 0.9
     b2 = 0.999
     a = 0.001
     eps = 1e-8
     t = 0
-    Adam(theta, loss, m, v, b1, b2, a, eps, t)
+    Adam{T}(theta, loss, m, v, b1, b2, a, eps, t)
 end
 
-function rg_update(X::AbstractArray{Float64}, rg::SkewHermitian)
+function rg_update(X::AbstractArray{T}, rg::SkewHermitian{T}) where T<:Number
     return exp(-rg) * X
 end
 
@@ -101,8 +101,9 @@ function step!(opt::Adam)
     opt.t += 1
     gt′ = Zygote.gradient(opt.loss, opt.theta)[1]
     gt = skewhermitian((gt′ - gt′') / 2)
+    # print("Typeof gt: ", typeof(gt))
     opt.m = opt.b1 * opt.m + (1 - opt.b1) * gt
-    opt.v = Symmetric(opt.b2 * opt.v + (1 - opt.b2) * (gt .^ 2))
+    opt.v = Hermitian(opt.b2 * opt.v + (1 - opt.b2) * (gt .^ 2))
     mhat = opt.m ./ (1 - opt.b1^opt.t)
     vhat = opt.v ./ (1 - opt.b2^opt.t)
     rg′ = opt.a .* (mhat ./ (sqrt.(vhat) .+ opt.eps))

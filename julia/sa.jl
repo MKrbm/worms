@@ -21,16 +21,10 @@ np = pyimport("numpy");
 # ou = np.load("/home/user/project/worms/python/rmsKit/array/torch/FF1D_loc/s_3_r_2_d_1_seed_3/1_mel/Adam/lr_0.01_epoch_100/loss_0.2643156/u/0.npy");
 H = -np.load("/home/user/project/worms/python/rmsKit/array/torch/FF1D_loc/s_$(sd)_r_2_d_1_seed_$(r)/1_mel/H/0.npy");
 
-# H = randn(sd^2, sd^2)
-# H = (H + H') / 2
 H -= eigmax(H) * I;
 Ha = Symmetric(H);
 
-# Ha = Symmetric(randn(sd^2, sd^2))
-
-
 H̄(u) = MinEigLoss.H̄(Ha, u);
-# MinEigLoss.min_eig_loss(Ha, )
 function wrapper(Ha)
     e0 = eigmin(Ha) |> abs  
     function loss_func(u)
