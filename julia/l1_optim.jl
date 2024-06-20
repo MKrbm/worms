@@ -18,8 +18,8 @@ r = 3
 sd = 16
 np = pyimport("numpy");
 # ou = np.load("/home/user/project/worms/python/rmsKit/array/torch/FF1D_loc/s_3_r_2_d_1_seed_3/1_mel/Adam/lr_0.01_epoch_100/loss_0.2643156/u/0.npy");
-# H = -np.load("/home/user/project/worms/python/rmsKit/array/torch/FF1D_loc/s_$(sd)_r_2_d_1_seed_$(r)/1_mel/H/0.npy");
-H = -np.load("/home/user/project/worms/python/rmsKit/array/torch/FF1D_loc/s_16_r_2_d_1_seed_3/1_mel/H/0.npy");
+H = -np.load("/Users/keisuke/Documents/projects/todo/worms/python/rmsKit/array/torch/FF1D_loc/s_16_r_2_d_1_seed_3/1_mel/H/0.npy");
+# H = -np.load("/home/user/project/worms/python/rmsKit/array/torch/FF1D_loc/s_16_r_2_d_1_seed_3/1_mel/H/0.npy");
 
 # H = randn(sd^2, sd^2)
 H = Hermitian(H)
@@ -61,7 +61,7 @@ begin loss = l1
         push!(loss_vals_adam_l1, l1(adam_l1.theta))
         push!(loss_val_adam_mle, loss_func(adam_l1.theta))
     end
-    p1 = plot(1:iter, loss_vals_adam_l1, label="Adam L1")
+    p1 = plot(1:iter, loss_vals_adam_l1, label="Adam L1", title = "Optimize unitary on L1 norm")
     p2 = plot(1:iter, loss_val_adam_mle, label="Adam MLE")
     plot(p1, p2, layout=(2,1))
 end
@@ -83,7 +83,7 @@ begin loss = loss_func; u = adam_l1.theta
         push!(loss_vals_adam2_l1, l1(adam2.theta))
         push!(loss_val_adam2_mle, loss_func(adam2.theta))
     end
-    p1 = plot(1:iter, loss_vals_adam2_l1, label="Adam2 L1")
+    p1 = plot(1:iter, loss_vals_adam2_l1, label="Adam2 L1", title = "Optimize orthogonal on minimumeigenloss norm")
     p2 = plot(1:iter, loss_val_adam2_mle, label="Adam2 MLE")
     plot(p1, p2, layout=(2,1))
 end
