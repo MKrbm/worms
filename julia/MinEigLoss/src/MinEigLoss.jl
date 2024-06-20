@@ -90,24 +90,47 @@ function Adam(theta::AbstractArray{T}, loss::Function) where T<:Number
     Adam{T}(theta, loss, m, v, b1, b2, a, eps, t)
 end
 
-function rg_update(X::AbstractArray{T}, rg::SkewHermitian{T}) where T<:Number
+function rg_update(X::AbstractArray{T}, rg::AbstractArray{T}) where T<:Number
+    return exp(-rg) * X
+end
+
+function rg_update(X::AbstractArray{T}, rg::SkewHermitian{T, Matrix{T}}) where T<:Number
     return exp(-rg) * X
 end
 
 
 
 # Step function with optional keyword arguments for the data passed to grad()
-function step!(opt::Adam)
+function step!(opt::Adam{Float64})
     opt.t += 1
     gt′ = Zygote.gradient(opt.loss, opt.theta)[1]
     gt = skewhermitian((gt′ - gt′') / 2)
-    # print("Typeof gt: ", typeof(gt))
     opt.m = opt.b1 * opt.m + (1 - opt.b1) * gt
     opt.v = Hermitian(opt.b2 * opt.v + (1 - opt.b2) * (gt .^ 2))
     mhat = opt.m ./ (1 - opt.b1^opt.t)
     vhat = opt.v ./ (1 - opt.b2^opt.t)
     rg′ = opt.a .* (mhat ./ (sqrt.(vhat) .+ opt.eps))
-    rg = skewhermitian(rg′)
+    opt.theta = rg_update(opt.theta, rg′)
+end
+
+function step!(opt::Adam{Complex{Float64}})
+    opt.t += 1
+    gt′ = Zygote.gradient(opt.loss, opt.theta)[1]
+    # println(gt′ - gt′')
+    gt = skewhermitian((gt′ - gt′') / 2)
+    opt.m = opt.b1 * opt.m + (1 - opt.b1) * gt
+    vr = Hermitian(opt.b2 * real(opt.v) + (1 - opt.b2) * (real(gt) .^ 2))
+    vi = Hermitian(opt.b2 * imag(opt.v) + (1 - opt.b2) * (imag(gt) .^ 2))
+    opt.v = Hermitian(vr +  vi * 1im)
+    mhat = opt.m ./ (1 - opt.b1^opt.t)
+    mr = real(mhat)
+    mi = imag(mhat)
+    vhatr = vr ./ (1 - opt.b2^opt.t)
+    vhati = vi ./ (1 - opt.b2^opt.t)
+    rg′_r = opt.a .* (mr ./ (sqrt.(vhatr) .+ opt.eps))
+    rg′_i = opt.a .* (mi ./ (sqrt.(vhati) .+ opt.eps))
+    rg = rg′_r + 1im * rg′_i
+    rg = skewhermitian(rg)
     opt.theta = rg_update(opt.theta, rg)
 end
 
