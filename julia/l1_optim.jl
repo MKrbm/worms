@@ -49,9 +49,8 @@ function l1(u :: AbstractMatrix)
     return sum(H′)
 end
 
-u0 = rand(Haar(1, sd))
-begin loss = l1
-    adam_l1 = Opt.Adam(u0, loss) 
+begin loss = l1; u = rand(Haar(1, sd))
+    adam_l1 = Opt.Adam(u, loss) 
     adam_l1.a = 0.05
     loss_vals_adam_l1 = []
     loss_val_adam_mle = []
@@ -61,19 +60,19 @@ begin loss = l1
         push!(loss_vals_adam_l1, l1(adam_l1.theta))
         push!(loss_val_adam_mle, loss_func(adam_l1.theta))
     end
-    p1 = plot(1:iter, loss_vals_adam_l1, label="Adam L1", title = "Optimize unitary on L1 norm")
+    p1 = plot(1:iter, loss_vals_adam_l1, label="Adam L1", title = "Optimize orthogonal on L1 norm")
     p2 = plot(1:iter, loss_val_adam_mle, label="Adam MLE")
     plot(p1, p2, layout=(2,1))
 end
 
 
-begin loss = loss_func; u = adam_l1.theta
+begin loss = loss_func; u = rand(Haar(1, sd))
     adam2 = Opt.Adam(u, loss)
     adam2.a = 0.05
     sign_bnf = Vector{typeof(u0)}([])
     loss_vals_adam2_l1 = []
     loss_val_adam2_mle = []
-    iter = 50
+    iter = 100
     for i in 1:iter
         if length(sign_bnf) >= 10
             pop!(sign_bnf)
@@ -104,9 +103,9 @@ begin loss = l1; u = rand(Haar(2, sd))
     plot(p1, p2, layout=(2,1))
 end
 
-begin loss = loss_func; u = adam.theta
+begin loss = loss_func; u = rand(Haar(2, sd))
     adam = Opt.Adam(u, loss) 
-    adam.a = 0.04
+    adam.a = 0.05
     loss_vals_adam_l1 = []
     loss_val_adam_mle = []
     iter = 100

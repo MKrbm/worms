@@ -21,6 +21,8 @@ using EDKit
 # ou = np.load("/home/user/project/worms/python/rmsKit/array/torch/FF1D_loc/s_3_r_2_d_1_seed_3/1_mel/Adam/lr_0.01_epoch_100/loss_0.2643156/u/0.npy");
 # H = -np.load("/home/user/project/worms/python/rmsKit/array/torch/FF1D_loc/s_$(sd)_r_2_d_1_seed_$(r)/1_mel/H/0.npy");
 
+H = -np.load("/Users/keisuke/Documents/projects/todo/worms/python/rmsKit/array/torch/FF1D_loc/s_16_r_2_d_1_seed_3/1_mel/H/0.npy");
+H = Hermitian(H)
 # H = randn(sd^2, sd^2)
 
 # SS = spin((1, "xx"), (1, "yy"), (1, "zz"), D=3)
@@ -40,23 +42,23 @@ using EDKit
 # eigen(Matrix(P)).values
 
 
-# D = 5
-# Px = spin((1, "xI"), (1, "Ix"), D=D)
-# Pz = spin((1, "zI"), (1, "Iz"), D=D)
-# Py = spin((1, "yI"), (1, "Iy"), D=D)
-# PP = Px ^ 2 + Pz ^ 2 + Py ^ 2 |> real
+function compute_projection(D::Int)
+    Px = spin((1, "xI"), (1, "Ix"), D=D)
+    Pz = spin((1, "zI"), (1, "Iz"), D=D)
+    Py = spin((1, "yI"), (1, "Iy"), D=D)
+    PP = Px ^ 2 + Pz ^ 2 + Py ^ 2 |> real
 
-# Λ, U = eigen(Matrix(PP))
-# println(Λ)
-# spectrum = Λ .|> (u -> round(u, digits = 4)) |> unique
-# idx = findall(abs.(spectrum .- spectrum[end - 1]) .< 0.1)
-# u = U[:, idx]
-# P = sparse(u * u')
+    Λ, U = eigen(Matrix(PP))
+    println(Λ)
+    spectrum = Λ .|> (u -> round(u, digits = 4)) |> unique
+    idx = findall(abs.(spectrum .- spectrum[end - 1]) .< 0.1)
+    u = U[:, idx]
+    P = sparse(u * u')
+    return Matrix(P) |> Hermitian
+end
 
-# L = 5
-# H = trans_inv_operator(P, 1:2, L)
-
-H = Hermitian(Matrix(P))
+D = 16
+# H = compute_projection(D)
 H -= eigmax(H) * I;
 Ha = Hermitian(H);
 H̄(u) = MinEigLoss.H̄(Ha, u);
@@ -70,6 +72,7 @@ function wrapper(Ha)
 end
 
 loss_func = wrapper(Ha);
+
 
 function grad(u :: Matrix{Float64})
     res :: typeof(u) = Zygote.gradient(loss_func, u)[1]
@@ -98,14 +101,13 @@ begin loss = l1; u = rand(Haar(1, D))
     plot(p1, p2, layout=(2,1))
 end
 
-
 begin loss = loss_func; u = rand(Haar(1, D))
     adam = Opt.Adam(u, loss)
     adam.a = 0.005
     sign_bnf = Vector{typeof(u0)}([])
     loss_vals_adam2_l1 = []
     loss_val_adam2_mle = []
-    iter = 400
+    iter = 200
     for i in 1:iter
         if length(sign_bnf) >= 10
             pop!(sign_bnf)
@@ -120,7 +122,15 @@ begin loss = loss_func; u = rand(Haar(1, D))
     plot(p1, p2, layout=(2,1))
 end
 
-A1 = H̄(adam.theta)
+println(loss_val_adam2_mle |> minimum)
+println(loss_func(I(D)))
+
+A1 = H̄(rand(Haar(1, D)))
+tr(A1 * A1')
+A1 .|> (u -> abs(u) ^ 2) |> sum
+
+
+A1 |> x -> -abs.(x) |> tr
 A2 = Ha
 
 A1 ^2 |> tr
@@ -147,7 +157,7 @@ begin loss = l1; u = rand(Haar(2, D))
     plot(p1, p2, layout=(2,1))
 end
 
-begin loss = loss_func; u = adam.theta
+begin loss = loss_func; u = rand(Haar(2, D))
     adam = Opt.Adam(u, loss) 
     adam.a = 0.01
     loss_vals_adam_l1 = []
