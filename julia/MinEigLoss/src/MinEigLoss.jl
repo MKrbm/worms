@@ -1,18 +1,36 @@
 module MinEigLoss
 
-
-
 using Zygote: @adjoint
 using LinearAlgebra
 using Zygote
 using Plots
 using RandomMatrix
 
-export compute_ground_state, min_eig_loss, min_eigenvalue, H̄, H̄_abs, unitary, riemannian_gradient, riemannian_update, Opt, foo
+export compute_ground_state, min_eig_loss, min_eigenvalue, H̄, H̄_abs, unitary, riemannian_gradient, riemannian_update, Opt, foo, riemannian_gradient_similarity, min_eig_loss_similarity, riemannian_gradient_similarity, H̄s, H̄s_abs, special
 
-greet(name) = println("Hello, $name!")
-say_hello() = println("Hello, world!")
-foo() = println("foo")
+
+
+struct SpecialLinear{T,S<:AbstractMatrix{<:T}} <: AbstractMatrix{T}
+    data::S
+    function SpecialLinear{T,S}(data) where {T,S<:AbstractMatrix{<:T}}
+        require_one_based_indexing(data)
+        new{T,S}(data)
+    end
+end
+
+
+import Base: size
+
+# Implement the size method for the custom type
+Base.size(sl::SpecialLinear) = size(sl.data)
+Base.size(sl::SpecialLinear, d :: Int) = size(sl.data, d)
+# Implement other necessary methods for AbstractMatrix
+Base.getindex(sl::SpecialLinear, i::Int, j::Int) = getindex(sl.data, i, j)
+Base.setindex!(sl::SpecialLinear, v, i::Int, j::Int) = setindex!(sl.data, v, i, j)
+Base.IndexStyle(::Type{SpecialLinear}) = IndexCartesian()
+
+
+
 
 # Function to compute the ground energy and ground state
 function compute_ground_state(H)
@@ -27,16 +45,36 @@ function H̄(H, u)
     U * H * U'
 end
 
+function H̄s(H, w)
+    W = kron(w, w)
+    W * H * inv(W)
+end
+
 function H̄_abs(H, u)
     res = -abs.(H̄(H, u))
     return Hermitian(res)
 end
 
-minimum_eigenvalue(H) = minimum(eigvals(H))
+function H̄s_abs(H, u)
+    res = -abs.(H̄s(H, u))
+    return res
+end
+
+
+
+
+minimum_eigenvalue(H :: Hermitian) = minimum(eigvals(H))
+minimum_eigenvalue(H :: Matrix) = H |> eigvals |> real |> minimum
 
 function min_eig_loss(H0, u)
     u = unitary(u)
     H = H̄_abs(H0, u)
+    return -minimum_eigenvalue(H)
+end
+
+function min_eig_loss_similarity(H0, w)
+    w = special(w)
+    H = H̄s_abs(H0, w)
     return -minimum_eigenvalue(H)
 end
 
@@ -45,15 +83,28 @@ function unitary(u)
     return u
 end
 
+function special(w)
+    return w
+end
+
 @adjoint unitary(u) = unitary(u), c -> (riemannian_gradient(u, c),)
+@adjoint special(w) = special(w), c -> (riemannian_gradient_similarity(w, c),)
 
 function riemannian_gradient(u, euc_grad)
     rg = euc_grad * u'
     return (rg - rg') / 2
 end
 
-function riemannian_update(u, rg, step)
-    exp(-step * rg) * u
+function riemannian_gradient_similarity(v, euc_grad)
+    v_inv = inv(v)
+    g = euc_grad * v_inv
+    v_inv = v_inv'v_inv
+    v_inv ./= tr(v_inv)
+    - v_inv .* tr(g) + g
+end
+
+function riemannian_update(w, rg, step)
+    exp(-step * rg) * w
 end
 module Opt
 
@@ -61,7 +112,7 @@ using SkewLinearAlgebra
 using Zygote
 using LinearAlgebra
 
-export Adam, step!, foo, SG, SGReg
+export Adam, step!, foo, SG, SGReg, AdamSpecial
 
 foo() = println("foo")
 
@@ -94,11 +145,9 @@ function rg_update(X::AbstractArray{T}, rg::AbstractArray{T}) where T<:Number
     return exp(-rg) * X
 end
 
-function rg_update(X::AbstractArray{T}, rg::SkewHermitian{T, Matrix{T}}) where T<:Number
-    return exp(-rg) * X
-end
-
-
+# function rg_update(X::AbstractArray{T}, rg::SkewHermitian{T, Matrix{T}}) where T<:Number
+#     return exp(-rg) * X
+# end
 
 # Step function with optional keyword arguments for the data passed to grad()
 function step!(opt::Adam{Float64})
@@ -133,6 +182,41 @@ function step!(opt::Adam{Complex{Float64}})
     rg = skewhermitian(rg)
     opt.theta = rg_update(opt.theta, rg)
 end
+
+mutable struct AdamSpecial{T<:Number}
+    theta::Matrix{T} # Parameter array
+    loss::Function                # Loss function
+    m::Matrix{T}     # First moment
+    v::Matrix{T}     # Second moment
+    b1::Float64                   # Exp. decay first moment
+    b2::Float64                   # Exp. decay second moment
+    a::Float64                    # Step size
+    eps::Float64                  # Epsilon for stability
+    t::Int                  # Time step (iteration)
+end
+
+function AdamSpecial(theta::AbstractArray{T}, loss::Function) where T<:Number
+    m = zero(theta)
+    v = zero(theta)
+    b1 = 0.9
+    b2 = 0.999
+    a = 0.001
+    eps = 1e-8
+    t = 0
+    AdamSpecial{T}(theta, loss, m, v, b1, b2, a, eps, t)
+end
+
+function step!(opt::AdamSpecial{Float64})
+    opt.t += 1
+    gt = Zygote.gradient(opt.loss, opt.theta)[1]
+    opt.m = opt.b1 * opt.m + (1 - opt.b1) * gt
+    opt.v = opt.b2 * opt.v + (1 - opt.b2) * (gt .^ 2)
+    mhat = opt.m ./ (1 - opt.b1^opt.t)
+    vhat = opt.v ./ (1 - opt.b2^opt.t)
+    rg′ = opt.a .* (mhat ./ (sqrt.(vhat) .+ opt.eps))
+    opt.theta = rg_update(opt.theta, rg′)
+end
+
 
 mutable struct SG
     theta::Matrix{Float64} # Parameter array

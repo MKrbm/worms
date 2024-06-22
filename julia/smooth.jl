@@ -1,4 +1,3 @@
-
 import Pkg
 Pkg.activate("julia")
 using PyCall
@@ -21,9 +20,9 @@ using EDKit
 
 function sabs(x ::Number, μ ::Float64)
     if abs(x) < μ
-        return (x * x') / μ
+        return (x * x') / (2μ) + μ / 2
     else
-        return abs(x) - μ
+        return abs(x)
     end
 end
 
@@ -38,10 +37,6 @@ function Broadcast.broadcasted(::typeof(f), v::Vector{T}) where T
     return output
 end
 
-map(x -> sabs(x, 1.0), randn(10,10))
-
-
-x, y = rand(3), rand(3)
-
-
-x .+ y
+t_list = LinRange(-1, 1, 100)
+plot(t_list, t_list .|> u -> sabs(u, 0.1))
+plot!(t_list, t_list .|> u -> abs(u))
