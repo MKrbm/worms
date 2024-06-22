@@ -17,7 +17,6 @@ using SparseArrays
 using Arpack
 using EDKit
 
-
 np = pyimport("numpy");
 
 H = -np.load("/home/user/project/worms/python/rmsKit/array/torch/FF1D_loc/s_16_r_2_d_1_seed_3/1_mel/H/0.npy");
