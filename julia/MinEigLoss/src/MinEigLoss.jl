@@ -5,8 +5,9 @@ using LinearAlgebra
 using Zygote
 using Plots
 using RandomMatrix
+include("./ff.jl")
 
-export compute_ground_state, min_eig_loss, min_eigenvalue, H̄, H̄_abs, unitary, riemannian_gradient, riemannian_update, Opt, foo, riemannian_gradient_similarity, min_eig_loss_similarity, riemannian_gradient_similarity, H̄s, H̄s_abs, special
+export compute_ground_state, min_eig_loss, min_eigenvalue, H̄, H̄_abs, unitary, riemannian_gradient, riemannian_update, Opt, foo, riemannian_gradient_similarity, min_eig_loss_similarity, riemannian_gradient_similarity, H̄s, H̄s_abs, special, FF
 
 
 
