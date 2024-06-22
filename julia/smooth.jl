@@ -27,6 +27,10 @@ function sabs(x ::Number, μ ::Float64)
     end
 end
 
+sabs(x :: Number) = sabs(x, 1.0)
+
+sabs.(randn(10))
+
 function Broadcast.broadcasted(::typeof(f), v::Vector{T}) where T
     # Write your custom implementation here to compute the output
     ...

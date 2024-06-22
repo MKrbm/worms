@@ -101,7 +101,7 @@ begin loss = l1; u = rand(Haar(1, D))
     plot(p1, p2, layout=(2,1))
 end
 
-begin loss = loss_func; u = rand(Haar(1, D))
+begin loss = loss_func; u = adam.theta
     adam = Opt.Adam(u, loss)
     adam.a = 0.005
     sign_bnf = Vector{typeof(u0)}([])
