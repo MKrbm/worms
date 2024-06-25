@@ -3,11 +3,9 @@ module MinEigLoss
 using Zygote: @adjoint
 using LinearAlgebra
 using Zygote
-using Plots
 using RandomMatrix
-include("./ff.jl")
 
-export compute_ground_state, min_eig_loss, min_eigenvalue, H̄, H̄_abs, unitary, riemannian_gradient, riemannian_update, Opt, foo, riemannian_gradient_similarity, min_eig_loss_similarity, riemannian_gradient_similarity, H̄s, H̄s_abs, special, FF
+export compute_ground_state, min_eig_loss, min_eigenvalue, H̄, H̄_abs, unitary, riemannian_gradient, riemannian_update, Opt, foo, riemannian_gradient_similarity, min_eig_loss_similarity, riemannian_gradient_similarity, H̄s, H̄s_abs, special, FF, mle_sys_special, mle_sys_unitary, mle_unitary, l1_sys_special
 
 
 
@@ -99,14 +97,97 @@ end
 function riemannian_gradient_similarity(v, euc_grad)
     v_inv = inv(v)
     g = euc_grad * v_inv
-    v_inv = v_inv'v_inv
-    v_inv ./= tr(v_inv)
-    - v_inv .* tr(g) + g
+    v_inv2 = v_inv'v_inv
+    v_inv2 ./= tr(v_inv2)
+    - v_inv2 .* tr(g) + g
 end
 
 function riemannian_update(w, rg, step)
     exp(-step * rg) * w
 end
+
+
+function mle_special(Ha)
+    e0 = eigmin(Ha) |> abs  
+    function loss_func(v)
+        return MinEigLoss.min_eig_loss_similarity(Ha, v) - e0
+    end
+    return loss_func
+end
+
+
+function mle_unitary(Ha)
+    e0 = eigmin(Ha) |> abs  
+    function loss_func(u)
+        return MinEigLoss.min_eig_loss(Ha, u) - e0
+    end
+    return loss_func
+end
+
+
+function l1_sys_special(H:: AbstractMatrix, s_loc :: Int)
+    s_sys = size(H, 1)
+    n_rep :: Int = log(s_loc, s_sys) |> round |> Int
+    function kron_w(w)
+        W = kron(w, w)
+        for i in 1:n_rep-2
+            W = kron(W, w)
+        end
+        return W
+    end
+
+    function wrapper_special(w)
+        w = MinEigLoss.special(w)
+        W = kron_w(w)
+        H̄ = (W * H * W') .|> abs
+        return sum(H̄)
+    end
+end
+
+function mle_sys_special(H:: AbstractMatrix, s_loc :: Int)
+    s_sys = size(H, 1)
+    n_rep :: Int = log(s_loc, s_sys) |> round |> Int
+    e0 = eigmin(H) |> abs
+    function kron_w(w)
+        W = kron(w, w)
+        for i in 1:n_rep-2
+            W = kron(W, w)
+        end
+        return W
+    end
+
+    function wrapper_special(w)
+        w = MinEigLoss.special(w)
+        W = kron_w(w)
+        W_inv = kron_w(inv(w))
+        H̄ = (W * H * W_inv) .|> abs
+        return (eigvals(H̄) |> real |> maximum) - e0
+    end
+end
+
+
+function mle_sys_unitary(H:: AbstractMatrix, s_loc :: Int)
+    s_sys = size(H, 1)
+    n_rep :: Int = log(s_loc, s_sys) |> round |> Int
+    e0 = eigmin(H) |> abs
+    function kron_w(w)
+        W = kron(w, w)
+        for i in 1:n_rep-2
+            W = kron(W, w)
+        end
+        return W
+    end
+
+    function wrapper_special(w)
+        w = MinEigLoss.unitary(w)
+        W = kron_w(w)
+        H̄ = (W * H * W') .|> abs
+        return (eigvals(H̄) |> real |> maximum) - e0
+    end
+
+    return wrapper_special
+end
+
 module Opt
 
 using SkewLinearAlgebra

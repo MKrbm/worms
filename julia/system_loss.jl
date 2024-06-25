@@ -20,7 +20,7 @@ using EDKit
 
 np = pyimport("numpy");
 
-H = -np.load("/home/user/project/worms/python/rmsKit/array/torch/FF1D_loc/s_3_r_2_d_1_seed_3/1_mel/H/0.npy");
+H = -np.load("/home/user/project/worms/python/rmsKit/array/torch/FF1D_loc/s_3_r_2_d_1_seed_1231/1_mel/H/0.npy");
 D = 3
 # H = randn(D^2, D^2) |> Symmetric
 H -= eigmax(H) * I;
@@ -47,7 +47,6 @@ function wrapper_unitary(Ha)
     return loss_func
 end
 
-loss_func_unitary = wrapper_unitary(H);
 
 
 const n_rep = 5
@@ -120,16 +119,40 @@ function mle_special_wrapper(H:: AbstractMatrix, s_loc :: Int)
     end
 end
 
+function mle_orthogonal_wrapper(H:: AbstractMatrix, s_loc :: Int)
+    s_sys = size(H, 1)
+    n_rep :: Int = log(s_loc, s_sys) |> round |> Int
+    e0 = eigmin(H) |> abs
+    function kron_w(w)
+        W = kron(w, w)
+        for i in 1:n_rep-2
+            W = kron(W, w)
+        end
+        return W
+    end
+
+    function wrapper_special(w)
+        w = MinEigLoss.unitary(w)
+        W = kron_w(w)
+        H̄ = W * H * W'
+        H̄ = abs.(H̄)
+        return (eigvals(H̄) |> real |> maximum) - e0
+    end
+end
 loss_func_special = wrapper_special(H);
+loss_func_unitary = wrapper_unitary(H);
+L = 4
+Hs = trans_inv_operator(H, 1:2, L) |> Array
 l1_special = l1_special_wrapper(Hs, size(w, 1))
 mle_special = mle_special_wrapper(Hs, size(w, 1))
+mle_orthogonal = mle_orthogonal_wrapper(Hs, size(w, 1))
+
 
 w = randn(D, D)
 w ./= (det(w) |> abs) ^ (1/D)
 mle_special(w)
 loss_func_special(w)
-
-mle_special(best_theta_orthogonal)
+mle_orthogonal(rand(Haar(1, D)))
 
 
 
@@ -175,49 +198,97 @@ mle_special(best_theta_orthogonal)
 
 
 begin
-    w = randn(D, D)
-    w ./= (det(w) |> abs) ^ (1/D)
-    adam = Opt.AdamSpecial(w, l1_special)
-    adam.a = 0.02
-    adam.b1 = 0.95
-    loss_val_adam_mle = []
-    loss_val_adam_mle_local = []
-    loss_val_adam_l1 = []
-    iter = 100
-    for j in 1:iter
-        Opt.step!(adam)
-        push!(loss_val_adam_mle_local, loss_func_special(adam.theta))
-        push!(loss_val_adam_l1, l1_special(adam.theta))
-        push!(loss_val_adam_mle, mle_special(adam.theta))
+    best_losses_special = []
+    best_theta_special = nothing
+    min_loss_special = Inf
+
+    for i in 1:100
+        # begin
+        #     w = randn(D, D)
+        #     w ./= (det(w) |> abs) ^ (1/D)
+        #     adam = Opt.AdamSpecial(w, l1_special)
+        #     adam.a = 0.02
+        #     adam.b1 = 0.95
+        #     loss_val_adam_mle = []
+        #     loss_val_adam_mle_local = []
+        #     loss_val_adam_l1 = []
+        #     iter = 100
+        #     for j in 1:iter
+        #         Opt.step!(adam)
+        #         push!(loss_val_adam_mle_local, loss_func_special(adam.theta))
+        #         push!(loss_val_adam_l1, l1_special(adam.theta))
+        #         push!(loss_val_adam_mle, mle_special(adam.theta))
+        #         if l1_special(adam.theta) < min_loss_special
+        #             min_loss_special = l1_special(adam.theta)
+        #             best_theta_special = adam.theta
+        #         end
+        #     end
+        #     # p1 = plot(1:iter, loss_val_adam_mle, label="Adam mle system = $(loss_val_adam_mle[end])")
+        #     # p2 = plot(1:iter, loss_val_adam_l1, label="Adam l1 system = $(loss_val_adam_l1[end])")
+        #     # p3 = plot(1:iter, loss_val_adam_mle_local, label="Adam mle local = $(loss_val_adam_mle_local[end])")
+        #     # plot(p1, p2, p3, layout=(3,1))
+        # end
+
+        begin
+            w = randn(D, D)
+            w ./= (det(w) |> abs) ^ (1/D)
+            adam = Opt.AdamSpecial(w, mle_special)
+            adam.a = 0.01
+            adam.b1 = 0.95
+            loss_mle = []
+            loss_l1 = []
+            loss_mle_local = []
+            iter = 400
+            for j in 1:iter
+                Opt.step!(adam)
+                push!(loss_mle, mle_special(adam.theta))
+                push!(loss_l1, l1_special(adam.theta))
+                push!(loss_mle_local, loss_func_special(adam.theta))
+            end
+            # p1 = plot(1:iter, loss_mle, label="Adam mle system = $(loss_mle[end])")
+            # p2 = plot(1:iter, loss_l1, label="Adam l1 system = $(loss_l1[end])")
+            # p3 = plot(1:iter, loss_mle_local, label="Adam mle local = $(loss_mle_local[end])")
+            # plot(p1, p2, p3, layout=(3,1))
+        end
+        push!(best_losses_special, loss_mle |> minimum)
     end
-    p1 = plot(1:iter, loss_val_adam_mle, label="Adam mle system = $(loss_val_adam_mle[end])")
-    p2 = plot(1:iter, loss_val_adam_l1, label="Adam l1 system = $(loss_val_adam_l1[end])")
-    p3 = plot(1:iter, loss_val_adam_mle_local, label="Adam mle local = $(loss_val_adam_mle_local[end])")
-    plot(p1, p2, p3, layout=(3,1))
 end
+
+best_losses_special |> minimum
 
 begin
-    w = adam.theta
-    adam = Opt.AdamSpecial(w, mle_special)
-    adam.a = 0.02
-    adam.b1 = 0.95
-    loss_mle = []
-    loss_l1 = []
-    loss_mle_local = []
-    iter = 300
-    for j in 1:iter
-        Opt.step!(adam)
-        push!(loss_mle, mle_special(adam.theta))
-        push!(loss_l1, l1_special(adam.theta))
-        push!(loss_mle_local, loss_func_special(adam.theta))
+    best_losses_orthogonal = []
+    best_theta_orthogonal = nothing
+    min_loss_orthogonal = Inf
+
+    for i in 1:100
+        begin
+            w = rand(Haar(1, D))
+            adam = Opt.Adam(w, mle_orthogonal)
+            adam.a = 0.02
+            adam.b1 = 0.95
+            loss_mle = []
+            loss_mle_local = []
+            iter = 300
+            for j in 1:iter
+                Opt.step!(adam)
+                current_loss = mle_orthogonal(adam.theta)
+                push!(loss_mle, current_loss)
+                push!(loss_mle_local, loss_func_unitary(adam.theta))
+                if current_loss < min_loss_orthogonal
+                    min_loss_orthogonal = current_loss
+                    best_theta_orthogonal = adam.theta
+                end
+            end
+            p1 = plot(1:iter, loss_mle, label="Adam mle system = $(loss_mle[end])")
+            p2 = plot(1:iter, loss_mle_local, label="Adam mle local = $(loss_mle_local[end])")
+            plot(p1, p2, layout=(2,1))
+            push!(best_losses_orthogonal, loss_mle |> minimum)
+        end
     end
-    p1 = plot(1:iter, loss_mle, label="Adam mle system = $(loss_mle[end])")
-    p2 = plot(1:iter, loss_l1, label="Adam l1 system = $(loss_l1[end])")
-    p3 = plot(1:iter, loss_mle_local, label="Adam mle local = $(loss_mle_local[end])")
-    plot(p1, p2, p3, layout=(3,1))
 end
 
-
+best_losses_orthogonal |> minimum
 
 # begin
 #     best_losses_unitary = []
