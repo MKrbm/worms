@@ -148,23 +148,15 @@ function main(seed)
 end
 
 res = Dict()
-for i in 1:100
-    seed = rand(10 ^ 5:2 * 10^6)  # Generate random seed between 1000 and 9999
+for i in 1:1000
+    seed = rand(10 ^ 5 : 2 * 10^6)  # Generate random seed between 1000 and 9999
     result = main(seed)
     res[seed] = result
     println("seed: $seed is done")
 end
-using Pickle
-dumped = Pickle.dump(res);
-Pickle.store("./julia/pickles/res2.pkl", dumped);
+save_object("./julia/pickles/res.jld2", res)
 
-idx = (res |> keys |> collect)
-begin i = idx[20]
-    @show res[i].orth_sys.losses_opt |> minimum 
-    @show res[i].spec_sys.losses_opt |> minimum
-    @show res[i].orth_loc.losses_track |> minimum
-    @show res[i].uni_loc.losses_track |> minimum
-end
+
 
 # # Print minimum losses for the last seed (if you want to keep this functionality)
 # last_seed = collect(keys(res))[end]
@@ -225,3 +217,8 @@ end
 # h5open("/tmp/test.h5",isfile("/tmp/test.h5") ? "r+" : "w") do file
 #        write(file,"group/J",[10,11,12,13])
 # end
+
+
+res = Pickle.load(open("./julia/pickles/res.pkl"))
+
+res

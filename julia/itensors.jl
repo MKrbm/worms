@@ -48,6 +48,5 @@ U, S, V = svd(E, (di))
 # P2 = P * dag(Di) * dag(Di')
 # MPS*P2*delta(spins[1], ds[1])*delta(spins[2], ds[2]) |> println
 
-P = MinEigLoss.FF.ff(3, 2, dim = Val(1))
-
+P = MinEigLoss.FF.ff(3, 2, dim = Val(1), seed = 3)
 H = trans_inv_operator(P, 1:2, 4)
