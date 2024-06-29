@@ -191,9 +191,20 @@ v ./= sqrt(sum(v .* v))
 using Arpack
 λ, V = Arpack.eigs(H, which = :SR)
 
+v = (H - (-10)I)\v
+
+H + 9.3I |> Array |> eigmin
+v = (H + 9.3I) \ v
+v ./= sqrt(sum(v .* v))
+
+v' * H * v
+eigmin(H |> Array)
 
 
 
+
+
+λ
 begin 
     v = H * v;
     v ./= sqrt(sum(v .* v))
