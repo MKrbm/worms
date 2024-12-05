@@ -59,7 +59,7 @@ if __name__ == "__main__":
         L_list = [[4, 4], [5, 5]]
         logger.info("RUN HXYZ2D MODEL")
     elif args.model == "BLBQ1D":
-        beta = np.array([1, 4])
+        beta = np.array([4])
         L_list = [[10]]
         beta_select = 1
         L_list_select = [4]
