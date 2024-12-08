@@ -63,6 +63,14 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
     # exit()
     print(df.head())
 
+
+    # J1s = np.arange(-1.0, 2.05, 0.05)
+    # hxs = np.arange(0.0, 1.05, 0.05)
+
+    # df = df[np.isclose(df["J1"].values[:, None], J1s, atol=0.005).any(axis=1)]
+    # df = df[np.isclose(df["hx"].values[:, None], hxs, atol=0.005).any(axis=1)]
+    # print(df["J1"].unique(), df["hx"].unique())
+
     # df = df[df["as"] > 0.0]
     # filter with average sign. 
     # df = df[df["as"] != 0.0]
@@ -73,7 +81,7 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
         filtered_df = df.copy()
         figure_name_parts = []
         # sort filtered_df by Jx, Jy, temperature, n_sites
-        # filtered_df = filtered_df.sort_values(by=["Jx", "Jy", "temperature", "n_sites"])
+        filtered_df = filtered_df.sort_values(by=["hx", "J1", "temperature", "n_sites"])
         filtered_df.to_csv(image_model_dir / "filtered_data.csv", index=False)
         # print(fixed_values)
         for key, value in zip(fixed_params.keys(), fixed_values):
@@ -113,7 +121,7 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
                 loss = np.nan
                 init_loss = np.nan
             else:
-                idx = np.argmin(df_u.loss.values)
+                idx = np.argmax(df_u["as"].values)
                 loss = df_u.loss.values[idx]
                 init_loss = df_u.init_loss.values[idx]
                 au = df_u["as"].values[idx]
@@ -166,8 +174,8 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
             zs["Loss (optimized)"])
         zs["Loss (original)"][np.isnan(zs["Loss (original)"])] = np.nanmin(
             zs["Loss (original)"])
-        zs["$log(\\eta) / \\beta$ (optimized)"][np.isnan(zs["$log(\\eta) / \\beta$ (optimized)"])] = 0.6
-        zs["$log(\\eta) / \\beta$ (original)"][np.isnan(zs["$log(\\eta) / \\beta$ (original)"])] = 0.6
+        zs["$log(\\eta) / \\beta$ (optimized)"][np.isnan(zs["$log(\\eta) / \\beta$ (optimized)"])] = 1.4
+        zs["$log(\\eta) / \\beta$ (original)"][np.isnan(zs["$log(\\eta) / \\beta$ (original)"])] = 1.4
 
         # zs["$log(\\eta) / \\beta$ (optimized)"][:] = np.minimum(zs["$log(\\eta) / \\beta$ (optimized)"], 0.6)
         # zs["$log(\\eta) / \\beta$ (original)"][:] = np.minimum(zs["$log(\\eta) / \\beta$ (original)"], 0.6)
@@ -200,8 +208,8 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
             Z = np.array(z).reshape(x.shape)
             if "eta" in key:
                 # vmin, vmax = (0, 1.5) ## KH2D
-                # vmin, vmax = (0, 1.2) ## BLBQ1D
-                vmin, vmax = (0, 0.6) ## SS2D
+                vmin, vmax = (0, 1.4) ## BLBQ1D
+                # vmin, vmax = (0, 0.6) ## SS2D
             elif "Loss" in key:
                 vmin, vmax = (0, max_loss)
             else:
@@ -268,10 +276,10 @@ elif model_name == "MG1D":
 
 elif model_name == "BLBQ1D":
     fixed_params_BLBQ1D = {
-        "temperature": np.sort(df.temperature.unique()),
-        "n_sites": np.sort(df.n_sites.unique()),
+        "temperature": [0.25],
+        "n_sites": [10],
         "J0": [1],
-        "bc": ["obc"]
+        "bc": ["obc", "pbc"]
     }
     plot_heatmap(df, fixed_params_BLBQ1D, ('J1', 'hx'), model_name, image_model_dir)
 
