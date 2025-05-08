@@ -62,7 +62,7 @@ if __name__ == "__main__":
         beta = np.array([4])
         L_list = [[10]]
         beta_select = 1
-        L_list_select = [4]
+        L_list_select = [10]
         logger.info("RUN BLBQ1D MODEL")
     elif args.model == "FF2D":
         beta = np.array([1])
@@ -130,7 +130,7 @@ if __name__ == "__main__":
         neg_vals = []
         for loss, path in top_k_unitary_paths:
             logger.info("test simulation with loss: {}, path: {}".format(loss, path))
-            N_select = 10**5
+            N_select = 10**4
             subprocess_out = utils.run_worm(
                 args.model,
                 ham_path,
@@ -151,7 +151,7 @@ if __name__ == "__main__":
                 data = extract_info_from_file(
                     result_file_path, warning=True, allow_missing=False)
                 
-                neg_val = data["as_error"] / data["as"]
+                neg_val = data["as"]
                 neg_vals.append((neg_val, loss, path))
                 logger.info("simulation fnished. negativity: {}".format(neg_val))
             except Exception as e:
@@ -161,12 +161,12 @@ if __name__ == "__main__":
                 logger.error("subprocess_out: {}".format(output))
                 continue
         
-        neg_vals.sort(key=lambda x: x[0])
+        neg_vals.sort(key=lambda x: -x[0])
 
         min_path = neg_vals[0][2]
 
         logger.info("selected min_path: {} with negativity {}".format(min_path, neg_vals[0][0]))
-        logger.info("other negative values: {}".format([(neg, loss) for neg, loss, path in neg_vals[1:]]))
+        logger.info("other negative values: {}".format([(neg, loss) for neg, loss, path in neg_vals[:]]))
 
 
 

@@ -4,9 +4,9 @@
 
 calculate_total_jobs() {
     J0_values=(1)  # Define J0 values
-    J1_values=($(seq -1 0.05 2))  # Define J1 values
+    J1_values=($(seq -1.0 0.05 2.0))  # Define J1 values
     hz_values=(0)          # Define hz values
-    hx_values=($(seq 0 0.05 1.05))          # Define hx values
+    hx_values=($(seq 0 0.05 1.0))          # Define hx values
 
     num_J0=${#J0_values[@]}
     num_J1=${#J1_values[@]}
@@ -55,8 +55,8 @@ run_job() {
 
     LT=1
     SWEEPS=1000000
-    EPOCH=1000
-    M=40
+    EPOCH=1500
+    M=100
     model_name="BLBQ1D"
     log_dir="${project_dir}/job/log/${model_name}"
     [ ! -d "$log_dir" ] && mkdir -p "$log_dir" && echo "Created log directory $log_dir"
@@ -85,17 +85,17 @@ run_job() {
 
 
     # Assuming the environment is already activated and required modules loaded
-    python -u optimize_loc.py -m $model_name -o Adam -lr 0.001 -e $EPOCH -M $M -lt $LT \
-        -J0 "$J0" -J1 "$J1" -hx "$hx" -hz "$hz" -n "$n_cpu" \
-        --symoblic_link "$symbolic_link" \
-        --stdout >> "$log_file"
+    #python -u optimize_loc.py -m $model_name -o Adam -lr 0.01 -e $EPOCH -M $M -lt $LT \
+    #    -J0 "$J0" -J1 "$J1" -hx "$hx" -hz "$hz" -n "$n_cpu" \
+    #    --symoblic_link "$symbolic_link" \
+    #    --stdout >> "$log_file"
 
     echo "Finished optimization for BLBQ model with J0=${J0}, J1=${J1}, hz=${hz} and hx=${hx} in CPU ${n_cpu}"
 
 
-    python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS -n "$n_cpu" -k 10 --stdout  >> "$log_file"
+    # python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS -n "$n_cpu" -k 10 --stdout >> "$log_file"
 
-    # python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS --original -n "$n_cpu" --stdout  >> "$log_file"
+    python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS --original -n "$n_cpu" --stdout  >> "$log_file"
 
 
     echo "Finished BLBQ model job with J0=${J0}, J1=${J1}, hz=${hz} and hx=${hx} in CPU ${n_cpu}"
