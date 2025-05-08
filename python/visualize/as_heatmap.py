@@ -81,8 +81,8 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
         filtered_df = df.copy()
         figure_name_parts = []
         # sort filtered_df by Jx, Jy, temperature, n_sites
-        filtered_df = filtered_df.sort_values(by=["hx", "J1", "temperature", "n_sites"])
-        filtered_df.to_csv(image_model_dir / "filtered_data.csv", index=False)
+        # filtered_df = filtered_df.sort_values(by=["J1","J2", "temperature", "n_sites"])
+        # filtered_df.to_csv(image_model_dir / "filtered_data.csv", index=False)
         # print(fixed_values)
         for key, value in zip(fixed_params.keys(), fixed_values):
             filtered_df = filtered_df[filtered_df[key] == value]
@@ -91,8 +91,11 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
             print(f"{key} : {value}")
             print("after filtering : len for fixed values : ", len(filtered_df))
         
+        if len(filtered_df) == 0:
+            logger.info(f"No data found for the given fixed parameters.")
+            continue
 
-
+        
         x_param, y_param = heatmap_params
         x_values = np.sort(filtered_df[x_param].unique())
         y_values = np.sort(filtered_df[y_param].unique())
@@ -207,9 +210,11 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
         for i, (key, z) in enumerate(zs.items()):
             Z = np.array(z).reshape(x.shape)
             if "eta" in key:
-                # vmin, vmax = (0, 1.5) ## KH2D
-                vmin, vmax = (0, 1.4) ## BLBQ1D
+                vmin, vmax = (0, 1.5) ## KH2D
+                # vmin, vmax = (0, 1.4) ## BLBQ1D
                 # vmin, vmax = (0, 0.6) ## SS2D
+                # vmin, vmax = (0, 0.5) ## J1J2J3
+                # vmin, vmax = (0, 0.6) ## J1J2J3 0.125
             elif "Loss" in key:
                 vmin, vmax = (0, max_loss)
             else:
@@ -234,8 +239,9 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
             ax[i % 2, i // 2].set_xlabel(x_param, fontsize=20)
             ax[i % 2, i // 2].set_ylabel(y_param, fontsize=20)
             # Adjust font size for tick labels
-            ax[i % 2, i // 2].tick_params(axis='both', which='major', labelsize=15)
+            ax[i % 2, i // 2].tick_params(axis='both', which='major', labelsize=18)
             cbar = fig.colorbar(c, ax=ax[i % 2, i // 2], fraction=0.06, pad=0.04)
+            cbar.ax.tick_params(labelsize=18)  # Adjust font size for color map text
             if "Loss" in key or "eta" in key:
                 pass
             else:
@@ -269,8 +275,8 @@ if model_name == "HXYZ2D":
 
 elif model_name == "MG1D":
     fixed_params_MG1D = {
-        "temperature": np.sort(df.temperature.unique()),
-        "n_sites": np.sort(df.n_sites.unique()),
+        "temperature": [0.125],
+        "n_sites": [10],
     }
     plot_heatmap(df, fixed_params_MG1D, ('J2', 'J3'), model_name, image_model_dir)
 
@@ -285,7 +291,7 @@ elif model_name == "BLBQ1D":
 
 elif model_name == "SS2D":
     fixed_params_MG1D = {
-        "temperature": [0.1],
+        "temperature": [1],
         "n_sites": [16,36],
         "J0": [1],
         "loss_func": ["-1_none", "1_mel"]
@@ -294,7 +300,7 @@ elif model_name == "SS2D":
 
 elif model_name == "KH2D":
     fixed_params_KH2D = {
-        "temperature": [2, 1],
+        "temperature": [2, 1, 4],
         "n_sites": [25],
         "loss_func": ["3_mel"],
         "hx" : [0.0, 0.5],
