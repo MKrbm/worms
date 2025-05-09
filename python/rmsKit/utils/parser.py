@@ -76,15 +76,6 @@ def get_parser(length: bool = False, model=None, Description=None):
         nargs="?",
     )
 
-    parser.add_argument(
-        "-o",
-        "--optimizer",
-        help="optimizer",
-        choices=["LION", "Adam"],
-        default="Adam",
-        nargs="?",
-        const="all",
-    )
 
     parser.add_argument(
         "-p",

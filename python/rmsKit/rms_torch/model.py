@@ -1,27 +1,35 @@
 """UnitaryRiemann and UnitaryRiemanNonSym classes for PyTorch."""
 
+
 import torch
 from torch import nn
 import numpy as np
 import math
 import logging
 from typing import Union, Optional
+import geoopt
 from .functions import check_is_unitary_torch, riemannian_grad_torch
 from .typing import is_complex, is_numerical
 
 logger = logging.getLogger(__name__)
 
-def random_unitary_matrix(size: int, device: torch.device, dtype: torch.dtype) -> torch.Tensor:
-    """Generate a random unitary matrix of size size x size in Haar measure."""
-    if not is_complex(dtype):
-        random_matrix = np.random.randn(size, size)
-    else:
-        random_matrix = np.random.randn(size, size) + 1j * np.random.randn(size, size)
-    q, _ = np.linalg.qr(random_matrix)
-    return torch.tensor(q, dtype=dtype, device=device)
+def _check_power_of(base: int, target: int) -> bool:
+    """
+    Check if 'target' is an integer power of 'base'.
+    """
+    # handle edge cases
+    if base <= 1 or target <= 0:
+        return False
+    # Check if log_base(target) is an integer
+    val = np.emath.logn(base, target)
+    return np.isclose(val, round(val))
+
 
 class UnitaryRiemann(nn.Module):
-    """UnitaryRiemann class for PyTorch."""
+    """
+    A class that builds a repeated Kronecker product of a single orthonormal (real "unitary")
+    matrix to match the dimension H_size x H_size. Uses geoopt for manifold-constrained optimization.
+    """
 
     def __init__(
         self,
@@ -30,84 +38,91 @@ class UnitaryRiemann(nn.Module):
         device: torch.device = torch.device("cpu"),
         u0: Optional[torch.Tensor] = None,
         dtype: torch.dtype = torch.float64,
+        manifold: geoopt.Manifold = geoopt.CanonicalStiefel(),
     ):
-        """Initialize UnitaryRiemann class."""
-        super(UnitaryRiemann, self).__init__()
+        """
+        Initialize the UnitaryRiemann class.
+
+        Args:
+            H_size (int): The total dimension of the final Kronecker product matrix.
+            unitary_size (int): The size of the single orthonormal matrix that will be repeated.
+            device (torch.device, optional): Device on which the data is located.
+            u0 (Optional[torch.Tensor], optional): An initial orthonormal (real unitary) matrix
+                                                   of shape (unitary_size, unitary_size).
+            dtype (torch.dtype, optional): Data type to use.
+        """
+        super().__init__()
 
         if H_size <= 0 or unitary_size <= 0:
-            raise ValueError(
-                "Both H_size and unitary_size should be positive integers."
-            )
-
-        if not is_numerical(dtype):
-            raise ValueError("The dtype is not correct.")
-        if not np.emath.logn(unitary_size, H_size).is_integer():
+            raise ValueError("Both H_size and unitary_size should be positive integers.")
+        if not _check_power_of(unitary_size, H_size):
             raise ValueError("H_size should be a power of unitary_size.")
-        if u0 is not None:
-            if u0.shape != (unitary_size, unitary_size):
-                raise ValueError("u0 must be a square matrix of shape (unitary_size, unitary_size).")
-            if u0.dtype != dtype:
-                raise ValueError("The dtype of u0 does not match the specified dtype.")
-            if not check_is_unitary_torch(X=u0):
-                raise ValueError("u0 must be a unitary matrix.")
 
         self.H_size = H_size
         self.unitary_size = unitary_size
         self.device = device
-        self.u0 = u0
         self.dtype = dtype
+
+        # Number of times we must Kronecker-product the base matrix
         self.num_repeat = round(np.emath.logn(unitary_size, H_size))
 
-        self.initialize_params()
-
-    def initialize_params(self):
-        """Initialize parameters of UnitaryRiemann class."""
-        # n_us = round(math.log2(self.H_size) / math.log2(self.unitary_size))
-        dtype = self.dtype
-        if self.u0 is None:
-            self.u = nn.ParameterList(
-                [
-                    nn.Parameter(
-                        random_unitary_matrix(self.unitary_size, self.device, dtype),
-                        requires_grad=True,
-                    )
-                ]
-            )
+        # Define a Stiefel manifold (real orthonormal constraint).
+        # You can choose among geoopt.CanonicalStiefel, geoopt.EuclideanStiefel, etc.
+        if manifold is None:
+            self.manifold = geoopt.CanonicalStiefel()
         else:
-            self.u = nn.ParameterList(
-                [
-                    nn.Parameter(
-                        self.u0.clone().detach().to(dtype).to(self.device),
-                        requires_grad=True,
-                    )
-                ]
-            )
-        
-    def reset_params(self, u0: Union[torch.Tensor, None] = None):
-        """Reset parameters of UnitaryRiemann class."""
-        if u0 is not None and u0.shape != (self.unitary_size, self.unitary_size):
-            raise ValueError("The shape of u0 is not correct.")
-        for i in range(len(self.u)):
-            self.u[i].data[:] = (
-                random_unitary_matrix(self.unitary_size, self.device, self.dtype)
-                if u0 is None
-                else u0.clone().detach().to(self.dtype).to(self.device)
-            )
+            if not isinstance(manifold, (geoopt.CanonicalStiefel, geoopt.EuclideanStiefel, geoopt.EuclideanStiefelExact)):
+                raise ValueError("Manifold must be one of: geoopt.CanonicalStiefel, geoopt.EuclideanStiefel,  geoopt.EuclideanStiefelExact")
+            self.manifold = manifold
 
+        # Construct the manifold parameter
+        # shape = (unitary_size, unitary_size) for the real "unitary."
+        if u0 is not None:
+            if u0.shape != (self.unitary_size, self.unitary_size):
+                raise ValueError(
+                    "u0 must be of shape (unitary_size, unitary_size)."
+                )
+            # Optionally check if it's orthonormal:
+            # if not torch.allclose(u0.T @ u0, torch.eye(self.unitary_size, dtype=dtype), atol=1e-7):
+            #     raise ValueError("Provided u0 is not orthonormal (or nearly so).")
+
+            u_data = u0.clone().detach().to(dtype=dtype, device=device)
+        else:
+            # Initialize with random orthonormal matrix from geoopt's Stiefel manifold
+            # shape = (unitary_size, unitary_size)
+            u_data = self.manifold.random((self.unitary_size, self.unitary_size), dtype=dtype, device=device)
+
+        # Create a ManifoldParameter so that geoopt-optimizers will handle retractions properly
+        self.u = geoopt.ManifoldParameter(u_data, manifold=self.manifold, requires_grad=True)
 
     def forward(self) -> torch.Tensor:
-        """Calculate kron of unitary matrix (result size must be H_size x H_size)."""
-        U = self.u[0]
-        for i in range(self.num_repeat - 1):
-            U = torch.kron(U, self.u[0])
+        """
+        Compute the Kronecker product repeated self.num_repeat times.
+        Returns a tensor of shape (H_size, H_size).
+        """
+        # Start with self.u
+        U = self.u
+        # Repeatedly compute the Kronecker product
+        for _ in range(self.num_repeat - 1):
+            U = torch.kron(U, self.u)
         return U
-    
-    def update_riemannian_gradient(self):
+
+    def reset_params(self, u0: Optional[torch.Tensor] = None):
         """
-        Update the Riemannian gradient of the unitary matrix for each parameter.
+        Reset parameters. If u0 is provided, use it; else randomly sample from the manifold.
         """
-        for i in range(len(self.u)):
-            self.u[i].grad[:] = riemannian_grad_torch(self.u[i], self.u[i].grad)
+        if u0 is not None:
+            if u0.shape != (self.unitary_size, self.unitary_size):
+                raise ValueError("Provided u0 has incorrect shape.")
+            u_data = u0.clone().detach().to(device=self.device, dtype=self.dtype)
+            # (Optional) check orthonormality
+            # ...
+        else:
+            # Random from the Stiefel manifold
+            u_data = self.manifold.random((self.unitary_size, self.unitary_size),
+                                          dtype=self.dtype, device=self.device)
+        with torch.no_grad():
+            self.u.data = u_data
     
     
 

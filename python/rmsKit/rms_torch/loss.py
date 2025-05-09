@@ -52,24 +52,25 @@ class MinimumEnergyLoss(nn.Module):
         logger.info(f"\tinitial weight: {self.weight}")
         logger.info(f"\tshift_origin_offset value: {self.shift_origin_offset}")
 
-    def forward(self, U: torch.Tensor) -> torch.Tensor:
+    def forward(self, U: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Return loss value for the minimum eigen loss."""
         if U.dtype != self.dtype:
             raise ValueError(f"U should be of type {self.dtype}.")
         loss = torch.tensor(0, dtype=torch.float64, device=self.device)
+        negativity = torch.tensor(0, dtype=torch.float64, device=self.device)
         for i in range(self.h_tensor.shape[0]):
-            loss += self.minimum_energy_loss(self.h_tensor[i], U) - self.shift_origin_offset[i]
+            e, n = self.minimum_energy_loss(self.h_tensor[i], U)
+            loss += e - self.shift_origin_offset[i]
+            negativity += n
+        return torch.abs(loss), negativity
 
-        self.weight *= np.exp(-1 / self.weight_decay)
-        return torch.abs(loss)
-
-    def minimum_energy_loss(self, H: torch.Tensor, U: torch.Tensor) -> torch.Tensor:
+    def minimum_energy_loss(self, H: torch.Tensor, U: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Calculate the minimum energy of a system with ED."""
         A = U @ H @ U.H
         result_abs = self.get_stoquastic(A)
-        negativity = torch.abs(A - result_abs).mean() / H.shape[0] if self.weight > 0 else 0
+        negativity = torch.abs(A - result_abs).mean() / H.shape[0] if self.weight > 0 else torch.tensor(0, dtype=torch.float64, device=self.device)
         E = torch.linalg.eigvalsh(result_abs)
-        return -E[0] + self.weight * negativity
+        return -E[0], negativity
 
     def stoquastic(self, A: torch.Tensor):
         """Change the sign of all non-diagonal elements into negative."""

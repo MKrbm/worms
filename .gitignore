@@ -34,6 +34,7 @@ Release/
 **/logs
 **/dataframe
 **/array
+**/array_save
 **/out
 # julia
 julia_practice/

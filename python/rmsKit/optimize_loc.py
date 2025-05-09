@@ -8,8 +8,12 @@ Available loss functions are:
     mel: minimum energy loss. The basic loss function.
     qsmel: quasi-system minimum energy loss. This consider the system hamiltonian with given system size.
     none: no loss function. Just return the hamiltonian
+
+Example usage:
+    python -u optimize_loc.py -m BLBQ1D -lr 0.003 -e 1000 -lt 1 -J1 1 -J2 0.1 -hx 0
 """
 import torch
+import geoopt
 import numpy as np
 import rms_torch
 import time
@@ -63,7 +67,7 @@ if __name__ == "__main__":
     logging.info(f"device = {device}")
     print_args_info(args)
 
-    optim_name = args.optimizer
+    optim_name = "radam"
     iter = args.num_iter
     dtype = get_dtype(args.dtype)
 
@@ -85,7 +89,7 @@ if __name__ == "__main__":
         loss_dir = f"{params['lt']}_{args.loss}"
     elif args.loss == "mel":
         h_list, _, _ = get_model(args.model, params)
-        loss = rms_torch.MinimumEnergyLoss(torch.tensor(h_list, dtype = dtype, device = device), device=device, decay=epochs/10, dtype=dtype)
+        loss = rms_torch.MinimumEnergyLoss(torch.tensor(h_list, dtype = dtype, device = device), device=device, decay=np.infty, dtype=dtype)
         loss_dir = f"{params['lt']}_{args.loss}"
     elif args.loss == "none":
         h_list, _, _ = get_model(args.model, params)
@@ -127,33 +131,21 @@ if __name__ == "__main__":
 
     # save global hamiltonian
 
-    optimizer_func: type[torch.optim.Optimizer] = rms_torch.LION
-    if args.optimizer == "LION":
-        optimizer_func = rms_torch.LION
-        learning_params = dict(
-            lr=args.learning_rate,
-        )
-    elif args.optimizer == "Adam":
-        optimizer_func = rms_torch.Adam
-        learning_params = dict(
-            lr=args.learning_rate,
-            betas=(0.3, 0.5),
-        )
-    else:
-        raise ValueError("Invalid optimizer")
 
     model = rms_torch.UnitaryRiemann(
-        h_list[0].shape[1], sps, device=device).to(device)
+        h_list[0].shape[1], sps, device=device, manifold=geoopt.EuclideanStiefelExact()).to(device)
     model.reset_params(torch.eye(sps))
 
-    initial_loss = loss(model()).item()
-    logging.info(f"initial loss = {initial_loss}")
+    initial_loss, initial_negativity = loss(model())
+    logging.info(f"initial loss = {initial_loss}, initial negativity = {initial_negativity}")
 
-    best_loss = initial_loss
+    best_loss = initial_loss.item()
     best_us = [
         np.eye(sps, dtype=np.float64),
     ]
     num_print = 10
+
+    decay = 10 / epochs
     for i, seed in enumerate(seed_list):
         logging.info(f"------ Start iteration {i + 1} ------")
         start = time.time()
@@ -163,13 +155,18 @@ if __name__ == "__main__":
         local_best_loss = 1e10
         local_best_us = []
         model.reset_params()
-        optimizer = optimizer_func(model.parameters(), **learning_params)
+        optimizer = rms_torch.optimizer.RiemannianAdam(model.parameters(), lr=args.learning_rate, betas=(0.9, 0.999))
         logging.info(f"seed = {seed}")
+        weight = 1
 
         for t in range(epochs):
+            if t >= epochs // 2:
+                loss.weight = 0
             optimizer.zero_grad()
             output = model()
-            loss_val = loss(output)
+            loss_val, negativity = loss(output)
+
+            loss_val_optim = loss_val + weight * negativity * np.exp(-decay * t)
             loss_val_item = loss_val.item()
             if loss_val_item < local_best_loss:
                 with torch.no_grad():
@@ -177,8 +174,7 @@ if __name__ == "__main__":
                     local_best_us = [np.copy(p.data.detach().cpu().numpy())
                                      for p in model.parameters()]
 
-            loss_val.backward()
-            model.update_riemannian_gradient()
+            loss_val_optim.backward()
             if (t+1) % (epochs // num_print) == 0 or t == 0:
                 logging.info(
                     f"I: {i + 1}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}", )
@@ -196,21 +192,23 @@ if __name__ == "__main__":
 
         u_path_epoch = u_path / f"loss_{local_best_loss:.7f}/u"
         u_path_epoch.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
-        save_npy(u_path_epoch, local_best_us)
+        save_npy(u_path_epoch, [np.ascontiguousarray(u) for u in local_best_us])
 
     model.reset_params(torch.from_numpy(best_us[0]))
     out = model()
     loss.initializer()
-    if (abs(best_loss - loss(out).item())) > 1e-8:
+    current_loss, current_negativity = loss(out)
+    if (abs(best_loss - current_loss.item())) > 1e-8:
         logging.error(
             """
             The best loss and the actual loss do not match.
             Something is wrong with the optimization.
             best_loss: {} and actual loss: {}
-            """.format(best_loss, loss(out).item()))
+            """.format(best_loss, current_loss.item()))
+        raise ValueError("Best loss and actual loss do not match")
 
     u_path_epoch = u_path / f"loss_{best_loss:.7f}/u"
-    save_npy(u_path_epoch, best_us)
+    save_npy(u_path_epoch, [np.ascontiguousarray(u) for u in best_us])
 
     logging.info(f"best loss: {best_loss} / initial loss: {initial_loss}")
     logging.info(f"best loss was saved to {u_path}/loss_{best_loss:.7f}/u")
