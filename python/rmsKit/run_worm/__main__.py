@@ -153,7 +153,7 @@ if __name__ == "__main__":
                 
                 neg_val = data["as"]
                 neg_vals.append((neg_val, loss, path))
-                logger.info("simulation fnished. negativity: {}".format(neg_val))
+                logger.info("simulation fnished. average sign: {}".format(neg_val))
             except Exception as e:
                 logger.error("Exception: {}".format(e))
                 logger.error(

@@ -5,6 +5,7 @@ import numpy as np  # noqa
 import matplotlib.pyplot as plt  # noqa
 import pandas as pd  # noqa
 import itertools  # noqa
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 # import pandas  # noqa
 
 import sys  # noqa
@@ -18,13 +19,13 @@ parser = utils.parser.get_parser()
 args, _, _ = utils.parser.get_params_parser(parser)
 
 IMAGE_PATH = PYTHON_DIR / "visualize" / "image"
-WORM_RESULT_PATH = PYTHON_DIR / "rmsKit" / "array" / "quetta"
+WORM_RESULT_PATH = PYTHON_DIR / "rmsKit" / "array" / "torch"
 
 model_name = args.model
 image_model_dir = IMAGE_PATH / model_name
 worm_result_path = WORM_RESULT_PATH / (model_name+"_loc")
 
-N = 10**6
+N = 10**5
 BETA_THRES = 20
 
 if not IMAGE_PATH.exists():
@@ -57,11 +58,13 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
     """Plot the heatmap of the average sign and loss as a function of two parameters."""
     print(fixed_params)
     print(df.temperature.unique(), df.n_sites.unique())
-    print(df.columns)
-    # df_t = df[(df.temperature == 1) & (df["Jy"] == 2.0) & (df["Jx"] == -1.2)]
+    print(df.loss_func.unique())
+    # df_t = df[(df.temperature == 0.25) & (df["J1"] == -1.0)]
+    # df_t = df_t[["temperature", "J1", "hx", "loss", "init_loss", "as", "u_path", "loss_func"]]
     # df_t.to_csv(image_model_dir / "filtered_data.csv", index=False)
+    # print(df_t)
     # exit()
-    print(df.head())
+    # print(df.head())
 
 
     # J1s = np.arange(-1.0, 2.05, 0.05)
@@ -130,7 +133,7 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
                 au = df_u["as"].values[idx]
                 au_err = df_u["as_error"].values[idx]
 
-                if np.abs(au) < np.abs(au_err) * 5:
+                if np.abs(au) < np.abs(au_err) * 0.001:
                     au = np.nan
                     au_err = np.nan
                 
@@ -147,6 +150,10 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
             else:
                 ah = df_h["as"].min()
                 ah_err = df_h["as_error"].min() * np.sqrt(N)
+
+                if np.abs(ah) < np.abs(ah_err) * 0.001:
+                    ah = 0
+                    ah_err = np.infty
 
             au = np.maximum(au, 1e-5)
             ah = np.maximum(ah, 1e-5)
@@ -210,8 +217,8 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
         for i, (key, z) in enumerate(zs.items()):
             Z = np.array(z).reshape(x.shape)
             if "eta" in key:
-                vmin, vmax = (0, 1.5) ## KH2D
-                # vmin, vmax = (0, 1.4) ## BLBQ1D
+                # vmin, vmax = (0, 1.3) ## KH2D
+                vmin, vmax = (0, 1.1) ## BLBQ1D
                 # vmin, vmax = (0, 0.6) ## SS2D
                 # vmin, vmax = (0, 0.5) ## J1J2J3
                 # vmin, vmax = (0, 0.6) ## J1J2J3 0.125

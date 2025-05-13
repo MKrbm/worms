@@ -54,10 +54,10 @@ def find_info_txt_files(directory_path: Union[str, Path]) -> List[Path]:
 def extract_info_from_txt(file_path: Path) -> Dict[str, Union[float, Path]]:
     """Extract information from the given info.txt file."""
     patterns = {
-        "best_loss": r"best loss: ([\d.e-]+)",
-        "initial_loss": r"initial loss: ([\d.e-]+)",
-        "hamiltonian_path": r"hamiltonian was saved to ([/\w._-]+)",
-        "unitary_path": r"best loss was saved to ([/\w._-]+)"
+        "best_loss": r"best loss: ([\d.e+-]+)",
+        "initial_loss": r"initial loss: ([\d.e+-]+)",
+        "hamiltonian_path": r"hamiltonian was saved to ([^\s]+)",
+        "unitary_path": r"best loss was saved to ([^\s]+)"
     }
     res = {}
 
@@ -83,12 +83,9 @@ def extract_info_from_txt(file_path: Path) -> Dict[str, Union[float, Path]]:
     return res
 
 def top_k_upath(search_path: Path, k: int = 10) -> List[tuple[float, Path]]:
-
     """
     Get the top k unitary paths and their corresponding loss values.
     """
-
-
     if not search_path.exists():
         raise ValueError(f"The given search path {search_path} does not exist.")
     if not search_path.is_dir():
@@ -96,11 +93,24 @@ def top_k_upath(search_path: Path, k: int = 10) -> List[tuple[float, Path]]:
     
     # get all the paths to files that contain "u"
     unitary_paths = list(search_path.rglob("u"))
-    loss_vals = [float(re.search(r"[\d.]+", path.parent.name).group()) for path in unitary_paths if re.search(r"[\d.]+", path.parent.name)]
-
-    #argsort loss_vals
-    sorted_indices = np.argsort(loss_vals)
-    return [(loss_vals[i], unitary_paths[i]) for i in sorted_indices[:k]]
+    
+    # Extract loss values, handling both regular and scientific notation
+    loss_paths_pairs = []
+    for path in unitary_paths:
+        match = re.search(r"loss_([\d.e+-]+)", path.parent.name)
+        if match:
+            try:
+                loss_val = float(match.group(1))
+                loss_paths_pairs.append((loss_val, path))
+            except ValueError:
+                # Skip if conversion fails
+                continue
+    
+    # Sort by loss values
+    sorted_pairs = sorted(loss_paths_pairs, key=lambda x: x[0])
+    
+    # Return top k
+    return sorted_pairs[:k]
 
 
 def get_worm_path(

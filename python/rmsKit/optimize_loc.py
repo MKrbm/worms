@@ -137,7 +137,7 @@ if __name__ == "__main__":
     model.reset_params(torch.eye(sps))
 
     initial_loss, initial_negativity = loss(model())
-    logging.info(f"initial loss = {initial_loss}, initial negativity = {initial_negativity}")
+    logging.info(f"initial loss = {initial_loss:.6e}, initial negativity = {initial_negativity:.6e}")
 
     best_loss = initial_loss.item()
     best_us = [
@@ -168,16 +168,16 @@ if __name__ == "__main__":
 
             loss_val_optim = loss_val + weight * negativity * np.exp(-decay * t)
             loss_val_item = loss_val.item()
-            if loss_val_item < local_best_loss:
-                with torch.no_grad():
-                    local_best_loss = np.copy(loss_val_item)
-                    local_best_us = [np.copy(p.data.detach().cpu().numpy())
-                                     for p in model.parameters()]
+            # if loss_val_item < local_best_loss:
+            with torch.no_grad():
+                local_best_loss = np.copy(loss_val_item)
+                local_best_us = [np.copy(p.data.detach().cpu().numpy())
+                                    for p in model.parameters()]
 
             loss_val_optim.backward()
             if (t+1) % (epochs // num_print) == 0 or t == 0:
                 logging.info(
-                    f"I: {i + 1}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss: {loss_val.item()}", )
+                    f"I: {i + 1}/{len(seed_list)} : Epoch: {t+1}/{epochs}, Loss: {loss_val.item():.6e}", )
             optimizer.step()
 
         if local_best_loss < best_loss:
@@ -186,11 +186,11 @@ if __name__ == "__main__":
 
         time_elapsed = time.time() - start
         logging.info(
-            f"""best loss at epoch {epochs}: {local_best_loss}, best loss so far: {best_loss},
-            time elapsed: {time_elapsed:.4f} seconds"""
+            f"""best loss at epoch {epochs}: {local_best_loss:.6e}, best loss so far: {best_loss:.6e},
+            time elapsed: {time_elapsed:.4e} seconds"""
         )
 
-        u_path_epoch = u_path / f"loss_{local_best_loss:.7f}/u"
+        u_path_epoch = u_path / f"loss_{local_best_loss:.6e}/u"
         u_path_epoch.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
         save_npy(u_path_epoch, [np.ascontiguousarray(u) for u in local_best_us])
 
@@ -203,15 +203,15 @@ if __name__ == "__main__":
             """
             The best loss and the actual loss do not match.
             Something is wrong with the optimization.
-            best_loss: {} and actual loss: {}
+            best_loss: {:.6e} and actual loss: {:.6e}
             """.format(best_loss, current_loss.item()))
         raise ValueError("Best loss and actual loss do not match")
 
-    u_path_epoch = u_path / f"loss_{best_loss:.7f}/u"
+    u_path_epoch = u_path / f"loss_{best_loss:.6e}/u"
     save_npy(u_path_epoch, [np.ascontiguousarray(u) for u in best_us])
 
-    logging.info(f"best loss: {best_loss} / initial loss: {initial_loss}")
-    logging.info(f"best loss was saved to {u_path}/loss_{best_loss:.7f}/u")
+    logging.info(f"best loss: {best_loss:.6e} / initial loss: {initial_loss:.6e}")
+    logging.info(f"best loss was saved to {u_path}/loss_{best_loss:.6e}/u")
     logging.info(f"hamiltonian was saved to {h_path}/H")
 
     if args.symoblic_link is not None:
@@ -237,19 +237,19 @@ if __name__ == "__main__":
                 prev_best_loss = float(match.group(1))
                 prev_initial_loss = float(match.group(2))
                 logging.info(
-                    "Previous best loss: {} and previous initial loss: {}".format(
+                    "Previous best loss: {:.6e} and previous initial loss: {:.6e}".format(
                         prev_best_loss, prev_initial_loss))
                 if prev_initial_loss != initial_loss:
                     logging.warning(
-                        f"initial loss in info.txt ({prev_initial_loss}) does not match with the current initial loss ({initial_loss})")
+                        f"initial loss in info.txt ({prev_initial_loss:.6e}) does not match with the current initial loss ({initial_loss:.6e})")
                     logging.warning("Delete old info.txt and create a new one")
                 if prev_best_loss > best_loss:
                     logging.info(
-                        f"New best loss is found. Update info.txt file. Loss was {prev_best_loss} and now {best_loss}")
+                        f"New best loss is found. Update info.txt file. Loss was {prev_best_loss:.6e} and now {best_loss:.6e}")
                 else:
                     new_info = False
                     logging.info(
-                        f"Best loss did not change. Do not update info.txt file. Loss was {prev_best_loss} and now {best_loss}")
+                        f"Best loss did not change. Do not update info.txt file. Loss was {prev_best_loss:.6e} and now {best_loss:.6e}")
             else:
                 logging.warning(
                     "Could not find best_loss and initial_loss from info.txt. Delete old info.txt and create a new one")
@@ -258,8 +258,8 @@ if __name__ == "__main__":
 
     if new_info:
         with open(info_path, "w") as f:
-            best_unitary_path = u_path / f"loss_{best_loss:.7f}" / "u"
+            best_unitary_path = u_path / f"loss_{best_loss:.6e}" / "u"
             hamiltonian_path = h_path / "H"
-            f.write(f"best loss: {best_loss} / initial loss: {initial_loss}\n")
+            f.write(f"best loss: {best_loss:.6e} / initial loss: {initial_loss:.6e}\n")
             f.write(f"best loss was saved to {best_unitary_path.resolve()}\n")
             f.write(f"hamiltonian was saved to {hamiltonian_path.resolve()}\n")
