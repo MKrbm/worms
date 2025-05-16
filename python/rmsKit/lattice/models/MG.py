@@ -25,7 +25,8 @@ def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
     J1 = params["J1"]
     J2 = params["J2"]
     J3 = params["J3"]
-    lt = params["lt"]
+    lt = int(params["lt"])
+    print(f"lt = {lt}")
     h_bond = SzSz + SxSx + SySy
 
     u_dimer = np.array([
@@ -35,6 +36,7 @@ def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
         [0, 1 / np.sqrt(2), 1 / np.sqrt(2), 0],
     ])
     Ud = np.kron(u_dimer, u_dimer)
+    print(f"lt = {lt} but {lt != 2}, {type(lt)}")
     if lt == 2:
         # n: MG model has 3 bonds per site.
         _h = utils.sum_ham(h_bond, [[0, 2]], 4, 2) * J1
@@ -43,7 +45,7 @@ def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
         _h += utils.sum_ham(h_bond, [[0, 1], [2, 3]], 4, 2) * J2 / 2
         h = _h
         sps = 4
-    if lt == -2:
+    elif lt == -2:
         # n: MG model has 3 bonds per site.
         _h = utils.sum_ham(h_bond, [[0, 2]], 4, 2) * J1
         _h += utils.sum_ham(h_bond, [[1, 3]], 4, 2) * J1

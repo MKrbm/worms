@@ -12,6 +12,7 @@ models = [
     "FF2D",
     "BLBQ1D",
     "MG1D",
+    "MG1D8",
     "SS2D",
 ]
 # minimum energy solver, quasi energy solver

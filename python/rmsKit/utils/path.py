@@ -56,8 +56,7 @@ def extract_info_from_txt(file_path: Path) -> Dict[str, Union[float, Path]]:
     patterns = {
         "best_loss": r"best loss: ([\d.e+-]+)",
         "initial_loss": r"initial loss: ([\d.e+-]+)",
-        "hamiltonian_path": r"hamiltonian was saved to ([^\s]+)",
-        "unitary_path": r"best loss was saved to ([^\s]+)"
+        "hamiltonian_path": r"hamiltonian was saved to ([^\s]+)"
     }
     res = {}
 
@@ -115,7 +114,7 @@ def top_k_upath(search_path: Path, k: int = 10) -> List[tuple[float, Path]]:
 
 def get_worm_path(
         search_path: Path,
-        ) -> Tuple[float, float, Path, Path, Path]:
+        ) -> Tuple[float, float, Path, Path]:
     """
     Extracts the paths to the model hamiltonian and optimized unitary based on information found in 'info.txt' files within a given directory.
 
@@ -148,24 +147,24 @@ def get_worm_path(
     info_txt_file = info_txt_files[0]
     extracted_info = extract_info_from_txt(info_txt_file)
 
-    if not isinstance(extracted_info["unitary_path"], Path):
-        raise ValueError(f"The unitary path in the info.txt file is not a Path object: {extracted_info['unitary_path']}")
+    # if not isinstance(extracted_info["unitary_path"], Path):
+    #     raise ValueError(f"The unitary path in the info.txt file is not a Path object: {extracted_info['unitary_path']}")
     if not isinstance(extracted_info["hamiltonian_path"], Path):
         raise ValueError(f"The hamiltonian path in the info.txt file is not a Path object: {extracted_info['hamiltonian_path']}")
 
     # Ensure paths are Path objects
-    unitary_path = cast(Path, extracted_info["unitary_path"])
+    # unitary_path = cast(Path, extracted_info["unitary_path"])
     hamiltonian_path = cast(Path, extracted_info["hamiltonian_path"])
 
-    if not unitary_path.exists():
-        raise ValueError(f"The path to the optimized unitary {unitary_path} does not exist.")
+    # if not unitary_path.exists():
+    #     raise ValueError(f"The path to the optimized unitary {unitary_path} does not exist.")
     if not hamiltonian_path.exists():
         raise ValueError(f"The path to the model hamiltonian {hamiltonian_path} does not exist.")
 
     loss = cast(float, extracted_info["best_loss"])
     initial_loss = cast(float, extracted_info["initial_loss"])
 
-    return loss, initial_loss, unitary_path, hamiltonian_path, info_txt_file
+    return loss, initial_loss, hamiltonian_path, info_txt_file
 
 def find_summary_files(directory_path: Union[str, Path]) -> List[Dict[str, Path]]:
     dir_path = Path(directory_path).resolve()

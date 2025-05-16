@@ -240,6 +240,8 @@ def run_worm(
     T = round(T, 5)
     cmd = [
         "mpirun",
+        "--report-bindings",
+        "--bind-to", "none",
         "-n" if n >= 1 else "",
         str(n) if n >= 1 else "",
         executable_name,
@@ -291,5 +293,7 @@ def run_worm(
             logger.error("Error output: %s", out.stdout.decode())
             logger.error("command: %s", command)
             raise RuntimeError(error_message)
+    
+    print("out.stdout: \n", out.stdout.decode())
 
     return out

@@ -100,8 +100,18 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
 
         
         x_param, y_param = heatmap_params
-        x_values = np.sort(filtered_df[x_param].unique())
-        y_values = np.sort(filtered_df[y_param].unique())
+        # x_values = np.sort(filtered_df[x_param].unique())
+        # y_values = np.sort(filtered_df[y_param].unique())
+        
+        # Round values to multiples of 0.5
+        # x_values = np.array([np.round(val * 2) / 2 for val in x_values])
+        # y_values = np.array([np.round(val * 2) / 2 for val in y_values])
+        x_values = np.round(np.arange(0, 4.2, 0.2), 2)
+        y_values = np.round(np.arange(0, 4.2, 0.2), 2)
+        
+        # Remove duplicates after rounding
+        # x_values = np.unique(x_values)
+        # y_values = np.unique(y_values)
         x, y = np.meshgrid(x_values, y_values)
 
         zs = {
@@ -133,9 +143,9 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
                 au = df_u["as"].values[idx]
                 au_err = df_u["as_error"].values[idx]
 
-                if np.abs(au) < np.abs(au_err) * 0.001:
-                    au = np.nan
-                    au_err = np.nan
+                # if np.abs(au) < np.abs(au_err) * 0.001:
+                #     au = np.nan
+                #     au_err = np.nan
                 
                 au_err *= np.sqrt(N)
 
@@ -151,9 +161,9 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
                 ah = df_h["as"].min()
                 ah_err = df_h["as_error"].min() * np.sqrt(N)
 
-                if np.abs(ah) < np.abs(ah_err) * 0.001:
-                    ah = 0
-                    ah_err = np.infty
+                # if np.abs(ah) < np.abs(ah_err) * 0.001:
+                #     ah = 0
+                #     ah_err = np.infty
 
             au = np.maximum(au, 1e-5)
             ah = np.maximum(ah, 1e-5)
@@ -202,7 +212,7 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
         print(zs["Loss (optimized)"])
 
         # Plotting
-        fig, ax = plt.subplots(2, 2, figsize=(13, 13))
+        fig, ax = plt.subplots(2, 2, figsize=(15, 15))
         try:
             max_loss = max(np.max(zs["Loss (optimized)"]), np.max(zs["Loss (original)"]))
         except BaseException as e:
@@ -214,13 +224,17 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
         if np.abs(max_loss) < 1e-5:
             max_loss = 1
 
+        # Set the same ticks for all subplots
+        x_ticks = np.linspace(x.min(), x.max(), 9)
+        y_ticks = np.linspace(y.min(), y.max(), 9)
+
         for i, (key, z) in enumerate(zs.items()):
             Z = np.array(z).reshape(x.shape)
             if "eta" in key:
                 # vmin, vmax = (0, 1.3) ## KH2D
-                vmin, vmax = (0, 1.1) ## BLBQ1D
+                # vmin, vmax = (0, 1.1) ## BLBQ1D
                 # vmin, vmax = (0, 0.6) ## SS2D
-                # vmin, vmax = (0, 0.5) ## J1J2J3
+                vmin, vmax = (0, 1.) ## J1J2J3
                 # vmin, vmax = (0, 0.6) ## J1J2J3 0.125
             elif "Loss" in key:
                 vmin, vmax = (0, max_loss)
@@ -235,20 +249,30 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
             else:
                 colormap = 'RdPu_r'  # Colormap for other plots
             if "eeeee" in key:
-                c = ax[i % 2, i // 2].imshow(Z, cmap=colormap, aspect="auto",
+                c = ax[i % 2, i // 2].imshow(Z, cmap=colormap, aspect="equal",
                                             extent=[x.min(), x.max(), y.min(), y.max()],
                                             origin='lower', interpolation='none')
             else:
-                c = ax[i % 2, i // 2].imshow(Z, cmap=colormap, vmin=vmin, vmax=vmax, aspect="auto",
+                c = ax[i % 2, i // 2].imshow(Z, cmap=colormap, vmin=vmin, vmax=vmax, aspect="equal",
                                             extent=[x.min(), x.max(), y.min(), y.max()],
                                             origin='lower', interpolation='none')
+            
+            # Set the same ticks for all subplots
+            ax[i % 2, i // 2].set_xticks(x_ticks)
+            ax[i % 2, i // 2].set_yticks(y_ticks)
+            
             ax[i % 2, i // 2].set_title(key, fontsize=25)
             ax[i % 2, i // 2].set_xlabel(x_param, fontsize=20)
             ax[i % 2, i // 2].set_ylabel(y_param, fontsize=20)
             # Adjust font size for tick labels
             ax[i % 2, i // 2].tick_params(axis='both', which='major', labelsize=18)
-            cbar = fig.colorbar(c, ax=ax[i % 2, i // 2], fraction=0.06, pad=0.04)
+            
+            # Create a smaller colorbar
+            divider = make_axes_locatable(ax[i % 2, i // 2])
+            cax = divider.append_axes("right", size="3%", pad=0.15)
+            cbar = fig.colorbar(c, cax=cax)
             cbar.ax.tick_params(labelsize=18)  # Adjust font size for color map text
+            
             if "Loss" in key or "eta" in key:
                 pass
             else:
@@ -280,10 +304,11 @@ if model_name == "HXYZ2D":
                 df.hx.unique())}
     plot_heatmap(df, fixed_params_HXYZ2D, ('Jx', 'Jy'), model_name, image_model_dir)
 
-elif model_name == "MG1D":
+elif "MG1D" in model_name:
     fixed_params_MG1D = {
-        "temperature": [0.125],
+        "temperature": [0.25],
         "n_sites": [10],
+        "loss_func": ["2_mel"]
     }
     plot_heatmap(df, fixed_params_MG1D, ('J2', 'J3'), model_name, image_model_dir)
 
@@ -292,7 +317,7 @@ elif model_name == "BLBQ1D":
         "temperature": [0.25],
         "n_sites": [10],
         "J0": [1],
-        "bc": ["obc", "pbc"]
+        "bc": ["obc", "pbc"],
     }
     plot_heatmap(df, fixed_params_BLBQ1D, ('J1', 'hx'), model_name, image_model_dir)
 

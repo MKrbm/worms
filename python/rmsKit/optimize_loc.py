@@ -31,7 +31,7 @@ parser = get_parser()
 
 # add symbolic link to generated hamiltonian and unitary
 parser.add_argument(
-    "--symoblic_link",
+    "--symbolic_link",
     type=Path,  # Changed to Path for direct pathlib support
     default=None,
     help="The symbolic link to the directory the generated hamiltonian and unitary are stored.",
@@ -214,8 +214,8 @@ if __name__ == "__main__":
     logging.info(f"best loss was saved to {u_path}/loss_{best_loss:.6e}/u")
     logging.info(f"hamiltonian was saved to {h_path}/H")
 
-    if args.symoblic_link is not None:
-        symb_path = args.symoblic_link
+    if args.symbolic_link is not None:
+        symb_path = args.symbolic_link
         logging.info(f"Link is {symb_path.resolve()}")
         if symb_path.exists():
             logging.info(f"Remove existing link {symb_path}")
