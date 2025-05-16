@@ -97,12 +97,12 @@ namespace model {
 
     for (int i=0; i<path_list.size(); i++) {
       auto path = path_list[i];
-      auto pair = load_npy(path);
+      auto pair = load_npy<double>(path);
       auto shape = pair.first;
       auto data = pair.second;
 
       auto path2 = path_list2[i];
-      auto pair2 = load_npy(path2);
+      auto pair2 = load_npy<double>(path2);
       auto shape2 = pair2.first;
       auto data2 = pair2.second;
 

@@ -265,7 +265,7 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
 
   for (int p_i = 0; p_i < path_list.size(); p_i++) {
     std::string path = path_list[p_i];
-    auto pair = load_npy(path);
+    auto pair = load_npy<double>(path);
     VS shape = pair.first;
     VD data = pair.second;
     if (shape[0] != shape[1]) {
@@ -434,7 +434,7 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
   }
 
   // load unitary matrix
-  auto pair = load_npy(u_path_npy);
+  auto pair = load_npy<double>(u_path_npy);
   VS u_shape = pair.first;
   VD u_data = pair.second;
   if (u_shape[0] != u_shape[1]) {
@@ -453,7 +453,7 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
   }
   for (int p_i = 0; p_i < path_list.size(); p_i++) {
     std::string path = path_list[p_i];
-    auto pair = load_npy(path);
+    auto pair = load_npy<double>(path);
     VS shape = pair.first;
     VD data = pair.second;
     if (shape[0] != shape[1]) {

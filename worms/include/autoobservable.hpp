@@ -81,7 +81,7 @@ public:
       {
         model::local_operator<MCT> loperator = loperators[p_i];
         std::string path = path_list[p_i];
-        auto pair = load_npy(path);
+        auto pair = load_npy<double>(path);
         VS shape = pair.first;
         VD data = pair.second;
         size_t S = shape[0];
