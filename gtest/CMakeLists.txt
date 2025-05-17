@@ -7,6 +7,7 @@ set (test_src
      local_hams
      optype
      HXXX
+     lnpy
     )
 
 
