@@ -1,3 +1,4 @@
+// load_npy.cpp
 #include <npy.hpp>
 #include <iostream>
 #include <complex>
@@ -5,9 +6,7 @@
 #include <cstring>
 #include <stdexcept>
 
-// -----------------------------------------------------------------
-// Template definition (you can also inline this in the header)
-// -----------------------------------------------------------------
+// primary, real‐valued loader:
 template<typename T>
 std::pair<std::vector<unsigned long>, std::vector<T>>
 load_npy(const std::string& path) {
@@ -15,23 +14,55 @@ load_npy(const std::string& path) {
     std::vector<T> data;
     bool fortran_order;
     try {
-        // this will automatically pick the right overload
         npy::LoadArrayFromNumpy(path, shape, fortran_order, data);
     }
     catch(const std::exception& e) {
-        std::cerr << "I/O error while reading npy file : "
+        std::cerr << "I/O error while reading npy file: "
                   << path << " : " << e.what() << "\n";
         std::exit(127);
     }
     return { shape, data };
 }
 
-// Explicit instantiations so linker can pick them up:
-template std::pair<std::vector<unsigned long>, std::vector<double>>
-    load_npy<double>(const std::string& path);
+// specialization for complex<double>:
+template<>
+std::pair<std::vector<unsigned long>, std::vector<std::complex<double>>>
+load_npy<std::complex<double>>(const std::string& path) {
+    std::vector<unsigned long> shape;
+    bool fortran_order;
 
-template std::pair<std::vector<unsigned long>, std::vector<std::complex<double>>>
-    load_npy<std::complex<double>>(const std::string& path);
+    // first try to read as complex<double> directly
+    std::vector<std::complex<double>> cdata;
+    try {
+        npy::LoadArrayFromNumpy(path, shape, fortran_order, cdata);
+        return { shape, cdata };
+    }
+    catch(...) {
+      // if that fails, fall back to reading as real<double>
+    }
+
+    // fallback: load real data and zero‐pad imaginary parts
+    std::vector<double> rdata;
+    try {
+        npy::LoadArrayFromNumpy(path, shape, fortran_order, rdata);
+    }
+    catch(const std::exception& e) {
+        std::cerr << "I/O error while reading npy file (real fallback): "
+                  << path << " : " << e.what() << "\n";
+        std::exit(127);
+    }
+
+    cdata.resize(rdata.size());
+    for (size_t i = 0; i < rdata.size(); ++i) {
+        cdata[i] = std::complex<double>(rdata[i], 0.0);
+    }
+    return { shape, cdata };
+}
+
+// force instantiation of the primary template for double
+template std::pair<std::vector<unsigned long>, std::vector<double>>
+load_npy<double>(const std::string&);
+
 
 
 // -----------------------------------------------------------------

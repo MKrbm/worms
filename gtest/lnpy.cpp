@@ -46,3 +46,21 @@ TEST(LoadNpyTest, ComplexArrayLoad) {
 
     fs::remove(tmp);
 }
+
+TEST(LoadNpyTest, RealArrayLoadComplex) {
+    // Write a small real-valued array to a temporary .npy file
+    fs::path tmp = fs::temp_directory_path() / "test_real.npy";
+    std::vector<unsigned long> shape = {2, 3};
+    std::vector<double> data = {1, 2, 3, 4, 5, 6};
+    GTEST_COUT << "Real array tmp path: " << tmp.string() << std::endl;
+    npy::SaveArrayAsNumpy(tmp.string(), false, shape.size(), shape.data(), data);
+
+    // Load it via the wrapper overload (defaults to double)
+    auto [loaded_shape, loaded_data] = load_npy<std::complex<double>>(tmp.string());
+    // EXPECT_EQ(loaded_shape, shape);
+    // EXPECT_EQ(loaded_data, data);
+    GTEST_COUT << "Loaded shape: " << loaded_shape[0] << ", " << loaded_shape[1] << std::endl;
+    GTEST_COUT << "Loaded data: " << loaded_data[0] << ", " << loaded_data[1] << std::endl;
+
+    fs::remove(tmp);
+}

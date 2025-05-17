@@ -133,7 +133,6 @@ namespace model {
 
 
 
-*/
 template <int N_op, size_t _max_sps, size_t MAX_L, class MC>
 class model::base_spin_model{
 protected:
