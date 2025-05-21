@@ -29,7 +29,7 @@ typedef bcl::heatbath MC;
 void run_worm(
     model::base_model<MC> &spin,
     double T, size_t sweeps, size_t therms,
-    std::vector<batch_res> &res,
+    std::vector<batch_res_complex> &res,
     model::observable &obs,
     model::base_lattice &lat,
     model::WormObs wobs = model::WormObs(2))
@@ -39,17 +39,17 @@ void run_worm(
   double r;
   exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, ac_res, obs, wobs, r);
 
-  batch_res as = res[0];  // average sign
-  batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
-  batch_res sglt = res[2];
-  batch_res n_neg_ele = res[3];
-  batch_res n_ops = res[4];
-  batch_res N2 = res[5];
-  batch_res N = res[6];
-  batch_res dH = res[7];         // $\frac{\frac{\partial}{\partial h}Z}{Z}$
-  batch_res dH2 = res[8];        // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
-  batch_res worm_obs = res[9];   // depends on the definition of worm observable
-  batch_res phys_conf = res[10]; // number of physical configurations
+  batch_res_complex as = res[0];  // average sign
+  batch_res_complex ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
+  batch_res_complex sglt = res[2];
+  batch_res_complex n_neg_ele = res[3];
+  batch_res_complex n_ops = res[4];
+  batch_res_complex N2 = res[5];
+  batch_res_complex N = res[6];
+  batch_res_complex dH = res[7];         // $\frac{\frac{\partial}{\partial h}Z}{Z}$
+  batch_res_complex dH2 = res[8];        // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
+  batch_res_complex worm_obs = res[9];   // depends on the definition of worm observable
+  batch_res_complex phys_conf = res[10]; // number of physical configurations
 
   std::function<double(double, double, double)> f;
 
@@ -126,7 +126,7 @@ TEST(WormTest, HXXX1D)
 
   model::observable obs(spin, obs_path, false);
   model::WormObs wobs(spin.sps_sites(0), wobs_path);
-  vector<batch_res> res;
+  vector<batch_res_complex> res;
   double T;
   size_t sweeps, therms;
 

@@ -85,7 +85,9 @@ TEST(ModelTest, HeisenbergUnitary) {
 
   for (size_t i = 0; i < h1.size(); i++) {
     for (size_t j = 0; j < h1[i].size(); j++) {
-      EXPECT_NEAR(h1[i][j], h2[i][j], 1E-8);
+      // EXPECT_NEAR(h1[i][j], h2[i][j], std::complex<double>(1E-8, 1E-8));
+      EXPECT_NEAR(std::real(h1[i][j]), std::real(h2[i][j]), 1E-8);
+      EXPECT_NEAR(std::imag(h1[i][j]), std::imag(h2[i][j]), 1E-8);
     }
   }
 }
@@ -115,7 +117,8 @@ TEST(ModelTest, KagomeUnitary) {
     auto h2 = spin2.loperators[n].ham();
     for (size_t i = 0; i < h1.size(); i++) {
       for (size_t j = 0; j < h1[i].size(); j++) {
-        EXPECT_NEAR(h1[i][j], h2[i][j], 1E-8);
+        EXPECT_NEAR(std::real(h1[i][j]), std::real(h2[i][j]), 1E-8);
+        EXPECT_NEAR(std::imag(h1[i][j]), std::imag(h2[i][j]), 1E-8);
       }
     }
   }

@@ -1,0 +1,3 @@
+best loss: 0.0 / initial loss: 0.02383596708314517
+best loss was saved to /Users/keisuke/Documents/projects/todo/worms2/python/rmsKit/array/torch/BLBQ1D_loc/J0_1_J1_-0.5_hx_0.3_hz_0/1_mel/radam/lr_0.01_epoch_1000/loss_0.0000000/u
+hamiltonian was saved to /Users/keisuke/Documents/projects/todo/worms2/python/rmsKit/array/torch/BLBQ1D_loc/J0_1_J1_-0.5_hx_0.3_hz_0/1_mel/H

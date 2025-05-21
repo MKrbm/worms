@@ -25,8 +25,10 @@
 #include "automodel.hpp"
 
 // batch_obs type is used to store results of observables
-typedef alps::alea::batch_acc<double> batch_obs;
+typedef alps::alea::batch_acc<std::complex<double>> batch_obs;
+typedef alps::alea::batch_acc<double> batch_obs_real;
 typedef alps::alea::batch_result<double> batch_res;
+typedef alps::alea::batch_result<std::complex<double>> batch_res_complex;
 
 namespace model
 {
@@ -225,6 +227,12 @@ public:
 
   batch_obs &get_batch_obs() { return *this; }
   WormObs &operator<<(double x)
+  {
+    static_cast<batch_obs &>(*this) << x;
+    return *this;
+  }
+
+  WormObs &operator<<(std::complex<double> x)
   {
     static_cast<batch_obs &>(*this) << x;
     return *this;

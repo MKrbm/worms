@@ -59,13 +59,13 @@ class Worm {
 
  private:
   model::MapWormObs _mp_worm_obs;
-  alps::alea::batch_acc<double> _phys_cnt;
+  alps::alea::batch_acc<std::complex<double>> _phys_cnt;
 
   // n*  number of physically meaningful configurations;
-  double phys_cnt;
+  std::complex<double> phys_cnt;
   // n*  sum of observables encountered while worm update. (observable must be
   // non-diagonal operator)
-  std::vector<double> obs_sum;
+  std::vector<std::complex<double>> obs_sum;
 
   // n* maximum diagonal value of local operator.
 
@@ -117,7 +117,7 @@ class Worm {
 
   // end of define observables
 
-  int sign = 1;
+  std::complex<double> sign = 1;
   int cnt = 0;
   const int L;  // n* number of sites
   const int N_op;
@@ -132,7 +132,7 @@ class Worm {
   std::unordered_map<std::string, WormObs> &get_worm_obs() {
     return _mp_worm_obs();
   }
-  alps::alea::batch_acc<double> &get_phys_cnt() { return _phys_cnt; }
+  alps::alea::batch_acc<std::complex<double>> &get_phys_cnt() { return _phys_cnt; }
 
   Worm(double beta, MODEL model_, size_t cl = SIZE_MAX, int rank = 0,
        int seed = SEED)
@@ -277,9 +277,9 @@ class Worm {
                         int fl, int dir);
   bool detectWormCross(double tau, double tau_prime, double wt_tau, int dir);
   void reset_ops();
-  double get_single_flip_elem(const OP_type &op);
-  double get_single_flip_elem(int site, int x, int x_prime, state_t _state);
-  double get_single_flip_elem(int site, int x, int x_prime, state_t _state,
+  std::complex<double> get_single_flip_elem(const OP_type &op);
+  std::complex<double> get_single_flip_elem(int site, int x, int x_prime, state_t _state);
+  std::complex<double> get_single_flip_elem(int site, int x, int x_prime, state_t _state,
                               state_t &nn_state);
 
   /*

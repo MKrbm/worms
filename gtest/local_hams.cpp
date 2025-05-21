@@ -10,6 +10,8 @@
 #include <argparse.hpp>
 #include <observable.hpp>
 #include <funcs.hpp>
+#include <iostream>
+#include <string>
 
 #include "gtest/gtest.h"
 #include "dataset.hpp"
@@ -39,7 +41,7 @@ int seed = 1681255693;
 auto rand_src = engine_type(seed);
 
 std::vector<size_t> shapes = {4, 4};
-  double alpha = 1 / 6.0;
+double alpha = 1 / 6.0;
 model::base_lattice lat("triangular lattice", "anisotropic triangular", shapes, "../config/lattices.xml", false);
 string ham_path = "../gtest/model_array/KH/smel/H1";
 model::base_model<MC> spin(lat, {8}, ham_path, {1, 1, 1}, {0, 1, 2}, 0.1, false, false, false, alpha);
@@ -66,19 +68,19 @@ TEST(HamsTest, Kagome4x4SplitTest2)
       auto bond_index = bond_func.num2state(j, 2);
       if (bond_index[0] == bond_index[1]){
         double val = lop.ham_vector(j);
-        val += lop.single_flip(0, index[1])[index[0]][index[0]] + lop.single_flip(1, index[0])[index[1]][index[1]];
-        EXPECT_NEAR(val, lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+        val += std::real(lop.single_flip(0, index[1])[index[0]][index[0]]) + std::real(lop.single_flip(1, index[0])[index[1]][index[1]]);
+        EXPECT_NEAR(val, std::real(lop.ham_prime()[bond_index[0]][bond_index[1]]), 1E-8);
       } else {
         if (index[0] == index[2]){
-          double val = lop.single_flip(true, index[0])[index[1]][index[3]];
-          EXPECT_NEAR(val, lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+          double val = std::real(lop.single_flip(true, index[0])[index[1]][index[3]]);
+          EXPECT_NEAR(val, std::real(lop.ham_prime()[bond_index[0]][bond_index[1]]), 1E-8);
           EXPECT_FLOAT_EQ(val, 0);
         } else if (index[1] == index[3]){
-          double val = lop.single_flip(false, index[1])[index[0]][index[2]];
-          EXPECT_NEAR(val, lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+          double val = std::real(lop.single_flip(false, index[1])[index[0]][index[2]]);
+          EXPECT_NEAR(val, std::real(lop.ham_prime()[bond_index[0]][bond_index[1]]), 1E-8);
           EXPECT_FLOAT_EQ(val, 0);
         } else {
-          EXPECT_NEAR(lop.ham_vector(j) * lop.signs[j], lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+          EXPECT_NEAR(lop.ham_vector(j) * std::real(lop.signs[j]), std::real(lop.ham_prime()[bond_index[0]][bond_index[1]]), 1E-8);
         }
       }
     }
@@ -102,17 +104,17 @@ TEST(HamsTest, Kagome4x4SplitTest)
       auto bond_index = bond_func.num2state(j, 2);
       if (bond_index[0] == bond_index[1]){
         double val = lop.ham_vector(j);
-        val += lop.single_flip(0, index[1])[index[0]][index[0]] + lop.single_flip(1, index[0])[index[1]][index[1]];
-        EXPECT_NEAR(val, lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+        val += std::real(lop.single_flip(0, index[1])[index[0]][index[0]]) + std::real(lop.single_flip(1, index[0])[index[1]][index[1]]);
+        EXPECT_NEAR(val, std::real(lop.ham_prime()[bond_index[0]][bond_index[1]]), 1E-8);
       } else {
         if (index[0] == index[2]){
-          double val = lop.single_flip(true, index[0])[index[1]][index[3]];
-          EXPECT_NEAR(val, lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+          double val = std::real(lop.single_flip(true, index[0])[index[1]][index[3]]);
+          EXPECT_NEAR(val, std::real(lop.ham_prime()[bond_index[0]][bond_index[1]]), 1E-8);
         } else if (index[1] == index[3]){
-          double val = lop.single_flip(false, index[1])[index[0]][index[2]];
-          EXPECT_NEAR(val, lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+          double val = std::real(lop.single_flip(false, index[1])[index[0]][index[2]]);
+          EXPECT_NEAR(val, std::real(lop.ham_prime()[bond_index[0]][bond_index[1]]), 1E-8);
         } else {
-          EXPECT_NEAR(lop.ham_vector(j) * lop.signs[j], lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+          EXPECT_NEAR(lop.ham_vector(j) * std::real(lop.signs[j]), std::real(lop.ham_prime()[bond_index[0]][bond_index[1]]), 1E-8);
         }
       }
     }
@@ -184,14 +186,14 @@ TEST(HamsTest, Kagome4x4DiagonalUpdate)
     auto const &accept = solver.accepts[bop_label];
     auto const &bond = solver.bonds[i];
     size_t u = solver.state_funcs[bop_label].state2num(state, bond);
-    weights_bonds[i] = accept[u] * solver.max_diagonal_weight;
+    weights_bonds[i] = std::real(accept[u] * solver.max_diagonal_weight);
   }
 
   for (int i = 0; i < sites.size(); i++)
   {
     //* append single-flip
     double sop_label = spin.site_type[i];
-    double mat_elem = 0;
+    std::complex<double> mat_elem = 0;
     for (auto target : spin.nn_sites[i])
     {
       mat_elem += spin.loperators[target.bt]
@@ -199,7 +201,7 @@ TEST(HamsTest, Kagome4x4DiagonalUpdate)
     }
 
     mat_elem = std::abs(mat_elem);
-    weights_sites[i] = mat_elem;
+    weights_sites[i] = std::real(mat_elem);
   }
 
   std::vector<BC::observable> bops(spin.Nb);
@@ -259,7 +261,7 @@ TEST(HamsTest, Kagome4x4DiagonalUpdate)
     int dir = j / sps;
     int fl = j % sps;
     int num = op3.update_state(dir, fl);
-    markov_mat_elem[j] = std::abs(solver.get_single_flip_elem(op3));
+    markov_mat_elem[j] = std::abs(std::real(solver.get_single_flip_elem(op3)));
     if (fl == 0) {
       markov_mat_elem[j] = 0;
     }
@@ -303,18 +305,18 @@ TEST(HamsTest, Kagome_4x4_aggr)
 
   for (int i = 0; i < spin.loperators.size(); i++)
   {
-    vector<vector<double>> H = spin.loperators[i]._ham;
+    vector<vector<std::complex<double>>> H = spin.loperators[i]._ham;
     double shift = 0;
     double max_elem = std::numeric_limits<double>::lowest();
     for (int i = 0; i < H.size(); i++)
     {
-      shift = std::min(shift, H[i][i]);
-      max_elem = std::max(max_elem, H[i][i]);
+      shift = std::min(shift, std::real(H[i][i]));
+      max_elem = std::max(max_elem, std::real(H[i][i]));
     }
     shift *= -1;
     shift += _shift;
     shifts.push_back(shift);
-    EXPECT_FLOAT_EQ((max_elem + shift) * (1 - alpha), spin.loperators[i].max_diagonal_weight_);
+    EXPECT_FLOAT_EQ((max_elem + shift) * (1 - alpha), std::real(spin.loperators[i].max_diagonal_weight_));
   }
   // cerr << spin.nn_sites << endl;
   double shift = 0;
@@ -325,18 +327,18 @@ TEST(HamsTest, Kagome_4x4_aggr)
     {
       state_t state = state_func.num2state(j, 6);
       double val = 0;
-      val += spin.loperators[0]._ham[state[0] + i * 8][state[0] + i * 8];
-      val += spin.loperators[1]._ham[state[2] + i * 8][state[2] + i * 8];
-      val += spin.loperators[2]._ham[state[4] + i * 8][state[4] + i * 8];
-      val += spin.loperators[0]._ham[state[1] * 8 + i][state[1] * 8 + i];
-      val += spin.loperators[1]._ham[state[3] * 8 + i][state[3] * 8 + i];
-      val += spin.loperators[2]._ham[state[5] * 8 + i][state[5] * 8 + i];
+      val += std::real(spin.loperators[0]._ham[state[0] + i * 8][state[0] + i * 8]);
+      val += std::real(spin.loperators[1]._ham[state[2] + i * 8][state[2] + i * 8]);
+      val += std::real(spin.loperators[2]._ham[state[4] + i * 8][state[4] + i * 8]);
+      val += std::real(spin.loperators[0]._ham[state[1] * 8 + i][state[1] * 8 + i]);
+      val += std::real(spin.loperators[1]._ham[state[3] * 8 + i][state[3] * 8 + i]);
+      val += std::real(spin.loperators[2]._ham[state[5] * 8 + i][state[5] * 8 + i]);
       val += 2 * (shifts[0] + shifts[1] + shifts[2]);
       max_val = std::max(max_val, val);
     }
   }
 
-  EXPECT_FLOAT_EQ(max_val / 2 * alpha, spin.s_flip_max_weights[0]);
+  EXPECT_FLOAT_EQ(max_val / 2 * alpha, std::real(spin.s_flip_max_weights[0]));
 
   double beta = 1;
   size_t cutoff_l = std::numeric_limits<size_t>::max();
@@ -356,19 +358,19 @@ TEST(HamsTest, Kagome_4x4_aggr)
   double max_diag = 0;
   for (int i = 0; i < spin.loperators.size(); i++)
   {
-    max_diag = std::max(max_diag, spin.loperators[i].max_diagonal_weight_);
+    max_diag = std::max(max_diag, std::real(spin.loperators[i].max_diagonal_weight_));
   }
 
   for (int i = 0; i < num_type(spin.site_type); i++)
   {
-    max_diag = std::max(max_diag, spin.s_flip_max_weights[i]);
+    max_diag = std::max(max_diag, std::real(spin.s_flip_max_weights[i]));
   }
   EXPECT_FLOAT_EQ(solver.rho / (spin.Nb + spin.L), max_diag);
 }
 
 TEST(HamsTest, Kagome_2x2_array)
 {
-  vector<vector<double>> H = spin.loperators[0]._ham;
+  vector<vector<std::complex<double>>> H = spin.loperators[0]._ham;
   //* diagonal element at site = (0, 1) spins are = (1, 0)
 
   spin_state::StateFunc state_func(8, 2);
@@ -377,7 +379,7 @@ TEST(HamsTest, Kagome_2x2_array)
   //! Note that the indexing rule of numpy is different from this.
   //! In numpy, {1,0} will be 8 but here it is 1.
   EXPECT_EQ(x, 1);
-  EXPECT_FLOAT_EQ(H[x][x], 0.16666234482156317);
+  EXPECT_FLOAT_EQ(std::real(H[x][x]), 0.16666234482156317);
 
   // d* test single flip operator
   //* end spin is fixed to 3
@@ -386,26 +388,26 @@ TEST(HamsTest, Kagome_2x2_array)
   double shift = 0;
   for (int i = 0; i < H.size(); i++)
   {
-    shift = std::min(shift, H[i][i]);
+    shift = std::min(shift, std::real(H[i][i]));
   }
   shift *= -1;
   shift += 0.1;
-  EXPECT_FLOAT_EQ(shift, spin.loperators[0].ene_shift);
-  EXPECT_FLOAT_EQ(single_flip[1][3], -0.11785105507860531);
+  EXPECT_FLOAT_EQ(shift, std::real(spin.loperators[0].ene_shift));
+  EXPECT_FLOAT_EQ(std::real(single_flip[1][3]), -0.11785105507860531);
 
   // d* diagonal element is little bit tricky
   double elem2 = -0.16666596146430332;
   elem2 += shift;
   elem2 = abs(elem2);
-  EXPECT_FLOAT_EQ(spin.loperators[0].ham_prime()[2 + 3 * 8][2 + 3 * 8], elem2);
-  EXPECT_FLOAT_EQ(single_flip[2][2], elem2 / 2 * alpha);
+  EXPECT_FLOAT_EQ(std::real(spin.loperators[0].ham_prime()[2 + 3 * 8][2 + 3 * 8]), elem2);
+  EXPECT_FLOAT_EQ(std::real(single_flip[2][2]), elem2 / 2 * alpha);
 
   //* fix end site
   auto single_flip2 = spin.loperators[0].single_flip(1, 2);
-  EXPECT_FLOAT_EQ(single_flip2[1][3], -0.11785629850799827);
+  EXPECT_FLOAT_EQ(std::real(single_flip2[1][3]), -0.11785629850799827);
   elem2 = -0.33333079565882834;
   elem2 += shift;
   elem2 = abs(elem2);
-  EXPECT_FLOAT_EQ(spin.loperators[0].ham_prime()[2 + 4 * 8][2 + 4 * 8], elem2);
-  EXPECT_FLOAT_EQ(single_flip2[4][4], elem2 / 2 * alpha);
+  EXPECT_FLOAT_EQ(std::real(spin.loperators[0].ham_prime()[2 + 4 * 8][2 + 4 * 8]), elem2);
+  EXPECT_FLOAT_EQ(std::real(single_flip2[4][4]), elem2 / 2 * alpha);
 }

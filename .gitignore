@@ -36,6 +36,7 @@ Release/
 **/array
 **/array_save
 **/out
+**/*.bak
 # julia
 julia_practice/
 julia_test/
