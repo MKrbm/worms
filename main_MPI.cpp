@@ -26,7 +26,8 @@ fs::path out_dir_name = fs::path("output_worm");
 int main(int argc, char **argv) {
   int rank;
   int size;
-  double elapsed;
+  double elapsed, start_time, end_time;
+
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -387,23 +388,30 @@ int main(int argc, char **argv) {
   alps::alea::autocorr_result<double> ac_res;
 
   // simulate with worm algorithm (parallel computing is enable)
-  vector<batch_res> res;
+  start_time = MPI_Wtime();
+
+  // simulate with worm algorithm (parallel computing is enabled)
+  vector<batch_res_complex> res;
   double break_rate = 0;
   auto map_worm_obs =
       exe_worm_parallel(*spin_ptr, T, sweeps, therms, cutoff_l, fix_wdensity,
                         rank, res, ac_res, obs, mapwobs, break_rate, seed);
 
-  batch_res as = res[0];   // average sign
-  batch_res ene = res[1];  // signed energy i.e. $\sum_i E_i S_i / N_MC$
-  batch_res n_neg_ele = res[2];
-  batch_res n_ops = res[3];
-  batch_res N2 = res[4];
-  batch_res N = res[5];
-  batch_res dH = res[6];   // $\frac{\frac{\partial}{\partial h}Z}{Z}$
-  batch_res dH2 = res[7];  // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
-  batch_res phys_conf = res[8];
+  // --- end timing ---
+  end_time = MPI_Wtime();
+  elapsed = end_time - start_time;
 
-  vector<pair<string, batch_res>> worm_obs;
+  batch_res_complex as = res[0];   // average sign
+  batch_res_complex ene = res[1];  // signed energy i.e. $\sum_i E_i S_i / N_MC$
+  batch_res_complex n_neg_ele = res[2];
+  batch_res_complex n_ops = res[3];
+  batch_res_complex N2 = res[4];
+  batch_res_complex N = res[5];
+  batch_res_complex dH = res[6];   // $\frac{\frac{\partial}{\partial h}Z}{Z}$
+  batch_res_complex dH2 = res[7];  // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
+  batch_res_complex phys_conf = res[8];
+
+  vector<pair<string, batch_res_complex>> worm_obs;
   int i = 0;
   for (auto &obs : map_worm_obs) {
     worm_obs.emplace_back(obs.first, res[9 + i]);
@@ -425,27 +433,26 @@ int main(int argc, char **argv) {
     get<1>(obs).reduce(red_);
   }
 
-  double elapsed_max;
-  double elapsed_min;
+  double elapsed_max, elapsed_min;
   MPI_Allreduce(&elapsed, &elapsed_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
   MPI_Allreduce(&elapsed, &elapsed_min, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
 
   if (setup.have_result) {
-    std::function<double(double, double, double)> f;
+    std::function<std::complex<double>(std::complex<double>, std::complex<double>, std::complex<double>)> f;
 
-    pair<double, double> as_mean =
+    pair<std::complex<double>, std::complex<double>> as_mean =
         jackknife_reweight_single(as);  // calculate <S>
-    pair<double, double> nop_mean =
+    pair<std::complex<double>, std::complex<double>> nop_mean =
         jackknife_reweight_single(n_ops);  // calculate <S>
-    pair<double, double> nnop_mean =
+    pair<std::complex<double>, std::complex<double>> nnop_mean =
         jackknife_reweight_single(n_neg_ele);  // calculate <S>
 
     // n* install
-    pair<double, double> ene_mean =
+    pair<std::complex<double>, std::complex<double>> ene_mean =
         jackknife_reweight_div(ene, as);  // calculate <SH> / <S>
 
     // calculate worm_observable
-    vector<pair<string, pair<double, double>>> worm_obs_mean;
+    vector<pair<string, pair<std::complex<double>, std::complex<double>>>> worm_obs_mean;
     for (auto &obs : worm_obs) {
       auto mean = jackknife_reweight_div(get<1>(obs),
                                          phys_conf);  // calculate <WoS> / <S>
@@ -453,44 +460,43 @@ int main(int argc, char **argv) {
     }
 
     // calculat heat capacity
-    f = [](double x1, double x2, double y) {
+    f = [](std::complex<double> x1, std::complex<double> x2, std::complex<double> y) {
       return (x2 - x1) / y - (x1 / y) * (x1 / y);
     };
-    pair<double, double> c_mean = jackknife_reweight_any(N, N2, as, f);
+    pair<std::complex<double>, std::complex<double>> c_mean = jackknife_reweight_any(N, N2, as, f);
 
     // calculate magnetization
-    pair<double, double> m_mean = jackknife_reweight_div(dH, as);
+    pair<std::complex<double>, std::complex<double>> m_mean = jackknife_reweight_div(dH, as);
 
     // calculate susceptibility
-    f = [](double x1, double x2, double y) {
+    f = [](std::complex<double> x1, std::complex<double> x2, std::complex<double> y) {
       return x2 / y - (x1 / y) * (x1 / y);
     };
-    pair<double, double> chi_mean = jackknife_reweight_any(dH, dH2, as, f);
-
+    pair<std::complex<double>, std::complex<double>> chi_mean = jackknife_reweight_any(dH, dH2, as, f);
     std::cout << "Elapsed time         = " << elapsed_max << "(" << elapsed_min
               << ") sec\n"
               << "Speed                = " << (therms + sweeps) / elapsed_max
               << " MCS/sec\n";
 
     std::cout << "beta                 = " << 1.0 / T << std::endl
-              << "Total Energy         = " << ene_mean.first << " +- "
-              << ene_mean.second << std::endl;
+              << "Total Energy         = " << std::real(ene_mean.first) << " +- "
+              << std::real(ene_mean.second) << std::endl;
 
-    std::cout << "Average sign         = " << as_mean.first << " +- "
-              << as_mean.second << std::endl
-              << "Energy per site      = " << ene_mean.first / n_sites << " +- "
-              << ene_mean.second / n_sites << std::endl
-              << "Specific heat        = " << c_mean.first / n_sites << " +- "
-              << c_mean.second / n_sites << std::endl
-              << "magnetization        = " << m_mean.first * T / n_sites
-              << " +- " << m_mean.second * T / n_sites << std::endl
-              << "susceptibility       = " << chi_mean.first * T / n_sites
-              << " +- " << chi_mean.second * T / n_sites << std::endl;
+    std::cout << "Average sign         = " << std::real(as_mean.first) << " +- "
+              << std::real(as_mean.second) << std::endl
+              << "Energy per site      = " << std::real(ene_mean.first) / (double)n_sites << " +- "
+              << std::real(ene_mean.second) / (double)n_sites << std::endl
+              << "Specific heat        = " << std::real(c_mean.first) / (double)n_sites << " +- "
+              << std::real(c_mean.second) / (double)n_sites << std::endl
+              << "magnetization        = " << std::real(m_mean.first) * T / (double)n_sites
+              << " +- " << std::real(m_mean.second) * T / (double)n_sites << std::endl
+              << "susceptibility       = " << std::real(chi_mean.first) * T / (double)n_sites
+              << " +- " << std::real(chi_mean.second) * T / (double)n_sites << std::endl;
 
     for (auto &obs : worm_obs_mean) {
       fillStringWithSpaces(obs.first, 11);
-      std::cout << obs.first << "          = " << obs.second.first << " +- "
-                << obs.second.second << std::endl;
+      std::cout << obs.first << "          = " << std::real(obs.second.first) << " +- "
+                << std::real(obs.second.second) << std::endl;
     }
 
     std::cout << "----------------------------------------" << std::endl;
@@ -499,11 +505,17 @@ int main(int argc, char **argv) {
               << "M^2                  = " << ac_res.tau()[1] << std::endl
               << "S                    = " << ac_res.tau()[2] << std::endl;
     std::cout << "----------------------------------------" << std::endl;
-    std::cout << "# of operators       = " << nop_mean.first << " +- "
-              << nop_mean.second << std::endl
-              << "# of neg sign op     = " << nnop_mean.first << " +- "
-              << nnop_mean.second << std::endl
+    std::cout << "# of operators       = " << std::real(nop_mean.first) << " +- "
+              << std::real(nop_mean.second) << std::endl
+              << "# of neg sign op     = " << std::real(nnop_mean.first) << " +- "
+              << std::real(nnop_mean.second) << std::endl
               << "break out rate       = " << break_rate << std::endl;
+
+  if (std::abs(std::imag(ene_mean.first)) > 3 * std::real(ene_mean.second)) {
+    std::cout << "Warning: Imaginary part of energy is significant!" << std::endl
+              << "Imaginary part = " << std::imag(ene_mean.first) << std::endl
+              << "3 * error = " << 3 * std::real(ene_mean.second) << std::endl;
+  }
   }
   MPI_Finalize();
 }

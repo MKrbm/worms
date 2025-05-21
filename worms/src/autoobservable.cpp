@@ -272,7 +272,7 @@ namespace model
     pair<vector<size_t>, vector<double>> pair;
     try
     {
-      pair = load_npy(file_path);
+      pair = load_npy<double>(file_path);
     }
     catch (const std::exception &e)
     {

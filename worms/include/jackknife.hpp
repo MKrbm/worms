@@ -63,16 +63,16 @@ return
 mean and error estimated by jackknife
 
 */
-std::pair<double, double> jackknife_reweight_single(alea::batch_result<double> obs){
+std::pair<std::complex<double>, std::complex<double>> jackknife_reweight_single(alea::batch_result<std::complex<double>> obs){
   
   // define transformer
-  auto f = [] (double x) -> double { return x; };
-  alea::batch_result<double> prop = alea::transform(
+  auto f = [] (std::complex<double> x) -> std::complex<double> { return x; };
+  alea::batch_result<std::complex<double>> prop = alea::transform(
                   alea::jackknife_prop(),
-                  alea::make_transformer(std::function<double(double)>(f)),
+                  alea::make_transformer(std::function<std::complex<double>(std::complex<double>)>(f)),
                   obs
                   );
-  return std::make_pair((double)prop.mean()[0], (double)prop.stderror()[0]);
+  return std::make_pair((std::complex<double>)prop.mean()[0], (std::complex<double>)prop.stderror()[0]);
 }
 
 
@@ -91,20 +91,20 @@ return
 mean and error for a model with negative sign problem estimated by jackknife
 
 */
-std::pair<double, double> jackknife_reweight_div(alea::batch_result<double> obs, alea::batch_result<double> as){
+std::pair<std::complex<double>, std::complex<double>> jackknife_reweight_div(alea::batch_result<std::complex<double>> obs, alea::batch_result<std::complex<double>> as){
   
   // define join batch (you can also define join_rbatch by appending another dimension to batch_result<T>)
-  alea::batch_result<double> join_rbatch = alps::alea::join(obs, as); 
+  alea::batch_result<std::complex<double>> join_rbatch = alps::alea::join(obs, as); 
 
   // define transformer
   // esitimator is f(x,y) = x/y
-  auto f = [] (double x, double y) -> double { return x/y; };
-  alea::batch_result<double> prop = alea::transform(
+  auto f = [] (std::complex<double> x, std::complex<double> y) -> std::complex<double> { return x/y; };
+  alea::batch_result<std::complex<double>> prop = alea::transform(
                   alea::jackknife_prop(),
-                  alea::make_transformer(std::function<double(double, double)>(f)),
+                  alea::make_transformer(std::function<std::complex<double>(std::complex<double>, std::complex<double>)>(f)),
                   join_rbatch
                   );
-  return std::make_pair((double)prop.mean()[0], (double)prop.stderror()[0]);
+  return std::make_pair((std::complex<double>)prop.mean()[0], (std::complex<double>)prop.stderror()[0]);
 }
 
 
@@ -128,22 +128,22 @@ return
 mean and error for a model with negative sign problem estimated by jackknife
 
 */
-std::pair<double, double> jackknife_reweight_any(
-                    alea::batch_result<double> obs1, 
-                    alea::batch_result<double> obs2, 
-                    alea::batch_result<double> as,
-                    std::function<double(double, double, double)> f
+std::pair<std::complex<double>, std::complex<double>> jackknife_reweight_any(
+                    alea::batch_result<std::complex<double>> obs1, 
+                    alea::batch_result<std::complex<double>> obs2, 
+                    alea::batch_result<std::complex<double>> as,
+                    std::function<std::complex<double>(std::complex<double>, std::complex<double>, std::complex<double>)> f
 ){
   
   // define join batch (you can also define join_rbatch by appending another dimension to batch_result<T>)
-  alea::batch_result<double> join_rbatch = alps::alea::join(obs1, obs2); 
+  alea::batch_result<std::complex<double>> join_rbatch = alps::alea::join(obs1, obs2); 
   join_rbatch = alps::alea::join(join_rbatch, as);
-  alea::batch_result<double> prop = alea::transform(
+  alea::batch_result<std::complex<double>> prop = alea::transform(
                   alea::jackknife_prop(),
-                  alea::make_transformer(std::function<double(double, double, double)>(f)),
+                  alea::make_transformer(std::function<std::complex<double>(std::complex<double>, std::complex<double>, std::complex<double>)>(f)),
                   join_rbatch
                   );
-  return std::make_pair((double)prop.mean()[0], (double)prop.stderror()[0]);
+  return std::make_pair((std::complex<double>)prop.mean()[0], (std::complex<double>)prop.stderror()[0]);
 }
 
 }}

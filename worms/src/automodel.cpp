@@ -6,12 +6,12 @@
 
 namespace model {
 
-VVD kron_product(const VVD &a, const VVD &b) {
+VVCD kron_product(const VVCD &a, const VVCD &b) {
   // check if a and b are square matrix
   if (a.size() != a[0].size() || b.size() != b[0].size()) {
     throw std::invalid_argument("kron_product only accepts square matrix");
   }
-  VVD c(a.size() * b.size(), VD(a.size() * b.size(), 0));
+  VVCD c(a.size() * b.size(), VCD(a.size() * b.size(), 0));
   for (int i = 0; i < a.size(); i++)
     for (int j = 0; j < a[0].size(); j++)
       for (int k = 0; k < b.size(); k++)
@@ -65,6 +65,9 @@ base_lattice::base_lattice(int L, VVS bonds, VS bond_type, VS site_type)
     nn_sites[bond[0]].push_back({bt, false, bond[1]});
     nn_sites[bond[1]].push_back({bt, true, bond[0]});
   }
+
+  int x = 0;
+  std::cout << "bond type: ";
 }
 
 base_lattice::base_lattice(std::tuple<size_t, VVS, VS, VS> tp)
@@ -265,9 +268,9 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
 
   for (int p_i = 0; p_i < path_list.size(); p_i++) {
     std::string path = path_list[p_i];
-    auto pair = load_npy(path);
+    auto pair = load_npy<std::complex<double>>(path);
     VS shape = pair.first;
-    VD data = pair.second;
+    VCD data = pair.second;
     if (shape[0] != shape[1]) {
       std::cerr << "require square matrix" << std::endl;
       exit(1);
@@ -316,7 +319,7 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
         for (size_t xt = 0; xt < sps; xt++) {
           max_weights[xs] = std::max(
               max_weights[xs],
-              loperators[btype.bt].single_flip(btype.start, xt)[xs][xs]);
+              std::real(loperators[btype.bt].single_flip(btype.start, xt)[xs][xs]));
           // cout << loperators[btype.bt].single_flip(btype.start, xt)[xs][xs]
           // << " ";
         }
@@ -434,28 +437,28 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
   }
 
   // load unitary matrix
-  auto pair = load_npy(u_path_npy);
+  auto pair = load_npy<std::complex<double>>(u_path_npy);
   VS u_shape = pair.first;
-  VD u_data = pair.second;
+  VCD u_data = pair.second;
   if (u_shape[0] != u_shape[1]) {
     std::cerr << "require square matrix" << std::endl;
     exit(1);
   }
-  VVD u_mat(u_shape[0], VD(u_shape[1], 0));
+  VVCD u_mat(u_shape[0], VCD(u_shape[1], 0));
   for (int i = 0; i < u_shape[0]; i++)
     for (int j = 0; j < u_shape[1]; j++)
       u_mat[i][j] = u_data[i * u_shape[1] + j];
 
-  VVD u_mat_kron = kron_product(u_mat, u_mat);
+  VVCD u_mat_kron = kron_product(u_mat, u_mat);
 
   if (print) {
     std::cout << "unitary matrix is read from " << u_path_npy << std::endl;
   }
   for (int p_i = 0; p_i < path_list.size(); p_i++) {
     std::string path = path_list[p_i];
-    auto pair = load_npy(path);
+    auto pair = load_npy<std::complex<double>>(path);
     VS shape = pair.first;
-    VD data = pair.second;
+    VCD data = pair.second;
     if (shape[0] != shape[1]) {
       std::cerr << "require square matrix" << std::endl;
       exit(1);
@@ -490,7 +493,7 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
   // apply unitary matrix to hamiltonian U @ H @ U.T
   size_t S = u_shape[0] * u_shape[0];
   for (auto &loperator : loperators) {
-    VVD tmp(S, VD(S, 0));
+    VVCD tmp(S, VCD(S, 0));
     // tmp = u_mat_kron @ loperator._ham
     for (int i = 0; i < S; i++)
       for (int j = 0; j < S; j++)
@@ -499,8 +502,8 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
     // loperator._ham = tmp @ u_mat_kron.T
     for (int i = 0; i < S; i++)
       for (int j = 0; j < S; j++) {
-        double x = 0;
-        for (int k = 0; k < S; k++) x += tmp[i][k] * u_mat_kron[j][k];
+        std::complex<double> x = 0;
+        for (int k = 0; k < S; k++) x += tmp[i][k] * std::conj(u_mat_kron[j][k]);
         loperator._ham[i][j] = x;
       }
   }
@@ -530,7 +533,7 @@ base_model<MC>::base_model(model::base_lattice lat, VS dofs,
         for (size_t xt = 0; xt < sps; xt++) {
           max_weights[xs] = std::max(
               max_weights[xs],
-              loperators[btype.bt].single_flip(btype.start, xt)[xs][xs]);
+              std::real(loperators[btype.bt].single_flip(btype.start, xt)[xs][xs]));
           // cout << loperators[btype.bt].single_flip(btype.start, xt)[xs][xs]
           // << " ";
         }

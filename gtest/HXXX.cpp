@@ -16,8 +16,8 @@
 
 struct mc_res {
   struct res {
-    double mean;
-    double err;
+    std::complex<double> mean;
+    std::complex<double> err;
   };
   res ene;  // energy per site
   res as;   // average sign
@@ -50,7 +50,7 @@ spin_state::StateFunc state_func(sps);
 spin_state::StateFunc bond_func(sps *sps);
 
 mc_res run_worm(model::base_model<MC> &spin, double T, size_t sweeps,
-                size_t therms, std::vector<batch_res> &res,
+                size_t therms, std::vector<batch_res_complex> &res,
                 model::observable &obs, model::base_lattice &lat,
                 model::MapWormObs wobs) {
   // dont fix worm density. Not printout density information.
@@ -59,35 +59,35 @@ mc_res run_worm(model::base_model<MC> &spin, double T, size_t sweeps,
   exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, ac_res, obs,
                     std::move(wobs), r, SEED);
 
-  batch_res as = res[0];   // average sign
-  batch_res ene = res[1];  // signed energy i.e. $\sum_i E_i S_i / N_MC$
-  batch_res sglt = res[2];
-  batch_res n_neg_ele = res[3];
-  batch_res n_ops = res[4];
-  batch_res N2 = res[5];
-  batch_res N = res[6];
+  batch_res_complex as = res[0];   // average sign
+  batch_res_complex ene = res[1];  // signed energy i.e. $\sum_i E_i S_i / N_MC$
+  batch_res_complex sglt = res[2];
+  batch_res_complex n_neg_ele = res[3];
+  batch_res_complex n_ops = res[4];
+  batch_res_complex N2 = res[5];
+  batch_res_complex N = res[6];
 
-  std::function<double(double, double, double)> f;
+  std::function<std::complex<double>(std::complex<double>,std::complex<double>,std::complex<double>)> f;
 
-  pair<double, double> as_mean =
+  pair<std::complex<double>, std::complex<double>> as_mean =
       jackknife_reweight_single(as);  // calculate <S>
-  pair<double, double> nop_mean =
+  pair<std::complex<double>, std::complex<double>> nop_mean =
       jackknife_reweight_single(n_ops);  // calculate <S>
-  pair<double, double> nnop_mean =
+  pair<std::complex<double>, std::complex<double>> nnop_mean =
       jackknife_reweight_single(n_neg_ele);  // calculate <S>
 
   // calculate energy
-  pair<double, double> ene_mean =
+  pair<std::complex<double>, std::complex<double>> ene_mean =
       jackknife_reweight_div(ene, as);  // calculate <SH> / <S>
 
   // calculat heat capacity
-  f = [](double x1, double x2, double y) {
+  f = [](std::complex<double> x1, std::complex<double> x2, std::complex<double> y) {
     return (x2 - x1) / y - (x1 / y) * (x1 / y);
   };
-  pair<double, double> c_mean = jackknife_reweight_any(N, N2, as, f);
+  pair<std::complex<double>, std::complex<double>> c_mean = jackknife_reweight_any(N, N2, as, f);
 
   mc_res res_;
-  res_.ene = {ene_mean.first / lat.L, ene_mean.second / lat.L};
+  res_.ene = {ene_mean.first / (double)lat.L, ene_mean.second / (double)lat.L};
   res_.as = {as_mean.first, as_mean.second};
   return res_;
 }
@@ -159,7 +159,7 @@ TEST(HXX1D2SITE, check_update_a) {
       if (opi->op_type() >= 0) {
         bolzman *= lop.ham_vector(opi->state());
       } else {
-        bolzman *= solver.get_single_flip_elem(*opi);
+        bolzman *= std::real(solver.get_single_flip_elem(*opi));
       }
       solver.update_state(opi, cstate);
     }
@@ -315,22 +315,26 @@ TEST(HXXX, SplitTest) {
       auto index = state_func.num2state(j, 4);
       auto bond_index = bond_func.num2state(j, 2);
       if (bond_index[0] == bond_index[1]) {
-        double val = lop.ham_vector(j);
-        val += lop.single_flip(0, index[1])[index[0]][index[0]] +
-               lop.single_flip(1, index[0])[index[1]][index[1]];
-        EXPECT_NEAR(val, lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+        auto val = lop.ham_vector(j);
+        val += std::real(lop.single_flip(0, index[1])[index[0]][index[0]] +
+               lop.single_flip(1, index[0])[index[1]][index[1]]);
+        double val_prime = std::real(lop.ham_prime()[bond_index[0]][bond_index[1]]);
+        EXPECT_NEAR(val, val_prime, 1E-8);
       } else {
         if (index[0] == index[2]) {
-          double val = lop.single_flip(true, index[0])[index[1]][index[3]];
-          EXPECT_NEAR(val, lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+          auto val = std::real(lop.single_flip(true, index[0])[index[1]][index[3]]);
+          double val_prime = std::real(lop.ham_prime()[bond_index[0]][bond_index[1]]);
+          EXPECT_NEAR(val, val_prime, 1E-8);
           EXPECT_FLOAT_EQ(val, 0);
         } else if (index[1] == index[3]) {
-          double val = lop.single_flip(false, index[1])[index[0]][index[2]];
-          EXPECT_NEAR(val, lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+          auto val = std::real(lop.single_flip(false, index[1])[index[0]][index[2]]);
+          double val_prime = std::real(lop.ham_prime()[bond_index[0]][bond_index[1]]);
+          EXPECT_NEAR(val, val_prime, 1E-8);
           EXPECT_FLOAT_EQ(val, 0);
         } else {
-          EXPECT_NEAR(lop.ham_vector(j) * lop.signs[j],
-                      lop.ham_prime()[bond_index[0]][bond_index[1]], 1E-8);
+          double val_prime = std::real(lop.ham_prime()[bond_index[0]][bond_index[1]]);
+          EXPECT_NEAR(lop.ham_vector(j) * std::real(lop.signs[j]),
+                      val_prime, 1E-8);
         }
       }
     }
@@ -367,7 +371,7 @@ TEST(HXXX, WormUpdate) {
       x1 = state[b[0]];
       x2 = state[b[1]];
       int s = x1 + sps * x2;
-      sum += lop.ham_prime()[s][s];
+      sum += std::real(lop.ham_prime()[s][s]);
     }
 
     double sum_prime = 0;
@@ -383,7 +387,7 @@ TEST(HXXX, WormUpdate) {
     for (int i = 0; i < solver.L; i++) {
       int x1;
       x1 = state[i];
-      sum_prime += solver.get_single_flip_elem(i, x1, x1, state);
+      sum_prime += std::real(solver.get_single_flip_elem(i, x1, x1, state));
     }
     EXPECT_NEAR(sum, sum_prime, 1E-8);
   }
@@ -484,8 +488,8 @@ TEST(HXXX, DiagonalUpdate) {
       double sop_label = spin.site_type[i];
       double mat_elem = 0;
       for (auto target : spin.nn_sites[i]) {
-        mat_elem += spin.loperators[target.bt].single_flip(
-            target.start, state[target.target], state[i], state[i]);
+        mat_elem += std::real(spin.loperators[target.bt].single_flip(
+            target.start, state[target.target], state[i], state[i]));
       }
 
       mat_elem = std::abs(mat_elem);
@@ -549,7 +553,7 @@ TEST(HXX1D_02a, MC) {
 
   vector<string> wobs_paths;
   wobs_paths.push_back("");
-  std::vector<batch_res> res;
+  std::vector<batch_res_complex> res;
   model::observable obs(spin, "", false);
 
   // run_worm(spin, T, sweeps, therms, res, obs, lat, mapwobs);
@@ -558,8 +562,8 @@ TEST(HXX1D_02a, MC) {
 
   // EXPECT_FLOAT_EQ(out_res.ene.mean, -0.21661999999999898);
   EXPECT_NEAR(
-      out_res.ene.mean, -0.21627057785439316,
-      3 * out_res.ene.err);  // -0.21627057785439316 for L = 4 J = [1, 1, 1]
+      std::real(out_res.ene.mean), -0.21627057785439316,
+      3 * std::real(out_res.ene.err));  // -0.21627057785439316 for L = 4 J = [1, 1, 1]
 }
 
 TEST(HXX2D, none_a_zw) {
@@ -588,13 +592,13 @@ TEST(HXX2D, none_a_zw) {
 
   vector<string> wobs_paths;
   wobs_paths.emplace_back("");
-  std::vector<batch_res> res;
+  std::vector<batch_res_complex> res;
   model::observable obs(spin, "", false);
   mc_res out_res = run_worm(spin, T, sweeps, therms, res, obs, lat, mapwobs);
 
   // EXPECT_FLOAT_EQ(out_res.ene.mean, -0.22672973371746891);
-  EXPECT_NEAR(out_res.ene.mean, -0.22695394021770868,
-              3 * out_res.ene.err);  // -0.18543629571195416 for L = [2,4] J =
+  EXPECT_NEAR(std::real(out_res.ene.mean), -0.22695394021770868,
+              3 * std::real(out_res.ene.err));  // -0.18543629571195416 for L = [2,4] J =
                                      // [-0.3, 0.5, 0.8] hx = 0.3
 }
 
@@ -624,13 +628,13 @@ TEST(HXX2D, MES_a_zw) {
 
   vector<string> wobs_paths;
   wobs_paths.emplace_back("");
-  std::vector<batch_res> res;
+  std::vector<batch_res_complex> res;
   model::observable obs(spin, "", false);
 
   mc_res out_res = run_worm(spin, T, sweeps, therms, res, obs, lat, mapwobs);
 
   // EXPECT_FLOAT_EQ(out_res.ene.mean, -0.22710672923632713);
-  EXPECT_NEAR(out_res.ene.mean, -0.22695394021770868,
-              3 * out_res.ene.err);  // -0.18543629571195416 for L = [2,4] J =
+  EXPECT_NEAR(std::real(out_res.ene.mean), -0.22695394021770868,
+              3 * std::real(out_res.ene.err));  // -0.18543629571195416 for L = [2,4] J =
                                      // [-0.3, 0.5, 0.8] hx = 0.3
 }

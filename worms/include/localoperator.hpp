@@ -23,6 +23,8 @@ using VI = vector<int>;
 using VVI = vector<VI>;
 using VD = vector<double>;
 using VVD = vector<VD>;
+using VCD = vector<complex<double>>;
+using VVCD = vector<VCD>;
 
 template <class MC = bcl::heatbath> class local_operator;
 
@@ -86,24 +88,24 @@ template <class MC> class local_operator {
 private:
   std::vector<double> _ham_vector;
   std::vector<bool> _has_warp; // check if the state has warphole
-  std::vector<std::vector<double>> _ham_prime;
+  std::vector<std::vector<std::complex<double>>> _ham_prime;
 
 public:
   typedef MC MCT;
   double ham_vector(int i) { return _ham_vector[i]; }
   const std::vector<double> &ham_vector() const { return _ham_vector; }
-  const std::vector<std::vector<double>> &ham() const { return _ham; }
-  const std::vector<std::vector<double>> &ham_prime() const {
+  const std::vector<std::vector<std::complex<double>>> &ham() const { return _ham; }
+  const std::vector<std::vector<std::complex<double>>> &ham_prime() const {
     return _ham_prime;
   }
 
-  std::vector<std::vector<double>> &single_flip(bool start, int spin) {
+  std::vector<std::vector<std::complex<double>>> &single_flip(bool start, int spin) {
     //* i represents if the target site is start or the end of bond
     //* spin represents the spin of the site
     return _single_flip[spin + start * sps];
   }
 
-  const double &single_flip(bool start, int spin, int x, int y) const {
+  const std::complex<double> &single_flip(bool start, int spin, int x, int y) const {
     return _single_flip[spin + start * sps][x][y];
   }
   const bool has_warp(int i) const { return _has_warp[i]; }
@@ -112,10 +114,10 @@ public:
       std::vector<VECD>; // type for transition probability. typically, this is
                          // 2D matrix with 4 x 4 elements( check notebook for
                          // detail definition of this type).
-  std::vector<std::vector<std::vector<double>>> _single_flip;
-  std::vector<std::vector<double>>
+  std::vector<std::vector<std::vector<std::complex<double>>>> _single_flip;
+  std::vector<std::vector<std::complex<double>>>
       _ham; // virtual hamiltonian (or maybe absolute of original hamiltonian)
-  std::vector<int> signs; // list of sign defined via the sign of ham_prime;
+  std::vector<std::complex<double>> signs; // list of sign defined via the sign of ham_prime;
 
   std::vector<TPROB> trans_prob; // num_configuration x 4 x 4 matrix.
   std::array<int, 2> num2index(int num);
@@ -177,11 +179,11 @@ public:
 template <class MC>
 local_operator<MC>::local_operator(int leg, size_t sps)
     : leg(leg), size(pow(sps, leg)), ogwt(leg, sps), sps(sps) {
-  _ham = std::vector<std::vector<double>>(size, std::vector<double>(size, 0));
+  _ham = std::vector<std::vector<std::complex<double>>>(size, std::vector<std::complex<double>>(size, 0));
   _single_flip.resize(2 * sps);
   for (int i = 0; i < 2 * sps; ++i) {
-    _single_flip[i] = std::vector<std::vector<double>>(
-        sps, std::vector<double>(sps, 0));
+    _single_flip[i] = std::vector<std::vector<std::complex<double>>>(
+        sps, std::vector<std::complex<double>>(sps, 0));
   }
 }
 
@@ -209,11 +211,13 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp,
   spin_state::StateFunc state_func(sps, 2);
   int N = size * size;
   ene_shift = 0;
+  // _ham_prime = _ham;
   _ham_prime = _ham;
   _ham_vector = std::vector<double>(N, 0);
+  auto ham_vector_complex = std::vector<std::complex<double>>(N, 0);
 
   for (int i = 0; i < _ham_prime.size(); i++) {
-    ene_shift = std::min(ene_shift, _ham[i][i]);
+    ene_shift = std::min(ene_shift, std::real(_ham_prime[i][i]));
   }
   ene_shift *= -1;
   ene_shift += off_set;
@@ -237,47 +241,47 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp,
   for (int i = 0; i < N; i++) {
     auto index = state_func.num2state(i, 4);
     auto mat_index = num2index(i);
-    _ham_vector[i] = _ham_prime[mat_index[0]][mat_index[1]];
+    ham_vector_complex[i] = _ham_prime[mat_index[0]][mat_index[1]];
     if (index[1] == index[3]) {
       if (index[0] == index[2]) {
         single_flip(0, index[1])[index[0]][index[0]] =
-            _ham_vector[i] / 2 * alpha;
+            ham_vector_complex[i] / 2.0 * alpha;
       } else {
-        single_flip(0, index[1])[index[0]][index[2]] = _ham_vector[i];
+        single_flip(0, index[1])[index[0]][index[2]] = ham_vector_complex[i];
       }
     }
 
     if (index[0] == index[2]) {
       if (index[1] == index[3]) {
         single_flip(1, index[0])[index[1]][index[1]] =
-            _ham_vector[i] / 2 * alpha;
+            ham_vector_complex[i] / 2.0 * alpha;
       } else {
-        single_flip(1, index[0])[index[1]][index[3]] = _ham_vector[i];
+        single_flip(1, index[0])[index[1]][index[3]] = ham_vector_complex[i];
       }
     }
 
     if (mat_index[0] == mat_index[1]) {
-      _ham_vector[i] *= (1 - alpha);
-      max_diagonal_weight_ = std::max(max_diagonal_weight_, _ham_vector[i]);
+      ham_vector_complex[i] *= (1 - alpha);
+      max_diagonal_weight_ = std::max(max_diagonal_weight_, std::real(ham_vector_complex[i]));
     } else if (index[0] == index[2] || index[1] == index[3]) {
-      if (abs(_ham_vector[i]) > 1E-4) {
+      if (std::abs(ham_vector_complex[i]) > 1E-4) {
         int x = 0;
       }
-      _ham_vector[i] = ( alpha == 0 ) ? _ham_vector[i] : 0;
+      ham_vector_complex[i] = ( alpha == 0 ) ? ham_vector_complex[i] : 0;
     }
   }
 
-  // d* check single_flip operator is real symmetric
+  // d* check single_flip operator is hermitian
   for (int s = 0; s < sps; s++) {
     for (int i = 0; i < 2; i++) {
       for (int j = 0; j < sps; j++) {
         for (int k = 0; k < sps; k++) {
-          if (std::abs(single_flip(i, s)[j][k] - single_flip(i, s)[k][j]) >
+          if (std::abs(single_flip(i, s)[j][k] - std::conj(single_flip(i, s)[k][j])) >
               1e-8) {
             std::cerr << "difference is "
-                      << single_flip(i, s)[j][k] - single_flip(i, s)[k][j]
+                      << single_flip(i, s)[j][k] - std::conj(single_flip(i, s)[k][j])
                       << std::endl;
-            throw std::runtime_error("single_flip is not symmetric");
+            throw std::runtime_error("single_flip is not hermitian");
           }
         }
       }
@@ -288,12 +292,14 @@ void local_operator<MC>::set_ham(double off_set, double thres, bool warp,
   for (int i = 0; i < size; i++) {
   }
 
-  for (int i = 0; i < _ham_vector.size(); i++) {
-    auto &x = _ham_vector[i];
-    signs.push_back(x >= 0 ? 1 : -1);
-    x = std::abs(x);
-    if (x < thres)
-      x = 0;
+  for (int i = 0; i < ham_vector_complex.size(); i++) {
+    auto x = ham_vector_complex[i];
+    auto sign = std::abs(x) > thres ? x / std::abs(x) : 1;
+    signs.push_back(sign);
+    double x_abs = std::abs(x);
+    if (x_abs < thres)
+      x_abs = 0.0;
+    _ham_vector[i] = x_abs;
   }
 
   std::vector<markov_t> markov_tmp;

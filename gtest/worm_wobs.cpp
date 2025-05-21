@@ -27,7 +27,7 @@ std::vector<std::vector<std::vector<double>>> heisenberg1D_hams = {
 
 typedef bcl::st2013 MC;
 void run_worm(model::base_model<MC> &spin, double T, size_t sweeps,
-              size_t therms, std::vector<batch_res> &res,
+              size_t therms, std::vector<batch_res_complex> &res,
               model::observable &obs, model::base_lattice &lat,
               model::MapWormObs wobs = model::WormObs(2), size_t n_sites = 1) {
   size_t ns = lat.L * n_sites;
@@ -37,17 +37,17 @@ void run_worm(model::base_model<MC> &spin, double T, size_t sweeps,
   auto solver = exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res,
                                   ac_res, obs, wobs, r);
 
-  batch_res as = res[0];   // average sign
-  batch_res ene = res[1];  // signed energy i.e. $\sum_i E_i S_i / N_MC$
-  batch_res n_neg_ele = res[2];
-  batch_res n_ops = res[3];
-  batch_res N2 = res[4];
-  batch_res N = res[5];
-  batch_res dH = res[6];   // $\frac{\frac{\partial}{\partial h}Z}{Z}$
-  batch_res dH2 = res[7];  // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
-  batch_res worm_obs = res[8];
-  batch_res phys_conf = res[9];
-  batch_res m2_diag = res[10];
+  batch_res_complex as = res[0];   // average sign
+  batch_res_complex ene = res[1];  // signed energy i.e. $\sum_i E_i S_i / N_MC$
+  batch_res_complex n_neg_ele = res[2];
+  batch_res_complex n_ops = res[3];
+  batch_res_complex N2 = res[4];
+  batch_res_complex N = res[5];
+  batch_res_complex dH = res[6];   // $\frac{\frac{\partial}{\partial h}Z}{Z}$
+  batch_res_complex dH2 = res[7];  // $\frac{\frac{\partial^2}{\partial h^2}Z}{Z}$
+  batch_res_complex worm_obs = res[8];
+  batch_res_complex phys_conf = res[9];
+  batch_res_complex m2_diag = res[10];
 
   std::function<double(double, double, double)> f;
 

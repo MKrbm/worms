@@ -162,11 +162,11 @@ void Worm<MCT>::diagonalUpdate(double wdensity) {
           int site = b - spin_model.Nb;
           double sop_label = spin_model.site_type[site];
           size_t spin = cstate[site];
-          double mat_elem =
+          std::complex<double> mat_elem =
               get_single_flip_elem(site, spin, spin, cstate, nn_state);
           mat_elem = std::abs(mat_elem) / max_diagonal_weight;
-          if (mat_elem > 1) throw std::runtime_error("mat_elem > 1");
-          if (r < mat_elem) {
+          if (std::real(mat_elem) > 1) throw std::runtime_error("mat_elem > 1");
+          if (r < std::real(mat_elem)) {
             appendSingleOps(ops_main, spacetime_dots, can_warp_ops, site,
                             &nn_sites[site],
                             &pows_vec[sop_label + loperators.size()],
@@ -271,8 +271,8 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength, size_t &w_update_cnt
       wcount += 1;
 
       // n* initialize wobs variables
-      phys_cnt = 0;
-      obs_sum.assign(obs_sum.size(), 0);
+      phys_cnt = 0.0;
+      obs_sum.assign(obs_sum.size(), 0.0);
 
       do {
         if (fl != 0) {
@@ -387,7 +387,7 @@ void Worm<MCT>::calcHorizontalGreen(double tau, size_t h_site, size_t t_site,
                           L / 2.0 * sign / (double)(sps - 1);
           }
         }
-        phys_cnt = (double)sign / (sps - 1);
+        phys_cnt = sign / static_cast<std::complex<double>>(sps - 1);
       } else {  // n* This case could contribute to single flip operator but not
                 // implemented yet.
         ;
@@ -415,10 +415,10 @@ void Worm<MCT>::calcWarpGreen(double tau, size_t t_site, size_t t_x,
       size_t h_x = _cstate[i];
       if (i == t_site) {
         obs_sum[j] +=
-            _worm_obs.first()->operator()(t_x, t_x_prime) * L * sign * 2;
+            _worm_obs.first()->operator()(t_x, t_x_prime) * L * sign * 2.0;
       } else {
         obs_sum[j] += _worm_obs.second()->operator()(t_x, h_x, t_x_prime, h_x) *
-                      L * sign * 2;
+                      L * sign * 2.0;
       }
     }
     j++;
@@ -766,7 +766,7 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
       return 0;
     }
 
-    sign *= loperators[op_type].signs[opsp->state()];  //! sign for single-flip
+    sign /= loperators[op_type].signs[opsp->state()];  //! sign for single-flip
                                                        //! is not included yet.
     if (true) {
       state_num = opsp->update_state(cindex, fl);
@@ -792,7 +792,7 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
         can_warp_ops.insert(cur_dot - dotp->index());
       }
       if (!warped) {
-        sign *= loperators[op_type]
+        sign /= loperators[op_type]
                     .signs[state_num];  // include an effect by start point
       }
       t_x_prime = getDotState(wtdot->move_next(1), 1);
@@ -817,7 +817,7 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
         if (fl != 0) {
           throw std::runtime_error("fl must be zero when warp_label is called");
         }
-        sign *= loperators[op_type].signs[opsp->state()];
+        sign /= loperators[op_type].signs[opsp->state()];
       }
       fl = tmp % (sps - 1) + 1;
       state_num = opsp->update_state(nindex, fl);
@@ -850,10 +850,11 @@ int Worm<MCT>::wormOpUpdate(int &next_dot, int &dir, int &site, double &wlength,
 
 #ifndef NDEBUG
 
-    int dsign = 1;
+    std::complex<double> dsign = 1;
     for (auto &op : ops_main) {
       if (op.op_type() == -1) {
-        dsign *= get_single_flip_elem(op) >= 0 ? 1 : -1;
+        std::complex<double> tmp_e = get_single_flip_elem(op);
+        dsign *= tmp_e / std::abs(tmp_e);
       } else {
         dsign *= loperators[op.op_type()].signs[op.state()];
       }
@@ -1008,7 +1009,7 @@ void Worm<MCT>::reset_ops() {
 }
 
 template <class MCT>
-double Worm<MCT>::get_single_flip_elem(const OP_type &op) {
+std::complex<double> Worm<MCT>::get_single_flip_elem(const OP_type &op) {
   if (op._check_is_bond())
     throw std::runtime_error("op must be a single site operator");
   ptrdiff_t _index = op.bond_ptr() - &nn_sites[0];
@@ -1016,7 +1017,7 @@ double Worm<MCT>::get_single_flip_elem(const OP_type &op) {
   int x = op.get_local_state(0);
   int x_prime = op.get_local_state(1);
   const state_t &nn_state = op.nn_state();
-  double mat_elem = 0;
+  std::complex<double> mat_elem = 0;
   for (int i = 0; i < nn_sites[site].size(); i++) {
     auto target = spin_model.nn_sites[site][i];
     mat_elem += loperators[target.bt].single_flip(target.start, nn_state[i], x,
@@ -1043,9 +1044,9 @@ double Worm<MCT>::get_single_flip_elem(const OP_type &op) {
 }
 
 template <class MCT>
-double Worm<MCT>::get_single_flip_elem(int site, int x, int x_prime,
+std::complex<double> Worm<MCT>::get_single_flip_elem(int site, int x, int x_prime,
                                        state_t _state) {
-  double mat_elem = 0;
+  std::complex<double> mat_elem = 0;
 
   for (auto target : spin_model.nn_sites[site]) {
     mat_elem += loperators[target.bt].single_flip(
@@ -1055,9 +1056,9 @@ double Worm<MCT>::get_single_flip_elem(int site, int x, int x_prime,
 }
 
 template <class MCT>
-double Worm<MCT>::get_single_flip_elem(int site, int x, int x_prime,
+std::complex<double> Worm<MCT>::get_single_flip_elem(int site, int x, int x_prime,
                                        state_t _state, state_t &nn_state) {
-  double mat_elem = 0;
+  std::complex<double> mat_elem = 0;
   nn_state.resize(spin_model.nn_sites[site].size());
 
   for (int i = 0; i < spin_model.nn_sites[site].size(); i++) {
@@ -1090,9 +1091,9 @@ std::pair<int, int> Worm<MCT>::markov_next_flip(OP_type &op, int dir, int fl,
   if (fl < 0 || fl >= sps) throw std::runtime_error("fl must be in [0, sps)");
 
   int num = op.state();
-  double mat_elem = get_single_flip_elem(op);
-  double old_sign = sign;
-  sign *= mat_elem > 0 ? 1 : -1;
+  std::complex<double> mat_elem = get_single_flip_elem(op);
+  std::complex<double> old_sign = sign;
+  sign /= mat_elem / std::abs(mat_elem);
   mat_elem = std::abs(mat_elem);
   if (fl == 0) {
     int x = 0;
@@ -1125,12 +1126,12 @@ std::pair<int, int> Worm<MCT>::markov_next_flip(OP_type &op, int dir, int fl,
 
   // n* update op state using dir_prime and fl_prime
   op.update_state(dir_prime, fl_prime);
-  double mat_elem_prime = get_single_flip_elem(op);
-  sign *= mat_elem_prime > 0 ? 1 : -1;
+  std::complex<double> mat_elem_prime = get_single_flip_elem(op);
+  sign *= mat_elem_prime / std::abs(mat_elem_prime);
   mat_elem_prime = std::abs(mat_elem_prime);
 
   //* update op state using Metropolis
-  double ratio = mat_elem_prime / mat_elem;
+  double ratio = std::real(mat_elem_prime) / std::real(mat_elem);
 
   if (r < ratio)
     return make_pair(dir_prime, fl_prime);
@@ -1157,17 +1158,17 @@ std::pair<int, int> Worm<MCT>::markov_diagonal_nn(OP_type &op, int dir_in,
 
   int num = op.state();
   // double mat_elem = std::abs(get_single_flip_elem(op));
-  double old_sign = sign;
-  double mat_elem = get_single_flip_elem(op);
-  sign *= mat_elem > 0 ? 1 : -1;
+  std::complex<double> old_sign = sign;
+  std::complex<double> mat_elem = get_single_flip_elem(op);
+  sign /= mat_elem / std::abs(mat_elem);
   mat_elem = std::abs(mat_elem);
   op.update_nn_state(nn_index, fl);
 
   // double mat_elem_prime = std::abs(get_single_flip_elem(op));
-  double mat_elem_prime = get_single_flip_elem(op);
-  sign *= mat_elem_prime > 0 ? 1 : -1;
+  std::complex<double> mat_elem_prime = get_single_flip_elem(op);
+  sign *= mat_elem_prime / std::abs(mat_elem_prime);
   mat_elem_prime = std::abs(mat_elem_prime);
-  double ratio = mat_elem_prime / mat_elem;
+  double ratio = std::real(mat_elem_prime) / std::real(mat_elem);
   double r = uniform(rand_src);
 
   if (r < ratio)

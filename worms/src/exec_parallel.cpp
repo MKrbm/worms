@@ -5,7 +5,7 @@ template <typename MC>
 std::unordered_map<std::string, model::WormObs> exe_worm_parallel(
     model::base_model<MC> spin_model, double T, size_t sweeps, size_t therms,
     int64_t cutoff_l, bool fix_wdensity, int rank,
-    std::vector<batch_res>
+    std::vector<batch_res_complex>
         &res,  // contains results such as energy, average_sign,, etc
     alps::alea::autocorr_result<double> &ac_res, model::observable obs,
     model::MapWormObs wobs, double &borate, int seed) {
@@ -58,9 +58,8 @@ std::unordered_map<std::string, model::WormObs> exe_worm_parallel(
     solver.diagonalUpdate(wdensity);  // n* need to be comment out
     solver.wormUpdate(wcount, wlength, w_upd_cnt, cutoff_thres);
     if (cnt >= therms) {
-      int sign = 1;
+      std::complex<double> sign = 1;
       // double w_rate = 1;
-      double n_neg = 0;
       double n_op = 0;
       double mu = 0;
       double sum_ot = 0;  // \sum_{tau} O_{tau} : sum of observables
@@ -72,16 +71,14 @@ std::unordered_map<std::string, model::WormObs> exe_worm_parallel(
       }
 
       for (const auto &op : solver.ops_main) {
-        int sign_ = 1;
+        std::complex<double> sign_ = 1;
         if (op._check_is_bond()) {
           sign_ = spin_model.loperators[op.op_type()].signs[op.state()];
         } else {
-          sign_ = solver.get_single_flip_elem(op) > 0 ? 1 : -1;
+          auto tmp_e = solver.get_single_flip_elem(op);
+          sign_ = tmp_e / std::abs(tmp_e);
         }
         sign *= sign_;
-        if (sign_ == -1) {
-          n_neg++;
-        }
         n_op++;
 
         // calculate kai (susceptibility)
@@ -110,7 +107,6 @@ std::unordered_map<std::string, model::WormObs> exe_worm_parallel(
       N << m * sign;
       ene << ene_tmp * sign;
       ave_sign << sign;
-      n_neg_ele << n_neg;
       n_ops << n_op;
       dH << sum_ot * sign;
       dH2 << (sum_ot * sum_ot - sum_2_ot) * sign;
@@ -118,7 +114,7 @@ std::unordered_map<std::string, model::WormObs> exe_worm_parallel(
       m_diag << (mu * sign);
       // alps::alea::vector_adapter<double> _tmp = std::vector<double>({ene_tmp,
       // mu * mu, (double)sign});
-      auto v = std::vector<double>({ene_tmp, mu * mu, (double)sign});
+      auto v = std::vector<double>({ene_tmp, mu * mu, (double)std::real(sign)});
       auto _tmp = alps::alea::make_adapter<double>(v);
       // cout << alps::alea::make_adapter<double>(v)[0] << endl;
       auto_corr << _tmp;
@@ -193,7 +189,7 @@ std::unordered_map<std::string, model::WormObs> exe_worm_parallel(
 template map_wobs_t exe_worm_parallel<bcl::st2013>(
     model::base_model<bcl::st2013> spin_model, double T, size_t sweeps,
     size_t therms, int64_t cutoff_l, bool fix_wdensity, int rank,
-    std::vector<batch_res> &res, alps::alea::autocorr_result<double> &ac_res,
+    std::vector<batch_res_complex> &res, alps::alea::autocorr_result<double> &ac_res,
     model::observable obs, model::MapWormObs wobs, double &borate, int seed);
 
 // template map_wobs_t exe_worm_parallel<bcl::st2010>(
@@ -205,5 +201,5 @@ template map_wobs_t exe_worm_parallel<bcl::st2013>(
 template map_wobs_t exe_worm_parallel<bcl::heatbath>(
     model::base_model<bcl::heatbath> spin_model, double T, size_t sweeps,
     size_t therms, int64_t cutoff_l, bool fix_wdensity, int rank,
-    std::vector<batch_res> &res, alps::alea::autocorr_result<double> &ac_res,
+    std::vector<batch_res_complex> &res, alps::alea::autocorr_result<double> &ac_res,
     model::observable obs, model::MapWormObs wobs, double &borate, int seed);

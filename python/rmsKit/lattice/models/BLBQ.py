@@ -31,10 +31,12 @@ def local(params: Dict[str, Any], D: int = 1) -> Tuple[List[NDArray[Any]], int]:
 
     if lt < 0:
         e = np.linalg.eigvalsh(h)
-        h = (UR @ h @ UR.T.conj()).real
+        h = (UR @ h @ UR.T.conj())
         e_1 = np.linalg.eigvalsh(h)
         if (np.linalg.norm(e - e_1) > 1E-10):
             logging.warning("eigenvalues are not equal for parameter {}".format(params))
+            logging.warning(f"e: {e}")
+            logging.warning(f"e_1: {e_1}")
             raise ValueError("lattice type -1 with magnetic field is not supported yet")
     if abs(lt) > 0:
         sps = 3

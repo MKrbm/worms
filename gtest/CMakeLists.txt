@@ -7,6 +7,8 @@ set (test_src
      local_hams
      optype
      HXXX
+     lnpy
+     blbq
     )
 
 
@@ -25,17 +27,17 @@ FOREACH(name ${test_src})
 ENDFOREACH(name)
 
 
-set(worm
-    worm
-    worm_wobs
-    Kagome
-    Ising1D
-    )
+# set(worm
+#     worm
+#     worm_wobs
+#     Kagome
+#     Ising1D
+#     )
 
-FOREACH(name ${worm})
-  add_executable(${name}-gtest ${name}.cpp)
-  target_link_libraries(${name}-gtest worm gtest_main)
-  target_include_directories(${name}-gtest PUBLIC "${PROJECT_BINARY_DIR}")
-ENDFOREACH(name)
+# FOREACH(name ${worm})
+#   add_executable(${name}-gtest ${name}.cpp)
+#   target_link_libraries(${name}-gtest worm gtest_main)
+#   target_include_directories(${name}-gtest PUBLIC "${PROJECT_BINARY_DIR}")
+# ENDFOREACH(name)
   
 

@@ -1,51 +1,85 @@
-#include "../include/load_npy.hpp"
+// load_npy.cpp
 #include <npy.hpp>
 #include <iostream>
-#include <string>
-#include <fstream>
+#include <complex>
 #include <dirent.h>
+#include <cstring>
+#include <stdexcept>
 
-std::pair<std::vector<unsigned long>, std::vector<double>> load_npy(std::string path) {
-
-  try
-  {
+// primary, real‐valued loader:
+template<typename T>
+std::pair<std::vector<unsigned long>, std::vector<T>>
+load_npy(const std::string& path) {
     std::vector<unsigned long> shape;
-    std::vector<double> data;
+    std::vector<T> data;
     bool fortran_order;
-    shape.clear();
-    data.clear();
-    npy::LoadArrayFromNumpy(path, shape, fortran_order, data);
-    return std::make_pair(shape, data);
-  }
-  catch(...)
-  {
-    std::cerr << "I/O error while reading npy file : " << path << "\n";
-    exit(127);
-  }
-
+    try {
+        npy::LoadArrayFromNumpy(path, shape, fortran_order, data);
+    }
+    catch(const std::exception& e) {
+        std::cerr << "I/O error while reading npy file: "
+                  << path << " : " << e.what() << "\n";
+        std::exit(127);
+    }
+    return { shape, data };
 }
 
-void get_npy_path(std::string dir_path, std::vector<std::string>& npy_path){
-  DIR *di;
-  char *ptr1,*ptr2;
-  int retn;
-  struct dirent *dir;
-  di = opendir(dir_path.c_str()); 
-  if (di)
-  {
-      while ((dir = readdir(di)) != NULL)
-      {
-          ptr1=strtok(dir->d_name,"."); ptr2=strtok(NULL,".");
-          if(ptr2!=NULL) {
-            retn=strcmp(ptr2,"npy"); 
-            if(retn==0) {std::string path(ptr1); path += ".npy"; npy_path.push_back(dir_path +  "/" + path);}
-            }
-      }
-      closedir(di);
-  }else{
-    std::string err = "cannot open folder : ";
-    err += dir_path;
-    throw std::runtime_error(err);
-    // std::cout << "cannot open folder : " << dir_path << std::endl;
-  }
+// specialization for complex<double>:
+template<>
+std::pair<std::vector<unsigned long>, std::vector<std::complex<double>>>
+load_npy<std::complex<double>>(const std::string& path) {
+    std::vector<unsigned long> shape;
+    bool fortran_order;
+
+    // first try to read as complex<double> directly
+    std::vector<std::complex<double>> cdata;
+    try {
+        npy::LoadArrayFromNumpy(path, shape, fortran_order, cdata);
+        return { shape, cdata };
+    }
+    catch(...) {
+      // if that fails, fall back to reading as real<double>
+    }
+
+    // fallback: load real data and zero‐pad imaginary parts
+    std::vector<double> rdata;
+    try {
+        npy::LoadArrayFromNumpy(path, shape, fortran_order, rdata);
+    }
+    catch(const std::exception& e) {
+        std::cerr << "I/O error while reading npy file (real fallback): "
+                  << path << " : " << e.what() << "\n";
+        std::exit(127);
+    }
+
+    cdata.resize(rdata.size());
+    for (size_t i = 0; i < rdata.size(); ++i) {
+        cdata[i] = std::complex<double>(rdata[i], 0.0);
+    }
+    return { shape, cdata };
+}
+
+// force instantiation of the primary template for double
+template std::pair<std::vector<unsigned long>, std::vector<double>>
+load_npy<double>(const std::string&);
+
+
+
+// -----------------------------------------------------------------
+// Directory traversal (unchanged)
+// -----------------------------------------------------------------
+void get_npy_path(const std::string& dir_path, std::vector<std::string>& npy_path) {
+    DIR *di = opendir(dir_path.c_str());
+    if (!di) {
+        throw std::runtime_error("cannot open folder : " + dir_path);
+    }
+    while (auto *dir = readdir(di)) {
+        // split on last dot instead of strtok (safer)
+        std::string name(dir->d_name);
+        auto pos = name.rfind('.');
+        if (pos != std::string::npos && name.substr(pos) == ".npy") {
+            npy_path.push_back(dir_path + "/" + name);
+        }
+    }
+    closedir(di);
 }

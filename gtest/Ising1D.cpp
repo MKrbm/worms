@@ -60,8 +60,8 @@ spin_state::StateFunc bond_func(sps *sps);
 
 struct mc_res {
   struct res {
-    double mean;
-    double err;
+    std::complex<double> mean;
+    std::complex<double> err;
   };
 
   res ene; // energy per site
@@ -69,7 +69,7 @@ struct mc_res {
 };
 
 mc_res run_worm(model::base_model<MC> &spin, double T, size_t sweeps,
-                size_t therms, std::vector<batch_res> &res,
+                size_t therms, std::vector<batch_res_complex> &res,
                 model::observable &obs, model::base_lattice &lat,
                 model::MapWormObs wobs) {
   // dont fix worm density. Not printout density information.
@@ -78,34 +78,34 @@ mc_res run_worm(model::base_model<MC> &spin, double T, size_t sweeps,
   exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, ac_res, obs,
                     wobs, r);
 
-  batch_res as = res[0];  // average sign
-  batch_res ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
-  batch_res sglt = res[2];
-  batch_res n_neg_ele = res[3];
-  batch_res n_ops = res[4];
-  batch_res N2 = res[5];
-  batch_res N = res[6];
+  batch_res_complex as = res[0];  // average sign
+  batch_res_complex ene = res[1]; // signed energy i.e. $\sum_i E_i S_i / N_MC$
+  batch_res_complex sglt = res[2];
+  batch_res_complex n_neg_ele = res[3];
+  batch_res_complex n_ops = res[4];
+  batch_res_complex N2 = res[5];
+  batch_res_complex N = res[6];
 
-  std::function<double(double, double, double)> f;
+  std::function<std::complex<double>(std::complex<double>, std::complex<double>, std::complex<double>)> f;
 
-  pair<double, double> as_mean = jackknife_reweight_single(as); // calculate <S>
-  pair<double, double> nop_mean =
+  pair<std::complex<double>, std::complex<double>> as_mean = jackknife_reweight_single(as); // calculate <S>
+  pair<std::complex<double>, std::complex<double>> nop_mean =
       jackknife_reweight_single(n_ops); // calculate <S>
-  pair<double, double> nnop_mean =
+  pair<std::complex<double>, std::complex<double>> nnop_mean =
       jackknife_reweight_single(n_neg_ele); // calculate <S>
 
   // calculate energy
-  pair<double, double> ene_mean =
+  pair<std::complex<double>, std::complex<double>> ene_mean =
       jackknife_reweight_div(ene, as); // calculate <SH> / <S>
 
   // calculat heat capacity
-  f = [](double x1, double x2, double y) {
+  f = [](std::complex<double> x1, std::complex<double> x2, std::complex<double> y) {
     return (x2 - x1) / y - (x1 / y) * (x1 / y);
   };
-  pair<double, double> c_mean = jackknife_reweight_any(N, N2, as, f);
+  pair<std::complex<double>, std::complex<double>> c_mean = jackknife_reweight_any(N, N2, as, f);
 
   mc_res res_;
-  res_.ene = {ene_mean.first / lat.L, ene_mean.second / lat.L};
+  res_.ene = {ene_mean.first / (double)lat.L, ene_mean.second / (double)lat.L};
   res_.as = {as_mean.first, as_mean.second};
   return res_;
 }
@@ -169,7 +169,7 @@ TEST(Ising1D_half_a, MC) {
 
   vector<string> wobs_paths;
   wobs_paths.push_back("");
-  std::vector<batch_res> res;
+  std::vector<batch_res_complex> res;
   model::observable obs(spin, "", false);
 
   // run_worm(spin, T, sweeps, therms, res, obs, lat, mapwobs);

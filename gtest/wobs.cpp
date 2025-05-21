@@ -159,8 +159,8 @@ TEST(WormObs, CheckRead)
   wo.add({0, 1, 0, 0}, 10, 1, -1, -1);
   wo.add({0, 1, 1, 1}, 10, 1, -1, -1);
 
-  batch_res res = wo.finalize();
-  EXPECT_FLOAT_EQ((double)res.mean()[0], 11.666667); // (5 + 0 + 10) / 3
+  batch_res_complex res = wo.finalize();
+  EXPECT_FLOAT_EQ((double)std::real(res.mean()[0]), 11.666667); // (5 + 0 + 10) / 3
 
   model::WormObs wo_2site(2, "../gtest/model_array/Heisenberg/1D/original/Jz_-1_Jx_-1_Jy_-1_h_0/g");
   EXPECT_EQ((*wo_2site.first())(0, 0), 0);
@@ -172,8 +172,8 @@ TEST(WormObs, CheckRead)
   wo_2site.add({0, 1, 0, 0}, 10, 1, -1, -1);
   wo_2site.add({1, 0, 0, 1}, 10, 1, -1, -1);
 
-  batch_res res2 = wo_2site.finalize();
-  EXPECT_FLOAT_EQ((double)res2.mean()[0], 10 / 3.0); // (5 + 0 + 5) / 3
+  batch_res_complex res2 = wo_2site.finalize();
+  EXPECT_FLOAT_EQ((double)std::real(res2.mean()[0]), 10 / 3.0); // (5 + 0 + 5) / 3
 }
 
 TEST(WormObs, MapWobs)
