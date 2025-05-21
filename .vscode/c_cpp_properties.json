@@ -4,8 +4,10 @@
             "name": "Mac",
             "configurationProvider": "ms-vscode.cmake-tools",
             "includePath": [
-                "${workspaceFolder}/**"
-            ]
+                "${workspaceFolder}/worms",
+                "${workspaceFolder}/release"
+            ],
+            "compileCommands": "${workspaceFolder}/release/compile_commands.json"
         },
         {
             "name": "Linux",

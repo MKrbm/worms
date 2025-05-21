@@ -5,6 +5,8 @@
 
   "exclude": [
     "python/rmsKit/array_save",
-    "python/rmsKit/array_save/**/*"
+    "python/rmsKit/array_save/**/*",
+    "python/rmsKit/array",
+    "python/rmsKit/array/**/*"
   ]
 }
