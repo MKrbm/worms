@@ -34,6 +34,8 @@ Release/
 **/logs
 **/dataframe
 **/array
+**/array_2
+**/array_save_2
 **/array_save
 **/out
 # julia
@@ -43,6 +45,8 @@ worm_result/
 result_worm/
 output_worm/
 project.toml
+job/link_old/*
+job/
 
 # packages / libraries
 ALPSCore

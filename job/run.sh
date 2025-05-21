@@ -7,7 +7,7 @@
 # source mg1d_sim.sh
 # source ss2d_sim.sh
 # source ff2d_sim.sh
-source ff1d_compare.sh
+# source ff1d_compare.sh
 
 P=1
 PROJECT_DIR=$(dirname "$(pwd)")

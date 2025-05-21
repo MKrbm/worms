@@ -3,8 +3,8 @@
 # n: Calculate the total number of jobs for MG1D model
 calculate_total_jobs() {
     J1_values=(1)                         # Define J1 values
-    J2_values=($(seq 0 0.2 4.0))          # Define J2 values
-    J3_values=($(seq 0 0.2 4.0))          # Define J3 values
+    J2_values=($(seq 0 0.5 8.0))          # Define J2 values
+    J3_values=($(seq 0 0.5 8.0))          # Define J3 values
 
     num_J1=${#J1_values[@]}
     num_J2=${#J2_values[@]}
@@ -45,7 +45,7 @@ run_job() {
     calculate_parameters "$task_id"
 
     # --- optimization settings (matched to BLBQ style) ---
-    LT=2
+    LT=-2
     SWEEPS=100000
     EPOCH=5000
     M=70
@@ -94,20 +94,21 @@ run_job() {
         -J2 $J2 \
         -J3 $J3 \
         -n $n_cpu \
+        --loss none \
         --symbolic_link $symbolic_link \
         --stdout >> $log_file
 
     echo "Finished optimization for MG1D model with J1=${J1}, J2=${J2}, J3=${J3} on $n_cpu CPUs"
 
     # 2) Worm sampling (match BLBQ order and flags)
-    python -u -m run_worm \
-        -m $model_name \
-        --path $symbolic_link \
-        -s $SWEEPS \
-        -n $n_cpu \
-        -k $M \
-        --obc \
-        --stdout >> $log_file
+    # python -u -m run_worm \
+    #     -m $model_name \
+    #     --path $symbolic_link \
+    #     -s $SWEEPS \
+    #     -n $n_cpu \
+    #     -k $M \
+    #     --obc \
+    #     --stdout >> $log_file
 
     python -u -m run_worm \
         -m $model_name \
