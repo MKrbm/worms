@@ -229,7 +229,7 @@ def files_to_dataframe(file_list, **kwargs):
 def get_loss(df):
     """Get the loss from the file path."""
     df['loss'] = df['u_path'].str.extract(
-        r'loss_([+|-]?[0-9]*\.[0-9]+|[0-9]+\.[0-9]*$)').astype(float)
+        r'loss_([\d.e+-]+)').astype(float)
     return df
 
 

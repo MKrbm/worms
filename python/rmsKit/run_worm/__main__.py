@@ -68,10 +68,14 @@ if __name__ == "__main__":
         beta = np.array([1])
         L_list = [[4, 4]]
         logger.info("RUN FF2D MODEL")
+    elif args.model == "MG1D":
+        beta = np.array([4])
+        L_list = [[10]]
+        L_list_select = [10]
+        beta_select = 1
+        logger.info("RUN MG1D MODEL")
     else:
-        beta = np.array([1, 4])
-        L_list = [[10], [11]]
-        logger.info("RUN {} MODEL".format(args.model))
+        raise ValueError("Model {} is not supported".format(args.model))
 
     T_list = 1/beta
     # define the number of samples
@@ -91,7 +95,7 @@ if __name__ == "__main__":
         logging.warning("The given path is a symbolic link.")
         logging.warning("The path will be resolved to {}".format(search_path))
 
-    min_loss, init_loss, min_path, ham_path, info_txt_path = utils.path.get_worm_path(
+    min_loss, init_loss, ham_path, info_txt_path = utils.path.get_worm_path(
         search_path)
 
     simu_setting = "sweeps_{}_p_{}".format(M, p)
@@ -110,7 +114,6 @@ if __name__ == "__main__":
         i += 1
     save_path = save_path / "{}.csv".format(i)
 
-    logger.info("min_path: {}".format(min_path))
     logger.info("min_loss: {}".format(min_loss))
     logger.info("ham_path: {}".format(ham_path))
 
@@ -153,7 +156,7 @@ if __name__ == "__main__":
                 
                 neg_val = data["as"]
                 neg_vals.append((neg_val, loss, path))
-                logger.info("simulation fnished. negativity: {}".format(neg_val))
+                logger.info("simulation fnished. average sign: {}".format(neg_val))
             except Exception as e:
                 logger.error("Exception: {}".format(e))
                 logger.error(
@@ -167,7 +170,13 @@ if __name__ == "__main__":
 
         logger.info("selected min_path: {} with negativity {}".format(min_path, neg_vals[0][0]))
         logger.info("other negative values: {}".format([(neg, loss) for neg, loss, path in neg_vals[:]]))
-
+    
+    else:
+        if args.original:
+            min_path = ""
+            logger.info("original simulation")
+        else:
+            raise ValueError("original flag is not set, but top_k is not 1")  
 
 
     # run the simulation
