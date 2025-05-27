@@ -93,7 +93,7 @@ run_job() {
     # 1) Optimization
     python -u optimize_loc.py -m $model_name -lr 0.01 -e $EPOCH -M $M -lt $LT \
        -J0 "$J0" -J1 "$J1" -hx "$hx" -hz "$hz" -n "$n_cpu" \
-       --symoblic_link "$symbolic_link" \
+       --symbolic_link "$symbolic_link" \
        --stdout >> "$log_file"
 
     echo "Finished optimization for BLBQ model with J0=${J0}, J1=${J1}, hz=${hz} and hx=${hx} in CPU ${n_cpu}"

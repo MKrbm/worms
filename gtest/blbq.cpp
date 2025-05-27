@@ -96,7 +96,7 @@ TEST(BLBQ1D_a, MC) {
   sweeps = 1000000;
   therms = 10000;
 
-  size_t cutoff_l = std::numeric_limits<size_t>::max();
+  size_t cutoff_l = 200;
   model::MapWormObs mapwobs;
 
   vector<string> wobs_paths;
@@ -134,7 +134,7 @@ TEST(BLBQ1D_b_1, MC) {
   sweeps = 1000000;
   therms = 10000;
 
-  size_t cutoff_l = std::numeric_limits<size_t>::max();
+  size_t cutoff_l = 200;
   model::MapWormObs mapwobs;
 
   vector<string> wobs_paths;
@@ -173,7 +173,7 @@ TEST(BLBQ1D_b_2, MC) {
   sweeps = 1000000;
   therms = 10000;
 
-  size_t cutoff_l = std::numeric_limits<size_t>::max();
+  size_t cutoff_l = 200;
   model::MapWormObs mapwobs;
 
   vector<string> wobs_paths;
@@ -216,7 +216,7 @@ TEST(BLBQ1D_c, MC) {
   sweeps = 1000000;
   therms = 10000;
 
-  size_t cutoff_l = std::numeric_limits<size_t>::max();
+  size_t cutoff_l = 200;
   model::MapWormObs mapwobs;
 
   vector<string> wobs_paths;

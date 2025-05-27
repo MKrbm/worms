@@ -190,7 +190,7 @@ def run_worm(
         model_name: str,
         ham_path: Path,
         u_path: Union[Path, None],
-        L: List[int],
+        L: Union[List[int], np.ndarray],
         T: float,
         N: int,
         n: int = 1,
@@ -227,8 +227,8 @@ def run_worm(
     if not release_dir.is_dir():
         raise ValueError("release_dir : {} must be a existing directory.".format(release_dir))
 
-    if not isinstance(L, list):
-        raise ValueError("L must be a list of integers.")
+    if not isinstance(L, list) and not isinstance(L, np.ndarray):
+        raise ValueError("L must be a list of integers or numpy array.")
 
     # 2. Find the executable
     executable_name = "./main_MPI"
@@ -294,6 +294,6 @@ def run_worm(
             logger.error("command: %s", command)
             raise RuntimeError(error_message)
     
-    print("out.stdout: \n", out.stdout.decode())
+    # print("out.stdout: \n", out.stdout.decode())
 
     return out

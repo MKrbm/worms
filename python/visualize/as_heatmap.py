@@ -106,8 +106,8 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
         # Round values to multiples of 0.5
         # x_values = np.array([np.round(val * 2) / 2 for val in x_values])
         # y_values = np.array([np.round(val * 2) / 2 for val in y_values])
-        x_values = np.round(np.arange(0, 4.2, 0.2), 2)
-        y_values = np.round(np.arange(0, 4.2, 0.2), 2)
+        x_values = np.round(np.arange(-1.0, 2.05, 0.05), 2)
+        y_values = np.round(np.arange(0, 1.05, 0.05), 2)
         
         # Remove duplicates after rounding
         # x_values = np.unique(x_values)
@@ -212,7 +212,7 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
         print(zs["Loss (optimized)"])
 
         # Plotting
-        fig, ax = plt.subplots(2, 2, figsize=(15, 15))
+        fig, ax = plt.subplots(2, 2, figsize=(15, 13), constrained_layout=True)
         try:
             max_loss = max(np.max(zs["Loss (optimized)"]), np.max(zs["Loss (original)"]))
         except BaseException as e:
@@ -225,8 +225,8 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
             max_loss = 1
 
         # Set the same ticks for all subplots
-        x_ticks = np.linspace(x.min(), x.max(), 9)
-        y_ticks = np.linspace(y.min(), y.max(), 9)
+        x_ticks = np.linspace(x.min(), x.max(), 5)
+        y_ticks = np.linspace(y.min(), y.max(), 5)
 
         for i, (key, z) in enumerate(zs.items()):
             Z = np.array(z).reshape(x.shape)
@@ -249,13 +249,15 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
             else:
                 colormap = 'RdPu_r'  # Colormap for other plots
             if "eeeee" in key:
-                c = ax[i % 2, i // 2].imshow(Z, cmap=colormap, aspect="equal",
-                                            extent=[x.min(), x.max(), y.min(), y.max()],
-                                            origin='lower', interpolation='none')
+                c = ax[i % 2, i // 2].imshow(Z, cmap=colormap, aspect="auto",
+                                            origin='lower', interpolation='none',
+                                            extent=[x.min(), x.max(), y.min(), y.max()])
+                ax[i % 2, i // 2].set_box_aspect(1)
             else:
-                c = ax[i % 2, i // 2].imshow(Z, cmap=colormap, vmin=vmin, vmax=vmax, aspect="equal",
+                c = ax[i % 2, i // 2].imshow(Z, cmap=colormap, vmin=vmin, vmax=vmax, aspect="auto",
                                             extent=[x.min(), x.max(), y.min(), y.max()],
                                             origin='lower', interpolation='none')
+                ax[i % 2, i // 2].set_box_aspect(1)
             
             # Set the same ticks for all subplots
             ax[i % 2, i // 2].set_xticks(x_ticks)
@@ -268,9 +270,15 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
             ax[i % 2, i // 2].tick_params(axis='both', which='major', labelsize=18)
             
             # Create a smaller colorbar
-            divider = make_axes_locatable(ax[i % 2, i // 2])
-            cax = divider.append_axes("right", size="3%", pad=0.15)
-            cbar = fig.colorbar(c, cax=cax)
+            # divider = make_axes_locatable(ax[i % 2, i // 2])
+            # cax = divider.append_axes("right", size="3%", pad=0.15)
+            # cbar = fig.colorbar(c, cax=cax, shrink=0.7)
+            # cbar.ax.tick_params(labelsize=18)  # Adjust font size for color map text
+            cbar = fig.colorbar(c,
+                       ax     = ax[i % 2, i // 2],
+                       shrink = 1.0,     # 1.0 → full height, <1.0 → a bit shorter
+                       fraction= 0.05,
+                       pad    = 0.02)    # horizontal gap from the heatmap
             cbar.ax.tick_params(labelsize=18)  # Adjust font size for color map text
             
             if "Loss" in key or "eta" in key:
@@ -278,7 +286,7 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
             else:
                 cbar.ax.invert_yaxis()
 
-        plt.tight_layout()
+        # plt.tight_layout()
         figure_name = f"AsHeatmap_{'_'.join(figure_name_parts)}.png"
         # figure_name = f"AsHeatmap_{'_'.join(figure_name_parts)}.pdf"
         figure_path = image_model_dir / figure_name
@@ -312,12 +320,13 @@ elif "MG1D" in model_name:
     }
     plot_heatmap(df, fixed_params_MG1D, ('J2', 'J3'), model_name, image_model_dir)
 
-elif model_name == "BLBQ1D":
+elif "BLBQ1D" in model_name:
     fixed_params_BLBQ1D = {
         "temperature": [0.25],
         "n_sites": [10],
         "J0": [1],
-        "bc": ["obc", "pbc"],
+        "bc": ["obc"],
+        "loss_func": ["-1_none", "1_mel"]
     }
     plot_heatmap(df, fixed_params_BLBQ1D, ('J1', 'hx'), model_name, image_model_dir)
 

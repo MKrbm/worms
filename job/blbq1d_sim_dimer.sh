@@ -3,11 +3,11 @@
 # n: Calculate the total number of jobs for BLBQ model
 calculate_total_jobs() {
     J0_values=(1)               # Define J0 values
-    # J1_values=($(seq -1.0 0.05 2.0))  # Define J1 values
+    J1_values=($(seq -1.0 0.05 2.0))  # Define J1 values
     hz_values=(0)               # Define hz values
-    # hx_values=($(seq 0 0.05 1.0))  # Define hx values
-    J1_values=($(seq 1.5 0.05 2.0))  # Define J1 values
-    hx_values=($(seq 0.2 0.05 1.0))  # Define hx values
+    hx_values=($(seq 0 0.05 1.0))  # Define hx values
+    # J1_values=($(seq 1.5 0.05 2.0))  # Define J1 values
+    # hx_values=($(seq 0.2 0.05 1.0))  # Define hx values
     # hx_values=(0)
 
     num_J0=${#J0_values[@]}
@@ -93,7 +93,7 @@ run_job() {
     # 1) Optimization
     python -u optimize_loc.py -m $model_name -lr 0.01 -e $EPOCH -M $M -lt $LT \
        -J0 "$J0" -J1 "$J1" -hx "$hx" -hz "$hz" -n "$n_cpu" \
-       --symoblic_link "$symbolic_link" \
+       --symbolic_link "$symbolic_link" \
        --loss none \
        --stdout >> "$log_file"
 

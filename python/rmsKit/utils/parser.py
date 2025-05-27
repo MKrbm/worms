@@ -11,6 +11,7 @@ models = [
     "FF1D",
     "FF2D",
     "BLBQ1D",
+    "BLBQ1D2",
     "MG1D",
     "MG1D8",
     "SS2D",

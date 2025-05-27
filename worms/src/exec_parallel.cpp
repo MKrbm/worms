@@ -52,7 +52,7 @@ std::unordered_map<std::string, model::WormObs> exe_worm_parallel(
   double wdensity = spin_model.Nb;
   double cutoff_ave = 0;
   double cutoff_var = 0;
-  size_t cutoff_thres = std::numeric_limits<size_t>::max();
+  size_t cutoff_thres = 1000000;
   for (int i = 0; i < therms + sweeps; i++) {
     size_t w_upd_cnt = 0;
     solver.diagonalUpdate(wdensity);  // n* need to be comment out
@@ -141,7 +141,7 @@ std::unordered_map<std::string, model::WormObs> exe_worm_parallel(
       if (cutoff_l > 0) {
         cutoff_thres = (size_t)(cutoff_ave + sqrt(cutoff_var) * cutoff_l);
       }
-      if (!fix_wdensity && (rank == 0)) {
+      if (!fix_wdensity) {
         std::cout << "Info: average number worms per MCS is reset from "
                   << spin_model.L << " to " << wdensity + 1 << "(rank=" << rank
                   << ")" << std::endl;

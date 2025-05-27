@@ -69,8 +69,11 @@ if __name__ == "__main__":
         L_list = [[4, 4]]
         logger.info("RUN FF2D MODEL")
     elif args.model == "MG1D":
-        beta = np.array([4])
-        L_list = [[10]]
+        # beta = np.array([1])
+        # beta = np.array([0.25, 0.5, 0.75, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+        beta = np.array([1])
+        L_list = np.round(np.linspace(10, 1000, 11)).astype(int)
+        L_list = [[l] for l in L_list]
         L_list_select = [10]
         beta_select = 1
         logger.info("RUN MG1D MODEL")
@@ -181,8 +184,13 @@ if __name__ == "__main__":
 
     # run the simulation
     data_list = []
+    L_n_rel = np.inf
+    T_n_rel = 0
     for L in L_list:
         for T in T_list:
+            if L_n_rel <= L[0] and T_n_rel >= T:
+                logger.info("skipping simulation for L: {}, T: {}".format(L, T))
+                continue
             subprocess_out = utils.run_worm(
                 args.model,
                 ham_path,
@@ -213,6 +221,9 @@ if __name__ == "__main__":
                         """Negativity was too high {} Simulation is not reliable.
                         The simulation for the following temperature can be ignored.
                         """.format(data["as_error"] / data["as"]))
+                    L_n_rel = L[0]
+                    T_n_rel = T
+                    
                 else:
                     logger.info(
                         "Simulation succeeded. Sweeps : {} L : {}, T : {}, Negativity : {}".format(

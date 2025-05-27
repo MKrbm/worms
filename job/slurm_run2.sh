@@ -7,8 +7,9 @@
 #SBATCH --nodes=1
 #SBATCH --partition=cpu
 
-# source blbq1d_sim.sh
-source mg1d_sim.sh
+# source blbq1d_sim_dimer.sh
+source blbq1d_sim.sh
+# source mg1d_sim.sh
 
 # Set the project directory
 PROJECT_DIR=$(dirname "$(pwd)")
