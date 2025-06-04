@@ -42,8 +42,10 @@ mc_res run_worm(model::base_model<MC> &spin, double T, size_t sweeps,
   // dont fix worm density. Not printout density information.
   alps::alea::autocorr_result<double> ac_res;
   double r;
-  exe_worm_parallel(spin, T, sweeps, therms, -1, false, true, res, ac_res, obs,
+  size_t cutoff_l = 10;
+  exe_worm_parallel(spin, T, sweeps, therms, cutoff_l, false, true, res, ac_res, obs,
                     std::move(wobs), r, SEED);
+  std::cerr << "bocount: " << r << std::endl;
 
   batch_res_complex as = res[0];   // average sign
   batch_res_complex ene = res[1];  // signed energy i.e. $\sum_i E_i S_i / N_MC$
@@ -96,7 +98,6 @@ TEST(BLBQ1D_a, MC) {
   sweeps = 1000000;
   therms = 10000;
 
-  size_t cutoff_l = 200;
   model::MapWormObs mapwobs;
 
   vector<string> wobs_paths;
@@ -134,7 +135,6 @@ TEST(BLBQ1D_b_1, MC) {
   sweeps = 1000000;
   therms = 10000;
 
-  size_t cutoff_l = 200;
   model::MapWormObs mapwobs;
 
   vector<string> wobs_paths;
@@ -173,7 +173,6 @@ TEST(BLBQ1D_b_2, MC) {
   sweeps = 1000000;
   therms = 10000;
 
-  size_t cutoff_l = 200;
   model::MapWormObs mapwobs;
 
   vector<string> wobs_paths;
@@ -216,7 +215,7 @@ TEST(BLBQ1D_c, MC) {
   sweeps = 1000000;
   therms = 10000;
 
-  size_t cutoff_l = 200;
+  size_t cutoff_l = 10;
   model::MapWormObs mapwobs;
 
   vector<string> wobs_paths;

@@ -11,9 +11,7 @@ models = [
     "FF1D",
     "FF2D",
     "BLBQ1D",
-    "BLBQ1D2",
     "MG1D",
-    "MG1D8",
     "SS2D",
 ]
 # minimum energy solver, quasi energy solver
@@ -26,7 +24,7 @@ def get_parser(length: bool = False, model=None, Description=None):
         description=Description)
     if model is None:
         parser.add_argument("-m", "--model", help="model (model) Name",
-                            required=True, choices=models)
+                            required=True)
     else:
         pass
     parser.add_argument("-Jz", "--coupling_z", help="coupling constant (Jz)",
@@ -139,6 +137,9 @@ def get_params_parser(parser):
 
     args = parser.parse_args()
 
+    if not any(model in args.model for model in models):
+        raise ValueError(f"Model {args.model} not supported. Supported models are: {models}")
+
     params = dict(
         J0=args.J0,
         J1=args.J1,
@@ -154,6 +155,7 @@ def get_params_parser(parser):
         seed=args.seed,  # random seed to generate hamiltonian
         obc=args.obc,
     )
+
 
     args_str = "args: {}".format(args)
     hash_str = str(hash(args_str))

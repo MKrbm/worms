@@ -106,8 +106,8 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
         # Round values to multiples of 0.5
         # x_values = np.array([np.round(val * 2) / 2 for val in x_values])
         # y_values = np.array([np.round(val * 2) / 2 for val in y_values])
-        x_values = np.round(np.arange(-1.0, 2.05, 0.05), 2)
-        y_values = np.round(np.arange(0, 1.05, 0.05), 2)
+        x_values = np.round(np.arange(0, 4.2, 0.2), 2)
+        y_values = np.round(np.arange(0, 4.2, 0.2), 2)
         
         # Remove duplicates after rounding
         # x_values = np.unique(x_values)

@@ -292,6 +292,7 @@ void Worm<MCT>::wormUpdate(double &wcount, double &wlength, size_t &w_update_cnt
           */
           bocnt++;
           // std::cout << "break" << std::endl;
+          // std::cout << "break" << std::endl;
           wlength += wlength_prime; 
           return;
         }

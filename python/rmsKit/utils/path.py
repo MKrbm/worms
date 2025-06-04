@@ -178,7 +178,8 @@ def find_summary_files(directory_path: Union[str, Path]) -> List[Dict[str, Path]
         if not summary_folder.is_dir():
             raise ValueError(f"Expected {summary_folder} to be a directory.")
         if not info_file.exists():
-            raise ValueError(f"Info file {info_file} does not exist.")
+            # raise ValueError(f"Info file {info_file} does not exist.")
+            logger.warning(f"Info file {info_file} does not exist.")
         for path in summary_folder.rglob('*.csv'):
             dic = {"summary": path, "info": info_file}
             res.append(dic)
@@ -200,7 +201,12 @@ def get_df_from_summary_files(summary_files: List[Dict[str, Path]], N: int) -> p
     for res_dict in summary_files:
         sum_file = res_dict["summary"]
         info_file = res_dict["info"]
-        info = extract_info_from_txt(info_file)
+        try:
+            info = extract_info_from_txt(info_file)
+        except Exception as e:
+            logger.warning(f"Could not extract info from {info_file}")
+            logger.warning(e)
+            continue
         if f"sweeps_{N}" in sum_file.resolve().as_posix():
             try:
                 df = pd.read_csv(sum_file)

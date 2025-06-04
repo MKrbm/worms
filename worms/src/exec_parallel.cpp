@@ -52,7 +52,7 @@ std::unordered_map<std::string, model::WormObs> exe_worm_parallel(
   double wdensity = spin_model.Nb;
   double cutoff_ave = 0;
   double cutoff_var = 0;
-  size_t cutoff_thres = 1000000;
+  size_t cutoff_thres = 10000000;
   for (int i = 0; i < therms + sweeps; i++) {
     size_t w_upd_cnt = 0;
     solver.diagonalUpdate(wdensity);  // n* need to be comment out
@@ -167,6 +167,7 @@ std::unordered_map<std::string, model::WormObs> exe_worm_parallel(
       solver.bocnt /
       static_cast<double>(therms + sweeps);  // # of loops breaked out divded
                                              // by total number of loops.
+  std::cout << "bocount: " << solver.bocnt << std::endl;
   // double r_ = 1-r_;
 
   res.push_back(ave_sign.finalize());
