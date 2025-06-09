@@ -106,8 +106,8 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
         # Round values to multiples of 0.5
         # x_values = np.array([np.round(val * 2) / 2 for val in x_values])
         # y_values = np.array([np.round(val * 2) / 2 for val in y_values])
-        x_values = np.round(np.arange(0, 4.2, 0.2), 2)
-        y_values = np.round(np.arange(0, 4.2, 0.2), 2)
+        x_values = np.round(np.arange(0, 2.1, 0.1), 2)
+        y_values = np.round(np.arange(0, 2.1, 0.1), 2)
         
         # Remove duplicates after rounding
         # x_values = np.unique(x_values)
@@ -160,6 +160,8 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
             else:
                 ah = df_h["as"].min()
                 ah_err = df_h["as_error"].min() * np.sqrt(N)
+                if init_loss is np.nan:
+                    init_loss = df_h.init_loss.values[0]
 
                 # if np.abs(ah) < np.abs(ah_err) * 0.001:
                 #     ah = 0
@@ -237,7 +239,7 @@ def plot_heatmap(df, fixed_params, heatmap_params, model_name, image_model_dir):
                 vmin, vmax = (0, 1.) ## J1J2J3
                 # vmin, vmax = (0, 0.6) ## J1J2J3 0.125
             elif "Loss" in key:
-                vmin, vmax = (0, max_loss)
+                vmin, vmax = (0, 1)  # Fixed range for loss plots
             else:
                 vmin, vmax = (0, max_as)
 
@@ -335,7 +337,8 @@ elif model_name == "SS2D":
         "temperature": [1],
         "n_sites": [16,36],
         "J0": [1],
-        "loss_func": ["-1_none", "1_mel"]
+        # "loss_func": ["-1_none", "1_mel"]
+        "loss_func": ["1_mel"]
     }
     plot_heatmap(df, fixed_params_MG1D, ('J1', 'J2'), model_name, image_model_dir)
 

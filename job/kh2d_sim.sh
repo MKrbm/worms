@@ -1,11 +1,10 @@
 #!/bin/bash
 
-# n: Calculate the total number of jobs for HXYZ1D model
-
+# n: Calculate the total number of jobs for KH2D model
 calculate_total_jobs() {
     Jx_values=($(seq -2 0.2 2))
     Jy_values=($(seq -2 0.2 2))
-    Jz_values=(1)  # Only one Jz value in this case
+    Jz_values=(1)
     H_values=(0 0.5 1)
 
     num_Jx=${#Jx_values[@]}
@@ -16,9 +15,8 @@ calculate_total_jobs() {
     total_jobs=$((num_Jx * num_Jy * num_Jz * num_H))
 }
 
-# Function to calculate Jx, Jy, Jz, and H from a single integer input
+# Function to compute Jx, Jy, Jz, and H from a single integer task_id
 calculate_parameters() {
-    calculate_total_jobs
     local task_id=$1
 
     i=$((task_id / (num_Jy * num_Jz * num_H)))
@@ -32,17 +30,16 @@ calculate_parameters() {
     H=$(printf "%.3f" "${H_values[$k]}")
 }
 
-# Echo all jobs to confirm the parameters
+# Echo all jobs to verify parameters
 echo_jobs() {
-
-    for i in $(seq 0 $((total_jobs - 1))); do
-        calculate_parameters "$i"
+    for idx in $(seq 0 $((total_jobs - 1))); do
+        calculate_parameters "$idx"
         echo "Jx=${Jx}, Jy=${Jy}, Jz=${Jz}, H=${H}"
     done
     echo "Total number of jobs for KH2D model: $total_jobs"
 }
 
-# Core job function for HXYZ1D model
+# Core job function for KH2D model
 run_job() {
     local task_id=$1
     local project_dir=$2
@@ -51,26 +48,32 @@ run_job() {
     calculate_parameters "$task_id"
 
     LT=3
-    SWEEPS=1000000
-    EPOCH=10000
+    SWEEPS=100000
     LR=0.001
-    M=1
+    EPOCH=5000
+    M=70
     model_name="KH2D"
+
+    # Logging setup
     log_dir="${project_dir}/job/log/${model_name}"
     [ ! -d "$log_dir" ] && mkdir -p "$log_dir" && echo "Created log directory $log_dir"
-    log_file="${log_dir}/Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_hx_${H}.log"
-    link_dir="${project_dir}/job/link/${model_name}"
-    symbolic_link="${link_dir}/Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_hx_${H}_hz_0_lt_${LT}"
+    log_file="${log_dir}/Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_H_${H}_lt_${LT}.log"
 
-    # Create the link directory if it does not exist
+    # Symbolic link directory
+    link_dir="${project_dir}/job/link/${model_name}"
+    symbolic_link="${link_dir}/Jx_${Jx}_Jy_${Jy}_Jz_${Jz}_H_${H}_lt_${LT}"
     [ ! -d "$link_dir" ] && mkdir -p "$link_dir" && echo "Created link directory $link_dir"
+
+    # Clear out any previous run files
+    echo "Clearing out $symbolic_link:"
+    rm -rf "${symbolic_link:?}/"*
 
     echo "Symbolic link for KH2D model: $symbolic_link"
     echo "Project directory: $project_dir"
 
     cd "$project_dir/python/rmsKit" || return
 
-    # if n_cpu is positive, then use that number of CPUs
+    # CPU configuration
     if [ "$n_cpu" -gt 0 ]; then
         echo "Using $n_cpu CPUs"
         export OMP_NUM_THREADS=$n_cpu
@@ -79,36 +82,62 @@ run_job() {
         echo "Using all available CPUs"
     fi
 
-    # if h is 1, then skip this simulation
-    if [ "$H" -eq 1 ]; then
+    # Skip simulation if H == 1.000
+    if [[ "$H" == "1.000" ]]; then
         echo "Skipping the simulation as H is set to 1."
-        exit 1
+        return
     fi
 
     source /opt/materiapps-intel/env.sh
     source ~/worms/myenv/bin/activate
 
-    # Running the simulation for HXYZ1D
-    python -u optimize_loc.py -m $model_name -o Adam -lr $LR -e $EPOCH -M $M -lt $LT \
-        -Jz "$Jz" -Jx "$Jx" -Jy "$Jy" -hx "$H" -n "$n_cpu" --symoblic_link "$symbolic_link" \
-        --stdout >> "$log_file"
+    # 1) Optimization
+    python -u optimize_loc.py \
+        -m $model_name \
+        -o Adam \
+        -lr $LR \
+        -e $EPOCH \
+        -M $M \
+        -lt $LT \
+        -Jx $Jx \
+        -Jy $Jy \
+        -Jz $Jz \
+        -hx $H \
+        -n $n_cpu \
+        --symbolic_link $symbolic_link \
+        --stdout >> $log_file
 
-    echo "Finished optimization for KH2D model with Jx=${Jx}, Jy=${Jy}, Jz=${Jz}, H=${H} in CPU ${n_cpu}"
+    echo "Finished optimization for KH2D model with Jx=${Jx}, Jy=${Jy}, Jz=${Jz}, H=${H} on $n_cpu CPUs"
 
-    python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS --original -n "$n_cpu" --stdout >> "$log_file"
+    # 2) Worm sampling (optimized first, then original)
+    python -u -m run_worm \
+        -m $model_name \
+        --path $symbolic_link \
+        -s $SWEEPS \
+        -n $n_cpu \
+        --obc \
+        --stdout >> $log_file
 
-    echo "Finished running worm with original hamiltonian"
+    python -u -m run_worm \
+        -m $model_name \
+        --path $symbolic_link \
+        -s $SWEEPS \
+        --original \
+        -n $n_cpu \
+        --obc \
+        --stdout >> $log_file
 
-    python -u -m run_worm -m $model_name --path "$symbolic_link" -s $SWEEPS -n "$n_cpu" --stdout >> "$log_file"
+    echo "Finished KH2D sampling for Jx=${Jx}, Jy=${Jy}, Jz=${Jz}, H=${H} on $n_cpu CPUs"
 
-    echo "Finished running worm with optimized hamiltonian"
-
+    # Optional: cleanup symbolic link
+    echo "Cleaning up existing symbolic link: $symbolic_link"
+    # [ -L "$symbolic_link" ] && unlink "$symbolic_link"
 }
 
 # Initialization
 calculate_total_jobs
 echo_jobs
-echo "Sourcing script hxyz1d.sh"
+echo "Sourcing script kh2d_sim.sh"
 export -f run_job
 export -f calculate_parameters
 export -f calculate_total_jobs

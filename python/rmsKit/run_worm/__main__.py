@@ -71,14 +71,18 @@ if __name__ == "__main__":
             L_list = [[4, 4]]
         beta_select = 1
         L_list_select = [2, 2]
+        L_list = [[2, 2]]
+        beta = np.array([1])
         logger.info("RUN SS2D MODEL")
     elif args.model == "HXYZ2D":
         beta = np.array([0.5, 1, 4])
         L_list = [[3, 3], [4, 4]]
         logger.info("RUN HXYZ2D MODEL")
     elif args.model == "KH2D":
-        beta = np.array([1, 4])
-        L_list = [[4, 4], [5, 5]]
+        beta = np.array([0.5, 1])
+        L_list = [[4, 4]]
+        beta_select = 0.5
+        L_list_select = [2, 2]
         logger.info("RUN KH2D MODEL")
     elif args.model == "BLBQ1D":
         if args.system_size:
@@ -133,7 +137,7 @@ if __name__ == "__main__":
     logger.info(f"Summary output: {save_path}")
 
     # --------------------------- Top-K Unitary Selection ---------------------------
-    if args.top_k > 1 and beta_select is not None and not args.original:
+    if args.top_k >= 1 and beta_select is not None and not args.original:
         logger.info(f"Selecting top {args.top_k} unitary paths.")
         top_k_unitary_paths = utils.path.top_k_upath(search_path, args.top_k)
         neg_vals = []

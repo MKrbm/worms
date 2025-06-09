@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=blbq1d_sim
+#SBATCH --job-name=ss2d_sim
 #SBATCH --output=job_log/logfile_%A_%a.log
 #SBATCH --array=0-128   # Adjust the array range as needed
 #SBATCH --ntasks=1
@@ -8,7 +8,10 @@
 #SBATCH --partition=cpu
 
 # source blbq1d_sim_dimer.sh
-source blbq1d_sim.sh
+# source blbq1d_sim.sh
+# source ss2d_sim.sh
+source kh2d_sim.sh
+# source ss2d_sim_dimer.sh
 # source mg1d_sim.sh
 
 # Set the project directory
